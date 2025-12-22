@@ -18,12 +18,116 @@
             --hotline: #ef4444;
             --hotline-glow: rgba(239, 68, 68, 0.4);
             --bg: #0D1117;
+            --bg-secondary: #161b22;
             --card: rgba(255, 255, 255, 0.03);
             --border: rgba(255, 255, 255, 0.06);
             --text: rgba(255, 255, 255, 0.9);
             --text-dim: rgba(255, 255, 255, 0.35);
             --content-width: 520px;
             --app-height: 100%;
+            --grid-color: rgba(255,255,255,0.015);
+            --input-bg: rgba(255,255,255,0.03);
+            --msg-user-bg: rgba(255,255,255,0.06);
+            --msg-ai-bg: transparent;
+            --shadow-color: rgba(0,0,0,0.3);
+        }
+        
+        /* LIGHT THEME */
+        [data-theme="light"] {
+            --bg: #f8fafc;
+            --bg-secondary: #ffffff;
+            --card: rgba(0, 0, 0, 0.02);
+            --border: rgba(0, 0, 0, 0.08);
+            --text: rgba(0, 0, 0, 0.9);
+            --text-dim: rgba(0, 0, 0, 0.45);
+            --grid-color: rgba(0,0,0,0.03);
+            --input-bg: rgba(0,0,0,0.03);
+            --msg-user-bg: rgba(0,0,0,0.04);
+            --msg-ai-bg: transparent;
+            --shadow-color: rgba(0,0,0,0.1);
+            --copilot-bg: rgba(255, 107, 53, 0.1);
+            --copilot-border: rgba(255, 107, 53, 0.25);
+            --assistant-bg: rgba(34, 197, 94, 0.1);
+            --assistant-border: rgba(34, 197, 94, 0.25);
+        }
+        
+        /* Toggle Switch Styles */
+        .setting-toggle { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            padding: 14px 16px; 
+            background: var(--card); 
+            border: 1px solid var(--border); 
+            border-radius: 12px; 
+            margin-bottom: 12px;
+        }
+        .setting-toggle-info { display: flex; flex-direction: column; gap: 2px; }
+        .setting-toggle-label { font-size: 13px; font-weight: 500; color: var(--text); }
+        .setting-toggle-desc { font-size: 11px; color: var(--text-dim); }
+        .toggle-switch { 
+            position: relative; 
+            width: 50px; 
+            height: 28px; 
+            background: var(--border); 
+            border-radius: 14px; 
+            cursor: pointer; 
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+        .toggle-switch.active { background: var(--copilot); }
+        .toggle-switch::after { 
+            content: ''; 
+            position: absolute; 
+            top: 3px; 
+            left: 3px; 
+            width: 22px; 
+            height: 22px; 
+            background: white; 
+            border-radius: 50%; 
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .toggle-switch.active::after { transform: translateX(22px); }
+        
+        /* Language Selector */
+        .lang-selector {
+            display: flex;
+            gap: 8px;
+        }
+        .lang-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: var(--text-dim);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .lang-btn.active {
+            background: var(--copilot-bg);
+            border-color: var(--copilot-border);
+            color: var(--copilot);
+        }
+        .lang-btn:hover:not(.active) {
+            background: var(--border);
+        }
+        
+        /* Settings Section Divider */
+        .settings-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 20px 0;
+        }
+        .settings-section-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
@@ -35,7 +139,7 @@
             margin: 0;
             padding: 0;
             background: var(--bg); 
-            background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px); 
+            background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px); 
             background-size: 32px 32px;
             background-attachment: fixed;
             overflow: hidden !important;
@@ -55,7 +159,7 @@
             padding-bottom: env(safe-area-inset-bottom, 0px);
             font-family: 'Inter', -apple-system, sans-serif; 
             background: var(--bg); 
-            background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px); 
+            background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px); 
             background-size: 32px 32px;
             background-attachment: fixed;
             color: var(--text); 
@@ -84,7 +188,7 @@
         input, textarea, select { font-size: 16px !important; }
         .icon { display: inline-flex; align-items: center; justify-content: center; }
         .icon svg { width: 100%; height: 100%; stroke: currentColor; stroke-width: 1.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-        .screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: none; flex-direction: column; background: var(--bg); background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px); background-size: 32px 32px; z-index: 1; }
+        .screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: none; flex-direction: column; background: var(--bg); background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px); background-size: 32px 32px; z-index: 1; }
         .screen.active { display: flex; }
 
         /* ==================== LOGIN ==================== */
@@ -379,7 +483,7 @@
             display: none; 
             z-index: 200; 
             background: var(--bg); 
-            background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px); 
+            background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px); 
             background-size: 32px 32px;
             overflow: hidden;
         }
@@ -401,7 +505,7 @@
         .panel.copilot { --mode-color: var(--copilot); --mode-glow: var(--copilot-glow); --mode-bg: var(--copilot-bg); --mode-border: var(--copilot-border); }
         .panel.assistant { --mode-color: var(--assistant); --mode-glow: var(--assistant-glow); --mode-bg: var(--assistant-bg); --mode-border: var(--assistant-border); }
 
-        .panel-header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; padding-top: max(10px, env(safe-area-inset-top)); flex-shrink: 0; border-bottom: 1px solid var(--border); background: rgba(13,17,23,0.8); }
+        .panel-header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; padding-top: max(10px, env(safe-area-inset-top)); flex-shrink: 0; border-bottom: 1px solid var(--border); background: var(--bg-secondary); }
         .chat-view.split .panel-header { padding-top: 10px; }
         .panel-back { width: 32px; height: 32px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
         .panel-back:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.8); }
@@ -549,7 +653,7 @@
         /* REPORT SHEET */
         .report-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 299; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
         .report-backdrop.show { opacity: 1; pointer-events: auto; }
-        .report-sheet { position: fixed; top: 0; right: 0; width: 100%; max-width: 340px; height: 100%; background: rgba(13,17,23,0.98); border-left: 1px solid var(--assistant-border); z-index: 300; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .report-sheet { position: fixed; top: 0; right: 0; width: 100%; max-width: 340px; height: 100%; background: var(--bg-secondary); border-left: 1px solid var(--assistant-border); z-index: 300; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .report-sheet.open { transform: translateX(0); }
         @media (max-width: 500px) { .report-sheet { max-width: 100%; border-left: none; } }
         .report-header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; padding-top: max(12px, env(safe-area-inset-top)); border-bottom: 1px solid var(--border); flex-shrink: 0; }
@@ -568,7 +672,7 @@
         .r-btn .icon { width: 14px; height: 14px; }
 
         /* ==================== HOTLINE VIEW ==================== */
-        .hotline-view { position: fixed; inset: 0; display: none; z-index: 200; background: var(--bg); background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px); background-size: 32px 32px; }
+        .hotline-view { position: fixed; inset: 0; display: none; z-index: 200; background: var(--bg); background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px); background-size: 32px 32px; }
         .hotline-view.active { display: block; }
         .hotline-close { position: absolute; top: max(16px, env(safe-area-inset-top)); right: 16px; width: 40px; height: 40px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 300; transition: all 0.2s; }
         .hotline-close:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.8); }
@@ -744,9 +848,9 @@
         .homepage-content > * { margin: 0; }
         /* Hide homepage when onboarding is visible - higher specificity */
         .onboarding-section:not(.hidden) ~ .homepage-content.active { display: none !important; }
-        .profile-view { position: fixed; inset: 0; display: none; z-index: 200; background: var(--bg); background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px); background-size: 32px 32px; flex-direction: column; }
+        .profile-view { position: fixed; inset: 0; display: none; z-index: 200; background: var(--bg); background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px); background-size: 32px 32px; flex-direction: column; }
         .profile-view.active { display: flex; }
-        .profile-header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; padding-top: max(10px, env(safe-area-inset-top)); flex-shrink: 0; border-bottom: 1px solid var(--border); background: rgba(13,17,23,0.8); }
+        .profile-header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; padding-top: max(10px, env(safe-area-inset-top)); flex-shrink: 0; border-bottom: 1px solid var(--border); background: var(--bg-secondary); }
         .profile-back { width: 32px; height: 32px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .profile-back:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.8); }
         .profile-back .icon { width: 14px; height: 14px; }
@@ -1540,30 +1644,60 @@
         <div class="profile-header">
             <button class="profile-back" onclick="closeProfile()"><span class="icon"><svg viewBox="0 0 24 24"><use href="#icon-arrow-left"/></svg></span></button>
             <div class="profile-info">
-                <div class="profile-title">Votre profil</div>
-                <div class="profile-subtitle">Informations personnelles</div>
+                <div class="profile-title" data-i18n="profile.title">Votre profil</div>
+                <div class="profile-subtitle" data-i18n="profile.subtitle">Informations personnelles</div>
             </div>
         </div>
         <div class="profile-body">
             <div class="profile-form">
+                <!-- Personal Info -->
+                <div class="settings-section-title" data-i18n="profile.personal">Informations personnelles</div>
                 <div class="form-group">
-                    <label class="form-label">Prénom</label>
-                    <input type="text" class="form-input" id="profileFirstName" placeholder="Votre prénom">
+                    <label class="form-label" data-i18n="profile.firstname">Prénom</label>
+                    <input type="text" class="form-input" id="profileFirstName" data-placeholder-i18n="profile.firstname_placeholder">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Nom</label>
-                    <input type="text" class="form-input" id="profileLastName" placeholder="Votre nom">
+                    <label class="form-label" data-i18n="profile.lastname">Nom</label>
+                    <input type="text" class="form-input" id="profileLastName" data-placeholder-i18n="profile.lastname_placeholder">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Email</label>
                     <input type="email" class="form-input" id="profileEmail" placeholder="Votre email" readonly style="opacity: 0.6;">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Téléphone</label>
-                    <input type="tel" class="form-input" id="profilePhone" placeholder="Votre numéro">
+                    <label class="form-label" data-i18n="profile.phone">Téléphone</label>
+                    <input type="tel" class="form-input" id="profilePhone" data-placeholder-i18n="profile.phone_placeholder">
                 </div>
-                <button class="profile-save" onclick="saveProfile()">Enregistrer</button>
-                <button class="profile-save" onclick="logout()" style="background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; margin-top: 12px;">Déconnexion</button>
+                
+                <!-- Settings Section -->
+                <div class="settings-divider"></div>
+                <div class="settings-section-title" data-i18n="profile.settings">Paramètres</div>
+                
+                <!-- Language Toggle -->
+                <div class="setting-toggle">
+                    <div class="setting-toggle-info">
+                        <div class="setting-toggle-label" data-i18n="profile.language">Langue</div>
+                        <div class="setting-toggle-desc" data-i18n="profile.language_desc">Choisissez votre langue</div>
+                    </div>
+                    <div class="lang-selector">
+                        <button class="lang-btn active" id="langFR" onclick="setLanguage('fr')">FR</button>
+                        <button class="lang-btn" id="langEN" onclick="setLanguage('en')">EN</button>
+                    </div>
+                </div>
+                
+                <!-- Theme Toggle -->
+                <div class="setting-toggle">
+                    <div class="setting-toggle-info">
+                        <div class="setting-toggle-label" data-i18n="profile.theme">Thème</div>
+                        <div class="setting-toggle-desc" data-i18n="profile.theme_desc">Mode sombre ou clair</div>
+                    </div>
+                    <div class="toggle-switch" id="themeToggle" onclick="toggleTheme()"></div>
+                </div>
+                
+                <div class="settings-divider"></div>
+                
+                <button class="profile-save" onclick="saveProfile()" data-i18n="profile.save">Enregistrer</button>
+                <button class="profile-save" onclick="logout()" style="background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; margin-top: 12px;" data-i18n="profile.logout">Déconnexion</button>
             </div>
         </div>
     </div>
@@ -1848,6 +1982,182 @@
         let chatOpen = false;
         let currentPhotoPanel = 'copilot';
         let currentPage = 'home';
+        
+        // Theme and Language
+        let currentTheme = localStorage.getItem('fixair_theme') || 'dark';
+        let currentLang = localStorage.getItem('fixair_lang') || 'fr';
+        
+        // Translations
+        const translations = {
+            fr: {
+                // Profile
+                'profile.title': 'Votre profil',
+                'profile.subtitle': 'Informations personnelles',
+                'profile.personal': 'Informations personnelles',
+                'profile.firstname': 'Prénom',
+                'profile.firstname_placeholder': 'Votre prénom',
+                'profile.lastname': 'Nom',
+                'profile.lastname_placeholder': 'Votre nom',
+                'profile.phone': 'Téléphone',
+                'profile.phone_placeholder': 'Votre numéro',
+                'profile.settings': 'Paramètres',
+                'profile.language': 'Langue',
+                'profile.language_desc': 'Choisissez votre langue',
+                'profile.theme': 'Thème',
+                'profile.theme_desc': 'Mode sombre ou clair',
+                'profile.save': 'Enregistrer',
+                'profile.logout': 'Déconnexion',
+                // Login
+                'login.welcome': 'Bienvenue',
+                'login.subtitle': 'Assistant IA pour techniciens HVAC',
+                'login.email_placeholder': 'Quelle est votre adresse email ?',
+                'login.password_placeholder': 'Votre mot de passe',
+                'login.name_placeholder': 'Votre prénom et nom',
+                // Nav
+                'nav.home': 'Accueil',
+                'nav.projects': 'Projets',
+                'nav.hotline': 'Hotline',
+                'nav.profile': 'Profil',
+                // Home
+                'home.greeting': 'Bonjour',
+                'home.progress': 'Progression du jour',
+                'home.choose_assistant': 'Choisissez votre assistant',
+                'home.copilot_desc': 'Questions techniques et conseils',
+                'home.assistant_desc': 'Diagnostic et résolution',
+                // Onboarding
+                'onboarding.step1_title': 'Choisissez votre marque',
+                'onboarding.step1_desc': 'Sélectionnez la marque principale sur laquelle vous travaillez',
+                'onboarding.step2_title': 'Bienvenue sur FixAIR !',
+                'onboarding.step2_desc': 'Votre assistant IA pour techniciens HVAC',
+                'onboarding.step3_title': 'Posez votre première question',
+                'onboarding.step3_desc': 'Essayez le Copilot avec une question technique',
+                'onboarding.step4_title': 'Découvrez l\'Assistant',
+                'onboarding.step4_desc': 'Pour un diagnostic approfondi',
+                'onboarding.complete': 'Terminé',
+                'onboarding.continue': 'Continuer',
+                // Chat
+                'chat.input_placeholder': 'Posez votre question...',
+                'chat.copilot_title': 'FixAIR Copilot',
+                'chat.assistant_title': 'FixAIR Assistant'
+            },
+            en: {
+                // Profile
+                'profile.title': 'Your Profile',
+                'profile.subtitle': 'Personal Information',
+                'profile.personal': 'Personal Information',
+                'profile.firstname': 'First Name',
+                'profile.firstname_placeholder': 'Your first name',
+                'profile.lastname': 'Last Name',
+                'profile.lastname_placeholder': 'Your last name',
+                'profile.phone': 'Phone',
+                'profile.phone_placeholder': 'Your phone number',
+                'profile.settings': 'Settings',
+                'profile.language': 'Language',
+                'profile.language_desc': 'Choose your language',
+                'profile.theme': 'Theme',
+                'profile.theme_desc': 'Dark or light mode',
+                'profile.save': 'Save',
+                'profile.logout': 'Logout',
+                // Login
+                'login.welcome': 'Welcome',
+                'login.subtitle': 'AI Assistant for HVAC technicians',
+                'login.email_placeholder': 'What is your email address?',
+                'login.password_placeholder': 'Your password',
+                'login.name_placeholder': 'Your first and last name',
+                // Nav
+                'nav.home': 'Home',
+                'nav.projects': 'Projects',
+                'nav.hotline': 'Hotline',
+                'nav.profile': 'Profile',
+                // Home
+                'home.greeting': 'Hello',
+                'home.progress': 'Daily Progress',
+                'home.choose_assistant': 'Choose your assistant',
+                'home.copilot_desc': 'Technical questions and advice',
+                'home.assistant_desc': 'Diagnosis and resolution',
+                // Onboarding
+                'onboarding.step1_title': 'Choose your brand',
+                'onboarding.step1_desc': 'Select the main brand you work with',
+                'onboarding.step2_title': 'Welcome to FixAIR!',
+                'onboarding.step2_desc': 'Your AI assistant for HVAC technicians',
+                'onboarding.step3_title': 'Ask your first question',
+                'onboarding.step3_desc': 'Try the Copilot with a technical question',
+                'onboarding.step4_title': 'Discover the Assistant',
+                'onboarding.step4_desc': 'For in-depth diagnostics',
+                'onboarding.complete': 'Complete',
+                'onboarding.continue': 'Continue',
+                // Chat
+                'chat.input_placeholder': 'Ask your question...',
+                'chat.copilot_title': 'FixAIR Copilot',
+                'chat.assistant_title': 'FixAIR Assistant'
+            }
+        };
+        
+        // Apply theme on load
+        function applyTheme(theme) {
+            currentTheme = theme;
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('fixair_theme', theme);
+            
+            // Update toggle state
+            const toggle = document.getElementById('themeToggle');
+            if (toggle) {
+                toggle.classList.toggle('active', theme === 'light');
+            }
+        }
+        
+        // Toggle theme
+        function toggleTheme() {
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            applyTheme(newTheme);
+        }
+        
+        // Set language
+        function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('fixair_lang', lang);
+            
+            // Update button states
+            document.getElementById('langFR').classList.toggle('active', lang === 'fr');
+            document.getElementById('langEN').classList.toggle('active', lang === 'en');
+            
+            // Apply translations
+            applyTranslations();
+        }
+        
+        // Apply translations to all elements with data-i18n attribute
+        function applyTranslations() {
+            const elements = document.querySelectorAll('[data-i18n]');
+            elements.forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[currentLang] && translations[currentLang][key]) {
+                    el.textContent = translations[currentLang][key];
+                }
+            });
+            
+            // Apply placeholder translations
+            const placeholders = document.querySelectorAll('[data-placeholder-i18n]');
+            placeholders.forEach(el => {
+                const key = el.getAttribute('data-placeholder-i18n');
+                if (translations[currentLang] && translations[currentLang][key]) {
+                    el.placeholder = translations[currentLang][key];
+                }
+            });
+        }
+        
+        // Initialize theme and language on load
+        function initSettings() {
+            applyTheme(currentTheme);
+            
+            // Set initial language button state
+            document.getElementById('langFR').classList.toggle('active', currentLang === 'fr');
+            document.getElementById('langEN').classList.toggle('active', currentLang === 'en');
+            
+            applyTranslations();
+        }
+        
+        // Call initSettings after DOM is ready
+        document.addEventListener('DOMContentLoaded', initSettings);
         
         // Onboarding state
         let loginStep = 0;
