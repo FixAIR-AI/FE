@@ -1,0 +1,2992 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>FixAIR V13 - Assistant HVAC</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --copilot: #FF6B35;
+            --copilot-glow: rgba(255, 107, 53, 0.4);
+            --copilot-bg: rgba(255, 107, 53, 0.08);
+            --copilot-border: rgba(255, 107, 53, 0.2);
+            --assistant: #22c55e;
+            --assistant-glow: rgba(34, 197, 94, 0.4);
+            --assistant-bg: rgba(34, 197, 94, 0.08);
+            --assistant-border: rgba(34, 197, 94, 0.2);
+            --hotline: #ef4444;
+            --hotline-glow: rgba(239, 68, 68, 0.4);
+            --bg: #0D1117;
+            --card: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.06);
+            --text: rgba(255, 255, 255, 0.9);
+            --text-dim: rgba(255, 255, 255, 0.35);
+            --content-width: 520px;
+            --app-height: 100%;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        /* CRITICAL: Prevent any gap or overflow */
+        html { 
+            width: 100%; 
+            height: 100%;
+            height: -webkit-fill-available;
+            margin: 0;
+            padding: 0;
+            background: var(--bg); 
+            background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px); 
+            background-size: 32px 32px;
+            background-attachment: fixed;
+            overflow: hidden !important;
+            overscroll-behavior: none;
+            -webkit-text-size-adjust: 100%;
+            /* Prevent any content from showing outside */
+            position: relative;
+        }
+        body { 
+            width: 100%; 
+            height: 100%;
+            height: -webkit-fill-available;
+            min-height: 100%;
+            max-height: 100%;
+            margin: 0;
+            padding: 0;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            font-family: 'Inter', -apple-system, sans-serif; 
+            background: var(--bg); 
+            background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px); 
+            background-size: 32px 32px;
+            background-attachment: fixed;
+            color: var(--text); 
+            overflow: hidden !important;
+            position: fixed; 
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overscroll-behavior: none;
+            -webkit-text-size-adjust: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* App wrapper to contain everything */
+        .app-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+            background: var(--bg);
+        }
+        input, textarea, select { font-size: 16px !important; }
+        .icon { display: inline-flex; align-items: center; justify-content: center; }
+        .icon svg { width: 100%; height: 100%; stroke: currentColor; stroke-width: 1.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+        .screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: none; flex-direction: column; background: var(--bg); background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px); background-size: 32px 32px; z-index: 1; }
+        .screen.active { display: flex; }
+
+        /* ==================== LOGIN ==================== */
+        .login-screen { justify-content: center; align-items: center; padding: 24px; }
+        .login-container { width: 100%; max-width: 380px; display: flex; flex-direction: column; align-items: center; }
+        .scan-line { position: fixed; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, var(--copilot), transparent); box-shadow: 0 0 20px var(--copilot-glow); animation: scanDown 2s ease-out forwards; }
+        @keyframes scanDown { to { top: 50%; opacity: 0; } }
+        .login-title { font-size: 22px; font-weight: 300; margin-bottom: 4px; color: rgba(255,255,255,0.9); }
+        .login-sub { font-size: 12px; color: var(--text-dim); margin-bottom: 32px; }
+        .login-logo { width: 160px; height: auto; margin-bottom: 24px; color: var(--copilot); }
+        .login-logo svg { width: 100%; height: auto; }
+        .login-bar { display: flex; align-items: center; gap: 8px; padding: 5px 5px 5px 8px; background: var(--card); border: 1px solid var(--border); border-radius: 40px; width: 100%; opacity: 0; animation: fadeUp 0.5s ease 1.5s forwards; }
+        @keyframes fadeUp { to { opacity: 1; } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .login-mini { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; position: relative; }
+        .glass-sphere { width: 26px; height: 26px; border-radius: 50%; position: relative; overflow: hidden; animation: glowPulse 8s ease-in-out infinite; }
+        @keyframes glowPulse { 
+            0%, 100% { box-shadow: 0 0 14px rgba(255,107,53,0.7), 0 0 28px rgba(255,107,53,0.3); } 
+            25% { box-shadow: 0 0 14px rgba(239,68,68,0.7), 0 0 28px rgba(239,68,68,0.3); } 
+            50% { box-shadow: 0 0 14px rgba(59,130,246,0.7), 0 0 28px rgba(59,130,246,0.3); } 
+            75% { box-shadow: 0 0 14px rgba(234,179,8,0.7), 0 0 28px rgba(234,179,8,0.3); } 
+        }
+        .glass-sphere::before { content: ''; position: absolute; top: 2px; left: 4px; width: 5px; height: 4px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,0.5), transparent 70%); z-index: 10; }
+        .sphere-fog-container { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; background: rgba(20,24,32,0.3); }
+        .sphere-fog { position: absolute; inset: -50%; border-radius: 50%; background: radial-gradient(circle at 30% 40%, currentColor, transparent 50%), radial-gradient(circle at 70% 60%, currentColor, transparent 40%); filter: blur(2px); animation: fogSwirl 6s ease-in-out infinite, fogColor 8s ease-in-out infinite; opacity: 0.9; }
+        @keyframes fogSwirl { 0% { transform: rotate(0deg) translate(0, 0); } 25% { transform: rotate(90deg) translate(2px, -2px); } 50% { transform: rotate(180deg) translate(0, 0); } 75% { transform: rotate(270deg) translate(-2px, 2px); } 100% { transform: rotate(360deg) translate(0, 0); } }
+        @keyframes fogColor { 0%, 100% { color: #FF6B35; } 25% { color: #ef4444; } 50% { color: #3B82F6; } 75% { color: #eab308; } }
+        .sphere-fog-2 { position: absolute; inset: -30%; border-radius: 50%; background: radial-gradient(circle at 60% 30%, currentColor, transparent 45%); filter: blur(2px); animation: fogSwirl2 5s ease-in-out infinite reverse, fogColor2 8s ease-in-out infinite; opacity: 0.7; }
+        @keyframes fogSwirl2 { 0% { transform: rotate(0deg) scale(0.9); } 50% { transform: rotate(180deg) scale(1.1); } 100% { transform: rotate(360deg) scale(0.9); } }
+        @keyframes fogColor2 { 0%, 100% { color: #3B82F6; } 25% { color: #eab308; } 50% { color: #FF6B35; } 75% { color: #ef4444; } }
+        .login-input { flex: 1; padding: 8px; background: transparent; border: none; color: white; font-size: 13px; outline: none; caret-color: white; }
+        .login-input::placeholder { color: rgba(255,255,255,0.25); }
+        .login-input:-webkit-autofill,
+        .login-input:-webkit-autofill:hover,
+        .login-input:-webkit-autofill:focus,
+        .login-input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+            -webkit-text-fill-color: white !important;
+            background-color: transparent !important;
+            background: transparent !important;
+            transition: background-color 9999s ease-out 9999s !important;
+            caret-color: white !important;
+        }
+        .login-btn { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #FF6B35, #E55A2B); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .login-btn .icon { width: 12px; height: 12px; }
+
+        /* ==================== MAIN APP ==================== */
+        .main-app { height: 100%; }
+        .app-header { position: fixed; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: center; padding: 12px 16px; padding-top: max(12px, env(safe-area-inset-top)); z-index: 100; background: linear-gradient(180deg, rgba(13,17,23,0.95), transparent); }
+        .header-inner { width: 100%; max-width: var(--content-width); display: flex; align-items: center; justify-content: space-between; }
+        .header-left { display: flex; align-items: center; }
+        .header-logo-svg { height: 20px; color: var(--copilot); }
+        .header-logo-svg svg { height: 100%; width: auto; }
+        /* BRAND DROPDOWN */
+        .brand-pill { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; cursor: pointer; position: relative; }
+        .brand-pill-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--assistant); box-shadow: 0 0 6px var(--assistant); }
+        .brand-pill.has-brand .brand-pill-dot { display: block; }
+        .brand-pill-text { font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.6); }
+        .brand-pill-arrow { width: 10px; height: 10px; color: rgba(255,255,255,0.3); transition: transform 0.2s; }
+        .brand-pill.open .brand-pill-arrow { transform: rotate(180deg); }
+        
+        .brand-dropdown { position: absolute; top: calc(100% + 6px); right: 0; min-width: 160px; background: rgba(20,24,32,0.98); border: 1px solid var(--border); border-radius: 12px; padding: 6px; display: none; flex-direction: column; gap: 2px; z-index: 200; box-shadow: 0 8px 24px rgba(0,0,0,0.4); backdrop-filter: blur(20px); }
+        .brand-dropdown.show { display: flex; }
+        .brand-dropdown-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+        .brand-dropdown-item:hover { background: rgba(255,255,255,0.06); }
+        .brand-dropdown-item.active { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); }
+        .brand-dropdown-item.disabled { cursor: default; opacity: 0.35; padding: 6px 12px; }
+        .brand-dropdown-item.disabled:hover { background: transparent; }
+        .brand-dropdown-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .brand-dropdown-item.active .brand-dropdown-dot { box-shadow: 0 0 6px currentColor; }
+        .brand-dropdown-name { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.8); flex: 1; }
+        .brand-dropdown-item.disabled .brand-dropdown-name { font-size: 11px; color: rgba(255,255,255,0.3); }
+        .brand-dropdown-check { width: 14px; height: 14px; color: #22c55e; opacity: 0; }
+        .brand-dropdown-item.selected .brand-dropdown-check { opacity: 1; }
+        .brand-dropdown-divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+        .app-content { height: 100%; padding-top: calc(56px + env(safe-area-inset-top)); padding-bottom: calc(70px + env(safe-area-inset-bottom)); overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; align-items: center; }
+        
+        /* CENTERED CONTENT CONTAINER */
+        .home, .projects-page { 
+            width: 100%; 
+            max-width: var(--content-width); 
+            padding: 16px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
+        }
+
+        /* ==================== IMPROVED PROGRESS RING (BIGGER) ==================== */
+        .activity-section { text-align: center; margin-bottom: 8px; }
+        .activity-ring-container { position: relative; width: 180px; height: 180px; margin: 0 auto 12px; }
+        .activity-ring-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+        .ring-bg { fill: none; stroke: rgba(255,255,255,0.04); stroke-width: 11; }
+        .ring-progress { fill: none; stroke-width: 11; stroke-linecap: round; stroke-dasharray: 440; stroke-dashoffset: 119; filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.5)); transition: stroke-dashoffset 1s ease, stroke 0.5s ease; }
+        .ring-progress.cold { stroke: url(#coldGradient); filter: drop-shadow(0 0 8px rgba(125, 64, 255, 0.5)); }
+        .ring-progress.warm { stroke: url(#warmGradient); filter: drop-shadow(0 0 8px rgba(255, 107, 53, 0.5)); }
+        .ring-progress.hot { stroke: url(#hotGradient); filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.5)); }
+        .activity-ring-inner { position: absolute; inset: 28px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, rgba(34,197,94,0.08), transparent 60%); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .activity-value { font-size: 32px; font-weight: 800; background: linear-gradient(135deg, #22c55e, #4ade80); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
+        .activity-label { font-size: 9px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+        
+        /* STATUS - NO BACKGROUND, JUST TEXT */
+        .activity-status { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+        .status-fire { font-size: 16px; animation: fireWiggle 0.5s ease-in-out infinite; }
+        @keyframes fireWiggle { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+        .status-text { font-size: 12px; font-weight: 600; color: var(--copilot); text-transform: uppercase; letter-spacing: 1px; }
+
+        /* ==================== HOMEPAGE TOGGLE CARDS (V2 STYLE) ==================== */
+        .modules-toggle { display: flex; gap: 12px; }
+        
+        .toggle-card { 
+            flex: 1; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            padding: 18px 16px; 
+            border-radius: 14px; 
+            cursor: pointer; 
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .toggle-card.copilot { 
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .toggle-card.assistant { 
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .toggle-card.copilot:hover { 
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+            transform: translateY(-2px);
+        }
+        .toggle-card.assistant:hover { 
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+            transform: translateY(-2px);
+        }
+        
+        .toggle-card-icon { 
+            width: 40px; 
+            height: 40px; 
+            border-radius: 10px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+        .toggle-card.copilot .toggle-card-icon { background: rgba(255, 255, 255, 0.1); color: var(--copilot); }
+        .toggle-card.assistant .toggle-card-icon { background: rgba(255, 255, 255, 0.1); color: var(--assistant); }
+        
+        .toggle-card-icon .icon { width: 20px; height: 20px; }
+        .toggle-card-icon .star-icon { width: 22px; height: 22px; }
+        .toggle-card-icon .star-icon svg { fill: currentColor; stroke: none; }
+        
+        .toggle-card-content { flex: 1; }
+        .toggle-card-title { 
+            font-size: 16px; 
+            font-weight: 600; 
+            margin-bottom: 4px;
+            transition: color 0.3s;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        .toggle-card.copilot:hover .toggle-card-title { color: white; }
+        .toggle-card.assistant:hover .toggle-card-title { color: white; }
+        
+        .toggle-card-desc { font-size: 11px; color: var(--text-dim); white-space: nowrap; }
+        .toggle-card-desc .highlight-copilot { color: rgba(255, 107, 53, 0.7); }
+        .toggle-card-desc .highlight-assistant { color: rgba(34, 197, 94, 0.7); }
+
+        .toggle-card-arrow { 
+            width: 18px; 
+            height: 18px; 
+            transition: all 0.3s;
+            flex-shrink: 0;
+            color: rgba(255, 255, 255, 0.25);
+        }
+        .toggle-card:hover .toggle-card-arrow { color: rgba(255, 255, 255, 0.5); transform: translateX(4px); }
+
+        /* BRAND CHIPS - Horizontal scrollable single line */
+        .brand-select-row { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            padding: 12px; 
+            background: var(--card); 
+            border: 1px solid var(--border); 
+            border-radius: 12px; 
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .brand-select-row::-webkit-scrollbar { display: none; }
+        .brand-label { font-size: 11px; color: var(--text-dim); flex-shrink: 0; }
+        .brand-chip { padding: 6px 12px; background: transparent; border: 1px solid var(--border); border-radius: 14px; font-size: 11px; color: rgba(255,255,255,0.5); cursor: pointer; transition: all 0.2s; flex-shrink: 0; white-space: nowrap; }
+        .brand-chip:hover { background: rgba(255,255,255,0.03); }
+        .brand-chip.active { background: var(--copilot-bg); border-color: var(--copilot-border); color: var(--copilot); }
+
+        /* SECTION HEADERS */
+        .sec-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .sec-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dim); }
+        .sec-line { flex: 1; height: 1px; background: var(--border); }
+
+        /* PROJECTS LIST */
+        .projects { display: flex; flex-direction: column; gap: 10px; }
+        .proj { display: flex; align-items: center; gap: 12px; padding: 14px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+        .proj:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.15); }
+        .proj-icons { display: flex; align-items: center; position: relative; width: 36px; height: 36px; flex-shrink: 0; }
+        .proj-icons.dual { width: 44px; height: 40px; }
+        .proj-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .proj-icon.copilot { background: var(--copilot-bg); color: var(--copilot); }
+        .proj-icon.assistant { background: var(--assistant-bg); color: var(--assistant); }
+        .proj-icon .icon { width: 16px; height: 16px; }
+        .proj-icon .star-icon { width: 18px; height: 18px; }
+        .proj-icon .star-icon svg { fill: currentColor; stroke: none; }
+        .proj-icons .proj-icon.back { position: absolute; top: 0; left: 0; width: 32px; height: 32px; border-radius: 8px; }
+        .proj-icons .proj-icon.back .icon { width: 14px; height: 14px; }
+        .proj-icons .proj-icon.back .star-icon { width: 16px; height: 16px; }
+        .proj-icons .proj-icon.front { position: absolute; bottom: 0; right: 0; width: 32px; height: 32px; border-radius: 8px; box-shadow: -2px -2px 8px rgba(0,0,0,0.3); }
+        .proj-icons .proj-icon.front .icon { width: 14px; height: 14px; }
+        .proj-info { flex: 1; min-width: 0; }
+        .proj-title { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
+        .proj-meta { font-size: 11px; color: var(--text-dim); }
+        .proj-time { font-size: 11px; color: rgba(255,255,255,0.25); }
+
+        /* NAV WITH CENTERED HOTLINE SPHERE */
+        .nav { 
+            position: fixed; 
+            bottom: 0; 
+            bottom: env(safe-area-inset-bottom, 0px);
+            left: 50%; 
+            transform: translateX(-50%); 
+            width: calc(100% - 16px); 
+            max-width: 580px; 
+            display: flex; 
+            justify-content: center; 
+            padding: 6px 16px; 
+            padding-bottom: max(10px, env(safe-area-inset-bottom, 10px)); 
+            background: rgba(30,35,44,0.98); 
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 99999; 
+            border-top: 1px solid var(--border); 
+            border-left: 1px solid var(--border); 
+            border-right: 1px solid var(--border); 
+            border-radius: 14px 14px 0 0;
+        }
+        /* HIDE nav when chat is open */
+        .chat-view.active ~ .nav { display: none !important; }
+        .nav-inner { width: 100%; display: flex; justify-content: space-around; align-items: flex-end; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 5px 16px; color: rgba(255,255,255,0.3); cursor: pointer; transition: color 0.2s; }
+        .nav-item:hover { color: rgba(255,255,255,0.5); }
+        .nav-item.active { color: var(--copilot); }
+        .nav-icon { width: 20px; height: 20px; }
+        .nav-label { font-size: 10px; font-weight: 500; }
+
+        .nav-hotline { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 5px 16px; color: rgba(255,255,255,0.3); cursor: pointer; transition: color 0.2s; }
+        .nav-hotline:hover { color: rgba(255,255,255,0.5); }
+        .nav-hotline .nav-icon { width: 20px; height: 20px; }
+        .nav-hotline-waves { display: flex; align-items: center; justify-content: center; gap: 2px; width: 20px; height: 20px; }
+        .nav-hotline-waves .wave-bar { width: 3px; background: currentColor; border-radius: 2px; animation: navWave 1s ease-in-out infinite; }
+        .nav-hotline-waves .wave-bar:nth-child(1) { height: 6px; animation-delay: 0s; }
+        .nav-hotline-waves .wave-bar:nth-child(2) { height: 12px; animation-delay: 0.1s; }
+        .nav-hotline-waves .wave-bar:nth-child(3) { height: 18px; animation-delay: 0.2s; }
+        .nav-hotline-waves .wave-bar:nth-child(4) { height: 12px; animation-delay: 0.3s; }
+        .nav-hotline-waves .wave-bar:nth-child(5) { height: 6px; animation-delay: 0.4s; }
+        @keyframes navWave { 0%, 100% { transform: scaleY(0.6); } 50% { transform: scaleY(1); } }
+
+        /* ==================== PROJECTS PAGE ==================== */
+        .projects-page { display: none; }
+        .projects-page.active { display: flex; }
+        .projects-page-header { margin-bottom: 8px; }
+        .projects-page-title { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+        .projects-page-sub { font-size: 12px; color: var(--text-dim); }
+        .projects-list { display: flex; flex-direction: column; gap: 10px; }
+
+        /* ==================== CHAT VIEW (FULL WIDTH) ==================== */
+        .chat-view { 
+            position: fixed; 
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0; /* Full screen - nav is hidden when chat is open */
+            display: none; 
+            z-index: 200; 
+            background: var(--bg); 
+            background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px); 
+            background-size: 32px 32px;
+            overflow: hidden;
+        }
+        .chat-view.active { display: flex; }
+        .chat-view.single { flex-direction: column; }
+        .chat-view.split { flex-direction: row; }
+        @media (max-width: 767px) { 
+            .chat-view.split { flex-direction: column; }
+        }
+
+        .panel { 
+            display: flex; 
+            flex-direction: column; 
+            flex: 1; 
+            min-width: 0; 
+            min-height: 0; 
+            overflow: hidden;
+        }
+        .panel.copilot { --mode-color: var(--copilot); --mode-glow: var(--copilot-glow); --mode-bg: var(--copilot-bg); --mode-border: var(--copilot-border); }
+        .panel.assistant { --mode-color: var(--assistant); --mode-glow: var(--assistant-glow); --mode-bg: var(--assistant-bg); --mode-border: var(--assistant-border); }
+
+        .panel-header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; padding-top: max(10px, env(safe-area-inset-top)); flex-shrink: 0; border-bottom: 1px solid var(--border); background: rgba(13,17,23,0.8); }
+        .chat-view.split .panel-header { padding-top: 10px; }
+        .panel-back { width: 32px; height: 32px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
+        .panel-back:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.8); }
+        .panel-back .icon { width: 14px; height: 14px; }
+        .panel-info { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; }
+        .panel-title { font-size: 13px; font-weight: 600; color: var(--mode-color); }
+        .panel-separator { width: 1px; height: 12px; background: rgba(255,255,255,0.15); }
+        .panel-brand { font-size: 12px; color: var(--text-dim); }
+
+        /* MODE TOGGLE */
+        .mode-toggle { display: flex; background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; flex-shrink: 0; height: 32px; }
+        .mode-btn { display: flex; align-items: center; justify-content: center; gap: 5px; padding: 0 10px; font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.35); cursor: pointer; transition: all 0.2s; border-right: 1px solid var(--border); }
+        .mode-btn:last-child { border-right: none; }
+        .mode-btn .mode-icon { width: 16px; height: 16px; opacity: 0.5; display: flex; align-items: center; justify-content: center; }
+        .mode-btn .mode-icon svg { width: 100%; height: 100%; }
+        .mode-btn .mode-icon.star-icon svg { fill: currentColor; stroke: none; }
+        .mode-btn .mode-icon.clip-icon svg { fill: none; stroke: currentColor; stroke-width: 1.5; }
+        
+        .mode-btn.copilot.active { background: var(--copilot-bg); color: var(--copilot); }
+        .mode-btn.copilot.active .mode-icon { opacity: 1; color: var(--copilot); }
+        .mode-btn.assistant.active { background: var(--assistant-bg); color: var(--assistant); }
+        .mode-btn.assistant.active .mode-icon { opacity: 1; color: var(--assistant); }
+
+        .header-actions { display: flex; gap: 6px; flex-shrink: 0; }
+        .h-btn { width: 32px; height: 32px; border-radius: 8px; background: var(--card); border: 1px solid var(--border); color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .h-btn:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.8); }
+        .h-btn.active { background: var(--mode-bg); border-color: var(--mode-border); color: var(--mode-color); }
+        .h-btn .icon { width: 14px; height: 14px; }
+
+        .chat-body { 
+            flex: 1; 
+            overflow-y: auto; 
+            overflow-x: hidden;
+            padding: 14px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+            min-height: 0;
+            -webkit-overflow-scrolling: touch;
+        }
+        .msg { max-width: 85%; animation: msgIn 0.3s ease; }
+        @keyframes msgIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .msg.user { align-self: flex-end; }
+        .msg.ai { align-self: flex-start; }
+        .msg-bubble { padding: 12px 16px; border-radius: 16px; font-size: 13px; line-height: 1.5; }
+        .msg.user .msg-bubble { background: linear-gradient(135deg, var(--mode-color), color-mix(in srgb, var(--mode-color) 80%, black)); color: white; border-bottom-right-radius: 4px; }
+        .msg.ai .msg-bubble { background: var(--card); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+        .msg-head { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+        .msg-avatar { width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(135deg, color-mix(in srgb, var(--mode-color) 70%, white), var(--mode-color)); display: flex; align-items: center; justify-content: center; }
+        .msg-avatar .icon { width: 8px; height: 8px; color: white; }
+        .msg-name { font-size: 10px; font-weight: 600; color: var(--mode-color); }
+        .msg-acts { display: flex; gap: 4px; margin-top: 6px; }
+        .msg-act { padding: 4px 8px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; font-size: 9px; color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.2s; }
+        .msg-act:hover { background: rgba(255,255,255,0.05); }
+        .msg-act .icon { width: 10px; height: 10px; }
+
+        .chat-input { 
+            padding: 12px 14px; 
+            padding-bottom: max(12px, env(safe-area-inset-bottom)); 
+            flex-shrink: 0; 
+            background: var(--bg); 
+            position: relative;
+            z-index: 10;
+        }
+        .chat-view.split .chat-input { padding-bottom: 12px; }
+        .input-row { display: flex; align-items: center; gap: 8px; padding: 6px; background: var(--card); border: 1px solid var(--border); border-radius: 24px; transition: border-color 0.2s; position: relative; overflow: hidden; }
+        .input-row:focus-within { border-color: var(--mode-border); }
+        .input-row.recording { border-color: var(--mode-border); }
+        
+        .plus-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; z-index: 2; }
+        .plus-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
+        .plus-btn .icon { width: 16px; height: 16px; }
+        
+        /* Attach menu - positioned above input row */
+        .attach-menu { position: absolute; bottom: 100%; left: 14px; margin-bottom: 4px; background: rgba(20,24,32,0.98); border: 1px solid var(--border); border-radius: 10px; padding: 4px; display: none; flex-direction: column; gap: 2px; min-width: 180px; z-index: 10; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+        .attach-menu.show { display: flex; }
+        .attach-opt { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 6px; font-size: 11px; color: rgba(255,255,255,0.7); cursor: pointer; transition: background 0.2s; }
+        .attach-opt:hover { background: rgba(255,255,255,0.05); }
+        .attach-opt .icon { width: 14px; height: 14px; color: var(--mode-color); }
+        
+        /* Input area wrapper */
+        .input-area { flex: 1; position: relative; height: 36px; display: flex; align-items: center; }
+        .input-text { width: 100%; background: transparent; border: none; color: white; font-size: 13px; outline: none; padding: 6px 10px; position: relative; z-index: 1; }
+        .input-text::placeholder { color: rgba(255,255,255,0.25); }
+        .input-row.recording .input-text { opacity: 0; pointer-events: none; }
+        
+        /* Voice waveform */
+        .voice-waveform { position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: space-between; padding: 0; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .input-row.recording .voice-waveform { opacity: 1; }
+        .wave-bars { flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 2px; height: 100%; padding: 0; overflow: hidden; }
+        .wave-bar { width: 3px; min-width: 3px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+        .voice-waveform.copilot .wave-bar { background: var(--copilot); }
+        .voice-waveform.assistant .wave-bar { background: var(--assistant); }
+        .voice-timer { font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text); min-width: 36px; text-align: right; opacity: 0.7; padding-right: 4px; background: linear-gradient(to right, transparent, var(--card) 20%); padding-left: 12px; }
+        
+        /* Dynamic action button (mic/send/stop) */
+        .action-btn { width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; flex-shrink: 0; z-index: 2; position: relative; }
+        .action-btn.copilot { background: linear-gradient(135deg, var(--copilot), #E55A2B); color: white; }
+        .action-btn.assistant { background: linear-gradient(135deg, var(--assistant), #16a34a); color: white; }
+        .action-btn:hover { transform: scale(1.05); }
+        .action-btn:active { transform: scale(0.95); }
+        .action-btn .icon-wrap { position: relative; width: 16px; height: 16px; }
+        .action-btn .btn-icon { position: absolute; top: 0; left: 0; width: 16px; height: 16px; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+        .action-btn .btn-icon svg { width: 16px; height: 16px; }
+        .action-btn .mic-icon { opacity: 1; transform: scale(1); }
+        .action-btn .send-icon { opacity: 0; transform: scale(0.5) translateY(6px); }
+        .action-btn .stop-icon { opacity: 0; transform: scale(0); }
+        .action-btn.has-text .mic-icon { opacity: 0; transform: scale(0.5) translateY(-6px); }
+        .action-btn.has-text .send-icon { opacity: 1; transform: scale(1) translateY(0); }
+        .action-btn.recording .mic-icon { opacity: 0; transform: scale(0); }
+        .action-btn.recording .stop-icon { opacity: 1; transform: scale(1); }
+
+        /* DIVIDER */
+        .divider { width: 8px; background: var(--border); cursor: col-resize; position: relative; flex-shrink: 0; transition: background 0.2s; display: flex; align-items: center; justify-content: center; touch-action: none; -webkit-user-select: none; user-select: none; }
+        .divider:hover, .divider.dragging { background: rgba(255,255,255,0.1); }
+        .divider-grip { display: flex; flex-direction: column; gap: 3px; }
+        .divider-grip span { width: 3px; height: 3px; background: rgba(255,255,255,0.3); border-radius: 50%; }
+        .divider:hover .divider-grip span, .divider.dragging .divider-grip span { background: rgba(255,255,255,0.6); }
+        @media (max-width: 767px) { .divider { width: 100%; height: 8px; cursor: row-resize; } .divider-grip { flex-direction: row; } }
+
+        /* PHOTO MODAL */
+        .photo-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 600; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .photo-modal.active { display: flex; }
+        .photo-modal-content { width: 100%; max-width: 300px; background: rgba(20,24,32,0.98); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+        .photo-modal-header { padding: 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+        .photo-modal-preview { width: 40px; height: 40px; border-radius: 8px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; }
+        .photo-modal-preview .icon { width: 20px; height: 20px; color: var(--copilot); }
+        .photo-modal-title { font-size: 13px; font-weight: 600; }
+        .photo-modal-sub { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+        .photo-modal-body { padding: 10px; }
+        .photo-option { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; margin-bottom: 6px; transition: all 0.2s; }
+        .photo-option:hover { background: rgba(255,255,255,0.05); }
+        .photo-option:last-child { margin-bottom: 0; }
+        .photo-option-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+        .photo-option-icon.extract { background: var(--copilot-bg); color: var(--copilot); }
+        .photo-option-icon.report { background: var(--assistant-bg); color: var(--assistant); }
+        .photo-option-icon .icon { width: 16px; height: 16px; }
+        .photo-option-text { flex: 1; }
+        .photo-option-title { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+        .photo-option-desc { font-size: 10px; color: var(--text-dim); }
+        .photo-modal-footer { padding: 10px 14px 14px; }
+        .photo-cancel { width: 100%; padding: 10px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: rgba(255,255,255,0.6); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .photo-cancel:hover { background: rgba(255,255,255,0.05); }
+
+        /* REPORT SHEET */
+        .report-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 299; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .report-backdrop.show { opacity: 1; pointer-events: auto; }
+        .report-sheet { position: fixed; top: 0; right: 0; width: 100%; max-width: 340px; height: 100%; background: rgba(13,17,23,0.98); border-left: 1px solid var(--assistant-border); z-index: 300; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .report-sheet.open { transform: translateX(0); }
+        @media (max-width: 500px) { .report-sheet { max-width: 100%; border-left: none; } }
+        .report-header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; padding-top: max(12px, env(safe-area-inset-top)); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .report-close { width: 28px; height: 28px; border-radius: 50%; background: transparent; border: 1px solid var(--border); color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .report-close .icon { width: 12px; height: 12px; }
+        .report-title { flex: 1; font-size: 14px; font-weight: 600; color: var(--assistant); }
+        .report-body { flex: 1; overflow-y: auto; padding: 14px; }
+        .r-field { margin-bottom: 12px; }
+        .r-label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; color: var(--text-dim); margin-bottom: 4px; }
+        .r-value { font-size: 13px; padding: 9px 11px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; min-height: 40px; }
+        .report-footer { display: flex; gap: 8px; padding: 12px 14px; padding-bottom: max(12px, env(safe-area-inset-bottom)); border-top: 1px solid var(--border); flex-shrink: 0; }
+        .r-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 11px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+        .r-btn.primary { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; }
+        .r-btn.primary:hover { box-shadow: 0 4px 14px var(--assistant-glow); }
+        .r-btn.secondary { background: var(--card); border: 1px solid var(--border); color: rgba(255,255,255,0.6); }
+        .r-btn .icon { width: 14px; height: 14px; }
+
+        /* ==================== HOTLINE VIEW ==================== */
+        .hotline-view { position: fixed; inset: 0; display: none; z-index: 200; background: var(--bg); background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px); background-size: 32px 32px; }
+        .hotline-view.active { display: block; }
+        .hotline-close { position: absolute; top: max(16px, env(safe-area-inset-top)); right: 16px; width: 40px; height: 40px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 300; transition: all 0.2s; }
+        .hotline-close:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.8); }
+        .hotline-close .icon { width: 18px; height: 18px; }
+
+        .hotline-widget { width: 100%; padding: 40px 20px; position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%); z-index: 100; text-align: center; transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        .hotline-widget.chat-mode { top: 10px; transform: translateY(0); padding-top: max(80px, calc(40px + env(safe-area-inset-top))); padding-bottom: 20px; }
+
+        .pulse-sphere { position: relative; width: 140px; height: 140px; margin: 0 auto; cursor: pointer; transition: filter 0.3s ease, width 0.6s ease, height 0.6s ease; filter: drop-shadow(0 4px 20px rgba(239, 68, 68, 0.4)); }
+        .pulse-sphere:hover { filter: drop-shadow(0 6px 28px rgba(239, 68, 68, 0.6)); transform: scale(1.03); }
+        .pulse-sphere.connected { filter: drop-shadow(0 4px 20px rgba(80, 220, 120, 0.4)); }
+        .pulse-sphere.connected:hover { filter: drop-shadow(0 6px 28px rgba(80, 220, 120, 0.6)); }
+        .hotline-widget.chat-mode .pulse-sphere { width: 80px; height: 80px; }
+
+        .pulse-atmosphere { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120%; height: 120%; border-radius: 50%; background: radial-gradient(circle, rgba(239, 68, 68, 0.3) 0%, transparent 70%); filter: blur(8px); animation: atmospherePulse 4s ease-in-out infinite; pointer-events: none; transition: background 0.5s ease, opacity 0.5s ease; }
+        .pulse-sphere.connected .pulse-atmosphere { background: radial-gradient(circle, rgba(100, 238, 140, 0.25) 0%, transparent 70%); }
+        .pulse-sphere.connecting .pulse-atmosphere, .pulse-sphere.disconnecting .pulse-atmosphere { opacity: 0; }
+        @keyframes atmospherePulse { 0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); } 50% { opacity: 0.85; transform: translate(-50%, -50%) scale(1.05); } }
+
+        .pulse-ring { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; height: 100%; border: 2.5px solid rgba(239, 68, 68, 0.5); border-radius: 50%; animation: pulseRingExpand 3.5s ease-out infinite; pointer-events: none; transition: opacity 0.5s ease; }
+        .pulse-ring:nth-child(2) { animation-delay: 1.2s; }
+        .pulse-ring:nth-child(3) { animation-delay: 2.4s; }
+        @keyframes pulseRingExpand { 0% { width: 100%; height: 100%; opacity: 0.7; } 100% { width: 200%; height: 200%; opacity: 0; } }
+        .pulse-sphere.connected .pulse-ring, .pulse-sphere.connecting .pulse-ring, .pulse-sphere.disconnecting .pulse-ring { opacity: 0 !important; }
+
+        .pulse-core { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; height: 100%; border-radius: 50%; background: linear-gradient(180deg, #ff9988 0%, #ff7766 12%, #ff5544 25%, #ef4444 40%, #dc3333 55%, #cc2222 70%, #bb1111 85%, #991111 100%); box-shadow: 0 0 20px 4px rgba(239, 68, 68, 0.4), 0 8px 30px rgba(0, 0, 0, 0.35), inset 0 -25px 40px rgba(100, 0, 0, 0.5), inset 0 3px 10px rgba(255, 200, 200, 0.3); position: relative; overflow: hidden; }
+        .pulse-core::after { content: ''; position: absolute; top: 8%; left: 15%; width: 40%; height: 30%; border-radius: 50%; background: radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.35) 0%, transparent 70%); pointer-events: none; }
+        .pulse-sphere.connected .pulse-core { background: linear-gradient(180deg, #99ffbb 0%, #88ffaa 12%, #77ee99 25%, #66dd88 40%, #55cc77 55%, #44bb66 70%, #33aa55 85%, #229944 100%); box-shadow: 0 0 20px 4px rgba(80, 220, 120, 0.35), 0 8px 30px rgba(0, 0, 0, 0.35), inset 0 -25px 40px rgba(20, 80, 40, 0.5), inset 0 3px 10px rgba(200, 255, 220, 0.25); }
+        .pulse-sphere.connecting .pulse-core { animation: pulseLiquidMorph 2.5s cubic-bezier(0.4, 0.0, 0.2, 1) forwards; }
+        @keyframes pulseLiquidMorph {
+            0% { border-radius: 50%; background: linear-gradient(180deg, #ff9988 0%, #ff7766 12%, #ff5544 25%, #ef4444 40%, #dc3333 55%, #cc2222 70%, #bb1111 85%, #991111 100%); transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+            15% { border-radius: 42% 58% 65% 35% / 38% 55% 45% 62%; transform: translate(-50%, -50%) rotate(-5deg) scale(0.92); }
+            30% { border-radius: 65% 35% 45% 55% / 55% 35% 65% 45%; transform: translate(-50%, -50%) rotate(8deg) scale(1.08); }
+            45% { border-radius: 38% 62% 58% 42% / 62% 48% 52% 38%; transform: translate(-50%, -50%) rotate(-3deg) scale(0.95); }
+            60% { border-radius: 58% 42% 35% 65% / 48% 65% 35% 52%; transform: translate(-50%, -50%) rotate(6deg) scale(1.06); background: linear-gradient(180deg, #99ffbb 0%, #88ffaa 12%, #77ee99 25%, #66dd88 40%, #55cc77 55%, #44bb66 70%, #33aa55 85%, #229944 100%); }
+            75% { border-radius: 45% 55% 62% 38% / 55% 42% 58% 45%; transform: translate(-50%, -50%) rotate(-2deg) scale(0.97); }
+            100% { border-radius: 50%; transform: translate(-50%, -50%) rotate(0deg) scale(1); background: linear-gradient(180deg, #99ffbb 0%, #88ffaa 12%, #77ee99 25%, #66dd88 40%, #55cc77 55%, #44bb66 70%, #33aa55 85%, #229944 100%); }
+        }
+        .pulse-sphere.disconnecting .pulse-core { animation: pulseLiquidMorphReverse 2.5s cubic-bezier(0.4, 0.0, 0.2, 1) forwards; }
+        @keyframes pulseLiquidMorphReverse {
+            0% { border-radius: 50%; background: linear-gradient(180deg, #99ffbb 0%, #88ffaa 12%, #77ee99 25%, #66dd88 40%, #55cc77 55%, #44bb66 70%, #33aa55 85%, #229944 100%); transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+            100% { border-radius: 50%; background: linear-gradient(180deg, #ff9988 0%, #ff7766 12%, #ff5544 25%, #ef4444 40%, #dc3333 55%, #cc2222 70%, #bb1111 85%, #991111 100%); transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+        }
+
+        .pulse-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; gap: 5px; pointer-events: none; transition: opacity 0.3s ease; z-index: 10; }
+        .pulse-sphere.connecting .pulse-icon, .pulse-sphere.disconnecting .pulse-icon { opacity: 0; }
+        .hotline-widget.chat-mode .pulse-icon { gap: 3px; }
+        .voice-bar { width: 6px; background: white; border-radius: 3px; animation: voiceWave 1.2s ease-in-out infinite; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .voice-bar:nth-child(1) { height: 16px; animation-delay: 0s; }
+        .voice-bar:nth-child(2) { height: 32px; animation-delay: 0.1s; }
+        .voice-bar:nth-child(3) { height: 48px; animation-delay: 0.2s; }
+        .voice-bar:nth-child(4) { height: 32px; animation-delay: 0.3s; }
+        .voice-bar:nth-child(5) { height: 16px; animation-delay: 0.4s; }
+        .hotline-widget.chat-mode .voice-bar { width: 4px; }
+        .hotline-widget.chat-mode .voice-bar:nth-child(1) { height: 10px; }
+        .hotline-widget.chat-mode .voice-bar:nth-child(2) { height: 18px; }
+        .hotline-widget.chat-mode .voice-bar:nth-child(3) { height: 26px; }
+        .hotline-widget.chat-mode .voice-bar:nth-child(4) { height: 18px; }
+        .hotline-widget.chat-mode .voice-bar:nth-child(5) { height: 10px; }
+        @keyframes voiceWave { 0%, 100% { transform: scaleY(0.5); opacity: 0.7; } 50% { transform: scaleY(1); opacity: 1; } }
+
+        .widget-label { margin-top: 80px; font-size: 18px; font-weight: 600; color: rgba(255,255,255,0.9); text-transform: uppercase; letter-spacing: 2px; transition: all 0.4s ease; }
+        .pulse-sphere.connected ~ .widget-label { color: #50dc78; }
+        .hotline-widget.chat-mode .widget-label { font-size: 12px; margin-top: 14px; }
+        .widget-sublabel { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 8px; font-weight: 500; transition: all 0.4s ease; }
+        .hotline-widget.chat-mode .widget-sublabel { font-size: 10px; margin-top: 4px; }
+
+        .hotline-chat { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 0.6s ease 0.3s; z-index: 50; }
+        .hotline-chat.visible { opacity: 1; pointer-events: auto; }
+        .chat-spacer { flex-shrink: 0; height: 280px; transition: height 0.6s ease; }
+        .chat-messages-outer { flex: 1; display: flex; justify-content: center; overflow: hidden; padding: 0 16px; -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 100%); mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 100%); }
+        .chat-messages { width: 100%; max-width: 600px; overflow-y: auto; padding: 0 0 100px 0; display: flex; flex-direction: column; gap: 16px; }
+        .messages-wrapper { width: 100%; display: flex; flex-direction: column; gap: 16px; padding: 10px 0; }
+        .chat-empty { text-align: center; padding: 40px 20px; color: rgba(255,255,255,0.3); font-size: 14px; }
+
+        .hotline-msg { display: flex; flex-direction: column; gap: 6px; max-width: 85%; animation: msgFloat 0.4s ease; }
+        @keyframes msgFloat { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        .hotline-msg.user { align-self: flex-end; align-items: flex-end; }
+        .hotline-msg.ai { align-self: flex-start; align-items: flex-start; }
+        .msg-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; padding: 0 8px; color: rgba(255,255,255,0.4); }
+        .hotline-msg .msg-bubble { padding: 14px 18px; font-size: 14px; line-height: 1.5; border-radius: 20px; }
+        .hotline-msg.ai .msg-bubble { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.9); border: 1px solid rgba(255,255,255,0.1); border-bottom-left-radius: 6px; }
+        .hotline-msg.user .msg-bubble { background: linear-gradient(135deg, #ef4444, #cc2222); color: white; border-bottom-right-radius: 6px; }
+        .msg-time { font-size: 10px; padding: 0 8px; color: rgba(255,255,255,0.3); }
+
+        .toggle-chat { position: absolute; bottom: max(24px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%) translateY(100px); display: flex; align-items: center; gap: 10px; padding: 14px 28px; background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); border-radius: 50px; border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.9); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.4s ease; z-index: 200; opacity: 0; pointer-events: none; }
+        .toggle-chat.visible { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto; }
+        .toggle-chat:hover { background: rgba(255,255,255,0.12); }
+        .toggle-icon { width: 20px; height: 20px; transition: transform 0.3s ease; }
+        .toggle-chat.open .toggle-icon { transform: rotate(180deg); }
+
+        /* TOAST */
+        .toast { position: fixed; top: max(12px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%) translateY(-60px); padding: 10px 20px; background: rgba(20,24,32,0.95); border: 1px solid var(--border); border-radius: 8px; font-size: 12px; z-index: 700; transition: transform 0.3s; }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        @media (max-width: 768px) {
+            .pulse-sphere { width: 120px; height: 120px; }
+            .voice-bar { width: 5px; }
+            .voice-bar:nth-child(1) { height: 12px; }
+            .voice-bar:nth-child(2) { height: 24px; }
+            .voice-bar:nth-child(3) { height: 36px; }
+            .voice-bar:nth-child(4) { height: 24px; }
+            .voice-bar:nth-child(5) { height: 12px; }
+            .widget-label { font-size: 16px; margin-top: 70px; }
+            .hotline-widget.chat-mode .pulse-sphere { width: 60px; height: 60px; }
+            .chat-spacer { height: 240px; }
+        }
+
+        /* ==================== ONBOARDING ==================== */
+        .login-icon-slot { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; }
+        .login-back { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.05); border: none; color: var(--text-dim); cursor: pointer; display: none; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
+        .login-back:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+        .login-back svg { width: 16px; height: 16px; stroke: currentColor; fill: none; }
+        .login-input-container { flex: 1; position: relative; height: 32px; overflow: hidden; }
+        .login-input-slider { display: flex; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); height: 100%; }
+        .login-input-slide { min-width: 100%; display: flex; align-items: center; }
+        
+        .onboarding-section { display: flex; flex-direction: column; align-items: center; padding: 12px 0 20px 0; }
+        .onboarding-section.hidden { display: none; }
+        .welcome-section { text-align: center; margin-bottom: 12px; margin-top: 8px; }
+        .welcome-text { font-size: 24px; font-weight: 300; }
+        .welcome-text strong { font-weight: 700; color: var(--copilot); }
+        .welcome-sub { font-size: 13px; color: var(--text-dim); margin-top: 6px; }
+        .onboarding-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; width: 100%; position: relative; }
+        .onboarding-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+        .onboarding-title { font-size: 13px; font-weight: 600; }
+        .onboarding-progress { font-size: 11px; color: var(--copilot); }
+        .onboarding-steps { display: flex; flex-direction: column; gap: 8px; }
+        .onboarding-step { display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid transparent; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+        .onboarding-step:hover { background: rgba(255,255,255,0.05); border-color: var(--border); }
+        .onboarding-step.completed { opacity: 0.6; }
+        .onboarding-step.completed:hover { opacity: 0.8; }
+        .onboarding-step.active { background: rgba(255,107,53,0.08); border-color: rgba(255,107,53,0.2); }
+        .onboarding-step.locked { opacity: 0.4; cursor: default; }
+        .onboarding-step.locked:hover { background: rgba(255,255,255,0.02); border-color: transparent; }
+        .step-check { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .step-check.done { background: var(--assistant); }
+        .step-check.done svg { stroke: white; }
+        .step-check.pending { background: rgba(255,255,255,0.05); border: 2px solid var(--border); }
+        .step-check.current { background: rgba(255,107,53,0.15); border: 2px solid var(--copilot); }
+        .step-check svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2.5; }
+        .step-content { flex: 1; display: flex; align-items: center; gap: 10px; }
+        .step-title { font-size: 13px; font-weight: 500; }
+        .step-divider { width: 1px; height: 16px; background: rgba(255,255,255,0.1); }
+        .step-tool { display: flex; align-items: center; gap: 6px; }
+        .step-tool-icon { width: 16px; height: 16px; }
+        .step-tool-icon.copilot { color: var(--copilot); }
+        .step-tool-icon.assistant { color: var(--assistant); }
+        .step-tool-name { font-size: 11px; font-weight: 600; }
+        .step-tool-name.copilot { color: var(--copilot); }
+        .step-tool-name.assistant { color: var(--assistant); }
+        .step-arrow { width: 16px; height: 16px; color: rgba(255,255,255,0.3); flex-shrink: 0; }
+        .brand-select-inline { display: none; flex-direction: column; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+        .brand-select-inline.show { display: flex; }
+        .brand-select-option { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.2s; }
+        .brand-select-option:hover { background: rgba(255,255,255,0.06); }
+        .brand-select-option.selected { background: rgba(34,197,94,0.1); border-color: var(--assistant); }
+        .brand-select-name { font-size: 13px; font-weight: 500; flex: 1; }
+        .brand-select-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.2); flex-shrink: 0; }
+        .brand-select-option.selected .brand-select-dot { background: var(--assistant); box-shadow: 0 0 6px var(--assistant); }
+        .congrats-content { display: none; text-align: center; padding: 30px 20px; }
+        .onboarding-card.congrats .onboarding-header, .onboarding-card.congrats .onboarding-steps { display: none; }
+        .onboarding-card.congrats .congrats-content { display: block; }
+        .congrats-close { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: rgba(255,255,255,0.5); cursor: pointer; display: none; align-items: center; justify-content: center; }
+        .congrats-close:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+        .congrats-close svg { width: 14px; height: 14px; }
+        .onboarding-card.congrats .congrats-close { display: flex; }
+        .congrats-icon { font-size: 56px; margin-bottom: 12px; }
+        .congrats-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+        .congrats-sub { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+        .homepage-content { display: none; }
+        .homepage-content.active { display: flex; flex-direction: column; gap: 20px; padding-top: 24px; }
+        .homepage-content > * { margin: 0; }
+        /* Hide homepage when onboarding is visible - higher specificity */
+        .onboarding-section:not(.hidden) ~ .homepage-content.active { display: none !important; }
+        .profile-view { position: fixed; inset: 0; display: none; z-index: 200; background: var(--bg); background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px); background-size: 32px 32px; flex-direction: column; }
+        .profile-view.active { display: flex; }
+        .profile-header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; padding-top: max(10px, env(safe-area-inset-top)); flex-shrink: 0; border-bottom: 1px solid var(--border); background: rgba(13,17,23,0.8); }
+        .profile-back { width: 32px; height: 32px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .profile-back:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.8); }
+        .profile-back .icon { width: 14px; height: 14px; }
+        .profile-info { flex: 1; }
+        .profile-title { font-size: 13px; font-weight: 600; color: var(--copilot); }
+        .profile-subtitle { font-size: 10px; color: var(--text-dim); }
+        .profile-body { flex: 1; overflow-y: auto; padding: 20px 16px; display: flex; flex-direction: column; align-items: center; }
+        .profile-form { width: 100%; max-width: var(--content-width); display: flex; flex-direction: column; gap: 16px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; color: var(--text-dim); }
+        .form-input { padding: 12px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-size: 13px; outline: none; }
+        .form-input:focus { border-color: var(--copilot-border); }
+        .form-input::placeholder { color: rgba(255,255,255,0.25); }
+        .profile-save { width: 100%; padding: 12px; background: linear-gradient(135deg, var(--copilot), #E55A2B); border: none; border-radius: 12px; color: white; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+        .profile-save:hover { box-shadow: 0 4px 14px var(--copilot-glow); }
+        
+        /* Profile badge - positioned ON the profile icon */
+        .nav-profile { position: relative; }
+        .nav-profile-badge { position: absolute; top: 2px; left: 50%; transform: translateX(4px); color: #3B82F6; }
+        .nav-profile-badge svg { width: 10px; height: 10px; fill: currentColor; stroke: none; }
+        
+        /* Brand dropdown - ONLY selected has green dot, NO highlight on others */
+        .brand-dropdown-item { background: transparent !important; }
+        .brand-dropdown-item:hover { background: rgba(255,255,255,0.06) !important; }
+        .brand-dropdown-item .brand-dropdown-dot { display: none !important; }
+        .brand-dropdown-item .brand-dropdown-check { display: none; }
+        .brand-dropdown-item.selected .brand-dropdown-dot { display: block !important; background: var(--assistant) !important; box-shadow: 0 0 6px var(--assistant); }
+        .brand-dropdown-item.onboard-selected .brand-dropdown-dot { display: block !important; background: var(--assistant) !important; box-shadow: 0 0 6px var(--assistant); }
+        .brand-dropdown-item.active { background: transparent !important; border: none !important; }
+
+        /* ==================== MOBILE-FIRST OPTIMIZATIONS (WAYMO/AIRBNB STYLE) ==================== */
+        
+        /* Section headers */
+        .sec-title { 
+            font-size: 13px; 
+            font-weight: 600; 
+            text-transform: none; 
+            letter-spacing: 0; 
+            color: var(--text-dim);
+        }
+        
+        /* Larger, more readable cards */
+        .toggle-card { 
+            padding: 20px 18px; 
+            border-radius: 16px;
+            min-height: 80px;
+        }
+        .toggle-card-icon { 
+            width: 44px; 
+            height: 44px; 
+            border-radius: 12px; 
+        }
+        .toggle-card-icon .icon { width: 22px; height: 22px; }
+        .toggle-card-icon .star-icon { width: 24px; height: 24px; }
+        .toggle-card-title { font-size: 17px; font-weight: 600; }
+        .toggle-card-desc { font-size: 13px; }
+        
+        /* Project cards - more padding, larger text */
+        .proj { 
+            padding: 18px 16px; 
+            border-radius: 14px;
+            gap: 14px;
+        }
+        .proj-icon { width: 40px; height: 40px; border-radius: 12px; }
+        .proj-icon .icon { width: 18px; height: 18px; }
+        .proj-icon .star-icon { width: 20px; height: 20px; }
+        .proj-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+        .proj-meta { font-size: 13px; }
+        .proj-time { font-size: 13px; }
+        
+        /* Brand select row */
+        .brand-select-row { 
+            padding: 14px 16px; 
+            border-radius: 14px;
+            gap: 10px;
+        }
+        .brand-label { font-size: 13px; color: var(--text-dim); font-weight: 500; }
+        .brand-chip { 
+            padding: 10px 16px; 
+            border-radius: 20px; 
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        /* Navigation - larger touch targets but shorter height */
+        .nav { padding: 6px 12px; }
+        .nav-item { padding: 6px 10px; gap: 3px; }
+        .nav-icon { width: 20px; height: 20px; }
+        .nav-label { font-size: 10px; font-weight: 600; }
+        .nav-hotline { padding: 6px 10px; gap: 3px; }
+        .nav-hotline .nav-icon { width: 20px; height: 20px; }
+        .nav-hotline-waves { width: 20px; height: 20px; }
+        
+        /* Activity ring section */
+        .activity-value { font-size: 36px; }
+        .activity-label { font-size: 10px; letter-spacing: 1.5px; }
+        .status-text { font-size: 13px; }
+        
+        /* Chat messages - larger, more readable */
+        .msg-bubble { 
+            padding: 14px 18px; 
+            border-radius: 18px; 
+            font-size: 15px; 
+            line-height: 1.6; 
+        }
+        .msg-head { gap: 8px; margin-bottom: 8px; padding-bottom: 8px; }
+        .msg-avatar { width: 22px; height: 22px; }
+        .msg-avatar .icon { width: 10px; height: 10px; }
+        .msg-name { font-size: 12px; }
+        .msg-acts { gap: 6px; margin-top: 8px; }
+        .msg-act { 
+            padding: 8px 12px; 
+            border-radius: 10px; 
+            font-size: 11px;
+        }
+        .msg-act .icon { width: 12px; height: 12px; }
+        
+        /* Chat input - larger touch targets */
+        .input-row { 
+            padding: 8px; 
+            border-radius: 28px;
+            gap: 10px;
+        }
+        .plus-btn { width: 40px; height: 40px; }
+        .plus-btn .icon { width: 18px; height: 18px; }
+        .action-btn { width: 40px; height: 40px; }
+        .action-btn .icon-wrap { width: 18px; height: 18px; }
+        .action-btn .btn-icon { width: 18px; height: 18px; }
+        .action-btn .btn-icon svg { width: 18px; height: 18px; }
+        .input-text { font-size: 15px; padding: 8px 12px; }
+        .input-area { height: 40px; }
+        
+        /* Panel header */
+        .panel-header { 
+            gap: 10px; 
+            padding: 12px 14px; 
+        }
+        .panel-back { width: 36px; height: 36px; }
+        .panel-back .icon { width: 16px; height: 16px; }
+        .panel-title { font-size: 15px; }
+        .panel-separator { height: 14px; }
+        .panel-brand { font-size: 14px; }
+        
+        /* Mode toggle */
+        .mode-toggle { height: 36px; border-radius: 10px; }
+        .mode-btn { 
+            padding: 0 14px; 
+            font-size: 12px;
+            gap: 6px;
+        }
+        .mode-btn .mode-icon { width: 18px; height: 18px; }
+        
+        /* Header buttons */
+        .h-btn { width: 36px; height: 36px; border-radius: 10px; }
+        .h-btn .icon { width: 16px; height: 16px; }
+        
+        /* Header */
+        .header-logo-svg { height: 22px; }
+        .brand-pill { 
+            padding: 8px 14px; 
+            border-radius: 20px;
+            gap: 8px;
+        }
+        .brand-pill-dot { width: 10px; height: 10px; }
+        .brand-pill-text { font-size: 13px; }
+        .brand-pill-arrow { width: 12px; height: 12px; }
+        
+        /* Brand dropdown */
+        .brand-dropdown { 
+            min-width: 180px; 
+            border-radius: 14px; 
+            padding: 8px;
+        }
+        .brand-dropdown-item { 
+            padding: 12px 14px; 
+            border-radius: 10px;
+            gap: 10px;
+        }
+        .brand-dropdown-dot { width: 10px; height: 10px; }
+        .brand-dropdown-name { font-size: 14px; }
+        
+        /* Attach menu */
+        .attach-menu { 
+            border-radius: 14px; 
+            padding: 6px;
+            min-width: 200px;
+        }
+        .attach-opt { 
+            padding: 12px 14px; 
+            border-radius: 10px; 
+            font-size: 14px;
+            gap: 10px;
+        }
+        .attach-opt .icon { width: 18px; height: 18px; }
+        
+        /* Projects page header */
+        .projects-page-title { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+        .projects-page-sub { font-size: 14px; }
+        
+        /* Report sheet */
+        .report-sheet { border-radius: 24px 24px 0 0; }
+        .report-header { padding: 20px 20px 16px; }
+        .report-title { font-size: 18px; }
+        .report-close { width: 36px; height: 36px; }
+        .report-body { padding: 0 20px 20px; gap: 16px; }
+        .report-section { padding: 16px; border-radius: 14px; }
+        .report-label { font-size: 12px; margin-bottom: 8px; }
+        .report-value { font-size: 15px; }
+        .report-actions { gap: 12px; padding: 16px 20px; }
+        .report-btn { 
+            padding: 16px 24px; 
+            border-radius: 14px; 
+            font-size: 15px;
+            font-weight: 600;
+        }
+        
+        /* Photo modal */
+        .photo-preview { border-radius: 16px; }
+        .photo-actions { gap: 10px; }
+        .photo-btn { 
+            padding: 14px 20px; 
+            border-radius: 12px; 
+            font-size: 14px;
+        }
+        
+        /* Onboarding */
+        .onboarding-card { padding: 24px; border-radius: 18px; }
+        .onboarding-title { font-size: 15px; }
+        .onboarding-progress { font-size: 13px; }
+        .onboarding-step { padding: 16px; border-radius: 14px; gap: 14px; }
+        .step-number { width: 32px; height: 32px; font-size: 14px; }
+        .step-text { font-size: 15px; }
+        .step-sub { font-size: 13px; }
+        
+        /* Toast */
+        .toast { 
+            padding: 14px 20px; 
+            border-radius: 14px; 
+            font-size: 14px;
+        }
+        
+        /* Login */
+        .login-title { font-size: 26px; }
+        .login-sub { font-size: 14px; margin-bottom: 36px; }
+        .login-bar { border-radius: 44px; padding: 6px 6px 6px 10px; }
+        .login-input { font-size: 15px; padding: 10px; }
+        .login-btn { width: 38px; height: 38px; }
+        .login-btn .icon { width: 14px; height: 14px; }
+        
+        /* Spacing adjustments */
+        .home, .projects-page { 
+            padding: 20px; 
+            gap: 24px; 
+        }
+        .modules-toggle { gap: 14px; }
+        .projects { gap: 12px; }
+        .projects-list { gap: 12px; }
+        .chat-body { padding: 16px; gap: 12px; }
+        .chat-input { padding: 14px 16px; }
+        
+        /* Diagnostic/Assistant specific cards */
+        .diag-card { 
+            padding: 18px; 
+            border-radius: 16px;
+        }
+        
+        /* Better scrolling */
+        .app-content { 
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+        }
+        .chat-body {
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+        }
+
+        /* ==================== MOBILE SPECIFIC FIXES ==================== */
+        @media (max-width: 767px) {
+            /* SAFARI & CHROME FIX */
+            html, body { 
+                overflow: hidden !important;
+                width: 100% !important;
+                height: 100% !important;
+                min-height: 100% !important;
+                max-height: 100% !important;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                -webkit-text-size-adjust: 100%;
+            }
+            
+            /* App wrapper fills entire viewport */
+            .app-wrapper {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                overflow: hidden !important;
+                background: var(--bg) !important;
+            }
+            
+            /* Chat view - FULL SCREEN (nav is hidden) */
+            .chat-view {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                height: 100% !important;
+                overflow: hidden !important;
+            }
+            
+            /* Panel - fill available space */
+            .panel {
+                flex: 1;
+                min-height: 0;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+            
+            /* Chat body - fill remaining space */
+            .chat-body {
+                flex: 1;
+                min-height: 0;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            /* Chat input - CRITICAL: Add safe area padding for Safari bottom bar */
+            .chat-input {
+                flex-shrink: 0;
+                padding: 12px 16px;
+                padding-bottom: calc(16px + env(safe-area-inset-bottom, 20px));
+                background: var(--bg);
+            }
+            
+            /* Split view on mobile - stack vertically */
+            .chat-view.split {
+                flex-direction: column;
+            }
+            .chat-view.split .panel {
+                flex: 1 1 auto;
+                min-height: 20%;
+                max-height: 80%;
+                overflow: hidden;
+            }
+            .chat-view.split .chat-input {
+                padding-bottom: 8px;
+            }
+            .chat-view.split .panel:last-child .chat-input {
+                padding-bottom: calc(16px + env(safe-area-inset-bottom, 20px));
+            }
+            .chat-view.split .divider {
+                z-index: 10;
+            }
+            
+            /* Hide homepage content during onboarding */
+            .onboarding-section:not(.hidden) ~ .homepage-content,
+            .onboarding-section:not(.hidden) ~ .homepage-content.active {
+                display: none !important;
+            }
+            
+            /* Full width layout - remove max-width constraints */
+            .header-inner { max-width: 100%; }
+            .home, .projects-page { 
+                max-width: 100%; 
+                padding: 16px;
+                padding-bottom: calc(90px + env(safe-area-inset-bottom, 20px)); /* Space for nav */
+            }
+            
+            /* NAV - only visible on home/projects/profile (hidden in chat via CSS selector) */
+            .nav {
+                position: fixed !important;
+                left: 8px !important;
+                right: 8px !important;
+                bottom: env(safe-area-inset-bottom, 0px) !important;
+                transform: none !important;
+                width: auto !important;
+                max-width: none !important;
+                padding-bottom: 10px !important;
+                z-index: 99999 !important;
+                min-height: 70px;
+            }
+            .nav-inner { max-width: 100%; }
+            
+            /* Brand chips - single line, horizontal scroll */
+            .brand-select-row { 
+                flex-wrap: nowrap !important; 
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+                padding: 12px 14px;
+            }
+            .brand-select-row::-webkit-scrollbar { display: none; }
+            .brand-label { flex-shrink: 0; }
+            .brand-chip { flex-shrink: 0; white-space: nowrap; }
+            
+            /* Chat header - hide title and brand name on mobile */
+            .panel-title { display: none !important; }
+            .panel-separator { display: none !important; }
+            .panel-brand { display: none !important; }
+            
+            /* Adjust panel-info when its contents are hidden */
+            .panel-info { 
+                display: none !important;
+            }
+            
+            /* Panel header layout - centered toggle */
+            .panel-header {
+                gap: 12px;
+            }
+            
+            /* Mode toggle - keep original style, centered */
+            .mode-toggle {
+                height: 32px;
+                flex-shrink: 0;
+                margin: 0 auto 0 0;
+            }
+            .mode-btn {
+                padding: 0 10px;
+                font-size: 11px;
+            }
+            .mode-btn .mode-icon { width: 14px; height: 14px; }
+            
+            /* Toggle cards - horizontal layout within stacked cards on mobile */
+            .modules-toggle {
+                flex-direction: column;
+                gap: 12px;
+            }
+            .toggle-card {
+                flex-direction: row;
+                align-items: center;
+                text-align: left;
+                padding: 20px 16px;
+                gap: 14px;
+                min-height: auto;
+            }
+            .toggle-card-icon {
+                margin: 0;
+                flex-shrink: 0;
+            }
+            .toggle-card-content {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                flex: 1;
+            }
+            .toggle-card-title {
+                font-size: 16px;
+            }
+            .toggle-card-desc {
+                font-size: 12px;
+            }
+            .toggle-card-arrow {
+                display: block;
+            }
+            
+            /* Report sheet full width and same padding */
+            .report-sheet { 
+                max-width: 100% !important; 
+                border-radius: 0 !important;
+            }
+            .report-body { padding: 0 16px 16px; }
+            .report-actions { padding: 16px; }
+            
+            /* Ensure all cards fit within viewport */
+            .toggle-card, .proj, .brand-select-row, .onboarding-card {
+                max-width: 100%;
+                box-sizing: border-box;
+            }
+            
+            /* Chat bubbles - wider on mobile */
+            .chat-body {
+                width: 100%;
+                padding: 14px;
+            }
+            .msg {
+                max-width: 90% !important;
+                min-width: 60px;
+            }
+            .msg.user {
+                max-width: 90% !important;
+            }
+            .msg-bubble { 
+                max-width: 100%; 
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+            }
+            
+            /* Activity section contained */
+            .activity-section { 
+                max-width: 100%; 
+                overflow: hidden;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- App wrapper to contain everything and prevent gaps -->
+    <div class="app-wrapper">
+    
+    <!-- SVG DEFS -->
+    <svg style="position:absolute;width:0;height:0;">
+        <defs>
+            <linearGradient id="coldGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#7D40FF"/>
+                <stop offset="100%" stop-color="#02A4FF"/>
+            </linearGradient>
+            <linearGradient id="warmGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#FF9966"/>
+                <stop offset="100%" stop-color="#FF6B35"/>
+            </linearGradient>
+            <linearGradient id="hotGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#4ade80"/>
+                <stop offset="100%" stop-color="#22c55e"/>
+            </linearGradient>
+            
+            <symbol id="icon-air" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></symbol>
+            <symbol id="icon-star" viewBox="0 0 200 200"><path d="M100.2 0C101.792 25.9476 98.6996 63.9402 117.082 82.3225C135.464 100.705 174.052 98.2076 200 99.8V100.2C174.051 101.79 135.763 98.9969 117.38 117.38C98.997 135.763 101.79 174.051 100.2 200H99.8C98.2103 174.051 100.109 136.06 81.7264 117.678C63.3436 99.2949 25.9485 101.79 0 100.2V99.8C25.9476 98.2076 63.6424 100.406 82.0246 82.0242C100.407 63.642 98.2076 25.9476 99.8 0H100.2Z" fill="currentColor"/></symbol>
+            <symbol id="icon-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12H3l9-9 9 9h-2M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/><path d="M9 21v-6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v6"/></symbol>
+            <symbol id="icon-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></symbol>
+            <symbol id="icon-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></symbol>
+            <symbol id="icon-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+            <symbol id="icon-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></symbol>
+            <symbol id="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+            <symbol id="icon-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></symbol>
+            <symbol id="icon-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></symbol>
+            <symbol id="icon-paperclip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></symbol>
+            <symbol id="icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></symbol>
+            <symbol id="icon-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></symbol>
+            <symbol id="icon-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></symbol>
+            <symbol id="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+            <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
+            <symbol id="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+            <symbol id="icon-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></symbol>
+            <symbol id="icon-columns" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="12" y1="3" x2="12" y2="21"/></symbol>
+            <symbol id="icon-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+            <symbol id="icon-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></symbol>
+            <symbol id="icon-fixair-logo" viewBox="0 0 235 48"><path d="M35.1986 6.4H17.4706C15.4226 6.4 13.5666 6.912 11.9026 7.936C10.2386 8.96 8.89463 10.3253 7.87063 12.032C6.88929 13.696 6.39863 15.552 6.39863 17.6V48H-0.00137472V16C-0.00137472 13.7387 0.467959 11.648 1.40663 9.728C2.34529 7.76533 3.62529 6.08 5.24663 4.672C6.91063 3.22133 8.78796 2.09067 10.8786 1.28C12.9693 0.426664 15.1666 -3.8147e-06 17.4706 -3.8147e-06H35.1986V6.4ZM48.8306 4.8C48.8306 6.12266 48.3613 7.25333 47.4226 8.192C46.484 9.13066 45.3533 9.6 44.0306 9.6C42.708 9.6 41.5773 9.13066 40.6386 8.192C39.7 7.25333 39.2306 6.12266 39.2306 4.8C39.2306 3.47733 39.7 2.34666 40.6386 1.408C41.5773 0.46933 42.708 -3.8147e-06 44.0306 -3.8147e-06C45.3533 -3.8147e-06 46.484 0.46933 47.4226 1.408C48.3613 2.34666 48.8306 3.47733 48.8306 4.8ZM47.2306 48H40.8306V22.4H9.59863V16H47.2306V48ZM97.7161 48H88.5641L74.8681 34.752L61.4281 48H52.2761L70.4521 30.464L52.2761 12.8H61.4281L97.7161 48ZM97.7161 12.8L82.4841 27.648L77.8761 23.552L88.5641 12.8H97.7161Z" fill="currentColor"/><path d="M154.461 48H148.061V35.2H112.285V28.8H148.061V9.6H125.085C122.183 9.6 119.517 10.3253 117.085 11.776C114.653 13.184 112.711 15.104 111.261 17.536C109.853 19.968 109.149 22.656 109.149 25.6V48H102.749V25.6C102.749 22.528 103.325 19.648 104.477 16.96C105.629 14.2293 107.229 11.84 109.277 9.792C111.325 7.70133 113.693 6.08 116.381 4.928C119.111 3.776 122.013 3.2 125.085 3.2H154.461V48ZM171.604 48H165.204V3.2H171.604V48ZM234.041 48H225.401L211.961 35.2H192.313V28.864H218.041C219.833 28.864 221.454 28.4373 222.905 27.584C224.356 26.688 225.508 25.5147 226.361 24.064C227.214 22.5707 227.641 20.9493 227.641 19.2C227.641 17.408 227.214 15.7867 226.361 14.336C225.508 12.8853 224.356 11.7333 222.905 10.88C221.454 10.0267 219.833 9.6 218.041 9.6H188.729V48H182.329V3.2H218.041C220.985 3.2 223.673 3.92533 226.105 5.376C228.537 6.784 230.457 8.704 231.865 11.136C233.316 13.568 234.041 16.256 234.041 19.2C234.041 21.8453 233.444 24.2987 232.249 26.56C231.097 28.8213 229.497 30.6987 227.449 32.192C225.444 33.6427 223.161 34.5813 220.601 35.008L234.041 48Z" fill="currentColor"/></symbol>
+        </defs>
+    </svg>
+
+    <!-- LOGIN -->
+    <div class="screen login-screen active" id="loginScreen">
+        <div class="scan-line"></div>
+        <div class="login-container">
+            <div class="login-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
+            <h1 class="login-title">Bienvenue</h1>
+            <p class="login-sub">Assistant IA pour techniciens HVAC</p>
+            <div class="login-bar">
+                <div class="login-icon-slot">
+                    <div class="login-mini" id="loginSphere"><div class="glass-sphere"><div class="sphere-fog-container"><div class="sphere-fog"></div><div class="sphere-fog-2"></div></div></div></div>
+                    <button class="login-back" id="loginBack" onclick="prevLoginStep()"><svg viewBox="0 0 24 24"><use href="#icon-arrow-left"/></svg></button>
+                </div>
+                <div class="login-input-container">
+                    <div class="login-input-slider" id="loginSlider">
+                        <div class="login-input-slide">
+                            <input type="email" class="login-input" id="loginEmail" placeholder="Quelle est votre adresse email ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
+                        </div>
+                        <div class="login-input-slide">
+                            <input type="password" class="login-input" id="loginPassword" placeholder="Quel est votre mot de passe ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
+                        </div>
+                        <div class="login-input-slide">
+                            <input type="text" class="login-input" id="loginName" placeholder="Quel est votre prénom ?" onkeypress="if(event.key==='Enter')completeLogin()">
+                        </div>
+                    </div>
+                </div>
+                <button class="login-btn" id="loginBtn" onclick="nextLoginStep()"><span class="icon"><svg><use href="#icon-arrow-right"/></svg></span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div class="screen main-app" id="mainApp">
+        <header class="app-header">
+            <div class="header-inner">
+                <div class="header-left">
+                    <div class="header-logo-svg"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
+                </div>
+                <div class="brand-pill" id="brandPill" onclick="toggleBrandDropdown()">
+                    <div class="brand-pill-dot" id="brandDot"></div>
+                    <span class="brand-pill-text" id="brandText">Mitsubishi</span>
+                    <svg class="brand-pill-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    <div class="brand-dropdown" id="brandDropdown">
+                        <div class="brand-dropdown-item active" data-b="carrier" onclick="event.stopPropagation(); setBrand('carrier')">
+                            <div class="brand-dropdown-dot" style="background:#3B82F6;"></div>
+                            <span class="brand-dropdown-name">Carrier</span>
+                            <svg class="brand-dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <div class="brand-dropdown-item active" data-b="daikin" onclick="event.stopPropagation(); setBrand('daikin')">
+                            <div class="brand-dropdown-dot" style="background:#10B981;"></div>
+                            <span class="brand-dropdown-name">Daikin</span>
+                            <svg class="brand-dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <div class="brand-dropdown-item active selected" data-b="mitsubishi" onclick="event.stopPropagation(); setBrand('mitsubishi')">
+                            <div class="brand-dropdown-dot" style="background:#E60012;"></div>
+                            <span class="brand-dropdown-name">Mitsubishi</span>
+                            <svg class="brand-dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <div class="brand-dropdown-divider"></div>
+                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">AAON</span></div>
+                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">American Standard</span></div>
+                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Amana</span></div>
+                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Armstrong Air</span></div>
+                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Bosch</span></div>
+                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Bryant</span></div>
+                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Fujitsu</span></div>
+                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Gree</span></div>
+                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Haier</span></div>
+                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Hitachi</span></div>
+                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Lennox</span></div>
+                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">LG</span></div>
+                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Panasonic</span></div>
+                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Rheem</span></div>
+                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Samsung</span></div>
+                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Trane</span></div>
+                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">York</span></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <div class="app-content">
+            <!-- HOME PAGE -->
+            <div class="home" id="homePage">
+                <!-- ONBOARDING SECTION -->
+                <div class="onboarding-section" id="onboardingSection">
+                    <div class="welcome-section" id="welcomeSection">
+                        <div class="welcome-text">Bienvenue, <strong id="userName">Technicien</strong></div>
+                        <div class="welcome-sub">Commençons votre parcours FixAIR</div>
+                    </div>
+                    <div class="onboarding-card" id="onboardingCard">
+                        <button class="congrats-close" onclick="closeCongrats()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#icon-x"/></svg></button>
+                        <div class="onboarding-header">
+                            <span class="onboarding-title">Premières étapes</span>
+                            <span class="onboarding-progress" id="onboardingProgress">0/4</span>
+                        </div>
+                        <div class="onboarding-steps" id="onboardingSteps">
+                            <div class="onboarding-step active" id="step1" onclick="openProfile()">
+                                <div class="step-check current" id="step1Check"></div>
+                                <div class="step-content"><span class="step-title">Créer votre compte</span></div>
+                                <svg class="step-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                            </div>
+                            <div class="onboarding-step locked" id="step2" onclick="toggleBrandSelect()">
+                                <div class="step-check pending" id="step2Check"></div>
+                                <div class="step-content"><span class="step-title">Sélectionner votre marque</span></div>
+                                <svg class="step-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                            </div>
+                            <div class="brand-select-inline" id="brandSelectInline">
+                                <div class="brand-select-option" data-brand="carrier" onclick="selectBrandInline('carrier')"><span class="brand-select-name">Carrier</span><div class="brand-select-dot"></div></div>
+                                <div class="brand-select-option" data-brand="daikin" onclick="selectBrandInline('daikin')"><span class="brand-select-name">Daikin</span><div class="brand-select-dot"></div></div>
+                                <div class="brand-select-option" data-brand="mitsubishi" onclick="selectBrandInline('mitsubishi')"><span class="brand-select-name">Mitsubishi</span><div class="brand-select-dot"></div></div>
+                            </div>
+                            <div class="onboarding-step locked" id="step3" onclick="handleStep3Click()">
+                                <div class="step-check pending" id="step3Check"></div>
+                                <div class="step-content">
+                                    <span class="step-title">Premier diagnostic</span>
+                                    <div class="step-divider"></div>
+                                    <div class="step-tool">
+                                        <svg class="step-tool-icon copilot" viewBox="0 0 200 200" fill="currentColor"><use href="#icon-star"/></svg>
+                                        <span class="step-tool-name copilot">Copilot</span>
+                                    </div>
+                                </div>
+                                <svg class="step-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                            </div>
+                            <div class="onboarding-step locked" id="step4" onclick="handleStep4Click()">
+                                <div class="step-check pending" id="step4Check"></div>
+                                <div class="step-content">
+                                    <span class="step-title">Créer un rapport</span>
+                                    <div class="step-divider"></div>
+                                    <div class="step-tool">
+                                        <svg class="step-tool-icon assistant" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><use href="#icon-clipboard"/></svg>
+                                        <span class="step-tool-name assistant">Assistant</span>
+                                    </div>
+                                </div>
+                                <svg class="step-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                            </div>
+                        </div>
+                        <div class="congrats-content">
+                            <div class="congrats-icon">🎉</div>
+                            <div class="congrats-title">Félicitations !</div>
+                            <div class="congrats-sub">Vous avez terminé les premières étapes.<br>Vous êtes prêt à utiliser FixAIR !</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- V13 HOMEPAGE CONTENT (hidden during onboarding) -->
+                <div class="homepage-content" id="homepageContent">
+                <!-- PROGRESS RING (BIGGER) -->
+                <div class="activity-section">
+                    <div class="activity-ring-container">
+                        <svg class="activity-ring-svg" viewBox="0 0 180 180">
+                            <circle class="ring-bg" cx="90" cy="90" r="70"/>
+                            <circle class="ring-progress hot" id="ringProgress" cx="90" cy="90" r="70"/>
+                        </svg>
+                        <div class="activity-ring-inner">
+                            <span class="activity-value" id="activityValue">73%</span>
+                            <span class="activity-label">Activité</span>
+                        </div>
+                    </div>
+                    <!-- STATUS - NO BACKGROUND -->
+                    <div class="activity-status">
+                        <span class="status-fire">🔥</span>
+                        <span class="status-text">En forme</span>
+                    </div>
+                </div>
+
+                <!-- TOGGLE CARDS -->
+                <div class="modules-toggle">
+                    <div class="toggle-card copilot" onclick="openChat('copilot')">
+                        <div class="toggle-card-icon"><span class="star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span></div>
+                        <div class="toggle-card-content">
+                            <div class="toggle-card-title">Diagnostic</div>
+                            <div class="toggle-card-desc">avec <span class="highlight-copilot">Copilot</span></div>
+                        </div>
+                        <svg class="toggle-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                    </div>
+                    <div class="toggle-card assistant" onclick="openChat('assistant')">
+                        <div class="toggle-card-icon"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>
+                        <div class="toggle-card-content">
+                            <div class="toggle-card-title">Rapport</div>
+                            <div class="toggle-card-desc">avec <span class="highlight-assistant">Assistant</span></div>
+                        </div>
+                        <svg class="toggle-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                    </div>
+                </div>
+
+                <!-- BRAND BAR -->
+                <div class="brand-select-row">
+                    <span class="brand-label">Marque:</span>
+                    <div class="brand-chip" data-b="carrier" onclick="setBrand('carrier')">Carrier</div>
+                    <div class="brand-chip" data-b="daikin" onclick="setBrand('daikin')">Daikin</div>
+                    <div class="brand-chip active" data-b="mitsubishi" onclick="setBrand('mitsubishi')">Mitsubishi</div>
+                </div>
+
+                <!-- RECENT PROJECTS -->
+                <div>
+                    <div class="sec-head"><span class="sec-title">Projets récents</span><div class="sec-line"></div></div>
+                    <div class="projects">
+                        <div class="proj" onclick="openChat('copilot')"><div class="proj-icons dual"><div class="proj-icon copilot back"><span class="star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span></div><div class="proj-icon assistant front"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div></div><div class="proj-info"><div class="proj-title">Erreur E6 sur groupe extérieur</div><div class="proj-meta">Diagnostic + Rapport • Mitsubishi</div></div><span class="proj-time">Hier</span></div>
+                        <div class="proj" onclick="openChat('assistant')"><div class="proj-icon assistant"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div><div class="proj-info"><div class="proj-title">Rapport Client Dupont</div><div class="proj-meta">Rapport • Exporté</div></div><span class="proj-time">16:20</span></div>
+                    </div>
+                </div>
+                </div><!-- END homepage-content -->
+            </div>
+
+            <!-- PROJECTS PAGE -->
+            <div class="projects-page" id="projectsPage">
+                <div class="projects-page-header">
+                    <div class="projects-page-title">Tous les projets</div>
+                    <div class="projects-page-sub">Historique de vos interventions</div>
+                </div>
+                <div class="projects-list">
+                    <div class="proj" onclick="openChat('copilot')"><div class="proj-icons dual"><div class="proj-icon copilot back"><span class="star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span></div><div class="proj-icon assistant front"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div></div><div class="proj-info"><div class="proj-title">Erreur E6 sur groupe extérieur</div><div class="proj-meta">Diagnostic + Rapport • Mitsubishi</div></div><span class="proj-time">Hier</span></div>
+                    <div class="proj" onclick="openChat('assistant')"><div class="proj-icon assistant"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div><div class="proj-info"><div class="proj-title">Rapport Client Dupont</div><div class="proj-meta">Rapport • Exporté</div></div><span class="proj-time">16:20</span></div>
+                    <div class="proj" onclick="openChat('copilot')"><div class="proj-icons dual"><div class="proj-icon copilot back"><span class="star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span></div><div class="proj-icon assistant front"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div></div><div class="proj-info"><div class="proj-title">Code F3 - Défaut capteur</div><div class="proj-meta">Diagnostic + Rapport • Daikin</div></div><span class="proj-time">Lun</span></div>
+                    <div class="proj" onclick="openChat('assistant')"><div class="proj-icon assistant"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div><div class="proj-info"><div class="proj-title">Rapport Maintenance Martin</div><div class="proj-meta">Rapport • PDF</div></div><span class="proj-time">Lun</span></div>
+                    <div class="proj" onclick="openChat('copilot')"><div class="proj-icon copilot"><span class="star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span></div><div class="proj-info"><div class="proj-title">Panne compresseur VRV</div><div class="proj-meta">Diagnostic • Daikin</div></div><span class="proj-time">12 Déc</span></div>
+                    <div class="proj" onclick="openChat('assistant')"><div class="proj-icon assistant"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div><div class="proj-info"><div class="proj-title">Rapport Installation Leroy</div><div class="proj-meta">Rapport • Envoyé</div></div><span class="proj-time">10 Déc</span></div>
+                    <div class="proj" onclick="openChat('copilot')"><div class="proj-icons dual"><div class="proj-icon copilot back"><span class="star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span></div><div class="proj-icon assistant front"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div></div><div class="proj-info"><div class="proj-title">Erreur U0 communication</div><div class="proj-meta">Diagnostic + Rapport • Carrier</div></div><span class="proj-time">8 Déc</span></div>
+                    <div class="proj" onclick="openChat('assistant')"><div class="proj-icon assistant"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div><div class="proj-info"><div class="proj-title">Rapport SAV Bernard</div><div class="proj-meta">Rapport • PDF</div></div><span class="proj-time">5 Déc</span></div>
+                </div>
+            </div>
+        </div>
+        <nav class="nav">
+            <div class="nav-inner">
+                <div class="nav-item active" id="navHome" onclick="showPage('home')"><span class="icon nav-icon"><svg><use href="#icon-home"/></svg></span><span class="nav-label">Accueil</span></div>
+                <div class="nav-item" id="navProjects" onclick="showPage('projects')"><span class="icon nav-icon"><svg><use href="#icon-folder"/></svg></span><span class="nav-label">Projets</span></div>
+                <div class="nav-item nav-hotline" onclick="openHotline()">
+                    <div class="nav-hotline-waves">
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                    </div>
+                    <span class="nav-label">Hotline</span>
+                </div>
+                <div class="nav-item nav-profile" onclick="openProfile()"><span class="icon nav-icon"><svg><use href="#icon-user"/></svg></span><div class="nav-profile-badge"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div><span class="nav-label">Profil</span></div>
+            </div>
+        </nav>
+    </div>
+
+    <!-- PROFILE VIEW -->
+    <div class="profile-view" id="profileView">
+        <div class="profile-header">
+            <button class="profile-back" onclick="closeProfile()"><span class="icon"><svg viewBox="0 0 24 24"><use href="#icon-arrow-left"/></svg></span></button>
+            <div class="profile-info">
+                <div class="profile-title">Votre profil</div>
+                <div class="profile-subtitle">Informations personnelles</div>
+            </div>
+        </div>
+        <div class="profile-body">
+            <div class="profile-form">
+                <div class="form-group">
+                    <label class="form-label">Prénom</label>
+                    <input type="text" class="form-input" id="profileFirstName" placeholder="Votre prénom">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nom</label>
+                    <input type="text" class="form-input" id="profileLastName" placeholder="Votre nom">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="profileEmail" placeholder="Votre email" readonly style="opacity: 0.6;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Téléphone</label>
+                    <input type="tel" class="form-input" id="profilePhone" placeholder="Votre numéro">
+                </div>
+                <button class="profile-save" onclick="saveProfile()">Enregistrer</button>
+                <button class="profile-save" onclick="logout()" style="background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; margin-top: 12px;">Déconnexion</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHAT VIEW (FULL WIDTH) -->
+    <div class="chat-view single" id="chatView">
+        <div class="panel copilot" id="panelCopilot" style="flex-basis:50%;">
+            <header class="panel-header">
+                <button class="panel-back" onclick="closeChat()"><span class="icon"><svg><use href="#icon-arrow-left"/></svg></span></button>
+                <div class="panel-info"><div class="panel-title">FixAIR Copilot</div><div class="panel-separator"></div><div class="panel-brand" id="copilotSub">Mitsubishi</div></div>
+                <div class="mode-toggle">
+                    <div class="mode-btn copilot active" onclick="switchMode('copilot')">
+                        <span class="mode-icon star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span>
+                        <span>Copilot</span>
+                    </div>
+                    <div class="mode-btn assistant" onclick="switchMode('assistant')">
+                        <span class="mode-icon clip-icon"><svg><use href="#icon-clipboard"/></svg></span>
+                        <span>Assistant</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="h-btn" onclick="toggleSplit()" title="Mode split"><span class="icon"><svg><use href="#icon-columns"/></svg></span></button>
+                </div>
+            </header>
+            <div class="chat-body" id="copilotBody"></div>
+            <div class="chat-input">
+                <div class="attach-menu" id="attachCopilot">
+                    <div class="attach-opt" onclick="attachAction('camera','copilot')"><span class="icon"><svg><use href="#icon-camera"/></svg></span>Prendre une photo</div>
+                    <div class="attach-opt" onclick="attachAction('gallery','copilot')"><span class="icon"><svg><use href="#icon-image"/></svg></span>Galerie photos</div>
+                    <div class="attach-opt" onclick="attachAction('file','copilot')"><span class="icon"><svg><use href="#icon-paperclip"/></svg></span>Fichier</div>
+                </div>
+                <div class="input-row" id="copilotInputRow">
+                    <button class="plus-btn" onclick="toggleAttach('copilot')"><span class="icon"><svg><use href="#icon-plus"/></svg></span></button>
+                    <div class="input-area">
+                        <input type="text" class="input-text" id="copilotInput" placeholder="Posez votre question..." oninput="handleChatInput('copilot')" onkeypress="if(event.key==='Enter')handleSend('copilot')">
+                        <div class="voice-waveform copilot" id="copilotWaveform">
+                            <div class="wave-bars" id="copilotBars"></div>
+                            <div class="voice-timer" id="copilotTimer">0:00</div>
+                        </div>
+                    </div>
+                    <button class="action-btn copilot" id="copilotActionBtn" onclick="handleAction('copilot')">
+                        <div class="icon-wrap">
+                            <span class="btn-icon mic-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></span>
+                            <span class="btn-icon send-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></span>
+                            <span class="btn-icon stop-icon"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="divider" id="divider" style="display:none;"><div class="divider-grip"><span></span><span></span><span></span></div></div>
+
+        <div class="panel assistant" id="panelAssistant" style="display:none;flex-basis:50%;">
+            <header class="panel-header">
+                <button class="panel-back" onclick="closeChat()"><span class="icon"><svg><use href="#icon-arrow-left"/></svg></span></button>
+                <div class="panel-info"><div class="panel-title">FixAIR Assistant</div><div class="panel-separator"></div><div class="panel-brand" id="assistantSub">Mitsubishi</div></div>
+                <div class="mode-toggle">
+                    <div class="mode-btn copilot" onclick="switchMode('copilot')">
+                        <span class="mode-icon star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span>
+                        <span>Copilot</span>
+                    </div>
+                    <div class="mode-btn assistant active" onclick="switchMode('assistant')">
+                        <span class="mode-icon clip-icon"><svg><use href="#icon-clipboard"/></svg></span>
+                        <span>Assistant</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="h-btn" onclick="openReport()" title="Voir rapport"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></button>
+                    <button class="h-btn" onclick="toggleSplit()" title="Mode split"><span class="icon"><svg><use href="#icon-columns"/></svg></span></button>
+                </div>
+            </header>
+            <div class="chat-body" id="assistantBody"></div>
+            <div class="chat-input">
+                <div class="attach-menu" id="attachAssistant">
+                    <div class="attach-opt" onclick="attachAction('camera','assistant')"><span class="icon"><svg><use href="#icon-camera"/></svg></span>Prendre une photo</div>
+                    <div class="attach-opt" onclick="attachAction('gallery','assistant')"><span class="icon"><svg><use href="#icon-image"/></svg></span>Galerie photos</div>
+                    <div class="attach-opt" onclick="attachAction('file','assistant')"><span class="icon"><svg><use href="#icon-paperclip"/></svg></span>Fichier</div>
+                </div>
+                <div class="input-row" id="assistantInputRow">
+                    <button class="plus-btn" onclick="toggleAttach('assistant')"><span class="icon"><svg><use href="#icon-plus"/></svg></span></button>
+                    <div class="input-area">
+                        <input type="text" class="input-text" id="assistantInput" placeholder="Décrivez l'intervention..." oninput="handleChatInput('assistant')" onkeypress="if(event.key==='Enter')handleSend('assistant')">
+                        <div class="voice-waveform assistant" id="assistantWaveform">
+                            <div class="wave-bars" id="assistantBars"></div>
+                            <div class="voice-timer" id="assistantTimer">0:00</div>
+                        </div>
+                    </div>
+                    <button class="action-btn assistant" id="assistantActionBtn" onclick="handleAction('assistant')">
+                        <div class="icon-wrap">
+                            <span class="btn-icon mic-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></span>
+                            <span class="btn-icon send-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></span>
+                            <span class="btn-icon stop-icon"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- REPORT SHEET -->
+    <div class="report-backdrop" id="reportBackdrop" onclick="closeReport()"></div>
+    <div class="report-sheet" id="reportSheet">
+        <header class="report-header">
+            <button class="report-close" onclick="closeReport()"><span class="icon"><svg><use href="#icon-x"/></svg></span></button>
+            <div class="report-title">Rapport d'intervention</div>
+        </header>
+        <div class="report-body">
+            <div class="r-field"><div class="r-label">Client</div><div class="r-value" id="rClient">—</div></div>
+            <div class="r-field"><div class="r-label">Adresse</div><div class="r-value" id="rAddress">—</div></div>
+            <div class="r-field"><div class="r-label">Équipement</div><div class="r-value" id="rEquip">—</div></div>
+            <div class="r-field"><div class="r-label">Problème identifié</div><div class="r-value" id="rProblem">—</div></div>
+            <div class="r-field"><div class="r-label">Actions réalisées</div><div class="r-value" id="rActions">—</div></div>
+            <div class="r-field"><div class="r-label">Statut</div><div class="r-value" id="rStatus">En cours</div></div>
+        </div>
+        <div class="report-footer">
+            <button class="r-btn secondary"><span class="icon"><svg><use href="#icon-share"/></svg></span>Partager</button>
+            <button class="r-btn primary"><span class="icon"><svg><use href="#icon-download"/></svg></span>Exporter PDF</button>
+        </div>
+    </div>
+
+    <!-- PHOTO MODAL -->
+    <div class="photo-modal" id="photoModal">
+        <div class="photo-modal-content">
+            <div class="photo-modal-header">
+                <div class="photo-modal-preview"><span class="icon"><svg><use href="#icon-image"/></svg></span></div>
+                <div>
+                    <div class="photo-modal-title">Photo sélectionnée</div>
+                    <div class="photo-modal-sub">Que souhaitez-vous faire ?</div>
+                </div>
+            </div>
+            <div class="photo-modal-body">
+                <div class="photo-option" onclick="handlePhotoOption('extract')">
+                    <div class="photo-option-icon extract"><span class="icon"><svg><use href="#icon-search"/></svg></span></div>
+                    <div class="photo-option-text">
+                        <div class="photo-option-title">Extraire les informations</div>
+                        <div class="photo-option-desc">Analyser pour extraire les données</div>
+                    </div>
+                </div>
+                <div class="photo-option" onclick="handlePhotoOption('report')">
+                    <div class="photo-option-icon report"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>
+                    <div class="photo-option-text">
+                        <div class="photo-option-title">Ajouter au rapport</div>
+                        <div class="photo-option-desc">Pièce jointe du rapport</div>
+                    </div>
+                </div>
+            </div>
+            <div class="photo-modal-footer">
+                <button class="photo-cancel" onclick="closePhotoModal()">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HOTLINE VIEW -->
+    <div class="hotline-view" id="hotlineView">
+        <button class="hotline-close" onclick="closeHotline()"><span class="icon"><svg><use href="#icon-x"/></svg></span></button>
+        <div class="hotline-widget" id="hotlineWidget">
+            <div class="pulse-sphere" id="pulseSphere" onclick="toggleHotline()">
+                <div class="pulse-atmosphere"></div>
+                <div class="pulse-ring"></div>
+                <div class="pulse-ring"></div>
+                <div class="pulse-ring"></div>
+                <div class="pulse-core"></div>
+                <div class="pulse-icon">
+                    <div class="voice-bar"></div>
+                    <div class="voice-bar"></div>
+                    <div class="voice-bar"></div>
+                    <div class="voice-bar"></div>
+                    <div class="voice-bar"></div>
+                </div>
+            </div>
+            <div class="widget-label" id="widgetLabel">Hotline</div>
+            <div class="widget-sublabel" id="widgetSublabel">Appuyez pour parler</div>
+        </div>
+        <div class="hotline-chat" id="hotlineChat">
+            <div class="chat-spacer"></div>
+            <div class="chat-messages-outer">
+                <div class="chat-messages" id="hotlineChatMessages">
+                    <div class="messages-wrapper" id="messagesWrapper">
+                        <div class="chat-empty" id="chatEmpty">Commencez à parler pour voir la conversation...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button class="toggle-chat" id="toggleChat" onclick="toggleChatView()">
+            <span class="toggle-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></span>
+            <span id="toggleText">Afficher</span>
+        </button>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // BROWSER DETECTION & DYNAMIC HEIGHT FIX
+        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        // Get actual visible height (handles Safari toolbar, keyboard, etc.)
+        function getVisibleHeight() {
+            if (window.visualViewport) {
+                return window.visualViewport.height;
+            }
+            return window.innerHeight;
+        }
+        
+        function setViewportHeight() {
+            const vh = window.innerHeight * 0.01;
+            const visibleHeight = getVisibleHeight();
+            
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+            document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
+            document.documentElement.style.setProperty('--visible-height', `${visibleHeight}px`);
+            
+            // CRITICAL: Set explicit heights to prevent gap
+            document.documentElement.style.height = '100%';
+            document.body.style.height = '100%';
+            document.body.style.minHeight = '100%';
+            document.body.style.maxHeight = '100%';
+            
+            // Update chatView if active
+            const chatView = document.getElementById('chatView');
+            if (chatView && chatView.classList.contains('active')) {
+                chatView.style.height = `${visibleHeight}px`;
+            }
+            
+            // Hide any overflow from parent iframe
+            document.documentElement.style.overflow = 'hidden';
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // Handle keyboard visibility changes (Safari specific)
+        function handleKeyboardChange() {
+            const chatView = document.getElementById('chatView');
+            if (!chatView || !chatView.classList.contains('active')) return;
+            
+            const visibleHeight = getVisibleHeight();
+            chatView.style.height = `${visibleHeight}px`;
+            
+            // Scroll chat body to bottom when keyboard opens
+            setTimeout(() => {
+                const activePanel = document.querySelector('.panel[style*="flex"]');
+                if (activePanel) {
+                    const chatBody = activePanel.querySelector('.chat-body');
+                    if (chatBody) {
+                        chatBody.scrollTop = chatBody.scrollHeight;
+                    }
+                }
+            }, 100);
+        }
+        
+        setViewportHeight();
+        window.addEventListener('resize', setViewportHeight);
+        window.addEventListener('load', setViewportHeight);
+        window.addEventListener('orientationchange', () => setTimeout(setViewportHeight, 100));
+        
+        // Safari/iOS specific: handle address bar and keyboard
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', handleKeyboardChange);
+            window.visualViewport.addEventListener('scroll', setViewportHeight);
+        }
+        
+        // Handle focus/blur on input fields for keyboard detection
+        document.addEventListener('focusin', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                setTimeout(handleKeyboardChange, 300);
+            }
+        });
+        
+        document.addEventListener('focusout', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                setTimeout(setViewportHeight, 300);
+            }
+        });
+        
+        let brand = 'mitsubishi';
+        let mode = 'copilot';
+        let isSplit = false;
+        let isConnected = false;
+        let isConnecting = false;
+        let isDisconnecting = false;
+        let chatOpen = false;
+        let currentPhotoPanel = 'copilot';
+        let currentPage = 'home';
+        
+        // Onboarding state
+        let loginStep = 0;
+        let onboardingStep = 1;
+        let onboardingComplete = false;
+        let step3Done = false;
+        let step4Done = false;
+        let onboardingBrand = null;
+        
+        // Auth state
+        const API_BASE = 'https://cherhabil.app.n8n.cloud/webhook';
+        let isNewUser = false;
+        let authToken = localStorage.getItem('fixair_token') || null;
+        let currentUser = JSON.parse(localStorage.getItem('fixair_user') || 'null');
+        
+        const colors = {carrier:'#3B82F6', daikin:'#10B981', mitsubishi:'#E60012'};
+        const names = {carrier:'Carrier', daikin:'Daikin', mitsubishi:'Mitsubishi'};
+
+        // Check if already logged in
+        if (authToken && currentUser && currentUser.id) {
+            console.log('Auto-login with saved session:', currentUser.email);
+            // Auto-login
+            setTimeout(() => {
+                document.getElementById('userName').textContent = currentUser.first_name;
+                document.getElementById('profileFirstName').value = currentUser.first_name;
+                if (currentUser.email) document.getElementById('profileEmail').value = currentUser.email;
+                
+                // Check if onboarding was completed
+                const onboardingDone = localStorage.getItem('fixair_onboarding_done');
+                if (onboardingDone) {
+                    onboardingComplete = true;
+                    document.querySelector('.onboarding-section').classList.add('hidden');
+                    document.getElementById('homepageContent').classList.add('active');
+                } else {
+                    // Show onboarding for returning users who haven't completed it
+                    onboardingComplete = false;
+                    document.querySelector('.onboarding-section').classList.remove('hidden');
+                    // Homepage stays hidden (no 'active' class)
+                }
+                
+                document.getElementById('loginScreen').classList.remove('active');
+                document.getElementById('mainApp').classList.add('active');
+            }, 500);
+        } else {
+            // Clear any partial/invalid auth data
+            localStorage.removeItem('fixair_token');
+            localStorage.removeItem('fixair_user');
+            authToken = null;
+            currentUser = null;
+        }
+
+        // LOGIN STEPS
+        async function nextLoginStep() {
+            const btn = document.getElementById('loginBtn');
+            
+            if (loginStep === 0) {
+                // Step 0: Check email
+                const email = document.getElementById('loginEmail').value.trim();
+                if (!email.includes('@')) { toast('Email invalide'); return; }
+                
+                btn.disabled = true;
+                btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
+                
+                try {
+                    const response = await fetch(`${API_BASE}/auth/check-email`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email })
+                    });
+                    const data = await response.json();
+                    console.log('Check email response:', data);
+                    
+                    isNewUser = (data.exists === false);
+                    console.log('Is new user:', isNewUser);
+                    
+                    // Update password placeholder based on user type
+                    const pwdInput = document.getElementById('loginPassword');
+                    if (isNewUser) {
+                        pwdInput.placeholder = 'Créez votre mot de passe';
+                    } else {
+                        pwdInput.placeholder = 'Entrez votre mot de passe';
+                    }
+                    
+                    loginStep = 1;
+                    updateLoginUI();
+                    
+                } catch (error) {
+                    toast('Erreur de connexion');
+                    console.error('Check email error:', error);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+                }
+                
+            } else if (loginStep === 1) {
+                // Step 1: Password
+                const email = document.getElementById('loginEmail').value.trim();
+                const password = document.getElementById('loginPassword').value;
+                
+                if (password.length < 6) { toast('Mot de passe: 6 caractères minimum'); return; }
+                
+                if (isNewUser) {
+                    // New user: go to name step
+                    loginStep = 2;
+                    document.getElementById('loginBtn').innerHTML = '<span class="icon"><svg><use href="#icon-check"/></svg></span>';
+                    document.getElementById('loginBtn').onclick = completeLogin;
+                    updateLoginUI();
+                } else {
+                    // Existing user: try login
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
+                    
+                    try {
+                        const response = await fetch(`${API_BASE}/auth/login`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email, password })
+                        });
+                        
+                        const data = await response.json();
+                        console.log('Login response:', response.status, data);
+                        
+                        // Check both response status and success flag
+                        if (response.ok && data.success === true && data.token) {
+                            // Save auth data
+                            authToken = data.token;
+                            currentUser = data.user;
+                            localStorage.setItem('fixair_token', authToken);
+                            localStorage.setItem('fixair_user', JSON.stringify(currentUser));
+                            
+                            // Update UI with user info
+                            document.getElementById('userName').textContent = currentUser.first_name;
+                            document.getElementById('profileFirstName').value = currentUser.first_name;
+                            if (currentUser.email) document.getElementById('profileEmail').value = currentUser.email;
+                            
+                            // Existing user - skip onboarding, go to main app
+                            onboardingComplete = true;
+                            document.querySelector('.onboarding-section').classList.add('hidden');
+                            document.getElementById('homepageContent').classList.add('active');
+                            localStorage.setItem('fixair_onboarding_done', 'true');
+                            
+                            toast('Bienvenue ' + currentUser.first_name + ' !');
+                            doLogin();
+                        } else {
+                            // Login failed - show error, do NOT proceed
+                            toast(data.error || 'Email ou mot de passe incorrect');
+                        }
+                    } catch (error) {
+                        toast('Erreur de connexion au serveur');
+                        console.error('Login error:', error);
+                    } finally {
+                        btn.disabled = false;
+                        btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+                    }
+                }
+            }
+        }
+        
+        function updateLoginUI() {
+            document.getElementById('loginSlider').style.transform = `translateX(-${loginStep * 100}%)`;
+            document.getElementById('loginSphere').style.display = loginStep === 0 ? 'flex' : 'none';
+            document.getElementById('loginBack').style.display = loginStep === 0 ? 'none' : 'flex';
+        }
+
+        function prevLoginStep() {
+            if (loginStep > 0) {
+                loginStep--;
+                updateLoginUI();
+                if (loginStep < 2) {
+                    document.getElementById('loginBtn').innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+                    document.getElementById('loginBtn').onclick = nextLoginStep;
+                }
+            }
+        }
+
+        async function completeLogin() {
+            const name = document.getElementById('loginName').value.trim();
+            if (!name) { toast('Entrez votre prénom'); return; }
+            
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            const btn = document.getElementById('loginBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-check"/></svg></span>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, first_name: name })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Save auth data
+                    authToken = data.token;
+                    currentUser = data.user;
+                    localStorage.setItem('fixair_token', authToken);
+                    localStorage.setItem('fixair_user', JSON.stringify(currentUser));
+                    
+                    // Update UI with user info
+                    document.getElementById('userName').textContent = name;
+                    document.getElementById('profileFirstName').value = name;
+                    document.getElementById('profileEmail').value = email;
+                    
+                    toast('Compte créé !');
+                    
+                    // New user - show onboarding
+                    document.getElementById('loginScreen').classList.remove('active');
+                    document.getElementById('mainApp').classList.add('active');
+                } else {
+                    toast(data.error || 'Erreur lors de la création du compte');
+                }
+            } catch (error) {
+                toast('Erreur de connexion');
+                console.error('Register error:', error);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="icon"><svg><use href="#icon-check"/></svg></span>';
+            }
+        }
+
+        function doLogin() {
+            document.getElementById('loginScreen').classList.remove('active');
+            document.getElementById('mainApp').classList.add('active');
+        }
+        
+        function logout() {
+            localStorage.removeItem('fixair_token');
+            localStorage.removeItem('fixair_user');
+            localStorage.removeItem('fixair_onboarding_done');
+            authToken = null;
+            currentUser = null;
+            loginStep = 0;
+            isNewUser = false;
+            onboardingComplete = false;
+            
+            // Close profile view first
+            document.getElementById('profileView').classList.remove('active');
+            
+            // Reset onboarding section visibility
+            document.querySelector('.onboarding-section').classList.remove('hidden');
+            
+            // Reset homepage content
+            document.getElementById('homepageContent').classList.remove('active');
+            
+            // Reset UI
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('loginName').value = '';
+            document.getElementById('loginSlider').style.transform = 'translateX(0)';
+            document.getElementById('loginSphere').style.display = 'flex';
+            document.getElementById('loginBack').style.display = 'none';
+            document.getElementById('loginBtn').innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+            document.getElementById('loginBtn').onclick = nextLoginStep;
+            
+            document.getElementById('mainApp').classList.remove('active');
+            document.getElementById('loginScreen').classList.add('active');
+            
+            toast('Déconnecté');
+        }
+
+        // PROFILE
+        function openProfile() {
+            document.getElementById('profileView').classList.add('active');
+        }
+
+        function closeProfile() {
+            document.getElementById('profileView').classList.remove('active');
+        }
+
+        function saveProfile() {
+            const firstName = document.getElementById('profileFirstName').value.trim();
+            if (!firstName) { toast('Entrez votre prénom'); return; }
+            document.getElementById('userName').textContent = firstName;
+            if (onboardingStep === 1) {
+                completeStep(1);
+                document.getElementById('step2').classList.remove('locked');
+                document.getElementById('step2').classList.add('active');
+                document.getElementById('step2Check').classList.remove('pending');
+                document.getElementById('step2Check').classList.add('current');
+                onboardingStep = 2;
+                updateOnboardingProgress();
+            }
+            closeProfile();
+        }
+
+        // BRAND SELECT (ONBOARDING)
+        function toggleBrandSelect() {
+            if (onboardingStep < 2) return;
+            document.getElementById('brandSelectInline').classList.toggle('show');
+        }
+
+        function selectBrandInline(b) {
+            onboardingBrand = b;
+            brand = b;
+            
+            document.querySelectorAll('.brand-select-option').forEach(opt => {
+                opt.classList.toggle('selected', opt.dataset.brand === b);
+            });
+            
+            // Update header pill with green dot only
+            document.getElementById('brandText').textContent = names[b];
+            document.getElementById('brandPill').classList.add('has-brand');
+            document.getElementById('copilotSub').textContent = names[b];
+            document.getElementById('assistantSub').textContent = names[b];
+            
+            // Update dropdown - only selected shows green dot
+            document.querySelectorAll('.brand-dropdown-item[data-b]').forEach(o => {
+                o.classList.remove('selected', 'onboard-selected');
+                if (o.dataset.b === b) o.classList.add('onboard-selected');
+            });
+            document.querySelectorAll('.brand-chip').forEach(c => c.classList.toggle('active', c.dataset.b === b));
+            
+            setTimeout(() => completeBrandStep(), 300);
+        }
+
+        function completeBrandStep() {
+            if (onboardingStep === 2) {
+                completeStep(2);
+                document.getElementById('brandSelectInline').classList.remove('show');
+                // Unlock BOTH step 3 and step 4 - user can do either first
+                document.getElementById('step3').classList.remove('locked');
+                document.getElementById('step3').classList.add('active');
+                document.getElementById('step3Check').classList.remove('pending');
+                document.getElementById('step3Check').classList.add('current');
+                document.getElementById('step4').classList.remove('locked');
+                document.getElementById('step4').classList.add('active');
+                document.getElementById('step4Check').classList.remove('pending');
+                document.getElementById('step4Check').classList.add('current');
+                onboardingStep = 3;
+                updateOnboardingProgress();
+            }
+        }
+
+        // STEP HANDLERS - Allow either order and re-entry
+        function handleStep3Click() {
+            // Accessible after brand selection (step 2) or if step4 already done
+            if (onboardingStep < 3 && !step4Done) return;
+            openChat('copilot');
+        }
+
+        function handleStep4Click() {
+            // Accessible after brand selection (step 2) or if step3 already done
+            if (onboardingStep < 3 && !step3Done) return;
+            openChat('assistant');
+        }
+
+        function completeStep(n) {
+            const step = document.getElementById('step' + n);
+            const check = document.getElementById('step' + n + 'Check');
+            step.classList.remove('active');
+            step.classList.add('completed');
+            check.classList.remove('current');
+            check.classList.add('done');
+            check.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>';
+        }
+
+        function updateOnboardingProgress() {
+            // Count completed steps: step1 (profile), step2 (brand), step3 (copilot), step4 (assistant)
+            let completed = 0;
+            if (onboardingStep >= 2) completed = 1; // Profile done
+            if (onboardingStep >= 3) completed = 2; // Brand done
+            if (step3Done) completed = Math.max(completed, 3);
+            if (step4Done) completed = Math.max(completed, step3Done ? 4 : 3);
+            if (step3Done && step4Done) completed = 4;
+            document.getElementById('onboardingProgress').textContent = completed + '/4';
+        }
+
+        function showCongrats() {
+            document.getElementById('welcomeSection').style.display = 'none';
+            document.getElementById('onboardingCard').classList.add('congrats');
+            onboardingComplete = true;
+        }
+
+        function closeCongrats() {
+            document.getElementById('onboardingSection').classList.add('hidden');
+            document.getElementById('homepageContent').classList.add('active');
+        }
+
+        function showPage(page) {
+            currentPage = page;
+            document.getElementById('homePage').style.display = page === 'home' ? 'flex' : 'none';
+            document.getElementById('projectsPage').classList.toggle('active', page === 'projects');
+            document.getElementById('navHome').classList.toggle('active', page === 'home');
+            document.getElementById('navProjects').classList.toggle('active', page === 'projects');
+        }
+
+        function toggleBrandDropdown() {
+            const pill = document.getElementById('brandPill');
+            const dropdown = document.getElementById('brandDropdown');
+            pill.classList.toggle('open');
+            dropdown.classList.toggle('show');
+        }
+
+        function closeBrandDropdown() {
+            document.getElementById('brandPill').classList.remove('open');
+            document.getElementById('brandDropdown').classList.remove('show');
+        }
+
+        function setBrand(b) {
+            brand = b;
+            document.getElementById('brandText').textContent = names[b];
+            document.getElementById('copilotSub').textContent = names[b];
+            document.getElementById('assistantSub').textContent = names[b];
+            document.querySelectorAll('.brand-dropdown-item[data-b]').forEach(o => o.classList.toggle('selected', o.dataset.b === b));
+            document.querySelectorAll('.brand-chip').forEach(c => c.classList.toggle('active', c.dataset.b === b));
+            closeBrandDropdown();
+        }
+
+        function updateRing(pct) {
+            const ring = document.getElementById('ringProgress');
+            const circumference = 2 * Math.PI * 70;
+            const offset = circumference - (pct / 100) * circumference;
+            ring.style.strokeDashoffset = offset;
+            ring.classList.remove('cold', 'warm', 'hot');
+            if (pct < 40) ring.classList.add('cold');
+            else if (pct < 70) ring.classList.add('warm');
+            else ring.classList.add('hot');
+            document.getElementById('activityValue').textContent = pct + '%';
+        }
+
+        setTimeout(() => updateRing(73), 500);
+
+        function openChat(m) {
+            mode = m;
+            // Update viewport height for mobile browsers
+            if (typeof setViewportHeight === 'function') setViewportHeight();
+            
+            const cv = document.getElementById('chatView');
+            // Use full visible height - nav is hidden via CSS when chat is open
+            const visibleHeight = typeof getVisibleHeight === 'function' ? getVisibleHeight() : window.innerHeight;
+            cv.style.height = `${visibleHeight}px`;
+            
+            cv.classList.add('active');
+            cv.classList.remove('split');
+            cv.classList.add('single');
+            isSplit = false;
+            document.getElementById('panelCopilot').style.flexBasis = '';
+            document.getElementById('panelAssistant').style.flexBasis = '';
+            document.getElementById('panelCopilot').style.display = m === 'copilot' ? 'flex' : 'none';
+            document.getElementById('panelAssistant').style.display = m === 'assistant' ? 'flex' : 'none';
+            document.getElementById('divider').style.display = 'none';
+            updateModeToggle(m);
+            document.getElementById('copilotBody').innerHTML = '';
+            document.getElementById('assistantBody').innerHTML = '';
+            closeAllAttach();
+            
+            const wel = {
+                copilot: `Bonjour ! <strong style="color:var(--copilot)">FixAIR Copilot</strong> prêt pour <strong>${names[brand]}</strong>. Comment puis-je vous aider ?`,
+                assistant: `<strong style="color:var(--assistant)">FixAIR Assistant</strong> prêt. Décrivez l'intervention et je génère le rapport.`
+            };
+            addMsg(m, 'ai', wel[m]);
+        }
+
+        function closeChat() {
+            document.getElementById('chatView').classList.remove('active');
+            closeReport();
+            closeAllAttach();
+            
+            // Recalculate viewport
+            if (typeof setViewportHeight === 'function') setViewportHeight();
+            
+            // Check onboarding completion - works regardless of order
+            if (!onboardingComplete) {
+                const copilotHasUserMsg = document.querySelectorAll('#copilotBody .msg.user').length > 0;
+                const assistantHasUserMsg = document.querySelectorAll('#assistantBody .msg.user').length > 0;
+                
+                // Check Copilot step (step 3) if user sent message in Copilot
+                if (copilotHasUserMsg && !step3Done) {
+                    step3Done = true;
+                    completeStep(3);
+                    // If step 4 not done, make it active
+                    if (!step4Done) {
+                        document.getElementById('step4').classList.remove('locked');
+                        document.getElementById('step4').classList.add('active');
+                        document.getElementById('step4Check').classList.remove('pending');
+                        document.getElementById('step4Check').classList.add('current');
+                    }
+                    updateOnboardingProgress();
+                }
+                
+                // Check Assistant step (step 4) if user sent message in Assistant
+                if (assistantHasUserMsg && !step4Done) {
+                    step4Done = true;
+                    completeStep(4);
+                    // If step 3 not done, make it active
+                    if (!step3Done) {
+                        document.getElementById('step3').classList.remove('locked');
+                        document.getElementById('step3').classList.add('active');
+                        document.getElementById('step3Check').classList.remove('pending');
+                        document.getElementById('step3Check').classList.add('current');
+                    }
+                    updateOnboardingProgress();
+                }
+                
+                // If both done, show congrats
+                if (step3Done && step4Done && !onboardingComplete) {
+                    onboardingStep = 5;
+                    updateOnboardingProgress();
+                    showCongrats();
+                }
+            }
+        }
+
+        function updateModeToggle(activeMode) {
+            const copilotPanel = document.getElementById('panelCopilot');
+            copilotPanel.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.classList.contains(activeMode)) btn.classList.add('active');
+            });
+            const assistantPanel = document.getElementById('panelAssistant');
+            assistantPanel.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.classList.contains(activeMode)) btn.classList.add('active');
+            });
+        }
+
+        function switchMode(m) {
+            if(isSplit) return;
+            mode = m;
+            document.getElementById('panelCopilot').style.display = m === 'copilot' ? 'flex' : 'none';
+            document.getElementById('panelAssistant').style.display = m === 'assistant' ? 'flex' : 'none';
+            updateModeToggle(m);
+            
+            const body = document.getElementById(m + 'Body');
+            if(!body.innerHTML) {
+                const wel = m === 'copilot' 
+                    ? `Bonjour ! <strong style="color:var(--copilot)">FixAIR Copilot</strong> prêt pour <strong>${names[brand]}</strong>.`
+                    : `<strong style="color:var(--assistant)">FixAIR Assistant</strong> prêt.`;
+                addMsg(m, 'ai', wel);
+            }
+        }
+
+        function toggleSplit() {
+            const cv = document.getElementById('chatView');
+            const div = document.getElementById('divider');
+            isSplit = !isSplit;
+            
+            // Update viewport and use full visible height
+            if (typeof setViewportHeight === 'function') setViewportHeight();
+            const visibleHeight = typeof getVisibleHeight === 'function' ? getVisibleHeight() : window.innerHeight;
+            cv.style.height = `${visibleHeight}px`;
+            
+            if(isSplit) {
+                cv.classList.remove('single');
+                cv.classList.add('split');
+                document.getElementById('panelCopilot').style.flexBasis = '50%';
+                document.getElementById('panelAssistant').style.flexBasis = '50%';
+                document.getElementById('panelCopilot').style.display = 'flex';
+                document.getElementById('panelAssistant').style.display = 'flex';
+                div.style.display = 'flex';
+                document.querySelectorAll('.h-btn[title="Mode split"]').forEach(b => b.classList.add('active'));
+                
+                const copilotPanel = document.getElementById('panelCopilot');
+                copilotPanel.querySelectorAll('.mode-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.classList.contains('copilot'));
+                });
+                const assistantPanel = document.getElementById('panelAssistant');
+                assistantPanel.querySelectorAll('.mode-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.classList.contains('assistant'));
+                });
+                
+                if(!document.getElementById('assistantBody').innerHTML) 
+                    addMsg('assistant', 'ai', `<strong style="color:var(--assistant)">FixAIR Assistant</strong> prêt.`);
+                if(!document.getElementById('copilotBody').innerHTML) 
+                    addMsg('copilot', 'ai', `<strong style="color:var(--copilot)">FixAIR Copilot</strong> prêt.`);
+            } else {
+                cv.classList.remove('split');
+                cv.classList.add('single');
+                document.getElementById('panelCopilot').style.flexBasis = '';
+                document.getElementById('panelAssistant').style.flexBasis = '';
+                document.getElementById('panelCopilot').style.display = mode === 'copilot' ? 'flex' : 'none';
+                document.getElementById('panelAssistant').style.display = mode === 'assistant' ? 'flex' : 'none';
+                div.style.display = 'none';
+                document.querySelectorAll('.h-btn[title="Mode split"]').forEach(b => b.classList.remove('active'));
+                updateModeToggle(mode);
+            }
+        }
+
+        function openReport() {
+            document.getElementById('reportSheet').classList.add('open');
+            document.getElementById('reportBackdrop').classList.add('show');
+        }
+        
+        function closeReport() {
+            document.getElementById('reportSheet').classList.remove('open');
+            document.getElementById('reportBackdrop').classList.remove('show');
+        }
+
+        function addMsg(panel, type, content) {
+            const body = document.getElementById(panel + 'Body');
+            const msg = document.createElement('div');
+            msg.className = 'msg ' + type;
+            const modeName = panel === 'copilot' ? 'Copilot' : 'Assistant';
+            
+            if(type === 'user') {
+                msg.innerHTML = `<div class="msg-bubble">${content}</div>`;
+            } else {
+                msg.innerHTML = `<div class="msg-bubble"><div class="msg-head"><div class="msg-avatar"><span class="icon"><svg><use href="#icon-air"/></svg></span></div><span class="msg-name">FixAIR ${modeName}</span></div>${content}<div class="msg-acts"><span class="msg-act" onclick="copyTxt(this)"><span class="icon"><svg><use href="#icon-copy"/></svg></span>Copier</span></div></div>`;
+            }
+            body.appendChild(msg);
+            body.scrollTop = body.scrollHeight;
+        }
+
+        // ==================== VOICE WAVEFORM SYSTEM ====================
+        const MAX_BARS = 400;
+        const MIN_HEIGHT = 3;
+        const MAX_HEIGHT = 28;
+        const SILENCE_THRESHOLD = 0.08;
+        
+        let recordings = {};
+        let audioContexts = {};
+        let analysers = {};
+        let waveformIntervals = {};
+        let voiceTimers = {};
+        let simulatedSpeaking = {};
+        let simulatedIntensityTarget = {};
+        let simulatedIntensityCurrent = {};
+        
+        // Handle input text changes - switch between mic and send
+        function handleChatInput(panel) {
+            const input = document.getElementById(panel + 'Input');
+            const btn = document.getElementById(panel + 'ActionBtn');
+            const hasText = input.value.trim().length > 0;
+            
+            if (hasText) {
+                btn.classList.add('has-text');
+                btn.classList.remove('recording');
+            } else {
+                btn.classList.remove('has-text');
+            }
+        }
+        
+        // Handle send (Enter key)
+        function handleSend(panel) {
+            const input = document.getElementById(panel + 'Input');
+            if (input.value.trim()) {
+                sendMsg(panel);
+            }
+        }
+        
+        // Handle action button click (mic/send/stop)
+        function handleAction(panel) {
+            const input = document.getElementById(panel + 'Input');
+            const btn = document.getElementById(panel + 'ActionBtn');
+            const hasText = input.value.trim().length > 0;
+            
+            if (btn.classList.contains('recording')) {
+                stopRecording(panel);
+            } else if (hasText) {
+                sendMsg(panel);
+                btn.classList.remove('has-text');
+            } else {
+                startRecording(panel);
+            }
+        }
+        
+        // Send message
+        function sendMsg(panel) {
+            const input = document.getElementById(panel + 'Input');
+            const btn = document.getElementById(panel + 'ActionBtn');
+            const text = input.value.trim();
+            if(!text) return;
+            addMsg(panel, 'user', text);
+            input.value = '';
+            btn.classList.remove('has-text');
+            
+            setTimeout(() => {
+                if(panel === 'copilot') {
+                    addMsg(panel, 'ai', `Pour <strong>${names[brand]}</strong>:<br>1. Vérifiez la connexion UI↔UE<br>2. Contrôlez le câblage F1-F2<br>3. Testez la carte électronique`);
+                } else {
+                    addMsg(panel, 'ai', `Rapport mis à jour !<br><strong>Client:</strong> ${text.split(' ')[0]}<br><strong>Intervention:</strong> ${text}`);
+                    document.getElementById('rClient').textContent = text.split(' ')[0];
+                    document.getElementById('rProblem').textContent = text;
+                }
+            }, 1000);
+        }
+        
+        // Get voice intensity from analyser
+        function getVoiceIntensity(panel) {
+            const analyser = analysers[panel];
+            if (!analyser) return 0;
+            
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(dataArray);
+            
+            let sum = 0;
+            for (let i = 0; i < dataArray.length; i++) {
+                sum += dataArray[i];
+            }
+            const average = sum / dataArray.length / 255;
+            
+            if (average < SILENCE_THRESHOLD) return 0;
+            return Math.min(1, (average - SILENCE_THRESHOLD) / (1 - SILENCE_THRESHOLD) * 2.0);
+        }
+        
+        // Simulated intensity when no mic
+        function getSimulatedIntensity(panel) {
+            if (simulatedIntensityCurrent[panel] === undefined) {
+                simulatedIntensityCurrent[panel] = 0;
+                simulatedIntensityTarget[panel] = 0;
+                simulatedSpeaking[panel] = false;
+            }
+            
+            const diff = simulatedIntensityTarget[panel] - simulatedIntensityCurrent[panel];
+            simulatedIntensityCurrent[panel] += diff * 0.3;
+            
+            if (simulatedSpeaking[panel] && simulatedIntensityCurrent[panel] > 0.1) {
+                return simulatedIntensityCurrent[panel] + (Math.random() - 0.5) * 0.3;
+            }
+            return Math.max(0, simulatedIntensityCurrent[panel]);
+        }
+        
+        // Update waveform - add bar and scroll left
+        function updateWaveform(panel) {
+            const barsContainer = document.getElementById(panel + 'Bars');
+            if (!barsContainer) return;
+            
+            const intensity = recordings[panel]?.simulated 
+                ? getSimulatedIntensity(panel) 
+                : getVoiceIntensity(panel);
+            
+            const height = MIN_HEIGHT + (intensity * (MAX_HEIGHT - MIN_HEIGHT));
+            
+            const bar = document.createElement('div');
+            bar.className = 'wave-bar';
+            bar.style.height = height + 'px';
+            barsContainer.appendChild(bar);
+            
+            while (barsContainer.children.length > MAX_BARS) {
+                barsContainer.removeChild(barsContainer.firstChild);
+            }
+        }
+        
+        // Start recording
+        async function startRecording(panel) {
+            const inputRow = document.getElementById(panel + 'InputRow');
+            const btn = document.getElementById(panel + 'ActionBtn');
+            const barsContainer = document.getElementById(panel + 'Bars');
+            
+            barsContainer.innerHTML = '';
+            simulatedIntensityCurrent[panel] = 0;
+            simulatedIntensityTarget[panel] = 0;
+            simulatedSpeaking[panel] = false;
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioContext.createMediaStreamSource(stream);
+                const analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+                analyser.smoothingTimeConstant = 0.4;
+                source.connect(analyser);
+                
+                audioContexts[panel] = audioContext;
+                analysers[panel] = analyser;
+                recordings[panel] = { stream, startTime: Date.now() };
+                
+            } catch (err) {
+                console.log('Mic access denied, using simulation');
+                recordings[panel] = { startTime: Date.now(), simulated: true };
+                
+                // Simulate speaking patterns
+                const simInterval = setInterval(() => {
+                    if (!recordings[panel]) { clearInterval(simInterval); return; }
+                    if (Math.random() < 0.15) {
+                        simulatedSpeaking[panel] = !simulatedSpeaking[panel];
+                    }
+                    simulatedIntensityTarget[panel] = simulatedSpeaking[panel] ? 0.4 + Math.random() * 0.6 : 0;
+                }, 250);
+            }
+            
+            inputRow.classList.add('recording');
+            btn.classList.add('recording');
+            btn.classList.remove('has-text');
+            
+            waveformIntervals[panel] = setInterval(() => updateWaveform(panel), 80);
+            
+            updateVoiceTimer(panel);
+            voiceTimers[panel] = setInterval(() => updateVoiceTimer(panel), 100);
+        }
+        
+        // Update timer
+        function updateVoiceTimer(panel) {
+            const timerEl = document.getElementById(panel + 'Timer');
+            const recording = recordings[panel];
+            if (!recording || !timerEl) return;
+            
+            const elapsed = (Date.now() - recording.startTime) / 1000;
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = Math.floor(elapsed % 60);
+            timerEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // Stop recording
+        function stopRecording(panel) {
+            const inputRow = document.getElementById(panel + 'InputRow');
+            const btn = document.getElementById(panel + 'ActionBtn');
+            const barsContainer = document.getElementById(panel + 'Bars');
+            
+            if (recordings[panel]?.stream) {
+                recordings[panel].stream.getTracks().forEach(track => track.stop());
+            }
+            if (audioContexts[panel]) {
+                audioContexts[panel].close();
+            }
+            if (waveformIntervals[panel]) {
+                clearInterval(waveformIntervals[panel]);
+            }
+            if (voiceTimers[panel]) {
+                clearInterval(voiceTimers[panel]);
+            }
+            
+            if (barsContainer) barsContainer.innerHTML = '';
+            
+            inputRow.classList.remove('recording');
+            btn.classList.remove('recording');
+            
+            delete recordings[panel];
+            delete audioContexts[panel];
+            delete analysers[panel];
+            
+            const timerEl = document.getElementById(panel + 'Timer');
+            if (timerEl) timerEl.textContent = '0:00';
+            
+            // Simulate transcription
+            setTimeout(() => {
+                const input = document.getElementById(panel + 'Input');
+                const transcriptions = [
+                    "Erreur E6 sur groupe extérieur Mitsubishi",
+                    "Le compresseur ne démarre pas correctement",
+                    "Code défaut F3 sur l'unité intérieure"
+                ];
+                input.value = transcriptions[Math.floor(Math.random() * transcriptions.length)];
+                handleChatInput(panel);
+                toast('🎤 Transcription terminée');
+            }, 300);
+        }
+
+        function voiceInput(panel) {
+            // Legacy function - now handled by handleAction
+            handleAction(panel);
+        }
+
+        function copyTxt(el) {
+            navigator.clipboard.writeText(el.closest('.msg-bubble').innerText);
+            toast('Copié !');
+        }
+
+        function toggleAttach(panel) {
+            closeAllAttach();
+            const menuId = 'attach' + panel.charAt(0).toUpperCase() + panel.slice(1);
+            document.getElementById(menuId).classList.toggle('show');
+        }
+
+        function closeAllAttach() {
+            document.querySelectorAll('.attach-menu').forEach(m => m.classList.remove('show'));
+        }
+
+        function attachAction(type, panel) {
+            closeAllAttach();
+            currentPhotoPanel = panel;
+            if(type === 'camera' || type === 'gallery') {
+                openPhotoModal();
+            } else {
+                toast('📎 Sélection fichier...');
+            }
+        }
+
+        function openPhotoModal() {
+            document.getElementById('photoModal').classList.add('active');
+        }
+
+        function closePhotoModal() {
+            document.getElementById('photoModal').classList.remove('active');
+        }
+
+        function handlePhotoOption(option) {
+            closePhotoModal();
+            if(option === 'extract') {
+                toast('🔍 Analyse de la photo...');
+                setTimeout(() => {
+                    addMsg(currentPhotoPanel, 'user', '📷 [Photo analysée]');
+                    setTimeout(() => {
+                        addMsg(currentPhotoPanel, 'ai', '<strong>Informations extraites:</strong><br>• Code erreur: <strong style="color:var(--copilot)">E6</strong><br>• Modèle: MXZ-4F72VA<br>• N° série: A1234567890');
+                    }, 800);
+                }, 1500);
+            } else {
+                toast('📋 Photo ajoutée au rapport');
+                addMsg(currentPhotoPanel, 'user', '📷 [Photo ajoutée au rapport]');
+            }
+        }
+
+        function openHotline() {
+            document.getElementById('hotlineView').classList.add('active');
+            resetHotline();
+        }
+
+        function closeHotline() {
+            document.getElementById('hotlineView').classList.remove('active');
+            if(isConnected) disconnectHotline();
+            resetHotline();
+        }
+
+        function resetHotline() {
+            isConnected = false;
+            isConnecting = false;
+            isDisconnecting = false;
+            chatOpen = false;
+            document.getElementById('pulseSphere').classList.remove('connected','connecting','disconnecting');
+            document.getElementById('hotlineWidget').classList.remove('chat-mode');
+            document.getElementById('hotlineChat').classList.remove('visible');
+            document.getElementById('toggleChat').classList.remove('visible','open');
+            document.getElementById('widgetLabel').textContent = 'Hotline';
+            document.getElementById('widgetSublabel').textContent = 'Appuyez pour parler';
+            document.getElementById('toggleText').textContent = 'Afficher';
+        }
+
+        function toggleHotline() {
+            if(isConnecting || isDisconnecting) return;
+            if(isConnected) disconnectHotline();
+            else connectHotline();
+        }
+
+        function connectHotline() {
+            if(isConnecting || isConnected) return;
+            isConnecting = true;
+            document.getElementById('pulseSphere').classList.add('connecting');
+            document.getElementById('widgetSublabel').textContent = 'Connexion...';
+            if(navigator.vibrate) navigator.vibrate(200);
+
+            setTimeout(() => {
+                isConnecting = false;
+                isConnected = true;
+                document.getElementById('pulseSphere').classList.remove('connecting');
+                document.getElementById('pulseSphere').classList.add('connected');
+                document.getElementById('widgetSublabel').textContent = 'Appuyez pour terminer';
+                document.getElementById('toggleChat').classList.add('visible');
+
+                setTimeout(() => {
+                    if(!chatOpen) toggleChatView();
+                    setTimeout(() => {
+                        addHotlineMessage('Bonjour ! Je suis l\'assistant ' + names[brand] + '. Comment puis-je vous aider ?', 'ai');
+                    }, 500);
+                }, 800);
+            }, 2500);
+        }
+
+        function disconnectHotline() {
+            if(!isConnected || isDisconnecting) return;
+            isDisconnecting = true;
+            isConnected = false;
+            document.getElementById('pulseSphere').classList.remove('connected');
+            document.getElementById('pulseSphere').classList.add('disconnecting');
+            document.getElementById('widgetSublabel').textContent = 'Fin...';
+
+            setTimeout(() => {
+                isDisconnecting = false;
+                document.getElementById('pulseSphere').classList.remove('disconnecting');
+                document.getElementById('widgetSublabel').textContent = 'Appuyez pour parler';
+                if(chatOpen) {
+                    document.getElementById('hotlineChat').classList.remove('visible');
+                    document.getElementById('toggleChat').classList.remove('open');
+                    document.getElementById('toggleText').textContent = 'Afficher';
+                    chatOpen = false;
+                }
+                document.getElementById('hotlineWidget').classList.remove('chat-mode');
+            }, 2500);
+        }
+
+        function toggleChatView() {
+            chatOpen = !chatOpen;
+            if(chatOpen) {
+                document.getElementById('hotlineChat').classList.add('visible');
+                document.getElementById('toggleChat').classList.add('open');
+                document.getElementById('toggleText').textContent = 'Masquer';
+                document.getElementById('hotlineWidget').classList.add('chat-mode');
+            } else {
+                document.getElementById('hotlineChat').classList.remove('visible');
+                document.getElementById('toggleChat').classList.remove('open');
+                document.getElementById('toggleText').textContent = 'Afficher';
+                document.getElementById('hotlineWidget').classList.remove('chat-mode');
+            }
+        }
+
+        function addHotlineMessage(text, sender) {
+            const empty = document.getElementById('chatEmpty');
+            if(empty) empty.style.display = 'none';
+            
+            const wrapper = document.getElementById('messagesWrapper');
+            const msg = document.createElement('div');
+            msg.className = 'hotline-msg ' + sender;
+            const now = new Date();
+            const time = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            const label = sender === 'user' ? 'Vous' : names[brand];
+            msg.innerHTML = `<span class="msg-label">${label}</span><div class="msg-bubble">${text}</div><span class="msg-time">${time}</span>`;
+            wrapper.appendChild(msg);
+            document.getElementById('hotlineChatMessages').scrollTop = document.getElementById('hotlineChatMessages').scrollHeight;
+        }
+
+        let toastTimeout = null;
+        function toast(m) {
+            const t = document.getElementById('toast');
+            t.textContent = m;
+            t.classList.add('show');
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                t.classList.remove('show');
+                toastTimeout = null;
+            }, 2000);
+        }
+
+        const divider = document.getElementById('divider');
+        const pC = document.getElementById('panelCopilot');
+        const pA = document.getElementById('panelAssistant');
+        let isDrag = false;
+
+        divider.addEventListener('mousedown', startDrag);
+        divider.addEventListener('touchstart', startDrag, {passive: false});
+
+        function startDrag(e) {
+            if(!isSplit) return;
+            isDrag = true;
+            divider.classList.add('dragging');
+            document.body.style.cursor = window.innerWidth > 767 ? 'col-resize' : 'row-resize';
+            document.body.style.userSelect = 'none';
+            e.preventDefault();
+        }
+
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('touchmove', drag, {passive: false});
+
+        function drag(e) {
+            if(!isDrag) return;
+            e.preventDefault();
+            const cv = document.getElementById('chatView');
+            const rect = cv.getBoundingClientRect();
+            const isHorizontal = window.innerWidth > 767;
+            
+            let pos, size, offset, pct;
+            
+            if (isHorizontal) {
+                // Desktop: horizontal split
+                pos = e.touches ? e.touches[0].clientX : e.clientX;
+                size = rect.width;
+                offset = pos - rect.left;
+            } else {
+                // Mobile: vertical split
+                pos = e.touches ? e.touches[0].clientY : e.clientY;
+                size = rect.height;
+                offset = pos - rect.top;
+            }
+            
+            pct = Math.max(25, Math.min(75, (offset / size) * 100));
+            pC.style.flexBasis = pct + '%';
+            pA.style.flexBasis = (100 - pct) + '%';
+        }
+
+        document.addEventListener('mouseup', stopDrag);
+        document.addEventListener('touchend', stopDrag);
+
+        function stopDrag() {
+            if(!isDrag) return;
+            isDrag = false;
+            divider.classList.remove('dragging');
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        }
+
+        let touchX = 0;
+        document.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; });
+        document.addEventListener('touchend', e => {
+            if(!document.getElementById('chatView').classList.contains('active') || isSplit || isDrag) return;
+            const diff = e.changedTouches[0].clientX - touchX;
+            if(Math.abs(diff) > 80) {
+                if(diff > 0 && mode === 'assistant') switchMode('copilot');
+                else if(diff < 0 && mode === 'copilot') switchMode('assistant');
+            }
+        });
+
+        document.addEventListener('click', e => {
+            if(!e.target.closest('.plus-btn') && !e.target.closest('.attach-menu')) {
+                closeAllAttach();
+            }
+            if(!e.target.closest('.brand-pill')) {
+                closeBrandDropdown();
+            }
+        });
+
+        // Reset split view on resize to prevent layout issues
+        window.addEventListener('resize', () => {
+            if (isSplit) {
+                document.getElementById('panelCopilot').style.flexBasis = '50%';
+                document.getElementById('panelAssistant').style.flexBasis = '50%';
+            }
+        });
+
+        // Safari keyboard fix - scroll input into view on focus
+        function handleInputFocus(e) {
+            const input = e.target;
+            setTimeout(() => {
+                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+        }
+        
+        // Apply to all login inputs
+        document.querySelectorAll('.login-input').forEach(input => {
+            input.addEventListener('focus', handleInputFocus);
+        });
+        
+        // Apply to chat inputs
+        document.querySelectorAll('.input-text').forEach(input => {
+            input.addEventListener('focus', handleInputFocus);
+        });
+
+        // Additional viewport listeners for orientation and visualViewport
+        window.addEventListener('orientationchange', () => {
+            setTimeout(setViewportHeight, 100);
+        });
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', setViewportHeight);
+        }
+    </script>
+    
+    </div><!-- End app-wrapper -->
+    
+    <!-- Gap cover: This covers any gap that might appear from iframe/embed issues -->
+    <div id="gapCover" style="
+        position: fixed;
+        bottom: -100px;
+        left: 0;
+        right: 0;
+        height: 200px;
+        background: var(--bg, #0f1217);
+        z-index: -1;
+        pointer-events: none;
+    "></div>
+</body>
+</html>
