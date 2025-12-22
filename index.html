@@ -30,457 +30,25 @@
             --msg-user-bg: rgba(255,255,255,0.06);
             --msg-ai-bg: transparent;
             --shadow-color: rgba(0,0,0,0.3);
-            --scrollbar-thumb: rgba(255, 255, 255, 0.15);
-            --scrollbar-thumb-hover: rgba(255, 255, 255, 0.25);
-            --scrollbar-track: transparent;
         }
         
         /* LIGHT THEME */
         [data-theme="light"] {
-            --bg: #F8FAFC;
-            --bg-secondary: #FFFFFF;
-            --card: #FFFFFF;
+            --bg: #f8fafc;
+            --bg-secondary: #ffffff;
+            --card: rgba(0, 0, 0, 0.02);
             --border: rgba(0, 0, 0, 0.08);
-            --text: #1E293B;
-            --text-dim: #64748B;
+            --text: rgba(0, 0, 0, 0.9);
+            --text-dim: rgba(0, 0, 0, 0.45);
             --grid-color: rgba(0,0,0,0.03);
-            --input-bg: #FFFFFF;
+            --input-bg: rgba(0,0,0,0.03);
             --msg-user-bg: rgba(0,0,0,0.04);
             --msg-ai-bg: transparent;
-            --shadow-color: rgba(0,0,0,0.08);
+            --shadow-color: rgba(0,0,0,0.1);
             --copilot-bg: rgba(255, 107, 53, 0.1);
             --copilot-border: rgba(255, 107, 53, 0.25);
             --assistant-bg: rgba(34, 197, 94, 0.1);
             --assistant-border: rgba(34, 197, 94, 0.25);
-            --assistant: #16a34a;
-            --hotline: #dc2626;
-            --scrollbar-thumb: rgba(0, 0, 0, 0.15);
-            --scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
-            --scrollbar-track: transparent;
-        }
-        
-        /* ==================== SCROLLBAR STYLING ==================== */
-        /* Firefox scrollbar */
-        * {
-            scrollbar-width: thin;
-            scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
-        }
-        
-        /* Webkit scrollbar (Chrome, Safari, Edge) */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: var(--scrollbar-track);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: var(--scrollbar-thumb);
-            border-radius: 3px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--scrollbar-thumb-hover);
-        }
-        ::-webkit-scrollbar-corner {
-            background: transparent;
-        }
-        
-        /* Hide scrollbar for specific elements while keeping scroll functionality */
-        .brand-select-row::-webkit-scrollbar,
-        .brand-dropdown::-webkit-scrollbar {
-            display: none;
-        }
-        .brand-select-row,
-        .brand-dropdown {
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        }
-        
-        /* ==================== LIGHT THEME COMPONENT OVERRIDES ==================== */
-        [data-theme="light"] .nav {
-            background: rgba(255,255,255,0.98) !important;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
-        }
-        [data-theme="light"] .app-header {
-            background: linear-gradient(180deg, rgba(248,250,252,0.98), rgba(248,250,252,0.8), transparent) !important;
-        }
-        [data-theme="light"] .login-bar,
-        [data-theme="light"] .brand-pill,
-        [data-theme="light"] .proj,
-        [data-theme="light"] .form-input,
-        [data-theme="light"] .brand-select-row {
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-        }
-        [data-theme="light"] .proj:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
-        [data-theme="light"] .brand-dropdown {
-            background: rgba(255,255,255,0.98);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-        }
-        [data-theme="light"] .brand-chip:hover,
-        [data-theme="light"] .brand-dropdown-item:hover {
-            background: rgba(0,0,0,0.04);
-        }
-        [data-theme="light"] .login-input::placeholder,
-        [data-theme="light"] .input-text::placeholder,
-        [data-theme="light"] .form-input::placeholder {
-            color: #94A3B8;
-        }
-        [data-theme="light"] .panel-header,
-        [data-theme="light"] .profile-header {
-            background: rgba(255,255,255,0.95) !important;
-        }
-        [data-theme="light"] .input-row {
-            background: var(--card);
-            border-color: rgba(0,0,0,0.08);
-        }
-        [data-theme="light"] .input-row:focus-within {
-            border-color: var(--copilot);
-            box-shadow: 0 0 0 3px rgba(255,107,53,0.1);
-        }
-        [data-theme="light"] .report-sheet {
-            background: rgba(255,255,255,0.98) !important;
-        }
-        [data-theme="light"] .photo-modal-content {
-            background: rgba(255,255,255,0.98);
-        }
-        [data-theme="light"] .attach-menu {
-            background: rgba(255,255,255,0.98);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-        }
-        [data-theme="light"] .attach-opt:hover {
-            background: rgba(0,0,0,0.04);
-        }
-        [data-theme="light"] .toast {
-            background: rgba(255,255,255,0.98);
-        }
-        [data-theme="light"] .toggle-chat {
-            background: rgba(255,255,255,0.95);
-            border-color: rgba(0,0,0,0.08);
-        }
-        [data-theme="light"] .toggle-chat:hover {
-            background: rgba(255,255,255,0.98);
-        }
-        [data-theme="light"] .h-btn {
-            background: var(--card);
-            border-color: rgba(0,0,0,0.08);
-        }
-        [data-theme="light"] .h-btn:hover {
-            background: rgba(0,0,0,0.04);
-        }
-        [data-theme="light"] .msg-act:hover {
-            background: rgba(0,0,0,0.04);
-        }
-        [data-theme="light"] .divider:hover,
-        [data-theme="light"] .divider.dragging {
-            background: rgba(0,0,0,0.12);
-        }
-        [data-theme="light"] .ring-bg {
-            stroke: rgba(0,0,0,0.06);
-        }
-        [data-theme="light"] .panel-back:hover,
-        [data-theme="light"] .profile-back:hover {
-            background: rgba(0,0,0,0.06);
-        }
-        [data-theme="light"] .hotline-close {
-            background: var(--card);
-            border-color: var(--border);
-        }
-        [data-theme="light"] .hotline-close:hover {
-            background: rgba(0,0,0,0.04);
-        }
-        [data-theme="light"] .onboarding-step {
-            background: rgba(255,255,255,0.98);
-        }
-        [data-theme="light"] .onboarding-step:hover {
-            background: rgba(0,0,0,0.02);
-        }
-        [data-theme="light"] .step-check.pending {
-            background: rgba(0,0,0,0.03);
-            border-color: rgba(0,0,0,0.12);
-        }
-        [data-theme="light"] .brand-select-option {
-            background: rgba(0,0,0,0.02);
-            border-color: rgba(0,0,0,0.06);
-        }
-        [data-theme="light"] .brand-select-option:hover {
-            background: rgba(0,0,0,0.04);
-        }
-        [data-theme="light"] .congrats-close {
-            background: rgba(0,0,0,0.03);
-            border-color: rgba(0,0,0,0.08);
-        }
-        [data-theme="light"] .congrats-close:hover {
-            background: rgba(0,0,0,0.06);
-        }
-        [data-theme="light"] .photo-option {
-            background: rgba(0,0,0,0.02);
-            border-color: rgba(0,0,0,0.06);
-        }
-        [data-theme="light"] .photo-option:hover {
-            background: rgba(0,0,0,0.04);
-        }
-        [data-theme="light"] .login-back {
-            background: rgba(0,0,0,0.04);
-        }
-        [data-theme="light"] .login-back:hover {
-            background: rgba(0,0,0,0.08);
-        }
-        [data-theme="light"] .sphere-fog-container {
-            background: rgba(255,255,255,0.3);
-        }
-        [data-theme="light"] .form-input:focus {
-            border-color: var(--copilot);
-            box-shadow: 0 0 0 3px rgba(255,107,53,0.1);
-        }
-        [data-theme="light"] .login-bar {
-            background: var(--card);
-        }
-        [data-theme="light"] .login-input:-webkit-autofill,
-        [data-theme="light"] .login-input:-webkit-autofill:hover,
-        [data-theme="light"] .login-input:-webkit-autofill:focus,
-        [data-theme="light"] .login-input:-webkit-autofill:active {
-            -webkit-box-shadow: 0 0 0 1000px var(--card) inset !important;
-            -webkit-text-fill-color: var(--text) !important;
-        }
-        
-        /* ==================== LIGHT THEME - NAVIGATION & ICONS ==================== */
-        [data-theme="light"] .nav-item {
-            color: #64748B;
-        }
-        [data-theme="light"] .nav-item:hover {
-            color: #1E293B;
-        }
-        [data-theme="light"] .nav-item.active {
-            color: var(--copilot);
-        }
-        
-        /* ==================== LIGHT THEME - BACK BUTTONS & ARROWS ==================== */
-        [data-theme="light"] .panel-back,
-        [data-theme="light"] .profile-back,
-        [data-theme="light"] .hotline-back,
-        [data-theme="light"] .report-close {
-            color: #64748B;
-            background: rgba(0,0,0,0.04);
-            border-color: rgba(0,0,0,0.08);
-        }
-        [data-theme="light"] .panel-back .icon,
-        [data-theme="light"] .profile-back .icon,
-        [data-theme="light"] .hotline-back .icon,
-        [data-theme="light"] .report-close .icon {
-            color: #64748B;
-        }
-        [data-theme="light"] .panel-back:hover .icon,
-        [data-theme="light"] .profile-back:hover .icon {
-            color: #1E293B;
-        }
-        
-        /* ==================== LIGHT THEME - BRAND CHIPS & DROPDOWN ==================== */
-        [data-theme="light"] .brand-chip {
-            color: #64748B;
-            border-color: rgba(0,0,0,0.12);
-        }
-        [data-theme="light"] .brand-chip.active {
-            color: var(--copilot);
-        }
-        [data-theme="light"] .brand-pill-text {
-            color: #1E293B;
-        }
-        [data-theme="light"] .brand-dropdown-name {
-            color: #1E293B;
-        }
-        [data-theme="light"] .brand-dropdown-item.disabled .brand-dropdown-name {
-            color: #78909C;
-        }
-        
-        /* ==================== LIGHT THEME - TOGGLE CARDS (Copilot/Assistant) ==================== */
-        [data-theme="light"] .toggle-card {
-            background: #FFFFFF !important;
-            border: 1px solid rgba(0,0,0,0.1);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        }
-        [data-theme="light"] .toggle-card:hover {
-            background: #F1F5F9 !important;
-            border-color: rgba(0,0,0,0.15);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-        }
-        [data-theme="light"] .toggle-card:active {
-            background: #E2E8F0 !important;
-        }
-        [data-theme="light"] .toggle-card-title {
-            color: #1E293B !important;
-        }
-        [data-theme="light"] .toggle-card:hover .toggle-card-title,
-        [data-theme="light"] .toggle-card:active .toggle-card-title {
-            color: #1E293B !important;
-        }
-        [data-theme="light"] .toggle-card-desc {
-            color: #64748B;
-        }
-        [data-theme="light"] .toggle-card-arrow {
-            color: #94A3B8;
-        }
-        [data-theme="light"] .toggle-card:hover .toggle-card-arrow {
-            color: #64748B;
-        }
-        /* Icon backgrounds matching proj-icon style */
-        [data-theme="light"] .toggle-card.copilot .toggle-card-icon {
-            background: var(--copilot-bg);
-            color: var(--copilot);
-        }
-        [data-theme="light"] .toggle-card.assistant .toggle-card-icon {
-            background: var(--assistant-bg);
-            color: var(--assistant);
-        }
-        
-        /* ==================== LIGHT THEME - MODE TOGGLE ==================== */
-        [data-theme="light"] .mode-btn {
-            color: #64748B;
-            background: rgba(0,0,0,0.04);
-        }
-        [data-theme="light"] .mode-btn .mode-icon {
-            color: #94A3B8;
-        }
-        [data-theme="light"] .mode-btn.copilot.active {
-            background: var(--copilot-bg);
-            color: var(--copilot);
-        }
-        [data-theme="light"] .mode-btn.copilot.active .mode-icon {
-            color: var(--copilot);
-        }
-        [data-theme="light"] .mode-btn.assistant.active {
-            background: var(--assistant-bg);
-            color: var(--assistant);
-        }
-        [data-theme="light"] .mode-btn.assistant.active .mode-icon {
-            color: var(--assistant);
-        }
-        
-        /* ==================== LIGHT THEME - PLUS BUTTON & ACTIONS ==================== */
-        [data-theme="light"] .plus-btn {
-            color: #64748B;
-            background: #F8FAFC;
-            border-color: rgba(0,0,0,0.1);
-        }
-        [data-theme="light"] .panel.copilot .plus-btn .icon {
-            color: var(--copilot);
-        }
-        [data-theme="light"] .panel.assistant .plus-btn .icon {
-            color: var(--assistant);
-        }
-        [data-theme="light"] .plus-btn:hover {
-            background: #F1F5F9;
-        }
-        
-        /* ==================== LIGHT THEME - MESSAGE ACTIONS (Copy, etc) ==================== */
-        [data-theme="light"] .msg-act {
-            color: #64748B;
-            background: rgba(0,0,0,0.02);
-            border-color: rgba(0,0,0,0.08);
-        }
-        [data-theme="light"] .msg-act .icon {
-            color: #64748B;
-        }
-        [data-theme="light"] .msg-act:hover {
-            color: #1E293B;
-            background: rgba(0,0,0,0.05);
-        }
-        
-        /* ==================== LIGHT THEME - HEADER BUTTONS ==================== */
-        [data-theme="light"] .h-btn {
-            color: #64748B;
-            background: rgba(0,0,0,0.02);
-            border-color: rgba(0,0,0,0.08);
-        }
-        [data-theme="light"] .h-btn .icon {
-            color: #64748B;
-        }
-        [data-theme="light"] .h-btn:hover {
-            color: #1E293B;
-            background: rgba(0,0,0,0.05);
-        }
-        [data-theme="light"] .h-btn:hover .icon {
-            color: #1E293B;
-        }
-        
-        /* ==================== LIGHT THEME - REPORT SHEET ==================== */
-        [data-theme="light"] .report-close {
-            color: #64748B;
-        }
-        [data-theme="light"] .report-close .icon {
-            color: #64748B;
-        }
-        [data-theme="light"] .r-btn.secondary {
-            color: #64748B;
-            background: rgba(0,0,0,0.02);
-            border-color: rgba(0,0,0,0.08);
-        }
-        [data-theme="light"] .r-btn.secondary .icon {
-            color: #64748B;
-        }
-        [data-theme="light"] .r-label {
-            color: #64748B;
-        }
-        [data-theme="light"] .r-value {
-            color: #1E293B;
-        }
-        [data-theme="light"] .r-section-title {
-            color: #1E293B;
-        }
-        
-        /* ==================== LIGHT THEME - PHOTO OPTIONS ==================== */
-        [data-theme="light"] .photo-option-title {
-            color: #1E293B;
-        }
-        [data-theme="light"] .photo-option-desc {
-            color: #64748B;
-        }
-        
-        /* ==================== LIGHT THEME - ATTACH MENU ==================== */
-        [data-theme="light"] .attach-opt {
-            color: #1E293B;
-        }
-        [data-theme="light"] .attach-opt .icon {
-            color: var(--mode-color);
-        }
-        
-        /* ==================== LIGHT THEME - HOTLINE ==================== */
-        [data-theme="light"] .hotline-close {
-            color: #64748B;
-            background: #FFFFFF;
-            border-color: rgba(0,0,0,0.08);
-        }
-        [data-theme="light"] .hotline-close .icon {
-            color: #64748B;
-        }
-        [data-theme="light"] .hotline-close:hover {
-            color: #1E293B;
-        }
-        
-        /* ==================== LIGHT THEME - PROJECT CARDS ==================== */
-        [data-theme="light"] .proj {
-            background: #FFFFFF !important;
-            border-color: rgba(0,0,0,0.08);
-        }
-        [data-theme="light"] .proj:hover {
-            background: #F8FAFC !important;
-            border-color: rgba(0,0,0,0.12);
-        }
-        [data-theme="light"] .proj:active {
-            background: #F1F5F9 !important;
-        }
-        [data-theme="light"] .proj-title {
-            color: #1E293B;
-        }
-        [data-theme="light"] .proj-meta,
-        [data-theme="light"] .proj-time {
-            color: #64748B;
-        }
-        
-        /* ==================== LIGHT THEME - PROJECTS PAGE ==================== */
-        [data-theme="light"] .projects-page-header::after {
-            background: linear-gradient(to bottom, #F8FAFC 0%, #F8FAFC 20%, transparent 100%);
         }
         
         /* Toggle Switch Styles */
@@ -682,7 +250,7 @@
         .brand-pill-arrow { width: 10px; height: 10px; color: rgba(255,255,255,0.3); transition: transform 0.2s; }
         .brand-pill.open .brand-pill-arrow { transform: rotate(180deg); }
         
-        .brand-dropdown { position: absolute; top: calc(100% + 6px); right: 0; min-width: 160px; max-height: 280px; overflow-y: auto; background: rgba(20,24,32,0.98); border: 1px solid var(--border); border-radius: 12px; padding: 6px; display: none; flex-direction: column; gap: 2px; z-index: 200; box-shadow: 0 8px 24px rgba(0,0,0,0.4); backdrop-filter: blur(20px); }
+        .brand-dropdown { position: absolute; top: calc(100% + 6px); right: 0; min-width: 160px; background: rgba(20,24,32,0.98); border: 1px solid var(--border); border-radius: 12px; padding: 6px; display: none; flex-direction: column; gap: 2px; z-index: 200; box-shadow: 0 8px 24px rgba(0,0,0,0.4); backdrop-filter: blur(20px); }
         .brand-dropdown.show { display: flex; }
         .brand-dropdown-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
         .brand-dropdown-item:hover { background: rgba(255,255,255,0.06); }
@@ -695,7 +263,7 @@
         .brand-dropdown-item.disabled .brand-dropdown-name { font-size: 11px; color: rgba(255,255,255,0.3); }
         .brand-dropdown-check { width: 14px; height: 14px; color: #22c55e; opacity: 0; }
         .brand-dropdown-item.selected .brand-dropdown-check { opacity: 1; }
-        .brand-dropdown-divider { height: 1px; background: var(--border); margin: 4px 0; position: sticky; top: 0; z-index: 1; }
+        .brand-dropdown-divider { height: 1px; background: var(--border); margin: 4px 0; }
 
         .app-content { height: 100%; padding-top: calc(56px + env(safe-area-inset-top)); padding-bottom: calc(70px + env(safe-area-inset-bottom)); overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; align-items: center; }
         
@@ -898,46 +466,12 @@
         @keyframes navWave { 0%, 100% { transform: scaleY(0.6); } 50% { transform: scaleY(1); } }
 
         /* ==================== PROJECTS PAGE ==================== */
-        .projects-page { display: none; flex-direction: column; height: 100%; position: relative; }
+        .projects-page { display: none; }
         .projects-page.active { display: flex; }
-        .projects-page-header { 
-            margin-bottom: 0; 
-            position: sticky; 
-            top: 0; 
-            background: transparent;
-            padding-top: 8px; 
-            padding-bottom: 16px; 
-            z-index: 10; 
-        }
-        /* Gradient fade effect below header */
-        .projects-page-header::after {
-            content: '';
-            position: absolute;
-            left: -20px;
-            right: -20px;
-            bottom: -50px;
-            height: 50px;
-            background: linear-gradient(to bottom, var(--bg) 0%, var(--bg) 20%, transparent 100%);
-            pointer-events: none;
-            z-index: 9;
-        }
+        .projects-page-header { margin-bottom: 8px; }
         .projects-page-title { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
         .projects-page-sub { font-size: 12px; color: var(--text-dim); }
-        .projects-list { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 10px; 
-            flex: 1; 
-            overflow-y: auto; 
-            padding-top: 10px;
-            padding-bottom: calc(90px + env(safe-area-inset-bottom));
-            /* Hide scrollbar completely */
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        }
-        .projects-list::-webkit-scrollbar {
-            display: none;
-        }
+        .projects-list { display: flex; flex-direction: column; gap: 10px; }
 
         /* ==================== CHAT VIEW (FULL WIDTH) ==================== */
         .chat-view { 
@@ -1012,130 +546,13 @@
             min-height: 0;
             -webkit-overflow-scrolling: touch;
         }
-        .msg { max-width: 90%; animation: msgIn 0.3s ease; }
+        .msg { max-width: 85%; animation: msgIn 0.3s ease; }
         @keyframes msgIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .msg.user { align-self: flex-end; max-width: 80%; }
+        .msg.user { align-self: flex-end; }
         .msg.ai { align-self: flex-start; }
-        
-        /* Report messages take full width like A4 */
-        .msg.ai.report { max-width: 98%; width: 98%; }
-        .msg.ai.report .msg-bubble {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 28px 32px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.2);
-        }
-        .msg.ai.report .msg-bubble h2 { 
-            font-size: 18px; 
-            border-bottom: 2px solid var(--mode-color);
-            padding-bottom: 8px;
-            margin-top: 24px;
-        }
-        .msg.ai.report .msg-bubble h2:first-of-type { margin-top: 16px; }
-        .msg.ai.report .msg-bubble table { 
-            font-size: 13px; 
-            margin: 12px 0;
-        }
-        .msg.ai.report .msg-bubble th { 
-            background: rgba(var(--mode-color-rgb), 0.1); 
-            color: var(--mode-color);
-        }
-        .msg.ai.report .msg-bubble td:first-child { 
-            font-weight: 600;
-            width: 40%;
-            color: var(--text-dim);
-        }
-        .msg.ai.report .msg-bubble hr {
-            margin: 20px 0;
-            border-top: 1px dashed var(--border);
-        }
-        .msg.ai.report .msg-bubble strong {
-            color: var(--mode-color);
-        }
-        
-        /* Light theme report */
-        [data-theme="light"] .msg.ai.report .msg-bubble {
-            background: #FFFFFF;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-        }
-        [data-theme="light"] .msg.ai.report .msg-bubble th { 
-            background: rgba(16, 185, 129, 0.1); 
-        }
-        
         .msg-bubble { padding: 12px 16px; border-radius: 16px; font-size: 13px; line-height: 1.5; }
         .msg.user .msg-bubble { background: linear-gradient(135deg, var(--mode-color), color-mix(in srgb, var(--mode-color) 80%, black)); color: white; border-bottom-right-radius: 4px; }
         .msg.ai .msg-bubble { background: var(--card); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
-        
-        /* Markdown styling in AI messages */
-        .msg.ai .msg-bubble h1, .msg.ai .msg-bubble h2, .msg.ai .msg-bubble h3 { 
-            color: var(--mode-color); 
-            font-weight: 700; 
-            margin: 16px 0 8px 0;
-            line-height: 1.3;
-        }
-        .msg.ai .msg-bubble h1:first-child, .msg.ai .msg-bubble h2:first-child, .msg.ai .msg-bubble h3:first-child { margin-top: 0; }
-        .msg.ai .msg-bubble h1 { font-size: 18px; }
-        .msg.ai .msg-bubble h2 { font-size: 16px; }
-        .msg.ai .msg-bubble h3 { font-size: 14px; }
-        .msg.ai .msg-bubble p { margin: 8px 0; }
-        .msg.ai .msg-bubble ul, .msg.ai .msg-bubble ol { margin: 8px 0; padding-left: 20px; }
-        .msg.ai .msg-bubble li { margin: 4px 0; }
-        .msg.ai .msg-bubble strong { font-weight: 600; color: var(--text); }
-        .msg.ai .msg-bubble em { font-style: italic; }
-        .msg.ai .msg-bubble code { 
-            background: rgba(255,255,255,0.1); 
-            padding: 2px 6px; 
-            border-radius: 4px; 
-            font-family: monospace; 
-            font-size: 12px; 
-        }
-        .msg.ai .msg-bubble pre { 
-            background: rgba(0,0,0,0.3); 
-            padding: 12px; 
-            border-radius: 8px; 
-            overflow-x: auto; 
-            margin: 8px 0;
-        }
-        .msg.ai .msg-bubble pre code { background: transparent; padding: 0; }
-        .msg.ai .msg-bubble hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
-        .msg.ai .msg-bubble blockquote { 
-            border-left: 3px solid var(--mode-color); 
-            padding-left: 12px; 
-            margin: 8px 0; 
-            color: var(--text-dim); 
-        }
-        .msg.ai .msg-bubble table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 12px; }
-        .msg.ai .msg-bubble th, .msg.ai .msg-bubble td { border: 1px solid var(--border); padding: 8px; text-align: left; }
-        .msg.ai .msg-bubble th { background: rgba(255,255,255,0.05); font-weight: 600; }
-        
-        /* Light theme markdown overrides */
-        [data-theme="light"] .msg.ai .msg-bubble h1,
-        [data-theme="light"] .msg.ai .msg-bubble h2,
-        [data-theme="light"] .msg.ai .msg-bubble h3 {
-            color: var(--mode-color);
-        }
-        [data-theme="light"] .msg.ai .msg-bubble strong { color: #1E293B; }
-        [data-theme="light"] .msg.ai .msg-bubble code { background: rgba(0,0,0,0.06); }
-        [data-theme="light"] .msg.ai .msg-bubble pre { background: #F1F5F9; }
-        
-        /* Loading indicator for messages */
-        .msg-loading { display: flex; gap: 4px; padding: 8px 0; }
-        .msg-loading span { 
-            width: 8px; 
-            height: 8px; 
-            background: var(--mode-color); 
-            border-radius: 50%; 
-            animation: msgBounce 1.4s ease-in-out infinite both;
-            opacity: 0.6;
-        }
-        .msg-loading span:nth-child(1) { animation-delay: -0.32s; }
-        .msg-loading span:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes msgBounce {
-            0%, 80%, 100% { transform: scale(0.6); }
-            40% { transform: scale(1); }
-        }
-        
         .msg-head { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
         .msg-avatar { width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(135deg, color-mix(in srgb, var(--mode-color) 70%, white), var(--mode-color)); display: flex; align-items: center; justify-content: center; }
         .msg-avatar .icon { width: 8px; height: 8px; color: white; }
@@ -1161,9 +578,6 @@
         .plus-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; z-index: 2; }
         .plus-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
         .plus-btn .icon { width: 16px; height: 16px; }
-        /* Plus icon color matches mode */
-        .panel.copilot .plus-btn .icon { color: var(--copilot); }
-        .panel.assistant .plus-btn .icon { color: var(--assistant); }
         
         /* Attach menu - positioned above input row */
         .attach-menu { position: absolute; bottom: 100%; left: 14px; margin-bottom: 4px; background: rgba(20,24,32,0.98); border: 1px solid var(--border); border-radius: 10px; padding: 4px; display: none; flex-direction: column; gap: 2px; min-width: 180px; z-index: 10; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
@@ -1351,8 +765,8 @@
         .toggle-chat.open .toggle-icon { transform: rotate(180deg); }
 
         /* TOAST */
-        .toast { position: fixed; top: max(12px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%) translateY(-100px); padding: 10px 20px; background: rgba(20,24,32,0.95); border: 1px solid var(--border); border-radius: 8px; font-size: 12px; z-index: 700; transition: transform 0.3s; pointer-events: none; }
-        .toast.show { transform: translateX(-50%) translateY(0); pointer-events: auto; }
+        .toast { position: fixed; top: max(12px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%) translateY(-60px); padding: 10px 20px; background: rgba(20,24,32,0.95); border: 1px solid var(--border); border-radius: 8px; font-size: 12px; z-index: 700; transition: transform 0.3s; }
+        .toast.show { transform: translateX(-50%) translateY(0); }
 
         @media (max-width: 768px) {
             .pulse-sphere { width: 120px; height: 120px; }
@@ -1436,10 +850,10 @@
         .onboarding-section:not(.hidden) ~ .homepage-content.active { display: none !important; }
         .profile-view { position: fixed; inset: 0; display: none; z-index: 200; background: var(--bg); background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px); background-size: 32px 32px; flex-direction: column; }
         .profile-view.active { display: flex; }
-        .profile-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; padding-top: max(14px, calc(env(safe-area-inset-top) + 6px)); flex-shrink: 0; border-bottom: 1px solid var(--border); background: var(--bg-secondary); }
-        .profile-back { width: 36px; height: 36px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .profile-header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; padding-top: max(10px, env(safe-area-inset-top)); flex-shrink: 0; border-bottom: 1px solid var(--border); background: var(--bg-secondary); }
+        .profile-back { width: 32px; height: 32px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .profile-back:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.8); }
-        .profile-back .icon { width: 16px; height: 16px; }
+        .profile-back .icon { width: 14px; height: 14px; }
         .profile-info { flex: 1; }
         .profile-title { font-size: 13px; font-weight: 600; color: var(--copilot); }
         .profile-subtitle { font-size: 10px; color: var(--text-dim); }
@@ -1712,10 +1126,6 @@
             -webkit-overflow-scrolling: touch;
             scroll-behavior: smooth;
         }
-        .projects-list {
-            -webkit-overflow-scrolling: touch;
-            scroll-behavior: smooth;
-        }
 
         /* ==================== MOBILE SPECIFIC FIXES ==================== */
         @media (max-width: 767px) {
@@ -1812,50 +1222,7 @@
             .home, .projects-page { 
                 max-width: 100%; 
                 padding: 16px;
-                padding-bottom: 0; /* Let projects-list handle the padding */
-            }
-            
-            /* Projects page mobile - full height scroll with fade effect */
-            /* Only apply these styles when projects-page is active */
-            .projects-page.active {
-                height: 100%;
-                display: flex;
-                flex-direction: column;
-                position: relative;
-            }
-            .projects-page-header {
-                background: transparent;
-                position: sticky;
-                top: 0;
-                z-index: 10;
-                padding-bottom: 12px;
-            }
-            .projects-page-header::after {
-                content: '';
-                position: absolute;
-                left: -16px;
-                right: -16px;
-                bottom: -50px;
-                height: 50px;
-                background: linear-gradient(to bottom, var(--bg) 0%, var(--bg) 20%, transparent 100%);
-                pointer-events: none;
-                z-index: 9;
-            }
-            .projects-list {
-                flex: 1;
-                overflow-y: auto;
-                padding-top: 10px;
-                padding-bottom: calc(90px + env(safe-area-inset-bottom, 20px)); /* Space for nav + extra */
-                margin-left: -16px;
-                margin-right: -16px;
-                padding-left: 16px;
-                padding-right: 16px;
-                /* Hide scrollbar completely */
-                scrollbar-width: none;
-                -ms-overflow-style: none;
-            }
-            .projects-list::-webkit-scrollbar {
-                display: none;
+                padding-bottom: calc(90px + env(safe-area-inset-bottom, 20px)); /* Space for nav */
             }
             
             /* NAV - only visible on home/projects/profile (hidden in chat via CSS selector) */
@@ -2067,7 +1434,7 @@
         <header class="app-header">
             <div class="header-inner">
                 <div class="header-left">
-                    <div class="header-logo-svg" onclick="goToHome()" style="cursor:pointer;"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
+                    <div class="header-logo-svg"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
                 </div>
                 <div class="brand-pill" id="brandPill" onclick="toggleBrandDropdown()">
                     <div class="brand-pill-dot" id="brandDot"></div>
@@ -3172,15 +2539,6 @@
             document.getElementById('homepageContent').classList.add('active');
         }
 
-        function goToHome() {
-            // Close any open views
-            closeChat();
-            closeProfile();
-            document.getElementById('hotlineView').classList.remove('active');
-            // Go to home page
-            showPage('home');
-        }
-
         function showPage(page) {
             currentPage = page;
             document.getElementById('homePage').style.display = page === 'home' ? 'flex' : 'none';
@@ -3394,22 +2752,13 @@
         function addMsg(panel, type, content) {
             const body = document.getElementById(panel + 'Body');
             const msg = document.createElement('div');
-            
-            // Detect if this is a report message (contains report keywords/headers)
-            const isReport = type === 'ai' && (
-                content.includes('RAPPORT D') || 
-                content.includes('📋 RAPPORT') ||
-                (content.includes('<h2>') && (content.includes('Client') || content.includes('Équipement')))
-            );
-            
-            msg.className = 'msg ' + type + (isReport ? ' report' : '');
+            msg.className = 'msg ' + type;
             const modeName = panel === 'copilot' ? 'Copilot' : 'Assistant';
-            const modeIcon = panel === 'copilot' ? '#icon-star' : '#icon-clipboard';
             
             if(type === 'user') {
                 msg.innerHTML = `<div class="msg-bubble">${content}</div>`;
             } else {
-                msg.innerHTML = `<div class="msg-bubble"><div class="msg-head"><div class="msg-avatar"><span class="icon"><svg><use href="${modeIcon}"/></svg></span></div><span class="msg-name">FixAIR ${modeName}</span></div>${content}<div class="msg-acts"><span class="msg-act" onclick="copyTxt(this)"><span class="icon"><svg><use href="#icon-copy"/></svg></span>Copier</span></div></div>`;
+                msg.innerHTML = `<div class="msg-bubble"><div class="msg-head"><div class="msg-avatar"><span class="icon"><svg><use href="#icon-air"/></svg></span></div><span class="msg-name">FixAIR ${modeName}</span></div>${content}<div class="msg-acts"><span class="msg-act" onclick="copyTxt(this)"><span class="icon"><svg><use href="#icon-copy"/></svg></span>Copier</span></div></div>`;
             }
             body.appendChild(msg);
             body.scrollTop = body.scrollHeight;
@@ -3469,106 +2818,26 @@
         }
         
         // Send message
-        // n8n Webhook URL
         const N8N_WEBHOOK_URL = 'https://cherhabil.app.n8n.cloud/webhook/fixair-assistant';
         
-        // Generate unique session IDs for memory (one per panel, persists during page session)
+        // Session IDs for memory
         const sessionIds = {
             copilot: 'copilot-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
             assistant: 'assistant-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9)
         };
         
-        // Simple markdown parser
-        function parseMarkdown(text) {
-            if (!text) return '';
-            
-            // Escape HTML first
-            let html = text
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;');
-            
-            // Headers
-            html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
-            html = html.replace(/^## (.*$)/gm, '<h2>$1</h2>');
-            html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
-            
-            // Bold and italic
-            html = html.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
-            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
-            html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
-            html = html.replace(/_(.*?)_/g, '<em>$1</em>');
-            
-            // Code blocks
-            html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
-            html = html.replace(/`(.*?)`/g, '<code>$1</code>');
-            
-            // Blockquotes
-            html = html.replace(/^> (.*$)/gm, '<blockquote>$1</blockquote>');
-            
-            // Horizontal rule
-            html = html.replace(/^---$/gm, '<hr>');
-            
-            // Unordered lists
-            html = html.replace(/^\s*[-*]\s+(.*$)/gm, '<li>$1</li>');
-            html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
-            
-            // Ordered lists
-            html = html.replace(/^\s*\d+\.\s+(.*$)/gm, '<li>$1</li>');
-            
-            // Paragraphs (double newlines)
-            html = html.replace(/\n\n+/g, '</p><p>');
-            
-            // Single newlines to <br>
-            html = html.replace(/\n/g, '<br>');
-            
-            // Wrap in paragraph if not already wrapped
-            if (!html.startsWith('<h') && !html.startsWith('<ul') && !html.startsWith('<ol') && !html.startsWith('<pre') && !html.startsWith('<blockquote')) {
-                html = '<p>' + html + '</p>';
-            }
-            
-            // Clean up empty paragraphs
-            html = html.replace(/<p><\/p>/g, '');
-            html = html.replace(/<p><br><\/p>/g, '');
-            
-            return html;
-        }
-        
-        // Add loading message
-        function addLoadingMsg(panel) {
-            const body = document.getElementById(panel + 'Body');
-            const msg = document.createElement('div');
-            msg.className = 'msg ai';
-            msg.id = 'loading-' + panel;
-            const modeName = panel === 'copilot' ? 'Copilot' : 'Assistant';
-            const modeIcon = panel === 'copilot' ? '#icon-star' : '#icon-clipboard';
-            msg.innerHTML = `<div class="msg-bubble"><div class="msg-head"><div class="msg-avatar"><span class="icon"><svg><use href="${modeIcon}"/></svg></span></div><span class="msg-name">FixAIR ${modeName}</span></div><div class="msg-loading"><span></span><span></span><span></span></div></div>`;
-            body.appendChild(msg);
-            body.scrollTop = body.scrollHeight;
-            return msg;
-        }
-        
-        // Remove loading message
-        function removeLoadingMsg(panel) {
-            const loading = document.getElementById('loading-' + panel);
-            if (loading) loading.remove();
-        }
-        
-        // Conversation history per panel
+        // Conversation history
         const chatHistory = {
             copilot: [],
             assistant: []
         };
         
-        // Send message to n8n
         async function sendMsg(panel) {
             const input = document.getElementById(panel + 'Input');
             const btn = document.getElementById(panel + 'ActionBtn');
             const text = input.value.trim();
             if(!text) return;
             
-            // Add user message to UI
             addMsg(panel, 'user', text);
             input.value = '';
             btn.classList.remove('has-text');
@@ -3577,15 +2846,18 @@
             chatHistory[panel].push({ role: 'user', content: text });
             
             // Show loading
-            addLoadingMsg(panel);
+            const body = document.getElementById(panel + 'Body');
+            const loadingMsg = document.createElement('div');
+            loadingMsg.className = 'msg ai';
+            loadingMsg.id = 'loading-' + panel;
+            loadingMsg.innerHTML = '<div class="msg-bubble"><div class="msg-loading"><span></span><span></span><span></span></div></div>';
+            body.appendChild(loadingMsg);
+            body.scrollTop = body.scrollHeight;
             
             try {
-                // Call n8n webhook
                 const response = await fetch(N8N_WEBHOOK_URL, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         panel: panel,
                         message: text,
@@ -3596,34 +2868,38 @@
                     })
                 });
                 
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                
                 const data = await response.json();
                 
                 // Remove loading
-                removeLoadingMsg(panel);
+                document.getElementById('loading-' + panel)?.remove();
                 
-                // Parse markdown and add AI response
-                const aiResponse = data.response || data.message || data.output || 'Désolé, une erreur est survenue.';
-                const parsedResponse = parseMarkdown(aiResponse);
-                addMsg(panel, 'ai', parsedResponse);
+                // Get response
+                const aiResponse = data.response || data.message || data.output || 'Erreur de connexion.';
+                addMsg(panel, 'ai', parseMarkdown(aiResponse));
                 
                 // Add to history
                 chatHistory[panel].push({ role: 'assistant', content: aiResponse });
                 
-                // If assistant generated a report, update the report panel
-                if (panel === 'assistant' && data.report) {
-                    if (data.report.client) document.getElementById('rClient').textContent = data.report.client;
-                    if (data.report.problem) document.getElementById('rProblem').textContent = data.report.problem;
-                }
-                
             } catch (error) {
-                console.error('Error sending message:', error);
-                removeLoadingMsg(panel);
-                addMsg(panel, 'ai', '<p><strong>Erreur de connexion</strong></p><p>Impossible de contacter le serveur. Vérifiez votre connexion internet.</p>');
+                console.error('Error:', error);
+                document.getElementById('loading-' + panel)?.remove();
+                addMsg(panel, 'ai', '<strong>Erreur</strong> - Impossible de contacter le serveur.');
             }
+        }
+        
+        // Simple markdown parser
+        function parseMarkdown(text) {
+            let html = text;
+            html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
+            html = html.replace(/^## (.*$)/gm, '<h2>$1</h2>');
+            html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            html = html.replace(/^- (.*$)/gm, '<li>$1</li>');
+            html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+            html = html.replace(/^---$/gm, '<hr>');
+            html = html.replace(/\n/g, '<br>');
+            return html;
         }
         
         // Get voice intensity from analyser
