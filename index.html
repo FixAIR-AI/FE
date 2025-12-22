@@ -145,14 +145,6 @@
         [data-theme="light"] .photo-modal-content {
             background: rgba(255,255,255,0.98);
         }
-        [data-theme="light"] .toggle-card {
-            background: linear-gradient(135deg, rgba(0,0,0,0.02), rgba(0,0,0,0.04));
-            border-color: rgba(0,0,0,0.08);
-        }
-        [data-theme="light"] .toggle-card:hover {
-            border-color: var(--copilot-border);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
         [data-theme="light"] .attach-menu {
             background: rgba(255,255,255,0.98);
             box-shadow: 0 4px 20px rgba(0,0,0,0.15);
@@ -169,13 +161,6 @@
         }
         [data-theme="light"] .toggle-chat:hover {
             background: rgba(255,255,255,0.98);
-        }
-        [data-theme="light"] .plus-btn {
-            background: rgba(0,0,0,0.04);
-            border-color: rgba(0,0,0,0.08);
-        }
-        [data-theme="light"] .plus-btn:hover {
-            background: rgba(0,0,0,0.08);
         }
         [data-theme="light"] .h-btn {
             background: var(--card);
@@ -306,17 +291,22 @@
             color: #1E293B;
         }
         [data-theme="light"] .brand-dropdown-item.disabled .brand-dropdown-name {
-            color: #94A3B8;
+            color: #78909C;
         }
         
         /* ==================== LIGHT THEME - TOGGLE CARDS (Copilot/Assistant) ==================== */
         [data-theme="light"] .toggle-card {
-            background: #FFFFFF;
-            border: 1px solid rgba(0,0,0,0.08);
+            background: #FFFFFF !important;
+            border: 1px solid rgba(0,0,0,0.1);
             box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         }
         [data-theme="light"] .toggle-card:hover {
+            background: #F1F5F9 !important;
+            border-color: rgba(0,0,0,0.15);
             box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        [data-theme="light"] .toggle-card:active {
+            background: #E2E8F0 !important;
         }
         [data-theme="light"] .toggle-card-title {
             color: #1E293B;
@@ -357,17 +347,17 @@
         /* ==================== LIGHT THEME - PLUS BUTTON & ACTIONS ==================== */
         [data-theme="light"] .plus-btn {
             color: #64748B;
-            background: rgba(0,0,0,0.04);
-            border-color: rgba(0,0,0,0.08);
+            background: #F8FAFC;
+            border-color: rgba(0,0,0,0.1);
         }
-        [data-theme="light"] .plus-btn .icon {
-            color: #64748B;
+        [data-theme="light"] .panel.copilot .plus-btn .icon {
+            color: var(--copilot);
+        }
+        [data-theme="light"] .panel.assistant .plus-btn .icon {
+            color: var(--assistant);
         }
         [data-theme="light"] .plus-btn:hover {
-            color: #1E293B;
-        }
-        [data-theme="light"] .plus-btn:hover .icon {
-            color: #1E293B;
+            background: #F1F5F9;
         }
         
         /* ==================== LIGHT THEME - MESSAGE ACTIONS (Copy, etc) ==================== */
@@ -457,8 +447,15 @@
         
         /* ==================== LIGHT THEME - PROJECT CARDS ==================== */
         [data-theme="light"] .proj {
-            background: #FFFFFF;
+            background: #FFFFFF !important;
             border-color: rgba(0,0,0,0.08);
+        }
+        [data-theme="light"] .proj:hover {
+            background: #F8FAFC !important;
+            border-color: rgba(0,0,0,0.12);
+        }
+        [data-theme="light"] .proj:active {
+            background: #F1F5F9 !important;
         }
         [data-theme="light"] .proj-title {
             color: #1E293B;
@@ -883,12 +880,12 @@
         @keyframes navWave { 0%, 100% { transform: scaleY(0.6); } 50% { transform: scaleY(1); } }
 
         /* ==================== PROJECTS PAGE ==================== */
-        .projects-page { display: none; }
+        .projects-page { display: none; flex-direction: column; height: 100%; }
         .projects-page.active { display: flex; }
-        .projects-page-header { margin-bottom: 8px; }
+        .projects-page-header { margin-bottom: 8px; position: sticky; top: 0; background: var(--bg); padding-top: 8px; padding-bottom: 8px; z-index: 10; }
         .projects-page-title { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
         .projects-page-sub { font-size: 12px; color: var(--text-dim); }
-        .projects-list { display: flex; flex-direction: column; gap: 10px; }
+        .projects-list { display: flex; flex-direction: column; gap: 10px; flex: 1; overflow-y: auto; padding-bottom: 20px; }
 
         /* ==================== CHAT VIEW (FULL WIDTH) ==================== */
         .chat-view { 
@@ -995,6 +992,9 @@
         .plus-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; z-index: 2; }
         .plus-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
         .plus-btn .icon { width: 16px; height: 16px; }
+        /* Plus icon color matches mode */
+        .panel.copilot .plus-btn .icon { color: var(--copilot); }
+        .panel.assistant .plus-btn .icon { color: var(--assistant); }
         
         /* Attach menu - positioned above input row */
         .attach-menu { position: absolute; bottom: 100%; left: 14px; margin-bottom: 4px; background: rgba(20,24,32,0.98); border: 1px solid var(--border); border-radius: 10px; padding: 4px; display: none; flex-direction: column; gap: 2px; min-width: 180px; z-index: 10; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
@@ -1267,10 +1267,10 @@
         .onboarding-section:not(.hidden) ~ .homepage-content.active { display: none !important; }
         .profile-view { position: fixed; inset: 0; display: none; z-index: 200; background: var(--bg); background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px); background-size: 32px 32px; flex-direction: column; }
         .profile-view.active { display: flex; }
-        .profile-header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; padding-top: max(10px, env(safe-area-inset-top)); flex-shrink: 0; border-bottom: 1px solid var(--border); background: var(--bg-secondary); }
-        .profile-back { width: 32px; height: 32px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .profile-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; padding-top: max(14px, calc(env(safe-area-inset-top) + 6px)); flex-shrink: 0; border-bottom: 1px solid var(--border); background: var(--bg-secondary); }
+        .profile-back { width: 36px; height: 36px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
         .profile-back:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.8); }
-        .profile-back .icon { width: 14px; height: 14px; }
+        .profile-back .icon { width: 16px; height: 16px; }
         .profile-info { flex: 1; }
         .profile-title { font-size: 13px; font-weight: 600; color: var(--copilot); }
         .profile-subtitle { font-size: 10px; color: var(--text-dim); }
@@ -1851,7 +1851,7 @@
         <header class="app-header">
             <div class="header-inner">
                 <div class="header-left">
-                    <div class="header-logo-svg"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
+                    <div class="header-logo-svg" onclick="goToHome()" style="cursor:pointer;"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
                 </div>
                 <div class="brand-pill" id="brandPill" onclick="toggleBrandDropdown()">
                     <div class="brand-pill-dot" id="brandDot"></div>
@@ -2954,6 +2954,15 @@
         function closeCongrats() {
             document.getElementById('onboardingSection').classList.add('hidden');
             document.getElementById('homepageContent').classList.add('active');
+        }
+
+        function goToHome() {
+            // Close any open views
+            closeChat();
+            closeProfile();
+            document.getElementById('hotlineView').classList.remove('active');
+            // Go to home page
+            showPage('home');
         }
 
         function showPage(page) {
