@@ -309,7 +309,11 @@
             background: #E2E8F0 !important;
         }
         [data-theme="light"] .toggle-card-title {
-            color: #1E293B;
+            color: #1E293B !important;
+        }
+        [data-theme="light"] .toggle-card:hover .toggle-card-title,
+        [data-theme="light"] .toggle-card:active .toggle-card-title {
+            color: #1E293B !important;
         }
         [data-theme="light"] .toggle-card-desc {
             color: #64748B;
@@ -319,6 +323,15 @@
         }
         [data-theme="light"] .toggle-card:hover .toggle-card-arrow {
             color: #64748B;
+        }
+        /* Icon backgrounds matching proj-icon style */
+        [data-theme="light"] .toggle-card.copilot .toggle-card-icon {
+            background: var(--copilot-bg);
+            color: var(--copilot);
+        }
+        [data-theme="light"] .toggle-card.assistant .toggle-card-icon {
+            background: var(--assistant-bg);
+            color: var(--assistant);
         }
         
         /* ==================== LIGHT THEME - MODE TOGGLE ==================== */
@@ -463,6 +476,11 @@
         [data-theme="light"] .proj-meta,
         [data-theme="light"] .proj-time {
             color: #64748B;
+        }
+        
+        /* ==================== LIGHT THEME - PROJECTS PAGE ==================== */
+        [data-theme="light"] .projects-page-header::after {
+            background: linear-gradient(to bottom, #F8FAFC, transparent);
         }
         
         /* Toggle Switch Styles */
@@ -880,12 +898,40 @@
         @keyframes navWave { 0%, 100% { transform: scaleY(0.6); } 50% { transform: scaleY(1); } }
 
         /* ==================== PROJECTS PAGE ==================== */
-        .projects-page { display: none; flex-direction: column; height: 100%; }
+        .projects-page { display: none; flex-direction: column; height: 100%; position: relative; }
         .projects-page.active { display: flex; }
-        .projects-page-header { margin-bottom: 8px; position: sticky; top: 0; background: var(--bg); padding-top: 8px; padding-bottom: 8px; z-index: 10; }
+        .projects-page-header { 
+            margin-bottom: 0; 
+            position: sticky; 
+            top: 0; 
+            background: transparent;
+            padding-top: 8px; 
+            padding-bottom: 16px; 
+            z-index: 10; 
+        }
+        /* Gradient fade effect below header */
+        .projects-page-header::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -40px;
+            height: 40px;
+            background: linear-gradient(to bottom, var(--bg), transparent);
+            pointer-events: none;
+            z-index: 9;
+        }
         .projects-page-title { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
         .projects-page-sub { font-size: 12px; color: var(--text-dim); }
-        .projects-list { display: flex; flex-direction: column; gap: 10px; flex: 1; overflow-y: auto; padding-bottom: 20px; }
+        .projects-list { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+            flex: 1; 
+            overflow-y: auto; 
+            padding-top: 8px;
+            padding-bottom: calc(20px + env(safe-area-inset-bottom));
+        }
 
         /* ==================== CHAT VIEW (FULL WIDTH) ==================== */
         .chat-view { 
