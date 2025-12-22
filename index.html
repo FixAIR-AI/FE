@@ -3417,6 +3417,12 @@
         // n8n Webhook URL
         const N8N_WEBHOOK_URL = 'https://cherhabil.app.n8n.cloud/webhook/fixair-assistant';
         
+        // Generate unique session IDs for memory (one per panel, persists during page session)
+        const sessionIds = {
+            copilot: 'copilot-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+            assistant: 'assistant-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9)
+        };
+        
         // Simple markdown parser
         function parseMarkdown(text) {
             if (!text) return '';
@@ -3530,6 +3536,7 @@
                         message: text,
                         history: chatHistory[panel],
                         brand: brand,
+                        session_id: sessionIds[panel],
                         timestamp: new Date().toISOString()
                     })
                 });
