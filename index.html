@@ -375,16 +375,18 @@
         
         /* ==================== LIGHT THEME - MESSAGE ACTIONS (Copy, etc) ==================== */
         [data-theme="light"] .msg-act {
-            color: #64748B;
-            background: rgba(0,0,0,0.02);
-            border-color: rgba(0,0,0,0.08);
+            color: rgba(0,0,0,0.25);
+            background: transparent;
         }
         [data-theme="light"] .msg-act .icon {
-            color: #64748B;
+            color: rgba(0,0,0,0.25);
         }
         [data-theme="light"] .msg-act:hover {
-            color: #1E293B;
+            color: rgba(0,0,0,0.6);
             background: rgba(0,0,0,0.05);
+        }
+        [data-theme="light"] .msg-act:hover .icon {
+            color: rgba(0,0,0,0.6);
         }
         
         /* ==================== LIGHT THEME - HEADER BUTTONS ==================== */
@@ -1027,18 +1029,18 @@
             border-radius: 8px;
             padding: 20px 24px;
             margin-top: 12px;
-            line-height: 1.45;
+            line-height: 1.5;
         }
         /* Report main title */
         .report-card .report-title {
             display: block;
-            font-size: 15px; 
+            font-size: 17px; 
             font-weight: 700;
             color: var(--assistant);
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
         .report-card h1 { 
-            font-size: 15px; 
+            font-size: 17px; 
             font-weight: 700;
             color: var(--assistant);
             margin: 0 0 4px 0;
@@ -1046,53 +1048,51 @@
         }
         /* Report section titles - green */
         .report-card h2 { 
-            font-size: 12px; 
+            font-size: 14px; 
             font-weight: 600;
             color: var(--assistant);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
             border: none;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-            padding-bottom: 5px;
-            margin: 14px 0 6px 0;
+            margin: 18px 0 8px 0;
         }
-        .report-card h2:first-of-type { margin-top: 6px; }
+        .report-card h2:first-of-type { margin-top: 10px; }
         /* Report subsection titles */
         .report-card h3 { 
-            font-size: 11px; 
+            font-size: 13px; 
             font-weight: 600;
-            color: rgba(255,255,255,0.65);
-            margin: 8px 0 3px 0;
+            color: rgba(255,255,255,0.7);
+            margin: 12px 0 4px 0;
             border: none;
         }
         /* Report paragraphs */
         .report-card p { 
-            margin: 2px 0; 
-            font-size: 12px;
-            color: rgba(255,255,255,0.8);
+            margin: 4px 0; 
+            font-size: 14px;
+            color: rgba(255,255,255,0.85);
         }
         /* Report first paragraph (reference line) */
         .report-card > p:first-of-type {
             color: rgba(255,255,255,0.5);
-            font-size: 11px;
-            margin-bottom: 6px;
+            font-size: 12px;
+            margin-bottom: 8px;
         }
         /* Report lists */
         .report-card ul, 
         .report-card ol { 
-            margin: 2px 0 4px 0; 
-            padding-left: 14px; 
+            margin: 4px 0 8px 0; 
+            padding-left: 18px; 
         }
         .report-card li { 
-            margin: 1px 0; 
-            font-size: 12px;
-            color: rgba(255,255,255,0.8);
+            margin: 3px 0; 
+            font-size: 14px;
+            color: rgba(255,255,255,0.85);
         }
-        /* Report horizontal rules */
+        /* Report horizontal rules - fewer and subtle */
         .report-card hr {
-            margin: 10px 0;
+            margin: 16px 0;
             border: none;
-            border-top: 1px solid rgba(255,255,255,0.05);
+            border-top: 1px solid rgba(255,255,255,0.06);
             height: 0;
         }
         /* Report bold text */
@@ -1100,14 +1100,37 @@
             color: #ffffff;
             font-weight: 600;
         }
+        /* Report tables */
+        .report-card table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 13px;
+        }
+        .report-card th {
+            background: rgba(255,255,255,0.06);
+            color: var(--assistant);
+            font-weight: 600;
+            text-align: left;
+            padding: 8px 10px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .report-card td {
+            padding: 6px 10px;
+            border: 1px solid rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.8);
+        }
+        .report-card tbody tr:hover {
+            background: rgba(255,255,255,0.02);
+        }
         /* Report footer */
         .report-card .report-footer,
         .report-card em:last-child {
             display: block;
-            margin-top: 12px;
-            padding-top: 8px;
-            border-top: 1px solid rgba(255,255,255,0.05);
-            font-size: 10px;
+            margin-top: 16px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            font-size: 11px;
             color: rgba(255,255,255,0.35);
             font-style: italic;
         }
@@ -1123,31 +1146,39 @@
         }
         [data-theme="light"] .report-card h2 {
             color: var(--assistant);
-            border-bottom: 1px solid rgba(0,0,0,0.06);
         }
         [data-theme="light"] .report-card h3 { 
-            color: rgba(0,0,0,0.55);
+            color: rgba(0,0,0,0.6);
         }
         [data-theme="light"] .report-card p,
         [data-theme="light"] .report-card li { 
             color: #374151;
         }
         [data-theme="light"] .report-card > p:first-of-type {
-            color: rgba(0,0,0,0.4);
+            color: rgba(0,0,0,0.45);
         }
         [data-theme="light"] .report-card strong {
             color: #1a1a1a;
         }
         [data-theme="light"] .report-card hr {
-            border-top: 1px solid rgba(0,0,0,0.05);
+            border-top: 1px solid rgba(0,0,0,0.06);
+        }
+        [data-theme="light"] .report-card th {
+            background: rgba(0,0,0,0.04);
+            color: var(--assistant);
+            border-color: rgba(0,0,0,0.08);
+        }
+        [data-theme="light"] .report-card td {
+            border-color: rgba(0,0,0,0.06);
+            color: #374151;
         }
         [data-theme="light"] .report-card .report-footer,
         [data-theme="light"] .report-card em:last-child {
             color: rgba(0,0,0,0.35);
-            border-top: 1px solid rgba(0,0,0,0.05);
+            border-top: 1px solid rgba(0,0,0,0.06);
         }
         
-        .msg-bubble { padding: 12px 16px; border-radius: 16px; font-size: 13px; line-height: 1.5; }
+        .msg-bubble { padding: 12px 16px; border-radius: 16px; font-size: 13px; line-height: 1.5; position: relative; }
         .msg.user .msg-bubble { background: linear-gradient(135deg, var(--mode-color), color-mix(in srgb, var(--mode-color) 80%, black)); color: white; border-bottom-right-radius: 4px; }
         .msg.ai .msg-bubble { background: var(--card); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
         
@@ -1223,10 +1254,11 @@
         .msg-avatar { width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(135deg, color-mix(in srgb, var(--mode-color) 70%, white), var(--mode-color)); display: flex; align-items: center; justify-content: center; }
         .msg-avatar .icon { width: 8px; height: 8px; color: white; }
         .msg-name { font-size: 10px; font-weight: 600; color: var(--mode-color); }
-        .msg-acts { display: flex; gap: 4px; margin-top: 6px; }
-        .msg-act { padding: 4px 8px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; font-size: 9px; color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.2s; }
-        .msg-act:hover { background: rgba(255,255,255,0.05); }
-        .msg-act .icon { width: 10px; height: 10px; }
+        .msg-acts { display: none; }
+        .msg-act { position: absolute; top: 12px; right: 12px; padding: 6px; background: transparent; border: none; border-radius: 6px; font-size: 9px; color: rgba(255,255,255,0.3); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; opacity: 0; }
+        .msg-bubble:hover .msg-act { opacity: 1; }
+        .msg-act:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
+        .msg-act .icon { width: 14px; height: 14px; }
 
         .chat-input { 
             padding: 12px 14px; 
@@ -3492,7 +3524,7 @@
             if(type === 'user') {
                 msg.innerHTML = `<div class="msg-bubble">${content}</div>`;
             } else {
-                msg.innerHTML = `<div class="msg-bubble"><div class="msg-head"><div class="msg-avatar"><span class="icon"><svg><use href="${modeIcon}"/></svg></span></div><span class="msg-name">FixAIR ${modeName}</span></div>${content}<div class="msg-acts"><span class="msg-act" onclick="copyTxt(this)"><span class="icon"><svg><use href="#icon-copy"/></svg></span>Copier</span></div></div>`;
+                msg.innerHTML = `<div class="msg-bubble"><div class="msg-head"><div class="msg-avatar"><span class="icon"><svg><use href="${modeIcon}"/></svg></span></div><span class="msg-name">FixAIR ${modeName}</span></div><span class="msg-act" onclick="copyTxt(this)" title="Copier"><span class="icon"><svg><use href="#icon-copy"/></svg></span></span>${content}</div>`;
             }
             body.appendChild(msg);
             body.scrollTop = body.scrollHeight;
@@ -3565,6 +3597,11 @@
         function parseMarkdown(text) {
             if (!text) return '';
             
+            // Strip any literal HTML tags the AI might output
+            text = text.replace(/<div class="report-card">/gi, '');
+            text = text.replace(/<\/div>/gi, '');
+            text = text.replace(/<div class="report-footer">/gi, '');
+            
             // Check if this contains a report
             const reportMarker = 'RAPPORT D\'INTERVENTION';
             const hasReport = text.includes(reportMarker);
@@ -3577,12 +3614,53 @@
                 reportContent = text.substring(reportIndex).trim();
             }
             
+            function parseTable(tableText) {
+                const lines = tableText.trim().split('\n');
+                if (lines.length < 2) return tableText;
+                
+                let html = '<table><thead><tr>';
+                // Header row
+                const headers = lines[0].split('|').map(h => h.trim()).filter(h => h);
+                headers.forEach(h => {
+                    html += `<th>${h}</th>`;
+                });
+                html += '</tr></thead><tbody>';
+                
+                // Skip separator line (index 1), process data rows
+                for (let i = 2; i < lines.length; i++) {
+                    const cells = lines[i].split('|').map(c => c.trim()).filter(c => c);
+                    if (cells.length > 0 && !cells.every(c => c === '...' || c === '…')) {
+                        html += '<tr>';
+                        cells.forEach(c => {
+                            html += `<td>${c}</td>`;
+                        });
+                        html += '</tr>';
+                    }
+                }
+                html += '</tbody></table>';
+                return html;
+            }
+            
             function processMarkdown(txt) {
-                // Escape HTML first
+                // First, extract and process tables
+                const tableRegex = /\|[^\n]+\|\n\|[-:\s|]+\|\n(\|[^\n]+\|\n?)*/g;
+                let tables = [];
+                txt = txt.replace(tableRegex, (match) => {
+                    const placeholder = `__TABLE_${tables.length}__`;
+                    tables.push(parseTable(match));
+                    return placeholder;
+                });
+                
+                // Escape HTML
                 let html = txt
                     .replace(/&/g, '&amp;')
                     .replace(/</g, '&lt;')
                     .replace(/>/g, '&gt;');
+                
+                // Restore tables
+                tables.forEach((table, i) => {
+                    html = html.replace(`__TABLE_${i}__`, table);
+                });
                 
                 // Headers
                 html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
@@ -3620,7 +3698,7 @@
                 html = html.replace(/\n/g, '<br>');
                 
                 // Wrap in paragraph if not already wrapped
-                if (!html.startsWith('<h') && !html.startsWith('<ul') && !html.startsWith('<ol') && !html.startsWith('<pre') && !html.startsWith('<blockquote')) {
+                if (!html.startsWith('<h') && !html.startsWith('<ul') && !html.startsWith('<ol') && !html.startsWith('<pre') && !html.startsWith('<blockquote') && !html.startsWith('<table')) {
                     html = '<p>' + html + '</p>';
                 }
                 
@@ -3638,7 +3716,7 @@
                 // Process report content and wrap in card
                 let reportHtml = processMarkdown(reportContent);
                 
-                // Style the report title (first h1 or strong text containing RAPPORT)
+                // Style the report title
                 reportHtml = reportHtml.replace(
                     /RAPPORT D(&amp;#39;|&#39;|')INTERVENTION/g, 
                     '<span class="report-title">RAPPORT D\'INTERVENTION</span>'
