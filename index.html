@@ -3397,10 +3397,9 @@
             
             // Detect if this is a report message (contains report keywords/headers)
             const isReport = type === 'ai' && (
-                content.includes('RAPPORT D\'INTERVENTION') || 
-                content.includes('RAPPORT D'INTERVENTION') ||
+                content.includes('RAPPORT D') || 
                 content.includes('📋 RAPPORT') ||
-                content.includes('<h2>') && (content.includes('Client') || content.includes('Équipement'))
+                (content.includes('<h2>') && (content.includes('Client') || content.includes('Équipement')))
             );
             
             msg.className = 'msg ' + type + (isReport ? ' report' : '');
