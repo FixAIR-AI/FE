@@ -34,21 +34,277 @@
         
         /* LIGHT THEME */
         [data-theme="light"] {
-            --bg: #f8fafc;
-            --bg-secondary: #ffffff;
-            --card: rgba(0, 0, 0, 0.02);
+            --bg: #F8FAFC;
+            --bg-secondary: #FFFFFF;
+            --card: #FFFFFF;
             --border: rgba(0, 0, 0, 0.08);
-            --text: rgba(0, 0, 0, 0.9);
-            --text-dim: rgba(0, 0, 0, 0.45);
+            --text: #1E293B;
+            --text-dim: #64748B;
             --grid-color: rgba(0,0,0,0.03);
-            --input-bg: rgba(0,0,0,0.03);
+            --input-bg: #FFFFFF;
             --msg-user-bg: rgba(0,0,0,0.04);
             --msg-ai-bg: transparent;
-            --shadow-color: rgba(0,0,0,0.1);
+            --shadow-color: rgba(0,0,0,0.08);
             --copilot-bg: rgba(255, 107, 53, 0.1);
             --copilot-border: rgba(255, 107, 53, 0.25);
             --assistant-bg: rgba(34, 197, 94, 0.1);
             --assistant-border: rgba(34, 197, 94, 0.25);
+            --assistant: #16a34a;
+            --hotline: #dc2626;
+        }
+        
+        /* Light theme specific overrides */
+        [data-theme="light"] .nav {
+            background: rgba(255,255,255,0.98) !important;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+        }
+        [data-theme="light"] .app-header {
+            background: linear-gradient(180deg, rgba(248,250,252,0.98), rgba(248,250,252,0.8), transparent) !important;
+        }
+        [data-theme="light"] .login-bar,
+        [data-theme="light"] .brand-dropdown,
+        [data-theme="light"] .brand-pill,
+        [data-theme="light"] .proj,
+        [data-theme="light"] .form-input,
+        [data-theme="light"] .brand-select-row {
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        [data-theme="light"] .proj:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        [data-theme="light"] .brand-dropdown {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+        [data-theme="light"] .brand-chip:hover,
+        [data-theme="light"] .brand-dropdown-item:hover {
+            background: rgba(0,0,0,0.03);
+        }
+        [data-theme="light"] .login-input::placeholder {
+            color: #94A3B8;
+        }
+        [data-theme="light"] .msg.user {
+            background: rgba(0,0,0,0.04);
+            border-color: rgba(0,0,0,0.06);
+        }
+        [data-theme="light"] .panel-header,
+        [data-theme="light"] .profile-header,
+        [data-theme="light"] .hotline-header {
+            background: rgba(255,255,255,0.95) !important;
+        }
+        [data-theme="light"] .input-area {
+            background: rgba(255,255,255,0.95);
+            border-top: 1px solid rgba(0,0,0,0.06);
+        }
+        [data-theme="light"] .input-box {
+            background: rgba(0,0,0,0.03);
+            border-color: rgba(0,0,0,0.08);
+        }
+        [data-theme="light"] .input-box:focus-within {
+            border-color: var(--copilot);
+            box-shadow: 0 0 0 3px rgba(255,107,53,0.1);
+        }
+        [data-theme="light"] .report-sheet {
+            background: rgba(255,255,255,0.98) !important;
+        }
+        [data-theme="light"] .photo-modal-content {
+            background: rgba(255,255,255,0.98);
+        }
+        [data-theme="light"] .toggle-card {
+            background: linear-gradient(135deg, rgba(0,0,0,0.02), rgba(0,0,0,0.04));
+            border-color: rgba(0,0,0,0.08);
+        }
+        [data-theme="light"] .toggle-card:hover {
+            border-color: var(--copilot-border);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        [data-theme="light"] .toggle-card-arrow {
+            color: rgba(0,0,0,0.25);
+        }
+        [data-theme="light"] .toggle-card:hover .toggle-card-arrow {
+            color: rgba(0,0,0,0.5);
+        }
+        [data-theme="light"] .onboarding-step {
+            background: rgba(255,255,255,0.98);
+        }
+        [data-theme="light"] .setting-toggle {
+            background: #FFFFFF;
+            border-color: rgba(0,0,0,0.08);
+        }
+        [data-theme="light"] .toggle-switch {
+            background: rgba(0,0,0,0.12);
+        }
+        [data-theme="light"] .lang-btn {
+            background: #FFFFFF;
+            border-color: rgba(0,0,0,0.08);
+        }
+        [data-theme="light"] .sphere-fog-container {
+            background: rgba(255,255,255,0.3);
+        }
+        [data-theme="light"] .login-title {
+            color: var(--text);
+        }
+        [data-theme="light"] .login-input::placeholder {
+            color: #94A3B8;
+        }
+        [data-theme="light"] .brand-pill-text {
+            color: var(--text-dim);
+        }
+        [data-theme="light"] .brand-pill-arrow {
+            color: var(--text-dim);
+        }
+        [data-theme="light"] .brand-dropdown-item:hover {
+            background: rgba(0,0,0,0.04);
+        }
+        [data-theme="light"] .brand-dropdown-name {
+            color: var(--text);
+        }
+        [data-theme="light"] .brand-dropdown-item.disabled .brand-dropdown-name {
+            color: var(--text-dim);
+        }
+        [data-theme="light"] .brand-chip {
+            color: var(--text-dim);
+        }
+        [data-theme="light"] .brand-chip:hover {
+            background: rgba(0,0,0,0.04);
+        }
+        [data-theme="light"] .ring-bg {
+            stroke: rgba(0,0,0,0.06);
+        }
+        [data-theme="light"] .toggle-card-title,
+        [data-theme="light"] .toggle-card-desc {
+            color: var(--text);
+        }
+        [data-theme="light"] .toggle-card-detail {
+            color: var(--text-dim);
+        }
+        [data-theme="light"] .nav-item {
+            color: var(--text-dim);
+        }
+        [data-theme="light"] .nav-item.active {
+            color: var(--copilot);
+        }
+        [data-theme="light"] .panel-back,
+        [data-theme="light"] .profile-back,
+        [data-theme="light"] .hotline-back {
+            color: var(--text-dim);
+            background: rgba(0,0,0,0.03);
+            border-color: rgba(0,0,0,0.08);
+        }
+        [data-theme="light"] .panel-back:hover,
+        [data-theme="light"] .profile-back:hover {
+            background: rgba(0,0,0,0.06);
+            color: var(--text);
+        }
+        [data-theme="light"] .panel-title,
+        [data-theme="light"] .profile-title,
+        [data-theme="light"] .hotline-title {
+            color: var(--text);
+        }
+        [data-theme="light"] .panel-brand,
+        [data-theme="light"] .profile-subtitle {
+            color: var(--text-dim);
+        }
+        [data-theme="light"] .msg-content {
+            color: var(--text);
+        }
+        [data-theme="light"] .msg-time {
+            color: var(--text-dim);
+        }
+        [data-theme="light"] .form-label {
+            color: var(--text-dim);
+        }
+        [data-theme="light"] .form-input {
+            background: #FFFFFF;
+            border-color: rgba(0,0,0,0.1);
+            color: var(--text);
+        }
+        [data-theme="light"] .form-input:focus {
+            border-color: var(--copilot);
+            box-shadow: 0 0 0 3px rgba(255,107,53,0.1);
+        }
+        [data-theme="light"] .form-input::placeholder {
+            color: #94A3B8;
+        }
+        [data-theme="light"] .r-label {
+            color: var(--text-dim);
+        }
+        [data-theme="light"] .r-value {
+            color: var(--text);
+        }
+        [data-theme="light"] .photo-option {
+            background: rgba(0,0,0,0.02);
+            border-color: rgba(0,0,0,0.06);
+        }
+        [data-theme="light"] .photo-option:hover {
+            background: rgba(0,0,0,0.04);
+        }
+        [data-theme="light"] .photo-option-title {
+            color: var(--text);
+        }
+        [data-theme="light"] .photo-option-desc {
+            color: var(--text-dim);
+        }
+        [data-theme="light"] .photo-cancel {
+            color: var(--text-dim);
+        }
+        [data-theme="light"] .onboarding-title,
+        [data-theme="light"] .onboarding-desc {
+            color: var(--text);
+        }
+        [data-theme="light"] .hotline-msg {
+            color: var(--text);
+        }
+        [data-theme="light"] .hotline-msg .msg-time {
+            color: var(--text-dim);
+        }
+        [data-theme="light"] .activity-center-number {
+            color: var(--text);
+        }
+        [data-theme="light"] .activity-center-label {
+            color: var(--text-dim);
+        }
+        [data-theme="light"] .greeting-text {
+            color: var(--text-dim);
+        }
+        [data-theme="light"] .greeting-name {
+            color: var(--text);
+        }
+        [data-theme="light"] .proj-title {
+            color: var(--text);
+        }
+        [data-theme="light"] .proj-meta,
+        [data-theme="light"] .proj-time {
+            color: var(--text-dim);
+        }
+        [data-theme="light"] .sec-title {
+            color: var(--text-dim);
+        }
+        [data-theme="light"] .mode-btn {
+            color: var(--text-dim);
+            background: rgba(0,0,0,0.03);
+        }
+        [data-theme="light"] .mode-btn.active.copilot {
+            background: var(--copilot-bg);
+            color: var(--copilot);
+        }
+        [data-theme="light"] .mode-btn.active.assistant {
+            background: var(--assistant-bg);
+            color: var(--assistant);
+        }
+        [data-theme="light"] .input-text::placeholder {
+            color: #94A3B8;
+        }
+        [data-theme="light"] .input-text {
+            color: var(--text);
+        }
+        [data-theme="light"] .settings-section-title {
+            color: var(--text-dim);
+        }
+        [data-theme="light"] .setting-toggle-label {
+            color: var(--text);
+        }
+        [data-theme="light"] .setting-toggle-desc {
+            color: var(--text-dim);
         }
         
         /* Toggle Switch Styles */
