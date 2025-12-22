@@ -1017,52 +1017,100 @@
         .msg.user { align-self: flex-end; max-width: 80%; }
         .msg.ai { align-self: flex-start; }
         
-        /* Report messages take full width like A4 */
+        /* Report messages - A4 artifact style */
         .msg.ai.report { max-width: 98%; width: 98%; }
         .msg.ai.report .msg-bubble {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 28px 32px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+            background: #1a1a1a;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            padding: 24px 28px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+            line-height: 1.4;
+        }
+        /* Report headers - clean, no colored borders */
+        .msg.ai.report .msg-bubble h1 { 
+            font-size: 20px; 
+            font-weight: 700;
+            color: #ffffff;
+            margin: 0 0 4px 0;
+            border: none;
         }
         .msg.ai.report .msg-bubble h2 { 
-            font-size: 18px; 
-            border-bottom: 2px solid var(--mode-color);
-            padding-bottom: 8px;
-            margin-top: 24px;
-        }
-        .msg.ai.report .msg-bubble h2:first-of-type { margin-top: 16px; }
-        .msg.ai.report .msg-bubble table { 
-            font-size: 13px; 
-            margin: 12px 0;
-        }
-        .msg.ai.report .msg-bubble th { 
-            background: rgba(var(--mode-color-rgb), 0.1); 
-            color: var(--mode-color);
-        }
-        .msg.ai.report .msg-bubble td:first-child { 
+            font-size: 15px; 
             font-weight: 600;
-            width: 40%;
-            color: var(--text-dim);
-        }
-        .msg.ai.report .msg-bubble hr {
-            margin: 16px 0;
+            color: #ffffff;
             border: none;
-            border-top: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding-bottom: 6px;
+            margin: 16px 0 8px 0;
+        }
+        .msg.ai.report .msg-bubble h2:first-of-type { margin-top: 12px; }
+        .msg.ai.report .msg-bubble h3 { 
+            font-size: 13px; 
+            font-weight: 600;
+            color: rgba(255,255,255,0.9);
+            margin: 12px 0 4px 0;
+            border: none;
+        }
+        /* Report paragraphs - tighter spacing */
+        .msg.ai.report .msg-bubble p { 
+            margin: 4px 0; 
+            color: rgba(255,255,255,0.85);
+        }
+        /* Report lists - compact */
+        .msg.ai.report .msg-bubble ul, 
+        .msg.ai.report .msg-bubble ol { 
+            margin: 4px 0 8px 0; 
+            padding-left: 18px; 
+        }
+        .msg.ai.report .msg-bubble li { 
+            margin: 2px 0; 
+            color: rgba(255,255,255,0.85);
+        }
+        /* Report horizontal rules - thin and discreet */
+        .msg.ai.report .msg-bubble hr {
+            margin: 12px 0;
+            border: none;
+            border-top: 1px solid rgba(255,255,255,0.06);
             height: 0;
         }
+        /* Report bold text - white, not green */
         .msg.ai.report .msg-bubble strong {
-            color: var(--mode-color);
+            color: #ffffff;
+            font-weight: 600;
+        }
+        /* Report reference line styling */
+        .msg.ai.report .msg-bubble p:first-of-type {
+            color: rgba(255,255,255,0.6);
+            font-size: 12px;
         }
         
         /* Light theme report */
         [data-theme="light"] .msg.ai.report .msg-bubble {
-            background: #FFFFFF;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            background: #ffffff;
+            border: 1px solid rgba(0,0,0,0.08);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
         }
-        [data-theme="light"] .msg.ai.report .msg-bubble th { 
-            background: rgba(16, 185, 129, 0.1); 
+        [data-theme="light"] .msg.ai.report .msg-bubble h1,
+        [data-theme="light"] .msg.ai.report .msg-bubble h2,
+        [data-theme="light"] .msg.ai.report .msg-bubble h3 { 
+            color: #1a1a1a;
+        }
+        [data-theme="light"] .msg.ai.report .msg-bubble h2 {
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+        }
+        [data-theme="light"] .msg.ai.report .msg-bubble p,
+        [data-theme="light"] .msg.ai.report .msg-bubble li { 
+            color: #374151;
+        }
+        [data-theme="light"] .msg.ai.report .msg-bubble strong {
+            color: #1a1a1a;
+        }
+        [data-theme="light"] .msg.ai.report .msg-bubble hr {
+            border-top: 1px solid rgba(0,0,0,0.06);
+        }
+        [data-theme="light"] .msg.ai.report .msg-bubble p:first-of-type {
+            color: rgba(0,0,0,0.5);
         }
         
         .msg-bubble { padding: 12px 16px; border-radius: 16px; font-size: 13px; line-height: 1.5; }
