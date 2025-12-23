@@ -4659,6 +4659,20 @@
             addLoadingMsg(panel);
             
             try {
+                // Get brand name for display
+                const brandNames = {
+                    'mitsubishi': 'Mitsubishi Electric',
+                    'daikin': 'Daikin',
+                    'carrier': 'Carrier',
+                    'lg': 'LG',
+                    'samsung': 'Samsung',
+                    'panasonic': 'Panasonic',
+                    'toshiba': 'Toshiba',
+                    'fujitsu': 'Fujitsu',
+                    'hitachi': 'Hitachi',
+                    'general': 'Multi-marques'
+                };
+                
                 // Call n8n webhook
                 const response = await fetch(N8N_WEBHOOK_URL, {
                     method: 'POST',
@@ -4670,10 +4684,13 @@
                         message: text,
                         history: chatHistory[panel],
                         brand: brand,
+                        brand_name: brandNames[brand] || brand,
                         session_id: sessionIds[panel],
                         project_id: currentProjectId,
                         chat_id: currentChatId[panel],
-                        timestamp: new Date().toISOString()
+                        timestamp: new Date().toISOString(),
+                        // System context for AI
+                        system_context: `Le technicien travaille sur un système ${brandNames[brand] || brand}. Utilise la base de connaissances ${brandNames[brand] || brand} pour répondre.`
                     })
                 });
                 
