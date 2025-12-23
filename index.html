@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FixAIR V36 - Safe DB Fix</title>
+    <title>FixAIR V37 - Chat Sync Fixed</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -3546,6 +3546,9 @@
 
         setTimeout(() => updateRing(73), 500);
 
+        // Track if we're opening from an existing project
+        let openingFromProject = false;
+        
         function openChat(m) {
             mode = m;
             // Update viewport height for mobile browsers
@@ -3566,15 +3569,40 @@
             document.getElementById('panelAssistant').style.display = m === 'assistant' ? 'flex' : 'none';
             document.getElementById('divider').style.display = 'none';
             updateModeToggle(m);
-            document.getElementById('copilotBody').innerHTML = '';
-            document.getElementById('assistantBody').innerHTML = '';
-            closeAllAttach();
             
-            const wel = {
-                copilot: `Bonjour ! <strong style="color:var(--copilot)">FixAIR Copilot</strong> prêt pour <strong>${names[brand]}</strong>. Comment puis-je vous aider ?`,
-                assistant: `<strong style="color:var(--assistant)">FixAIR Assistant</strong> prêt. Décrivez l'intervention et je génère le rapport.`
-            };
-            addMsg(m, 'ai', wel[m]);
+            // ═══ FIX: Handle project state based on whether we're opening from an existing project ═══
+            const isFromProject = openingFromProject;
+            openingFromProject = false; // Reset flag immediately
+            
+            if (isFromProject) {
+                // Opening existing project - keep the loaded messages
+                console.log('📂 Opening existing project:', currentProjectId);
+                // Don't clear body - messages are already loaded
+            } else {
+                // Starting fresh chat - reset everything
+                console.log('🆕 Opening fresh chat - resetting project state');
+                currentProjectId = null;
+                currentChatId = { assistant: null, copilot: null };
+                currentProjectTitle = null;
+                projectMessageCount = 0;
+                chatHistory.assistant = [];
+                chatHistory.copilot = [];
+                updateChatHeader();
+                
+                // Clear body for fresh start
+                document.getElementById('copilotBody').innerHTML = '';
+                document.getElementById('assistantBody').innerHTML = '';
+                
+                // Show welcome message
+                const wel = {
+                    copilot: `Bonjour ! <strong style="color:var(--copilot)">FixAIR Copilot</strong> prêt pour <strong>${names[brand]}</strong>. Comment puis-je vous aider ?`,
+                    assistant: `<strong style="color:var(--assistant)">FixAIR Assistant</strong> prêt. Décrivez l'intervention et je génère le rapport.`
+                };
+                addMsg(m, 'ai', wel[m]);
+            }
+            // ═══ END FIX ═══
+            
+            closeAllAttach();
         }
 
         function closeChat() {
@@ -4392,6 +4420,11 @@
                 // Open chat with the appropriate mode
                 const hasAssistant = currentChatId.assistant;
                 const defaultMode = hasAssistant ? 'assistant' : 'copilot';
+                
+                // ═══ FIX: Set flag so openChat knows we're opening an existing project ═══
+                openingFromProject = true;
+                // ═══ END FIX ═══
+                
                 openChat(defaultMode);
                 
                 console.log('✅ Project fully loaded:', currentProjectTitle);
