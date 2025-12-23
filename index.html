@@ -3550,24 +3550,24 @@
             document.getElementById('panelAssistant').style.display = m === 'assistant' ? 'flex' : 'none';
             updateModeToggle(m);
             
-            // ═══ SUPABASE: Load or create conversation for this mode ═══
-            if (currentProjectId && !currentConversationId[m]) {
-                // Check if conversation exists for this mode in current project
-                const { data: existingConv } = await db
-                    .from('conversations')
+            // ═══ SUPABASE: Load or create chat for this mode ═══
+            if (currentProjectId && !currentChatId[m]) {
+                // Check if chat exists for this mode in current project
+                const { data: existingChat } = await db
+                    .from('chats')
                     .select()
                     .eq('project_id', currentProjectId)
-                    .eq('mode', m)
+                    .eq('chat_type', m)
                     .single();
                 
-                if (existingConv) {
-                    currentConversationId[m] = existingConv.id;
+                if (existingChat) {
+                    currentChatId[m] = existingChat.id;
                     
-                    // Load messages for this conversation
+                    // Load messages for this chat
                     const { data: messages } = await db
                         .from('messages')
                         .select('*')
-                        .eq('conversation_id', existingConv.id)
+                        .eq('chat_id', existingChat.id)
                         .order('created_at', { ascending: true });
                     
                     // Clear and reload chat
@@ -3583,24 +3583,27 @@
                             chatHistory[m].push({ role: msg.role, content: msg.content });
                         }
                     }
-                    console.log('✅ Loaded existing conversation for', m);
+                    console.log('✅ Loaded existing chat for', m);
                     return;
                 } else {
-                    // Create new conversation in same project
+                    // Create new chat in same project
                     const userId = await getCurrentUserId();
-                    const { data: newConv } = await db
-                        .from('conversations')
-                        .insert({
-                            project_id: currentProjectId,
-                            user_id: userId,
-                            mode: m
-                        })
-                        .select()
-                        .single();
-                    
-                    if (newConv) {
-                        currentConversationId[m] = newConv.id;
-                        console.log('✅ Created new conversation for', m, 'in project', currentProjectId);
+                    if (userId && !userId.startsWith('demo-')) {
+                        const { data: newChat } = await db
+                            .from('chats')
+                            .insert({
+                                project_id: currentProjectId,
+                                user_id: userId,
+                                chat_type: m,
+                                is_active: true
+                            })
+                            .select()
+                            .single();
+                        
+                        if (newChat) {
+                            currentChatId[m] = newChat.id;
+                            console.log('✅ Created new chat for', m, 'in project', currentProjectId);
+                        }
                     }
                 }
             }
@@ -3762,15 +3765,15 @@
         // SUPABASE CONFIGURATION
         // ═══════════════════════════════════════════════════════════════
         
-        const SUPABASE_URL = 'https://rnbqdryjhpxhmdwwlwlh.supabase.co'; // ← REMPLACER par ton URL
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJuYnFkcnlqaHB4aG1kd3dsd2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ1NDQ3MDcsImV4cCI6MjA1MDEyMDcwN30.1K7MHEnCD2FzhzMCDFdJ6FNpJcvWBjOZ8FxqMFIvbHA'; // ← REMPLACER par ta clé anon
+        const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ1NDQ3MDcsImV4cCI6MjA1MDEyMDcwN30.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTcyMTksImV4cCI6MjA4MTgzMzIxOX0.8ryQm1tsdx5ox3aFJiiflmwuEGGxxH_PlobGxXMgFuQ'; // ← REMPLACER par ta clé anon
         
         const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
-        // Current project/conversation state
+        // Current project/chat state
         let currentUserId = null;
         let currentProjectId = null;
-        let currentConversationId = {
+        let currentChatId = {
             assistant: null,
             copilot: null
         };
@@ -3780,17 +3783,18 @@
         // PROJECT MANAGEMENT FUNCTIONS
         // ═══════════════════════════════════════════════════════════════
         
-        // Get current user ID from Supabase auth
+        // Get current user ID from existing auth (uses your n8n auth system)
         async function getCurrentUserId() {
             if (currentUserId) return currentUserId;
             
-            const { data: { user } } = await db.auth.getUser();
-            if (user) {
-                currentUserId = user.id;
-                return user.id;
+            // Use the existing auth from your login system
+            const savedUser = JSON.parse(localStorage.getItem('fixair_user') || 'null');
+            if (savedUser && savedUser.id) {
+                currentUserId = savedUser.id;
+                return savedUser.id;
             }
             
-            // If no auth, use localStorage fallback for demo
+            // Fallback for demo/testing
             let localId = localStorage.getItem('fixair_demo_user_id');
             if (!localId) {
                 localId = 'demo-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
@@ -3803,11 +3807,15 @@
         // Create or get project for current session
         async function ensureProject(panel) {
             // If we already have a project, return it
-            if (currentProjectId && currentConversationId[panel]) {
-                return { projectId: currentProjectId, conversationId: currentConversationId[panel] };
+            if (currentProjectId && currentChatId[panel]) {
+                return { projectId: currentProjectId, chatId: currentChatId[panel] };
             }
             
             const userId = await getCurrentUserId();
+            if (!userId || userId.startsWith('demo-')) {
+                console.log('⚠️ Demo mode - not saving to Supabase');
+                return null;
+            }
             
             // If no project yet, create one
             if (!currentProjectId) {
@@ -3815,7 +3823,7 @@
                     .from('projects')
                     .insert({
                         user_id: userId,
-                        name: 'Nouvelle intervention',
+                        title: 'Nouvelle intervention',
                         brand: brand,
                         status: 'active'
                     })
@@ -3828,41 +3836,42 @@
                 }
                 
                 currentProjectId = project.id;
-                console.log('✅ Project created:', project.id, project.reference);
+                console.log('✅ Project created:', project.id);
             }
             
-            // If no conversation for this panel, create one
-            if (!currentConversationId[panel]) {
-                const { data: conversation, error: convError } = await db
-                    .from('conversations')
+            // If no chat for this panel, create one
+            if (!currentChatId[panel]) {
+                const { data: chat, error: chatError } = await db
+                    .from('chats')
                     .insert({
                         project_id: currentProjectId,
                         user_id: userId,
-                        mode: panel
+                        chat_type: panel,
+                        is_active: true
                     })
                     .select()
                     .single();
                 
-                if (convError) {
-                    console.error('Error creating conversation:', convError);
+                if (chatError) {
+                    console.error('Error creating chat:', chatError);
                     return null;
                 }
                 
-                currentConversationId[panel] = conversation.id;
-                console.log('✅ Conversation created:', conversation.id, 'mode:', panel);
+                currentChatId[panel] = chat.id;
+                console.log('✅ Chat created:', chat.id, 'type:', panel);
             }
             
-            return { projectId: currentProjectId, conversationId: currentConversationId[panel] };
+            return { projectId: currentProjectId, chatId: currentChatId[panel] };
         }
         
         // Save message to Supabase
-        async function saveMessage(conversationId, role, content, contentType = 'text') {
-            if (!conversationId) return null;
+        async function saveMessage(chatId, role, content, contentType = 'text') {
+            if (!chatId) return null;
             
             const { data, error } = await db
                 .from('messages')
                 .insert({
-                    conversation_id: conversationId,
+                    chat_id: chatId,
                     role: role,
                     content: content,
                     content_type: contentType
@@ -3892,7 +3901,7 @@
             const { data: messages } = await db
                 .from('messages')
                 .select('content, role')
-                .eq('conversation_id', currentConversationId.assistant || currentConversationId.copilot)
+                .eq('chat_id', currentChatId.assistant || currentChatId.copilot)
                 .order('created_at', { ascending: true })
                 .limit(3);
             
@@ -3901,15 +3910,15 @@
             // Simple name generation: use first user message
             const firstUserMsg = messages.find(m => m.role === 'user');
             if (firstUserMsg) {
-                let name = firstUserMsg.content.substring(0, 50);
-                if (firstUserMsg.content.length > 50) name += '...';
+                let title = firstUserMsg.content.substring(0, 50);
+                if (firstUserMsg.content.length > 50) title += '...';
                 
                 await db
                     .from('projects')
-                    .update({ name: name })
+                    .update({ title: title })
                     .eq('id', currentProjectId);
                 
-                console.log('✅ Project auto-named:', name);
+                console.log('✅ Project auto-named:', title);
                 
                 // Refresh projects list
                 loadProjectsList();
@@ -3928,15 +3937,14 @@
                 .from('projects')
                 .select(`
                     id,
-                    name,
-                    reference,
+                    title,
                     brand,
                     status,
                     created_at,
                     updated_at,
-                    conversations (
+                    chats (
                         id,
-                        mode,
+                        chat_type,
                         message_count
                     )
                 `)
@@ -3968,8 +3976,8 @@
             }
             
             container.innerHTML = projects.map(project => {
-                const hasAssistant = project.conversations?.some(c => c.mode === 'assistant');
-                const hasCopilot = project.conversations?.some(c => c.mode === 'copilot');
+                const hasAssistant = project.chats?.some(c => c.chat_type === 'assistant');
+                const hasCopilot = project.chats?.some(c => c.chat_type === 'copilot');
                 const hasBoth = hasAssistant && hasCopilot;
                 
                 const timeAgo = formatTimeAgo(new Date(project.updated_at));
@@ -3993,7 +4001,7 @@
                     <div class="proj" onclick="loadProject('${project.id}')">
                         ${iconHtml}
                         <div class="proj-info">
-                            <div class="proj-title">${escapeHtml(project.name)}</div>
+                            <div class="proj-title">${escapeHtml(project.title || 'Sans titre')}</div>
                             <div class="proj-meta">${modeLabel}${brandLabel ? ' • ' + brandLabel : ''}</div>
                         </div>
                         <span class="proj-time">${timeAgo}</span>
@@ -4028,13 +4036,13 @@
         // Load a specific project
         async function loadProject(projectId) {
             currentProjectId = projectId;
-            currentConversationId = { assistant: null, copilot: null };
+            currentChatId = { assistant: null, copilot: null };
             projectMessageCount = 0;
             
             // Get project details
             const { data: project } = await db
                 .from('projects')
-                .select('*, conversations(*)')
+                .select('*, chats(*)')
                 .eq('id', projectId)
                 .single();
             
@@ -4046,20 +4054,20 @@
                 updateBrandUI();
             }
             
-            // Load conversations
-            for (const conv of project.conversations || []) {
-                currentConversationId[conv.mode] = conv.id;
+            // Load chats
+            for (const chat of project.chats || []) {
+                currentChatId[chat.chat_type] = chat.id;
                 
-                // Load messages for this conversation
+                // Load messages for this chat
                 const { data: messages } = await db
                     .from('messages')
                     .select('*')
-                    .eq('conversation_id', conv.id)
+                    .eq('chat_id', chat.id)
                     .order('created_at', { ascending: true });
                 
-                // Clear existing chat
-                chatHistory[conv.mode] = [];
-                const body = document.getElementById(conv.mode + 'Body');
+                // Clear existing chat UI
+                chatHistory[chat.chat_type] = [];
+                const body = document.getElementById(chat.chat_type + 'Body');
                 if (body) {
                     body.innerHTML = '';
                 }
@@ -4069,14 +4077,14 @@
                     const role = msg.role === 'assistant' ? 'ai' : msg.role;
                     if (role === 'user' || role === 'ai') {
                         const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
-                        addMsg(conv.mode, role, content);
-                        chatHistory[conv.mode].push({ role: msg.role, content: msg.content });
+                        addMsg(chat.chat_type, role, content);
+                        chatHistory[chat.chat_type].push({ role: msg.role, content: msg.content });
                     }
                 }
             }
             
             // Open chat with the appropriate mode
-            const hasAssistant = currentConversationId.assistant;
+            const hasAssistant = currentChatId.assistant;
             const defaultMode = hasAssistant ? 'assistant' : 'copilot';
             openChat(defaultMode);
         }
@@ -4084,7 +4092,7 @@
         // Start new project (clear current)
         function startNewProject() {
             currentProjectId = null;
-            currentConversationId = { assistant: null, copilot: null };
+            currentChatId = { assistant: null, copilot: null };
             projectMessageCount = 0;
             
             // Clear chats
@@ -4366,8 +4374,8 @@
             // ═══ SUPABASE: Ensure project exists and save user message ═══
             try {
                 const projectData = await ensureProject(panel);
-                if (projectData && projectData.conversationId) {
-                    await saveMessage(projectData.conversationId, 'user', text);
+                if (projectData && projectData.chatId) {
+                    await saveMessage(projectData.chatId, 'user', text);
                 }
             } catch (e) {
                 console.warn('Supabase save failed (continuing anyway):', e);
@@ -4390,8 +4398,8 @@
                         history: chatHistory[panel],
                         brand: brand,
                         session_id: sessionIds[panel],
-                        project_id: currentProjectId, // ← NEW: Send project ID
-                        conversation_id: currentConversationId[panel], // ← NEW: Send conversation ID
+                        project_id: currentProjectId,
+                        chat_id: currentChatId[panel],
                         timestamp: new Date().toISOString()
                     })
                 });
@@ -4415,8 +4423,8 @@
                 
                 // ═══ SUPABASE: Save AI response ═══
                 try {
-                    if (currentConversationId[panel]) {
-                        await saveMessage(currentConversationId[panel], 'assistant', aiResponse);
+                    if (currentChatId[panel]) {
+                        await saveMessage(currentChatId[panel], 'assistant', aiResponse);
                         
                         // If this is a report, save it to reports table
                         if (aiResponse.includes('RAPPORT D\'INTERVENTION')) {
@@ -4451,10 +4459,10 @@
                     .insert({
                         project_id: currentProjectId,
                         user_id: currentUserId,
-                        conversation_id: currentConversationId.assistant,
-                        type: reportContent.includes('[SAV') ? 'SAV' : (reportContent.includes('[MES') ? 'MES' : 'MAINT'),
+                        report_type: reportContent.includes('[SAV') ? 'SAV' : (reportContent.includes('[MES') ? 'MES' : 'MAINT'),
+                        title: 'Rapport d\'intervention',
                         status: 'completed',
-                        content_markdown: reportContent
+                        solution_description: reportContent
                     })
                     .select()
                     .single();
