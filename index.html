@@ -855,6 +855,86 @@
         .proj-title { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
         .proj-meta { font-size: 11px; color: var(--text-dim); }
         .proj-time { font-size: 11px; color: rgba(255,255,255,0.25); }
+        
+        /* PROJECT CONTEXT MENU */
+        .project-context-menu {
+            position: fixed;
+            background: rgba(30,35,44,0.98);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 6px;
+            min-width: 160px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            z-index: 10000;
+            display: none;
+        }
+        .project-context-menu.show { display: block; }
+        .context-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            color: rgba(255,255,255,0.85);
+            transition: all 0.15s;
+        }
+        .context-menu-item:hover { background: rgba(255,255,255,0.08); }
+        .context-menu-item .icon { width: 16px; height: 16px; color: rgba(255,255,255,0.5); }
+        .context-menu-item:hover .icon { color: rgba(255,255,255,0.8); }
+        .context-menu-item.delete { color: #ef4444; }
+        .context-menu-item.delete .icon { color: #ef4444; }
+        .context-menu-item.delete:hover { background: rgba(239,68,68,0.15); }
+        [data-theme="light"] .project-context-menu { background: rgba(255,255,255,0.98); border-color: rgba(0,0,0,0.08); }
+        [data-theme="light"] .context-menu-item { color: #374151; }
+        [data-theme="light"] .context-menu-item:hover { background: rgba(0,0,0,0.05); }
+        [data-theme="light"] .context-menu-item .icon { color: rgba(0,0,0,0.4); }
+        
+        /* RENAME MODAL */
+        .rename-modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+        }
+        .rename-modal.show { display: flex; }
+        .rename-modal-content {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            width: 90%;
+            max-width: 360px;
+        }
+        .rename-modal-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+        .rename-modal-input {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+        .rename-modal-input:focus { outline: none; border-color: var(--assistant); }
+        .rename-modal-buttons { display: flex; gap: 10px; justify-content: flex-end; }
+        .rename-modal-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+        }
+        .rename-modal-btn.cancel { background: var(--bg); color: var(--text-dim); }
+        .rename-modal-btn.save { background: var(--assistant); color: white; }
 
         /* NAV WITH CENTERED HOTLINE SPHERE */
         .nav { 
@@ -982,6 +1062,7 @@
         .panel-title { font-size: 13px; font-weight: 600; color: var(--mode-color); }
         .panel-separator { width: 1px; height: 12px; background: rgba(255,255,255,0.15); }
         .panel-brand { font-size: 12px; color: var(--text-dim); }
+        .panel-project { font-size: 11px; color: var(--text-dim); opacity: 0.7; max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         /* MODE TOGGLE */
         .mode-toggle { display: flex; background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; flex-shrink: 0; height: 32px; }
@@ -2445,9 +2526,8 @@
                 <!-- RECENT PROJECTS -->
                 <div>
                     <div class="sec-head"><span class="sec-title">Projets récents</span><div class="sec-line"></div></div>
-                    <div class="projects">
-                        <div class="proj" onclick="openChat('copilot')"><div class="proj-icons dual"><div class="proj-icon copilot back"><span class="star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span></div><div class="proj-icon assistant front"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div></div><div class="proj-info"><div class="proj-title">Erreur E6 sur groupe extérieur</div><div class="proj-meta">Diagnostic + Rapport • Mitsubishi</div></div><span class="proj-time">Hier</span></div>
-                        <div class="proj" onclick="openChat('assistant')"><div class="proj-icon assistant"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div><div class="proj-info"><div class="proj-title">Rapport Client Dupont</div><div class="proj-meta">Rapport • Exporté</div></div><span class="proj-time">16:20</span></div>
+                    <div class="projects" id="recentProjectsHome">
+                        <!-- Dynamic content loaded from Supabase -->
                     </div>
                 </div>
                 </div><!-- END homepage-content -->
@@ -2459,15 +2539,20 @@
                     <div class="projects-page-title">Tous les projets</div>
                     <div class="projects-page-sub">Historique de vos interventions</div>
                 </div>
-                <div class="projects-list">
-                    <div class="proj" onclick="openChat('copilot')"><div class="proj-icons dual"><div class="proj-icon copilot back"><span class="star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span></div><div class="proj-icon assistant front"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div></div><div class="proj-info"><div class="proj-title">Erreur E6 sur groupe extérieur</div><div class="proj-meta">Diagnostic + Rapport • Mitsubishi</div></div><span class="proj-time">Hier</span></div>
-                    <div class="proj" onclick="openChat('assistant')"><div class="proj-icon assistant"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div><div class="proj-info"><div class="proj-title">Rapport Client Dupont</div><div class="proj-meta">Rapport • Exporté</div></div><span class="proj-time">16:20</span></div>
-                    <div class="proj" onclick="openChat('copilot')"><div class="proj-icons dual"><div class="proj-icon copilot back"><span class="star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span></div><div class="proj-icon assistant front"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div></div><div class="proj-info"><div class="proj-title">Code F3 - Défaut capteur</div><div class="proj-meta">Diagnostic + Rapport • Daikin</div></div><span class="proj-time">Lun</span></div>
-                    <div class="proj" onclick="openChat('assistant')"><div class="proj-icon assistant"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div><div class="proj-info"><div class="proj-title">Rapport Maintenance Martin</div><div class="proj-meta">Rapport • PDF</div></div><span class="proj-time">Lun</span></div>
-                    <div class="proj" onclick="openChat('copilot')"><div class="proj-icon copilot"><span class="star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span></div><div class="proj-info"><div class="proj-title">Panne compresseur VRV</div><div class="proj-meta">Diagnostic • Daikin</div></div><span class="proj-time">12 Déc</span></div>
-                    <div class="proj" onclick="openChat('assistant')"><div class="proj-icon assistant"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div><div class="proj-info"><div class="proj-title">Rapport Installation Leroy</div><div class="proj-meta">Rapport • Envoyé</div></div><span class="proj-time">10 Déc</span></div>
-                    <div class="proj" onclick="openChat('copilot')"><div class="proj-icons dual"><div class="proj-icon copilot back"><span class="star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span></div><div class="proj-icon assistant front"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div></div><div class="proj-info"><div class="proj-title">Erreur U0 communication</div><div class="proj-meta">Diagnostic + Rapport • Carrier</div></div><span class="proj-time">8 Déc</span></div>
-                    <div class="proj" onclick="openChat('assistant')"><div class="proj-icon assistant"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div><div class="proj-info"><div class="proj-title">Rapport SAV Bernard</div><div class="proj-meta">Rapport • PDF</div></div><span class="proj-time">5 Déc</span></div>
+                <div class="projects-list" id="projectsList">
+                    <!-- Dynamic content loaded from Supabase -->
+                </div>
+            </div>
+            
+            <!-- PROJECT CONTEXT MENU -->
+            <div class="project-context-menu" id="projectContextMenu">
+                <div class="context-menu-item" onclick="renameProject()">
+                    <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span>
+                    <span>Renommer</span>
+                </div>
+                <div class="context-menu-item delete" onclick="deleteProject()">
+                    <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span>
+                    <span>Supprimer</span>
                 </div>
             </div>
         </div>
@@ -2558,7 +2643,13 @@
         <div class="panel copilot" id="panelCopilot" style="flex-basis:50%;">
             <header class="panel-header">
                 <button class="panel-back" onclick="closeChat()"><span class="icon"><svg><use href="#icon-arrow-left"/></svg></span></button>
-                <div class="panel-info"><div class="panel-title">FixAIR Copilot</div><div class="panel-separator"></div><div class="panel-brand" id="copilotSub">Mitsubishi</div></div>
+                <div class="panel-info">
+                    <div class="panel-title">FixAIR Copilot</div>
+                    <div class="panel-separator"></div>
+                    <div class="panel-brand" id="copilotSub">Mitsubishi</div>
+                    <div class="panel-separator panel-project-sep" id="copilotProjectSep" style="display:none;"></div>
+                    <div class="panel-project" id="copilotProjectName" style="display:none;"></div>
+                </div>
                 <div class="mode-toggle">
                     <div class="mode-btn copilot active" onclick="switchMode('copilot')">
                         <span class="mode-icon star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span>
@@ -2606,7 +2697,13 @@
         <div class="panel assistant" id="panelAssistant" style="display:none;flex-basis:50%;">
             <header class="panel-header">
                 <button class="panel-back" onclick="closeChat()"><span class="icon"><svg><use href="#icon-arrow-left"/></svg></span></button>
-                <div class="panel-info"><div class="panel-title">FixAIR Assistant</div><div class="panel-separator"></div><div class="panel-brand" id="assistantSub">Mitsubishi</div></div>
+                <div class="panel-info">
+                    <div class="panel-title">FixAIR Assistant</div>
+                    <div class="panel-separator"></div>
+                    <div class="panel-brand" id="assistantSub">Mitsubishi</div>
+                    <div class="panel-separator panel-project-sep" id="assistantProjectSep" style="display:none;"></div>
+                    <div class="panel-project" id="assistantProjectName" style="display:none;"></div>
+                </div>
                 <div class="mode-toggle">
                     <div class="mode-btn copilot" onclick="switchMode('copilot')">
                         <span class="mode-icon star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span>
@@ -3918,6 +4015,10 @@
                     .update({ title: title })
                     .eq('id', currentProjectId);
                 
+                // Update current project title and header
+                currentProjectTitle = title;
+                updateChatHeader();
+                
                 console.log('✅ Project auto-named:', title);
                 
                 // Refresh projects list
@@ -3957,12 +4058,57 @@
                 return;
             }
             
+            // Store projects globally for context menu
+            window.projectsData = projects || [];
+            
             renderProjectsList(projects);
+            renderRecentProjects(projects?.slice(0, 2) || []); // First 2 for home page
         }
         
-        // Render projects in the sidebar
+        // Variable to track which project is being edited
+        let contextMenuProjectId = null;
+        let currentProjectTitle = null;
+        
+        // Generate project card HTML
+        function generateProjectCardHtml(project, includeContextMenu = true) {
+            const hasAssistant = project.chats?.some(c => c.chat_type === 'assistant');
+            const hasCopilot = project.chats?.some(c => c.chat_type === 'copilot');
+            const hasBoth = hasAssistant && hasCopilot;
+            
+            const timeAgo = formatTimeAgo(new Date(project.updated_at));
+            
+            let iconHtml = '';
+            if (hasBoth) {
+                iconHtml = `<div class="proj-icons dual">
+                    <div class="proj-icon copilot back"><span class="star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span></div>
+                    <div class="proj-icon assistant front"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>
+                </div>`;
+            } else if (hasAssistant) {
+                iconHtml = `<div class="proj-icon assistant"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>`;
+            } else {
+                iconHtml = `<div class="proj-icon copilot"><span class="star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span></div>`;
+            }
+            
+            const brandLabel = project.brand ? project.brand.charAt(0).toUpperCase() + project.brand.slice(1) : '';
+            const modeLabel = hasBoth ? 'Diagnostic + Rapport' : (hasAssistant ? 'Rapport' : 'Diagnostic');
+            
+            const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextMenu(event, '${project.id}', '${escapeHtml(project.title || 'Sans titre')}')"` : '';
+            
+            return `
+                <div class="proj" onclick="loadProject('${project.id}')" ${contextMenuAttr} data-project-id="${project.id}">
+                    ${iconHtml}
+                    <div class="proj-info">
+                        <div class="proj-title">${escapeHtml(project.title || 'Sans titre')}</div>
+                        <div class="proj-meta">${modeLabel}${brandLabel ? ' • ' + brandLabel : ''}</div>
+                    </div>
+                    <span class="proj-time">${timeAgo}</span>
+                </div>
+            `;
+        }
+        
+        // Render projects in the projects page
         function renderProjectsList(projects) {
-            const container = document.querySelector('.projects-list');
+            const container = document.getElementById('projectsList');
             if (!container) return;
             
             if (!projects || projects.length === 0) {
@@ -3975,39 +4121,131 @@
                 return;
             }
             
-            container.innerHTML = projects.map(project => {
-                const hasAssistant = project.chats?.some(c => c.chat_type === 'assistant');
-                const hasCopilot = project.chats?.some(c => c.chat_type === 'copilot');
-                const hasBoth = hasAssistant && hasCopilot;
-                
-                const timeAgo = formatTimeAgo(new Date(project.updated_at));
-                
-                let iconHtml = '';
-                if (hasBoth) {
-                    iconHtml = `<div class="proj-icons dual">
-                        <div class="proj-icon copilot back"><span class="star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span></div>
-                        <div class="proj-icon assistant front"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>
-                    </div>`;
-                } else if (hasAssistant) {
-                    iconHtml = `<div class="proj-icon assistant"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>`;
-                } else {
-                    iconHtml = `<div class="proj-icon copilot"><span class="star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span></div>`;
-                }
-                
-                const brandLabel = project.brand ? project.brand.charAt(0).toUpperCase() + project.brand.slice(1) : '';
-                const modeLabel = hasBoth ? 'Diagnostic + Rapport' : (hasAssistant ? 'Rapport' : 'Diagnostic');
-                
-                return `
-                    <div class="proj" onclick="loadProject('${project.id}')">
-                        ${iconHtml}
-                        <div class="proj-info">
-                            <div class="proj-title">${escapeHtml(project.title || 'Sans titre')}</div>
-                            <div class="proj-meta">${modeLabel}${brandLabel ? ' • ' + brandLabel : ''}</div>
-                        </div>
-                        <span class="proj-time">${timeAgo}</span>
+            container.innerHTML = projects.map(project => generateProjectCardHtml(project, true)).join('');
+        }
+        
+        // Render recent projects on home page
+        function renderRecentProjects(projects) {
+            const container = document.getElementById('recentProjectsHome');
+            if (!container) return;
+            
+            if (!projects || projects.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: var(--text-dim); font-size: 13px;">
+                        Aucun projet récent
                     </div>
                 `;
-            }).join('');
+                return;
+            }
+            
+            container.innerHTML = projects.map(project => generateProjectCardHtml(project, true)).join('');
+        }
+        
+        // Show context menu for project
+        function showProjectContextMenu(event, projectId, projectTitle) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            contextMenuProjectId = projectId;
+            currentProjectTitle = projectTitle;
+            
+            const menu = document.getElementById('projectContextMenu');
+            menu.style.left = event.clientX + 'px';
+            menu.style.top = event.clientY + 'px';
+            menu.classList.add('show');
+            
+            // Close menu when clicking elsewhere
+            setTimeout(() => {
+                document.addEventListener('click', closeContextMenu, { once: true });
+            }, 10);
+        }
+        
+        function closeContextMenu() {
+            const menu = document.getElementById('projectContextMenu');
+            menu.classList.remove('show');
+        }
+        
+        // Rename project
+        function renameProject() {
+            closeContextMenu();
+            const modal = document.getElementById('renameModal');
+            const input = document.getElementById('renameInput');
+            input.value = currentProjectTitle || '';
+            modal.classList.add('show');
+            setTimeout(() => input.focus(), 100);
+        }
+        
+        function closeRenameModal() {
+            document.getElementById('renameModal').classList.remove('show');
+        }
+        
+        async function saveProjectRename() {
+            const newTitle = document.getElementById('renameInput').value.trim();
+            if (!newTitle || !contextMenuProjectId) return;
+            
+            const { error } = await db
+                .from('projects')
+                .update({ title: newTitle })
+                .eq('id', contextMenuProjectId);
+            
+            if (error) {
+                console.error('Error renaming project:', error);
+                alert('Erreur lors du renommage');
+                return;
+            }
+            
+            closeRenameModal();
+            loadProjectsList(); // Refresh list
+            
+            // Update header if this project is currently open
+            if (currentProjectId === contextMenuProjectId) {
+                currentProjectTitle = newTitle;
+                updateChatHeader();
+            }
+            
+            console.log('✅ Project renamed:', newTitle);
+        }
+        
+        // Delete project
+        async function deleteProject() {
+            closeContextMenu();
+            
+            if (!confirm('Supprimer ce projet et toutes ses conversations ?')) return;
+            
+            // Delete messages first (foreign key constraint)
+            const { data: chats } = await db
+                .from('chats')
+                .select('id')
+                .eq('project_id', contextMenuProjectId);
+            
+            for (const chat of chats || []) {
+                await db.from('messages').delete().eq('chat_id', chat.id);
+            }
+            
+            // Delete chats
+            await db.from('chats').delete().eq('project_id', contextMenuProjectId);
+            
+            // Delete project
+            const { error } = await db
+                .from('projects')
+                .delete()
+                .eq('id', contextMenuProjectId);
+            
+            if (error) {
+                console.error('Error deleting project:', error);
+                alert('Erreur lors de la suppression');
+                return;
+            }
+            
+            loadProjectsList(); // Refresh list
+            
+            // If this project was open, close chat
+            if (currentProjectId === contextMenuProjectId) {
+                closeChat();
+                startNewProject();
+            }
+            
+            console.log('✅ Project deleted');
         }
         
         // Format time ago
@@ -4048,6 +4286,9 @@
             
             if (!project) return;
             
+            // Store project title for header
+            currentProjectTitle = project.title || 'Sans titre';
+            
             // Set brand
             if (project.brand) {
                 brand = project.brand;
@@ -4081,7 +4322,12 @@
                         chatHistory[chat.chat_type].push({ role: msg.role, content: msg.content });
                     }
                 }
+                
+                console.log(`✅ Loaded ${messages?.length || 0} messages for ${chat.chat_type}`);
             }
+            
+            // Update chat header with project name
+            updateChatHeader();
             
             // Open chat with the appropriate mode
             const hasAssistant = currentChatId.assistant;
@@ -4089,10 +4335,34 @@
             openChat(defaultMode);
         }
         
+        // Update chat header to show project name
+        function updateChatHeader() {
+            const panels = ['copilot', 'assistant'];
+            
+            for (const panel of panels) {
+                const projectNameEl = document.getElementById(panel + 'ProjectName');
+                const projectSepEl = document.getElementById(panel + 'ProjectSep');
+                
+                if (currentProjectTitle && currentProjectId) {
+                    if (projectNameEl) {
+                        projectNameEl.textContent = currentProjectTitle;
+                        projectNameEl.style.display = 'block';
+                    }
+                    if (projectSepEl) {
+                        projectSepEl.style.display = 'block';
+                    }
+                } else {
+                    if (projectNameEl) projectNameEl.style.display = 'none';
+                    if (projectSepEl) projectSepEl.style.display = 'none';
+                }
+            }
+        }
+        
         // Start new project (clear current)
         function startNewProject() {
             currentProjectId = null;
             currentChatId = { assistant: null, copilot: null };
+            currentProjectTitle = null;
             projectMessageCount = 0;
             
             // Clear chats
@@ -4104,6 +4374,9 @@
             
             if (assistantBody) assistantBody.innerHTML = '';
             if (copilotBody) copilotBody.innerHTML = '';
+            
+            // Clear project name from header
+            updateChatHeader();
             
             // Show welcome message
             setTimeout(() => {
@@ -4995,5 +5268,17 @@
         z-index: -1;
         pointer-events: none;
     "></div>
+    
+    <!-- RENAME PROJECT MODAL -->
+    <div class="rename-modal" id="renameModal">
+        <div class="rename-modal-content">
+            <div class="rename-modal-title">Renommer le projet</div>
+            <input type="text" class="rename-modal-input" id="renameInput" placeholder="Nom du projet">
+            <div class="rename-modal-buttons">
+                <button class="rename-modal-btn cancel" onclick="closeRenameModal()">Annuler</button>
+                <button class="rename-modal-btn save" onclick="saveProjectRename()">Enregistrer</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
