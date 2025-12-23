@@ -1612,11 +1612,11 @@
             z-index: 10;
         }
         .chat-view.split .chat-input { padding-bottom: 12px; }
-        .input-row { display: flex; align-items: flex-end; gap: 8px; padding: 6px; background: var(--card); border: 1px solid var(--border); border-radius: 24px; transition: border-color 0.2s; position: relative; }
+        .input-row { display: flex; align-items: center; gap: 8px; padding: 6px; background: var(--card); border: 1px solid var(--border); border-radius: 24px; transition: border-color 0.2s; position: relative; }
         .input-row:focus-within { border-color: var(--mode-border); }
         .input-row.recording { border-color: var(--mode-border); }
         
-        .plus-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; z-index: 2; align-self: flex-end; }
+        .plus-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; z-index: 2; }
         .plus-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
         .plus-btn .icon { width: 16px; height: 16px; }
         /* Plus icon color matches mode */
@@ -1630,31 +1630,9 @@
         .attach-opt:hover { background: rgba(255,255,255,0.05); }
         .attach-opt .icon { width: 14px; height: 14px; color: var(--mode-color); }
         
-        /* Input area wrapper - supports expandable textarea */
-        .input-area { flex: 1; position: relative; display: flex; align-items: center; }
-        .input-text {
-            width: 100%;
-            height: 36px;
-            max-height: 25vh;
-            background: transparent;
-            border: none;
-            color: white;
-            font-size: 13px;
-            outline: none;
-            padding: 8px 10px;
-            position: relative;
-            z-index: 1;
-            resize: none;
-            line-height: 1.4;
-            font-family: inherit;
-            overflow-y: hidden;
-            scrollbar-width: none;
-            box-sizing: border-box;
-        }
-        .input-text::-webkit-scrollbar { width: 4px; }
-        .input-text::-webkit-scrollbar-track { background: transparent; }
-        .input-text::-webkit-scrollbar-thumb { background: transparent; border-radius: 4px; }
-        .input-text.scrolling::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); }
+        /* Input area wrapper */
+        .input-area { flex: 1; position: relative; height: 36px; display: flex; align-items: center; }
+        .input-text { width: 100%; background: transparent; border: none; color: white; font-size: 13px; outline: none; padding: 6px 10px; position: relative; z-index: 1; }
         .input-text::placeholder { color: rgba(255,255,255,0.25); }
         .input-row.recording .input-text { opacity: 0; pointer-events: none; }
         
@@ -1668,7 +1646,7 @@
         .voice-timer { font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text); min-width: 36px; text-align: right; opacity: 0.7; padding-right: 4px; background: linear-gradient(to right, transparent, var(--card) 20%); padding-left: 12px; }
         
         /* Dynamic action button (mic/send/stop) */
-        .action-btn { width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; flex-shrink: 0; z-index: 2; position: relative; align-self: flex-end; }
+        .action-btn { width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; flex-shrink: 0; z-index: 2; position: relative; }
         .action-btn.copilot { background: linear-gradient(135deg, var(--copilot), #E55A2B); color: white; }
         .action-btn.assistant { background: linear-gradient(135deg, var(--assistant), #16a34a); color: white; }
         .action-btn:hover { transform: scale(1.05); }
@@ -1698,7 +1676,6 @@
             z-index: 2;
             display: none;
             animation: sphereGlow 3s ease-in-out infinite;
-            align-self: flex-end;
         }
         .transcription-sphere.active { display: block; }
         @keyframes sphereGlow {
@@ -2990,7 +2967,7 @@
                 <div class="input-row" id="copilotInputRow">
                     <button class="plus-btn" onclick="toggleAttach('copilot')"><span class="icon"><svg><use href="#icon-plus"/></svg></span></button>
                     <div class="input-area">
-                        <textarea class="input-text" id="copilotInput" placeholder="Posez votre question..." rows="1" oninput="handleChatInput('copilot'); autoResizeInput('copilot')" onkeypress="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();handleSend('copilot')}" onscroll="handleInputScroll(this)"></textarea>
+                        <input type="text" class="input-text" id="copilotInput" placeholder="Posez votre question..." oninput="handleChatInput('copilot')" onkeypress="if(event.key==='Enter')handleSend('copilot')">
                         <div class="voice-waveform copilot" id="copilotWaveform">
                             <div class="wave-bars" id="copilotBars"></div>
                             <div class="voice-timer" id="copilotTimer">0:00</div>
@@ -3100,7 +3077,7 @@
                 <div class="input-row" id="assistantInputRow">
                     <button class="plus-btn" onclick="toggleAttach('assistant')"><span class="icon"><svg><use href="#icon-plus"/></svg></span></button>
                     <div class="input-area">
-                        <textarea class="input-text" id="assistantInput" placeholder="Décrivez l'intervention..." rows="1" oninput="handleChatInput('assistant'); autoResizeInput('assistant')" onkeypress="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();handleSend('assistant')}" onscroll="handleInputScroll(this)"></textarea>
+                        <input type="text" class="input-text" id="assistantInput" placeholder="Décrivez l'intervention..." oninput="handleChatInput('assistant')" onkeypress="if(event.key==='Enter')handleSend('assistant')">
                         <div class="voice-waveform assistant" id="assistantWaveform">
                             <div class="wave-bars" id="assistantBars"></div>
                             <div class="voice-timer" id="assistantTimer">0:00</div>
@@ -4447,11 +4424,6 @@
             const input = document.getElementById(panel + 'Input');
             if (input.value.trim()) {
                 sendMsg(panel);
-                // Reset input to single line
-                setTimeout(() => {
-                    input.style.height = '36px';
-                    input.style.overflowY = 'hidden';
-                }, 50);
             }
         }
         
@@ -4466,11 +4438,6 @@
             } else if (hasText) {
                 sendMsg(panel);
                 btn.classList.remove('has-text');
-                // Reset input to single line
-                setTimeout(() => {
-                    input.style.height = '36px';
-                    input.style.overflowY = 'hidden';
-                }, 50);
             } else {
                 startRecording(panel);
             }
@@ -4692,6 +4659,9 @@
                 
                 if (projectsError) {
                     console.error('❌ Error loading projects:', projectsError);
+                    // Clear loading state on error
+                    if (projectsContainer) projectsContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-dim);">Erreur de chargement</div>';
+                    if (recentContainer) recentContainer.innerHTML = '';
                     return;
                 }
                 
@@ -4734,6 +4704,11 @@
                 
             } catch (e) {
                 console.error('❌ Unexpected error loading projects:', e);
+                // Clear loading state on error
+                const projectsContainer = document.getElementById('projectsList');
+                const recentContainer = document.getElementById('recentProjectsHome');
+                if (projectsContainer) projectsContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-dim);">Erreur de chargement</div>';
+                if (recentContainer) recentContainer.innerHTML = '';
             }
         }
         
@@ -5999,7 +5974,6 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
                     input.value = transcription.trim();
                     input.placeholder = panel === 'assistant' ? 'Décrivez l\'intervention...' : 'Posez votre question...';
                     handleChatInput(panel);
-                    autoResizeInput(panel);
                     toast('🎤 Transcription terminée');
                     console.log('✅ ElevenLabs transcription:', transcription);
                 } else {
@@ -6025,48 +5999,7 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
                 ];
                 input.value = transcriptions[Math.floor(Math.random() * transcriptions.length)];
                 handleChatInput(panel);
-                autoResizeInput(panel);
             }
-        }
-        
-        // ═══════════════════════════════════════════════════════════════
-        // EXPANDABLE INPUT FUNCTIONS
-        // ═══════════════════════════════════════════════════════════════
-        
-        function autoResizeInput(panel) {
-            const input = document.getElementById(panel + 'Input');
-            if (!input) return;
-            
-            // Reset to single line to measure actual content height
-            input.style.height = '36px';
-            input.style.overflowY = 'hidden';
-            
-            // Get the actual scroll height (content height)
-            const scrollHeight = input.scrollHeight;
-            const minHeight = 36;
-            const maxHeight = window.innerHeight * 0.25; // 25% of screen
-            
-            // Only expand if content exceeds single line
-            if (scrollHeight > minHeight) {
-                if (scrollHeight >= maxHeight) {
-                    // At max height - enable scrolling
-                    input.style.height = maxHeight + 'px';
-                    input.style.overflowY = 'auto';
-                } else {
-                    // Expand to fit content
-                    input.style.height = scrollHeight + 'px';
-                    input.style.overflowY = 'hidden';
-                }
-            }
-        }
-        
-        let scrollbarTimeout = null;
-        function handleInputScroll(input) {
-            input.classList.add('scrolling');
-            if (scrollbarTimeout) clearTimeout(scrollbarTimeout);
-            scrollbarTimeout = setTimeout(() => {
-                input.classList.remove('scrolling');
-            }, 1000);
         }
         
         // Update timer
@@ -6140,7 +6073,6 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
                     ];
                     input.value = transcriptions[Math.floor(Math.random() * transcriptions.length)];
                     handleChatInput(panel);
-                    autoResizeInput(panel);
                     toast('🎤 Transcription (simulation)');
                 }, 1500); // Slightly longer delay to see the sphere
             }
