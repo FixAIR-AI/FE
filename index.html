@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FixAIR V42 - Brand History Tracking</title>
+    <title>FixAIR V43 - Speech-to-Text + Swipe Delete</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -879,6 +879,49 @@
         .proj-title { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
         .proj-meta { font-size: 11px; color: var(--text-dim); }
         .proj-time { font-size: 11px; color: rgba(255,255,255,0.25); }
+        
+        /* ═══ SWIPE TO DELETE - Mobile ═══ */
+        .proj-swipe-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+        }
+        .proj-swipe-container .proj {
+            position: relative;
+            z-index: 2;
+            transition: transform 0.3s ease;
+        }
+        .proj-swipe-container.swiped .proj {
+            transform: translateX(-70px);
+        }
+        .proj-delete-btn {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 70px;
+            background: #ef4444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+            border-radius: 0 12px 12px 0;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .proj-swipe-container.swiped .proj-delete-btn {
+            opacity: 1;
+        }
+        .proj-delete-btn .icon {
+            width: 22px;
+            height: 22px;
+            color: white;
+        }
+        .proj-delete-btn:active {
+            background: #dc2626;
+        }
+        /* ═══ END SWIPE TO DELETE ═══ */
         
         /* PROJECT CONTEXT MENU */
         .project-context-menu {
@@ -4576,16 +4619,23 @@
             
             const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextMenu(event, '${project.id}', '${escapeHtml(project.title || 'Sans titre')}')"` : '';
             
+            // ═══ SWIPE TO DELETE: Wrap project card with swipe container ═══
             return `
-                <div class="proj" onclick="loadProject('${project.id}')" ${contextMenuAttr} data-project-id="${project.id}">
-                    ${iconHtml}
-                    <div class="proj-info">
-                        <div class="proj-title">${escapeHtml(project.title || 'Sans titre')}</div>
-                        <div class="proj-meta">${modeLabel}${brandDisplay ? ' • ' + brandDisplay : ''}</div>
+                <div class="proj-swipe-container" data-project-id="${project.id}">
+                    <div class="proj" onclick="handleProjectClick('${project.id}', event)" ${contextMenuAttr}>
+                        ${iconHtml}
+                        <div class="proj-info">
+                            <div class="proj-title">${escapeHtml(project.title || 'Sans titre')}</div>
+                            <div class="proj-meta">${modeLabel}${brandDisplay ? ' • ' + brandDisplay : ''}</div>
+                        </div>
+                        <span class="proj-time">${timeAgo}</span>
                     </div>
-                    <span class="proj-time">${timeAgo}</span>
+                    <div class="proj-delete-btn" onclick="deleteProjectSwipe('${project.id}', event)">
+                        <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></span>
+                    </div>
                 </div>
             `;
+            // ═══ END SWIPE TO DELETE ═══
         }
         
         // Render projects in the projects page
@@ -4730,6 +4780,162 @@
             console.log('✅ Project deleted');
         }
         
+        // ═══════════════════════════════════════════════════════════════
+        // SWIPE TO DELETE - Mobile Touch Gestures
+        // ═══════════════════════════════════════════════════════════════
+        
+        let swipeStartX = 0;
+        let swipeCurrentX = 0;
+        let swipeThreshold = 50;
+        let activeSwipeContainer = null;
+        
+        // Initialize swipe listeners
+        function initSwipeToDelete() {
+            document.addEventListener('touchstart', handleSwipeStart, { passive: true });
+            document.addEventListener('touchmove', handleSwipeMove, { passive: false });
+            document.addEventListener('touchend', handleSwipeEnd, { passive: true });
+            
+            // Close swipe when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.proj-swipe-container')) {
+                    document.querySelectorAll('.proj-swipe-container.swiped').forEach(c => {
+                        c.classList.remove('swiped');
+                        c.querySelector('.proj').style.transform = 'translateX(0)';
+                    });
+                }
+            });
+        }
+        
+        function handleSwipeStart(e) {
+            const container = e.target.closest('.proj-swipe-container');
+            if (!container) return;
+            
+            // Close any other open swipes
+            document.querySelectorAll('.proj-swipe-container.swiped').forEach(c => {
+                if (c !== container) c.classList.remove('swiped');
+            });
+            
+            swipeStartX = e.touches[0].clientX;
+            activeSwipeContainer = container;
+        }
+        
+        function handleSwipeMove(e) {
+            if (!activeSwipeContainer) return;
+            
+            swipeCurrentX = e.touches[0].clientX;
+            const diff = swipeStartX - swipeCurrentX;
+            
+            // Only handle left swipes (diff > 0)
+            if (diff > 10) {
+                e.preventDefault();
+                const proj = activeSwipeContainer.querySelector('.proj');
+                const translateX = Math.min(diff, 70);
+                proj.style.transform = `translateX(-${translateX}px)`;
+                proj.style.transition = 'none';
+            }
+        }
+        
+        function handleSwipeEnd(e) {
+            if (!activeSwipeContainer) return;
+            
+            const diff = swipeStartX - swipeCurrentX;
+            const proj = activeSwipeContainer.querySelector('.proj');
+            
+            proj.style.transition = 'transform 0.3s ease';
+            
+            if (diff > swipeThreshold) {
+                // Swiped enough - show delete button
+                activeSwipeContainer.classList.add('swiped');
+                proj.style.transform = 'translateX(-70px)';
+            } else {
+                // Not enough - reset
+                activeSwipeContainer.classList.remove('swiped');
+                proj.style.transform = 'translateX(0)';
+            }
+            
+            activeSwipeContainer = null;
+            swipeStartX = 0;
+            swipeCurrentX = 0;
+        }
+        
+        // Delete project from swipe action
+        async function deleteProjectSwipe(projectId, event) {
+            event.stopPropagation();
+            
+            if (!confirm('Supprimer ce projet ?')) {
+                // Reset swipe
+                const container = event.target.closest('.proj-swipe-container');
+                if (container) {
+                    container.classList.remove('swiped');
+                    container.querySelector('.proj').style.transform = 'translateX(0)';
+                }
+                return;
+            }
+            
+            const userId = await getCurrentUserId();
+            if (!userId || userId.startsWith('demo-')) {
+                toast('Mode démo - suppression simulée');
+                event.target.closest('.proj-swipe-container').remove();
+                return;
+            }
+            
+            try {
+                // Delete messages first
+                const { data: chats } = await db
+                    .from('chats')
+                    .select('id')
+                    .eq('project_id', projectId);
+                
+                for (const chat of chats || []) {
+                    await db.from('messages').delete().eq('chat_id', chat.id);
+                }
+                
+                // Delete chats
+                await db.from('chats').delete().eq('project_id', projectId);
+                
+                // Delete project
+                const { error } = await db
+                    .from('projects')
+                    .delete()
+                    .eq('id', projectId);
+                
+                if (error) {
+                    console.error('Error deleting project:', error);
+                    toast('Erreur lors de la suppression');
+                    return;
+                }
+                
+                // Remove from UI with animation
+                const container = event.target.closest('.proj-swipe-container');
+                if (container) {
+                    container.style.transition = 'all 0.3s ease';
+                    container.style.transform = 'translateX(-100%)';
+                    container.style.opacity = '0';
+                    container.style.height = '0';
+                    container.style.marginBottom = '0';
+                    container.style.padding = '0';
+                    setTimeout(() => container.remove(), 300);
+                }
+                
+                // If this project was open, close chat
+                if (currentProjectId === projectId) {
+                    closeChat();
+                    startNewProject();
+                }
+                
+                toast('✅ Projet supprimé');
+                console.log('✅ Project deleted via swipe');
+                
+            } catch (e) {
+                console.error('Error deleting project:', e);
+                toast('Erreur lors de la suppression');
+            }
+        }
+        
+        // Initialize swipe on page load
+        document.addEventListener('DOMContentLoaded', initSwipeToDelete);
+        // ═══ END SWIPE TO DELETE ═══
+        
         // Format time ago
         function formatTimeAgo(date) {
             const now = new Date();
@@ -4751,6 +4957,18 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+        
+        // Handle project card click (check if swiped first)
+        function handleProjectClick(projectId, event) {
+            const container = event.target.closest('.proj-swipe-container');
+            if (container && container.classList.contains('swiped')) {
+                // Reset swipe instead of loading
+                container.classList.remove('swiped');
+                container.querySelector('.proj').style.transform = 'translateX(0)';
+                return;
+            }
+            loadProject(projectId);
         }
         
         // Load a specific project (FIXED: uses separate queries for reliability)
@@ -5508,11 +5726,16 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
             const inputRow = document.getElementById(panel + 'InputRow');
             const btn = document.getElementById(panel + 'ActionBtn');
             const barsContainer = document.getElementById(panel + 'Bars');
+            const input = document.getElementById(panel + 'Input');
             
             barsContainer.innerHTML = '';
             simulatedIntensityCurrent[panel] = 0;
             simulatedIntensityTarget[panel] = 0;
             simulatedSpeaking[panel] = false;
+            
+            // Clear input and show listening state
+            input.value = '';
+            input.placeholder = '🎤 En écoute...';
             
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -5526,7 +5749,26 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
                 
                 audioContexts[panel] = audioContext;
                 analysers[panel] = analyser;
-                recordings[panel] = { stream, startTime: Date.now() };
+                
+                // ═══ ELEVENLABS: Setup MediaRecorder for actual audio capture ═══
+                const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+                const audioChunks = [];
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+                
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    await transcribeWithElevenLabs(panel, audioBlob);
+                };
+                
+                mediaRecorder.start();
+                // ═══ END ELEVENLABS SETUP ═══
+                
+                recordings[panel] = { stream, startTime: Date.now(), mediaRecorder };
                 
             } catch (err) {
                 console.log('Mic access denied, using simulation');
@@ -5552,6 +5794,63 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
             voiceTimers[panel] = setInterval(() => updateVoiceTimer(panel), 100);
         }
         
+        // ═══════════════════════════════════════════════════════════════
+        // ELEVENLABS SPEECH-TO-TEXT
+        // ═══════════════════════════════════════════════════════════════
+        const ELEVENLABS_API_KEY = 'sk_22d550a1aecd2627750e50b5cf337ef5372bbbbcd35c8b71';
+        
+        async function transcribeWithElevenLabs(panel, audioBlob) {
+            const input = document.getElementById(panel + 'Input');
+            input.placeholder = '🔄 Transcription...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', audioBlob, 'recording.webm');
+                formData.append('model_id', 'scribe_v1');
+                formData.append('language_code', 'fra');
+                
+                const response = await fetch('https://api.elevenlabs.io/v1/speech-to-text', {
+                    method: 'POST',
+                    headers: {
+                        'xi-api-key': ELEVENLABS_API_KEY
+                    },
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`ElevenLabs API error: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                const transcription = result.text || '';
+                
+                if (transcription.trim()) {
+                    input.value = transcription.trim();
+                    input.placeholder = 'Posez votre question...';
+                    handleChatInput(panel);
+                    toast('🎤 Transcription terminée');
+                    console.log('✅ ElevenLabs transcription:', transcription);
+                } else {
+                    input.placeholder = 'Posez votre question...';
+                    toast('❌ Aucune parole détectée');
+                }
+                
+            } catch (error) {
+                console.error('❌ ElevenLabs STT error:', error);
+                input.placeholder = 'Posez votre question...';
+                toast('❌ Erreur transcription');
+                
+                // Fallback to simulation for demo
+                const transcriptions = [
+                    "Erreur E6 sur groupe extérieur",
+                    "Le compresseur ne démarre pas",
+                    "Code défaut F3"
+                ];
+                input.value = transcriptions[Math.floor(Math.random() * transcriptions.length)];
+                handleChatInput(panel);
+            }
+        }
+        
         // Update timer
         function updateVoiceTimer(panel) {
             const timerEl = document.getElementById(panel + 'Timer');
@@ -5569,6 +5868,13 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
             const inputRow = document.getElementById(panel + 'InputRow');
             const btn = document.getElementById(panel + 'ActionBtn');
             const barsContainer = document.getElementById(panel + 'Bars');
+            const input = document.getElementById(panel + 'Input');
+            
+            // ═══ ELEVENLABS: Stop MediaRecorder (triggers ondataavailable and onstop) ═══
+            if (recordings[panel]?.mediaRecorder && recordings[panel].mediaRecorder.state === 'recording') {
+                recordings[panel].mediaRecorder.stop();
+            }
+            // ═══ END ELEVENLABS ═══
             
             if (recordings[panel]?.stream) {
                 recordings[panel].stream.getTracks().forEach(track => track.stop());
@@ -5588,25 +5894,26 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
             inputRow.classList.remove('recording');
             btn.classList.remove('recording');
             
+            // Handle simulated mode (fallback)
+            if (recordings[panel]?.simulated) {
+                setTimeout(() => {
+                    const transcriptions = [
+                        "Erreur E6 sur groupe extérieur Mitsubishi",
+                        "Le compresseur ne démarre pas correctement",
+                        "Code défaut F3 sur l'unité intérieure"
+                    ];
+                    input.value = transcriptions[Math.floor(Math.random() * transcriptions.length)];
+                    handleChatInput(panel);
+                    toast('🎤 Transcription (simulation)');
+                }, 300);
+            }
+            
             delete recordings[panel];
             delete audioContexts[panel];
             delete analysers[panel];
             
             const timerEl = document.getElementById(panel + 'Timer');
             if (timerEl) timerEl.textContent = '0:00';
-            
-            // Simulate transcription
-            setTimeout(() => {
-                const input = document.getElementById(panel + 'Input');
-                const transcriptions = [
-                    "Erreur E6 sur groupe extérieur Mitsubishi",
-                    "Le compresseur ne démarre pas correctement",
-                    "Code défaut F3 sur l'unité intérieure"
-                ];
-                input.value = transcriptions[Math.floor(Math.random() * transcriptions.length)];
-                handleChatInput(panel);
-                toast('🎤 Transcription terminée');
-            }, 300);
         }
 
         function voiceInput(panel) {
