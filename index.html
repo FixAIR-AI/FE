@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FixAIR V37 - Chat Sync Fixed</title>
+    <title>FixAIR V38 - Brand Sync Fixed</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -3427,6 +3427,12 @@
             });
             document.querySelectorAll('.brand-chip').forEach(c => c.classList.toggle('active', c.dataset.b === b));
             
+            // ═══ FIX: Update brand context in fresh chat ═══
+            if (!currentProjectId && typeof updateBrandContextInHistory === 'function') {
+                updateBrandContextInHistory();
+            }
+            // ═══ END FIX ═══
+            
             setTimeout(() => completeBrandStep(), 300);
         }
 
@@ -3530,6 +3536,46 @@
             document.querySelectorAll('.brand-dropdown-item[data-b]').forEach(o => o.classList.toggle('selected', o.dataset.b === b));
             document.querySelectorAll('.brand-chip').forEach(c => c.classList.toggle('active', c.dataset.b === b));
             closeBrandDropdown();
+            
+            // ═══ FIX: Update brand context in fresh chat if no project created yet ═══
+            if (!currentProjectId) {
+                updateBrandContextInHistory();
+            }
+            // ═══ END FIX ═══
+        }
+        
+        // Helper function to update brand context in chat history
+        function updateBrandContextInHistory() {
+            const brandNames = {
+                'mitsubishi': 'Mitsubishi Electric',
+                'daikin': 'Daikin',
+                'carrier': 'Carrier',
+                'lg': 'LG',
+                'samsung': 'Samsung',
+                'panasonic': 'Panasonic',
+                'toshiba': 'Toshiba',
+                'fujitsu': 'Fujitsu',
+                'hitachi': 'Hitachi',
+                'general': 'Multi-marques'
+            };
+            const brandName = brandNames[brand] || brand;
+            
+            // Update context for both panels
+            ['assistant', 'copilot'].forEach(panel => {
+                const brandContext = panel === 'assistant' 
+                    ? `[CONTEXTE] Session de rapport d'intervention pour équipement ${brandName}. Toutes les questions et le rapport généré doivent être spécifiques à la marque ${brandName}.`
+                    : `[CONTEXTE] Session de diagnostic pour équipement ${brandName}. Utiliser la base de connaissances ${brandName} pour toutes les réponses techniques.`;
+                
+                // Find and update or add system message
+                const systemMsgIndex = chatHistory[panel].findIndex(m => m.role === 'system');
+                if (systemMsgIndex >= 0) {
+                    chatHistory[panel][systemMsgIndex].content = brandContext;
+                } else if (chatHistory[panel].length === 0) {
+                    chatHistory[panel].push({ role: 'system', content: brandContext });
+                }
+            });
+            
+            console.log('🏷️ Brand context updated:', brandName);
         }
 
         function updateRing(pct) {
@@ -3585,8 +3631,39 @@
                 currentChatId = { assistant: null, copilot: null };
                 currentProjectTitle = null;
                 projectMessageCount = 0;
+                
+                // ═══ FIX: Add brand context as FIRST message in history ═══
+                const brandNames = {
+                    'mitsubishi': 'Mitsubishi Electric',
+                    'daikin': 'Daikin',
+                    'carrier': 'Carrier',
+                    'lg': 'LG',
+                    'samsung': 'Samsung',
+                    'panasonic': 'Panasonic',
+                    'toshiba': 'Toshiba',
+                    'fujitsu': 'Fujitsu',
+                    'hitachi': 'Hitachi',
+                    'general': 'Multi-marques'
+                };
+                const brandName = brandNames[brand] || brand;
+                
+                // Create brand context message for the AI
+                const brandContext = m === 'assistant' 
+                    ? `[CONTEXTE] Session de rapport d'intervention pour équipement ${brandName}. Toutes les questions et le rapport généré doivent être spécifiques à la marque ${brandName}.`
+                    : `[CONTEXTE] Session de diagnostic pour équipement ${brandName}. Utiliser la base de connaissances ${brandName} pour toutes les réponses techniques.`;
+                
                 chatHistory.assistant = [];
                 chatHistory.copilot = [];
+                
+                // Add brand context as first system message
+                chatHistory[m].push({ 
+                    role: 'system', 
+                    content: brandContext 
+                });
+                
+                console.log('🏷️ Brand context added to history:', brandName);
+                // ═══ END FIX ═══
+                
                 updateChatHeader();
                 
                 // Clear body for fresh start
@@ -3595,8 +3672,8 @@
                 
                 // Show welcome message
                 const wel = {
-                    copilot: `Bonjour ! <strong style="color:var(--copilot)">FixAIR Copilot</strong> prêt pour <strong>${names[brand]}</strong>. Comment puis-je vous aider ?`,
-                    assistant: `<strong style="color:var(--assistant)">FixAIR Assistant</strong> prêt. Décrivez l'intervention et je génère le rapport.`
+                    copilot: `Bonjour ! <strong style="color:var(--copilot)">FixAIR Copilot</strong> prêt pour <strong>${brandName}</strong>. Comment puis-je vous aider ?`,
+                    assistant: `<strong style="color:var(--assistant)">FixAIR Assistant</strong> prêt pour <strong>${brandName}</strong>. Décrivez l'intervention et je génère le rapport.`
                 };
                 addMsg(m, 'ai', wel[m]);
             }
@@ -4830,17 +4907,28 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        panel: panel,
-                        message: text,
-                        history: chatHistory[panel],
+                        // ═══ BRAND CONTEXT (PRIORITY) ═══
                         brand: brand,
                         brand_name: brandNames[brand] || brand,
+                        
+                        // ═══ MESSAGE DATA ═══
+                        panel: panel,
+                        message: text,
+                        history: chatHistory[panel], // Now includes brand context as first system message
+                        
+                        // ═══ SESSION DATA ═══
                         session_id: sessionIds[panel],
                         project_id: currentProjectId,
                         chat_id: currentChatId[panel],
                         timestamp: new Date().toISOString(),
-                        // System context for AI
-                        system_context: `Le technicien travaille sur un système ${brandNames[brand] || brand}. Utilise la base de connaissances ${brandNames[brand] || brand} pour répondre.`
+                        
+                        // ═══ FLAGS ═══
+                        is_first_message: chatHistory[panel].filter(m => m.role === 'user').length === 1,
+                        
+                        // ═══ SYSTEM CONTEXT FOR AI ═══
+                        system_context: panel === 'assistant'
+                            ? `IMPORTANT: Cette session est pour un rapport d'intervention sur équipement ${brandNames[brand] || brand}. Pose des questions spécifiques à ${brandNames[brand] || brand} et génère un rapport ${brandNames[brand] || brand}.`
+                            : `IMPORTANT: Cette session est pour du diagnostic technique sur équipement ${brandNames[brand] || brand}. Utilise UNIQUEMENT la base de connaissances ${brandNames[brand] || brand} pour répondre.`
                     })
                 });
                 
