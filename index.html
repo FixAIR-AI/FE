@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FixAIR V40 - Brand Dropdown in Chat</title>
+    <title>FixAIR V41 - Brand Dropdown Styled</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -117,6 +117,30 @@
         [data-theme="light"] .brand-dropdown {
             background: rgba(255,255,255,0.98);
             box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+        [data-theme="light"] .panel-brand-dropdown {
+            background: rgba(255,255,255,0.98);
+            border-color: rgba(0,0,0,0.1);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+        [data-theme="light"] .panel-brand-option {
+            color: rgba(0,0,0,0.6);
+        }
+        [data-theme="light"] .panel-brand-option:hover {
+            background: rgba(0,0,0,0.04);
+            color: #000;
+        }
+        [data-theme="light"] .panel-brand-btn .panel-brand-text {
+            color: rgba(0,0,0,0.5);
+        }
+        [data-theme="light"] .panel-brand-btn:hover .panel-brand-text {
+            color: #000;
+        }
+        [data-theme="light"] .panel-brand-btn .brand-arrow {
+            color: rgba(0,0,0,0.4);
+        }
+        [data-theme="light"] .panel-brand-btn:hover .brand-arrow {
+            color: #000;
         }
         [data-theme="light"] .brand-chip:hover,
         [data-theme="light"] .brand-dropdown-item:hover {
@@ -1064,51 +1088,58 @@
         .panel-brand { font-size: 12px; color: var(--text-dim); }
         .panel-project { font-size: 11px; color: var(--text-dim); opacity: 0.7; max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* CLICKABLE BRAND TAG IN CHAT HEADER */
-        .panel-brand-wrapper { position: relative; }
+        /* CLICKABLE BRAND TAG IN CHAT HEADER - No chip, original style */
+        .panel-brand-wrapper { position: relative; display: flex; align-items: center; }
         .panel-brand-btn {
             display: flex;
             align-items: center;
             gap: 4px;
-            padding: 4px 8px;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
             cursor: pointer;
             transition: all 0.2s;
-            font-size: 11px;
-            color: var(--text-dim);
+            background: none;
+            border: none;
+            padding: 0;
         }
-        .panel-brand-btn:hover {
-            background: rgba(255,255,255,0.08);
-            border-color: rgba(255,255,255,0.2);
-            color: var(--text);
+        .panel-brand-btn .panel-brand-text {
+            font-size: 12px;
+            color: var(--text-dim);
+            transition: color 0.2s;
+        }
+        .panel-brand-btn:hover .panel-brand-text {
+            color: #fff;
         }
         .panel-brand-btn .brand-arrow {
             width: 10px;
             height: 10px;
-            opacity: 0.5;
-            transition: transform 0.2s;
+            color: var(--text-dim);
+            opacity: 0.6;
+            transition: all 0.2s;
+        }
+        .panel-brand-btn:hover .brand-arrow {
+            color: #fff;
+            opacity: 1;
         }
         .panel-brand-wrapper.open .brand-arrow {
             transform: rotate(180deg);
         }
         .panel-brand-dropdown {
             position: absolute;
-            top: calc(100% + 6px);
+            top: calc(100% + 8px);
             left: 0;
-            min-width: 160px;
-            background: var(--card);
-            border: 1px solid var(--border);
+            min-width: 180px;
+            background: rgba(30, 32, 38, 0.95);
+            border: 1px solid rgba(255,255,255,0.15);
             border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
             z-index: 1000;
             opacity: 0;
             visibility: hidden;
             transform: translateY(-8px);
             transition: all 0.2s;
-            max-height: 280px;
+            max-height: 320px;
             overflow-y: auto;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
         }
         .panel-brand-wrapper.open .panel-brand-dropdown {
             opacity: 1;
@@ -1118,18 +1149,18 @@
         .panel-brand-option {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 10px 12px;
+            gap: 10px;
+            padding: 11px 14px;
             cursor: pointer;
             transition: background 0.15s;
-            font-size: 12px;
-            color: var(--text-dim);
+            font-size: 13px;
+            color: rgba(255,255,255,0.7);
         }
         .panel-brand-option:first-child { border-radius: 11px 11px 0 0; }
         .panel-brand-option:last-child { border-radius: 0 0 11px 11px; }
         .panel-brand-option:hover {
-            background: rgba(255,255,255,0.05);
-            color: var(--text);
+            background: rgba(255,255,255,0.08);
+            color: #fff;
         }
         .panel-brand-option.selected {
             background: var(--mode-bg);
@@ -1140,6 +1171,7 @@
             height: 14px;
             opacity: 0;
             color: var(--mode-color);
+            flex-shrink: 0;
         }
         .panel-brand-option.selected .brand-check {
             opacity: 1;
