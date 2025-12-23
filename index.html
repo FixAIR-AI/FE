@@ -2201,6 +2201,9 @@
             }
         }
     </style>
+    
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <!-- App wrapper to contain everything and prevent gaps -->
@@ -2567,6 +2570,7 @@
                     </div>
                 </div>
                 <div class="header-actions">
+                    <button class="h-btn new-chat-btn" onclick="startNewProject()" title="Nouveau chat"><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button>
                     <button class="h-btn" onclick="toggleSplit()" title="Mode split"><span class="icon"><svg><use href="#icon-columns"/></svg></span></button>
                 </div>
             </header>
@@ -2614,6 +2618,7 @@
                     </div>
                 </div>
                 <div class="header-actions">
+                    <button class="h-btn new-chat-btn" onclick="startNewProject()" title="Nouveau chat"><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button>
                     <button class="h-btn" onclick="openReport()" title="Voir rapport"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></button>
                     <button class="h-btn" onclick="toggleSplit()" title="Mode split"><span class="icon"><svg><use href="#icon-columns"/></svg></span></button>
                 </div>
@@ -3048,6 +3053,10 @@
                 
                 document.getElementById('loginScreen').classList.remove('active');
                 document.getElementById('mainApp').classList.add('active');
+                
+                // ═══ SUPABASE: Load projects list ═══
+                loadProjectsList();
+                // ═══ END SUPABASE ═══
             }, 500);
         } else {
             // Clear any partial/invalid auth data
@@ -3534,12 +3543,68 @@
             });
         }
 
-        function switchMode(m) {
+        async function switchMode(m) {
             if(isSplit) return;
             mode = m;
             document.getElementById('panelCopilot').style.display = m === 'copilot' ? 'flex' : 'none';
             document.getElementById('panelAssistant').style.display = m === 'assistant' ? 'flex' : 'none';
             updateModeToggle(m);
+            
+            // ═══ SUPABASE: Load or create conversation for this mode ═══
+            if (currentProjectId && !currentConversationId[m]) {
+                // Check if conversation exists for this mode in current project
+                const { data: existingConv } = await db
+                    .from('conversations')
+                    .select()
+                    .eq('project_id', currentProjectId)
+                    .eq('mode', m)
+                    .single();
+                
+                if (existingConv) {
+                    currentConversationId[m] = existingConv.id;
+                    
+                    // Load messages for this conversation
+                    const { data: messages } = await db
+                        .from('messages')
+                        .select('*')
+                        .eq('conversation_id', existingConv.id)
+                        .order('created_at', { ascending: true });
+                    
+                    // Clear and reload chat
+                    const body = document.getElementById(m + 'Body');
+                    if (body) body.innerHTML = '';
+                    chatHistory[m] = [];
+                    
+                    for (const msg of messages || []) {
+                        const role = msg.role === 'assistant' ? 'ai' : msg.role;
+                        if (role === 'user' || role === 'ai') {
+                            const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
+                            addMsg(m, role, content);
+                            chatHistory[m].push({ role: msg.role, content: msg.content });
+                        }
+                    }
+                    console.log('✅ Loaded existing conversation for', m);
+                    return;
+                } else {
+                    // Create new conversation in same project
+                    const userId = await getCurrentUserId();
+                    const { data: newConv } = await db
+                        .from('conversations')
+                        .insert({
+                            project_id: currentProjectId,
+                            user_id: userId,
+                            mode: m
+                        })
+                        .select()
+                        .single();
+                    
+                    if (newConv) {
+                        currentConversationId[m] = newConv.id;
+                        console.log('✅ Created new conversation for', m, 'in project', currentProjectId);
+                    }
+                }
+            }
+            // ═══ END SUPABASE ═══
             
             const body = document.getElementById(m + 'Body');
             if(!body.innerHTML) {
@@ -3692,6 +3757,375 @@
             copilot: 'copilot-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
             assistant: 'assistant-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9)
         };
+        
+        // ═══════════════════════════════════════════════════════════════
+        // SUPABASE CONFIGURATION
+        // ═══════════════════════════════════════════════════════════════
+        
+        const SUPABASE_URL = 'https://rnbqdryjhpxhmdwwlwlh.supabase.co'; // ← REMPLACER par ton URL
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJuYnFkcnlqaHB4aG1kd3dsd2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ1NDQ3MDcsImV4cCI6MjA1MDEyMDcwN30.1K7MHEnCD2FzhzMCDFdJ6FNpJcvWBjOZ8FxqMFIvbHA'; // ← REMPLACER par ta clé anon
+        
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Current project/conversation state
+        let currentUserId = null;
+        let currentProjectId = null;
+        let currentConversationId = {
+            assistant: null,
+            copilot: null
+        };
+        let projectMessageCount = 0;
+        
+        // ═══════════════════════════════════════════════════════════════
+        // PROJECT MANAGEMENT FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════
+        
+        // Get current user ID from Supabase auth
+        async function getCurrentUserId() {
+            if (currentUserId) return currentUserId;
+            
+            const { data: { user } } = await db.auth.getUser();
+            if (user) {
+                currentUserId = user.id;
+                return user.id;
+            }
+            
+            // If no auth, use localStorage fallback for demo
+            let localId = localStorage.getItem('fixair_demo_user_id');
+            if (!localId) {
+                localId = 'demo-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('fixair_demo_user_id', localId);
+            }
+            currentUserId = localId;
+            return localId;
+        }
+        
+        // Create or get project for current session
+        async function ensureProject(panel) {
+            // If we already have a project, return it
+            if (currentProjectId && currentConversationId[panel]) {
+                return { projectId: currentProjectId, conversationId: currentConversationId[panel] };
+            }
+            
+            const userId = await getCurrentUserId();
+            
+            // If no project yet, create one
+            if (!currentProjectId) {
+                const { data: project, error: projectError } = await db
+                    .from('projects')
+                    .insert({
+                        user_id: userId,
+                        name: 'Nouvelle intervention',
+                        brand: brand,
+                        status: 'active'
+                    })
+                    .select()
+                    .single();
+                
+                if (projectError) {
+                    console.error('Error creating project:', projectError);
+                    return null;
+                }
+                
+                currentProjectId = project.id;
+                console.log('✅ Project created:', project.id, project.reference);
+            }
+            
+            // If no conversation for this panel, create one
+            if (!currentConversationId[panel]) {
+                const { data: conversation, error: convError } = await db
+                    .from('conversations')
+                    .insert({
+                        project_id: currentProjectId,
+                        user_id: userId,
+                        mode: panel
+                    })
+                    .select()
+                    .single();
+                
+                if (convError) {
+                    console.error('Error creating conversation:', convError);
+                    return null;
+                }
+                
+                currentConversationId[panel] = conversation.id;
+                console.log('✅ Conversation created:', conversation.id, 'mode:', panel);
+            }
+            
+            return { projectId: currentProjectId, conversationId: currentConversationId[panel] };
+        }
+        
+        // Save message to Supabase
+        async function saveMessage(conversationId, role, content, contentType = 'text') {
+            if (!conversationId) return null;
+            
+            const { data, error } = await db
+                .from('messages')
+                .insert({
+                    conversation_id: conversationId,
+                    role: role,
+                    content: content,
+                    content_type: contentType
+                })
+                .select()
+                .single();
+            
+            if (error) {
+                console.error('Error saving message:', error);
+                return null;
+            }
+            
+            // Increment message count for auto-naming
+            projectMessageCount++;
+            
+            // Auto-name project after 3 messages
+            if (projectMessageCount === 3 && currentProjectId) {
+                autoNameProject(content);
+            }
+            
+            return data;
+        }
+        
+        // Auto-generate project name from first messages
+        async function autoNameProject(lastMessage) {
+            // Get first few messages to generate name
+            const { data: messages } = await db
+                .from('messages')
+                .select('content, role')
+                .eq('conversation_id', currentConversationId.assistant || currentConversationId.copilot)
+                .order('created_at', { ascending: true })
+                .limit(3);
+            
+            if (!messages || messages.length === 0) return;
+            
+            // Simple name generation: use first user message
+            const firstUserMsg = messages.find(m => m.role === 'user');
+            if (firstUserMsg) {
+                let name = firstUserMsg.content.substring(0, 50);
+                if (firstUserMsg.content.length > 50) name += '...';
+                
+                await db
+                    .from('projects')
+                    .update({ name: name })
+                    .eq('id', currentProjectId);
+                
+                console.log('✅ Project auto-named:', name);
+                
+                // Refresh projects list
+                loadProjectsList();
+            }
+        }
+        
+        // Load user's projects list
+        async function loadProjectsList() {
+            const userId = await getCurrentUserId();
+            if (!userId || userId.startsWith('demo-')) {
+                // Demo mode - show placeholder projects
+                return;
+            }
+            
+            const { data: projects, error } = await db
+                .from('projects')
+                .select(`
+                    id,
+                    name,
+                    reference,
+                    brand,
+                    status,
+                    created_at,
+                    updated_at,
+                    conversations (
+                        id,
+                        mode,
+                        message_count
+                    )
+                `)
+                .eq('user_id', userId)
+                .order('updated_at', { ascending: false })
+                .limit(20);
+            
+            if (error) {
+                console.error('Error loading projects:', error);
+                return;
+            }
+            
+            renderProjectsList(projects);
+        }
+        
+        // Render projects in the sidebar
+        function renderProjectsList(projects) {
+            const container = document.querySelector('.projects-list');
+            if (!container) return;
+            
+            if (!projects || projects.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-projects" style="text-align: center; padding: 40px 20px; color: var(--text-dim);">
+                        <p style="margin-bottom: 8px;">Aucun projet</p>
+                        <p style="font-size: 12px;">Commencez une nouvelle conversation</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = projects.map(project => {
+                const hasAssistant = project.conversations?.some(c => c.mode === 'assistant');
+                const hasCopilot = project.conversations?.some(c => c.mode === 'copilot');
+                const hasBoth = hasAssistant && hasCopilot;
+                
+                const timeAgo = formatTimeAgo(new Date(project.updated_at));
+                
+                let iconHtml = '';
+                if (hasBoth) {
+                    iconHtml = `<div class="proj-icons dual">
+                        <div class="proj-icon copilot back"><span class="star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span></div>
+                        <div class="proj-icon assistant front"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>
+                    </div>`;
+                } else if (hasAssistant) {
+                    iconHtml = `<div class="proj-icon assistant"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>`;
+                } else {
+                    iconHtml = `<div class="proj-icon copilot"><span class="star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span></div>`;
+                }
+                
+                const brandLabel = project.brand ? project.brand.charAt(0).toUpperCase() + project.brand.slice(1) : '';
+                const modeLabel = hasBoth ? 'Diagnostic + Rapport' : (hasAssistant ? 'Rapport' : 'Diagnostic');
+                
+                return `
+                    <div class="proj" onclick="loadProject('${project.id}')">
+                        ${iconHtml}
+                        <div class="proj-info">
+                            <div class="proj-title">${escapeHtml(project.name)}</div>
+                            <div class="proj-meta">${modeLabel}${brandLabel ? ' • ' + brandLabel : ''}</div>
+                        </div>
+                        <span class="proj-time">${timeAgo}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Format time ago
+        function formatTimeAgo(date) {
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) return 'À l\'instant';
+            if (diffMins < 60) return `${diffMins} min`;
+            if (diffHours < 24) return `${diffHours}h`;
+            if (diffDays === 1) return 'Hier';
+            if (diffDays < 7) return ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'][date.getDay()];
+            return `${date.getDate()} ${['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'][date.getMonth()]}`;
+        }
+        
+        // Escape HTML for safety
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Load a specific project
+        async function loadProject(projectId) {
+            currentProjectId = projectId;
+            currentConversationId = { assistant: null, copilot: null };
+            projectMessageCount = 0;
+            
+            // Get project details
+            const { data: project } = await db
+                .from('projects')
+                .select('*, conversations(*)')
+                .eq('id', projectId)
+                .single();
+            
+            if (!project) return;
+            
+            // Set brand
+            if (project.brand) {
+                brand = project.brand;
+                updateBrandUI();
+            }
+            
+            // Load conversations
+            for (const conv of project.conversations || []) {
+                currentConversationId[conv.mode] = conv.id;
+                
+                // Load messages for this conversation
+                const { data: messages } = await db
+                    .from('messages')
+                    .select('*')
+                    .eq('conversation_id', conv.id)
+                    .order('created_at', { ascending: true });
+                
+                // Clear existing chat
+                chatHistory[conv.mode] = [];
+                const body = document.getElementById(conv.mode + 'Body');
+                if (body) {
+                    body.innerHTML = '';
+                }
+                
+                // Add messages to UI
+                for (const msg of messages || []) {
+                    const role = msg.role === 'assistant' ? 'ai' : msg.role;
+                    if (role === 'user' || role === 'ai') {
+                        const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
+                        addMsg(conv.mode, role, content);
+                        chatHistory[conv.mode].push({ role: msg.role, content: msg.content });
+                    }
+                }
+            }
+            
+            // Open chat with the appropriate mode
+            const hasAssistant = currentConversationId.assistant;
+            const defaultMode = hasAssistant ? 'assistant' : 'copilot';
+            openChat(defaultMode);
+        }
+        
+        // Start new project (clear current)
+        function startNewProject() {
+            currentProjectId = null;
+            currentConversationId = { assistant: null, copilot: null };
+            projectMessageCount = 0;
+            
+            // Clear chats
+            chatHistory.assistant = [];
+            chatHistory.copilot = [];
+            
+            const assistantBody = document.getElementById('assistantBody');
+            const copilotBody = document.getElementById('copilotBody');
+            
+            if (assistantBody) assistantBody.innerHTML = '';
+            if (copilotBody) copilotBody.innerHTML = '';
+            
+            // Show welcome message
+            setTimeout(() => {
+                addMsg(mode, 'ai', '<p>Bonjour ! Comment puis-je vous aider ?</p>');
+            }, 300);
+            
+            console.log('🆕 New project started');
+        }
+        
+        // Update brand in UI
+        function updateBrandUI() {
+            const brandBtn = document.querySelector('.brand-btn .brand-btn-text');
+            if (brandBtn) {
+                const brandNames = {
+                    'mitsubishi': 'Mitsubishi',
+                    'daikin': 'Daikin',
+                    'carrier': 'Carrier',
+                    'lg': 'LG',
+                    'samsung': 'Samsung',
+                    'panasonic': 'Panasonic',
+                    'general': 'Multi-marques'
+                };
+                brandBtn.textContent = brandNames[brand] || brand;
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // END SUPABASE FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════
+        
         
         // Simple markdown parser
         function parseMarkdown(text) {
@@ -3929,6 +4363,17 @@
             // Add to history
             chatHistory[panel].push({ role: 'user', content: text });
             
+            // ═══ SUPABASE: Ensure project exists and save user message ═══
+            try {
+                const projectData = await ensureProject(panel);
+                if (projectData && projectData.conversationId) {
+                    await saveMessage(projectData.conversationId, 'user', text);
+                }
+            } catch (e) {
+                console.warn('Supabase save failed (continuing anyway):', e);
+            }
+            // ═══ END SUPABASE ═══
+            
             // Show loading
             addLoadingMsg(panel);
             
@@ -3945,6 +4390,8 @@
                         history: chatHistory[panel],
                         brand: brand,
                         session_id: sessionIds[panel],
+                        project_id: currentProjectId, // ← NEW: Send project ID
+                        conversation_id: currentConversationId[panel], // ← NEW: Send conversation ID
                         timestamp: new Date().toISOString()
                     })
                 });
@@ -3966,6 +4413,21 @@
                 // Add to history
                 chatHistory[panel].push({ role: 'assistant', content: aiResponse });
                 
+                // ═══ SUPABASE: Save AI response ═══
+                try {
+                    if (currentConversationId[panel]) {
+                        await saveMessage(currentConversationId[panel], 'assistant', aiResponse);
+                        
+                        // If this is a report, save it to reports table
+                        if (aiResponse.includes('RAPPORT D\'INTERVENTION')) {
+                            await saveReport(aiResponse);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Supabase save AI response failed:', e);
+                }
+                // ═══ END SUPABASE ═══
+                
                 // If assistant generated a report, update the report panel
                 if (panel === 'assistant' && data.report) {
                     if (data.report.client) document.getElementById('rClient').textContent = data.report.client;
@@ -3976,6 +4438,39 @@
                 console.error('Error sending message:', error);
                 removeLoadingMsg(panel);
                 addMsg(panel, 'ai', '<p><strong>Erreur de connexion</strong></p><p>Impossible de contacter le serveur. Vérifiez votre connexion internet.</p>');
+            }
+        }
+        
+        // Save report to Supabase
+        async function saveReport(reportContent) {
+            if (!currentProjectId || !currentUserId) return;
+            
+            try {
+                const { data, error } = await db
+                    .from('reports')
+                    .insert({
+                        project_id: currentProjectId,
+                        user_id: currentUserId,
+                        conversation_id: currentConversationId.assistant,
+                        type: reportContent.includes('[SAV') ? 'SAV' : (reportContent.includes('[MES') ? 'MES' : 'MAINT'),
+                        status: 'completed',
+                        content_markdown: reportContent
+                    })
+                    .select()
+                    .single();
+                
+                if (error) throw error;
+                
+                console.log('✅ Report saved:', data.id);
+                
+                // Update project status
+                await db
+                    .from('projects')
+                    .update({ status: 'completed' })
+                    .eq('id', currentProjectId);
+                
+            } catch (e) {
+                console.error('Error saving report:', e);
             }
         }
         
