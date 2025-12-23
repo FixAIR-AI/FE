@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FixAIR V41 - Brand Dropdown Styled</title>
+    <title>FixAIR V42 - Brand History Tracking</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -3879,9 +3879,24 @@
             // Update database if project exists
             if (currentProjectId) {
                 try {
+                    // First, get current project to check if original_brand is set
+                    const { data: currentProject } = await db
+                        .from('projects')
+                        .select('original_brand, brand')
+                        .eq('id', currentProjectId)
+                        .single();
+                    
+                    // Build update data
+                    const updateData = { brand: newBrand };
+                    
+                    // Only set original_brand if not already set (first change only)
+                    if (!currentProject?.original_brand && currentProject?.brand) {
+                        updateData.original_brand = oldBrand;
+                    }
+                    
                     const { error } = await db
                         .from('projects')
-                        .update({ brand: newBrand })
+                        .update(updateData)
                         .eq('id', currentProjectId);
                     
                     if (error) {
@@ -4471,7 +4486,7 @@
                 // Step 1: Get projects (separate query - more reliable than nested)
                 const { data: projects, error: projectsError } = await db
                     .from('projects')
-                    .select('id, title, brand, status, created_at, updated_at')
+                    .select('id, title, brand, original_brand, status, created_at, updated_at')
                     .eq('user_id', userId)
                     .order('updated_at', { ascending: false })
                     .limit(20);
@@ -4548,6 +4563,15 @@
             }
             
             const brandLabel = project.brand ? project.brand.charAt(0).toUpperCase() + project.brand.slice(1) : '';
+            
+            // ═══ FIX: Show brand history if changed (Original → Current) ═══
+            let brandDisplay = brandLabel;
+            if (project.original_brand && project.original_brand !== project.brand) {
+                const originalBrandLabel = project.original_brand.charAt(0).toUpperCase() + project.original_brand.slice(1);
+                brandDisplay = `${originalBrandLabel} → ${brandLabel}`;
+            }
+            // ═══ END FIX ═══
+            
             const modeLabel = hasBoth ? 'Diagnostic + Rapport' : (hasAssistant ? 'Rapport' : 'Diagnostic');
             
             const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextMenu(event, '${project.id}', '${escapeHtml(project.title || 'Sans titre')}')"` : '';
@@ -4557,7 +4581,7 @@
                     ${iconHtml}
                     <div class="proj-info">
                         <div class="proj-title">${escapeHtml(project.title || 'Sans titre')}</div>
-                        <div class="proj-meta">${modeLabel}${brandLabel ? ' • ' + brandLabel : ''}</div>
+                        <div class="proj-meta">${modeLabel}${brandDisplay ? ' • ' + brandDisplay : ''}</div>
                     </div>
                     <span class="proj-time">${timeAgo}</span>
                 </div>
@@ -4741,7 +4765,7 @@
                 // Step 1: Get project details (separate query - more reliable)
                 const { data: project, error: projectError } = await db
                     .from('projects')
-                    .select('id, title, brand, status, created_at, updated_at')
+                    .select('id, title, brand, original_brand, status, created_at, updated_at')
                     .eq('id', projectId)
                     .single();
                 
@@ -4760,11 +4784,57 @@
                 // Store project title for header
                 currentProjectTitle = project.title || 'Sans titre';
                 
-                // Set brand
-                if (project.brand) {
-                    brand = project.brand;
+                // ═══ FIX: Detect if user selected different brand on main page ═══
+                const projectOriginalBrand = project.brand;
+                const userSelectedBrand = brand; // Current global brand from main page selection
+                let brandWasChanged = false;
+                
+                const brandNames = {
+                    'mitsubishi': 'Mitsubishi Electric',
+                    'daikin': 'Daikin',
+                    'carrier': 'Carrier',
+                    'lg': 'LG',
+                    'samsung': 'Samsung',
+                    'panasonic': 'Panasonic',
+                    'toshiba': 'Toshiba',
+                    'fujitsu': 'Fujitsu',
+                    'hitachi': 'Hitachi',
+                    'general': 'Multi-marques'
+                };
+                
+                // Check if user selected a different brand on main page
+                if (userSelectedBrand && projectOriginalBrand && userSelectedBrand !== projectOriginalBrand) {
+                    console.log('🔄 Brand changed from main page:', projectOriginalBrand, '→', userSelectedBrand);
+                    brandWasChanged = true;
+                    
+                    // Update project with new brand and store original
+                    try {
+                        const updateData = { brand: userSelectedBrand };
+                        // Only set original_brand if not already set
+                        if (!project.original_brand) {
+                            updateData.original_brand = projectOriginalBrand;
+                        }
+                        
+                        await db
+                            .from('projects')
+                            .update(updateData)
+                            .eq('id', projectId);
+                        
+                        console.log('✅ Project brand updated in database');
+                    } catch (e) {
+                        console.error('❌ Failed to update brand:', e);
+                    }
+                    
+                    // Keep the user's selected brand (don't override from project)
                     updateBrandUI();
+                } else {
+                    // Use project's brand as normal
+                    if (project.brand) {
+                        brand = project.brand;
+                        updateBrandUI();
+                    }
                 }
+                // ═══ END FIX ═══
                 
                 // Step 2: Get chats for this project (SEPARATE QUERY - fixes nested query issue)
                 const { data: chats, error: chatsError } = await db
@@ -4822,18 +4892,7 @@
                 
                 // ═══ FIX: Add brand context to history for existing projects ═══
                 // This ensures the AI always knows the brand, even when loading existing conversations
-                const brandNames = {
-                    'mitsubishi': 'Mitsubishi Electric',
-                    'daikin': 'Daikin',
-                    'carrier': 'Carrier',
-                    'lg': 'LG',
-                    'samsung': 'Samsung',
-                    'panasonic': 'Panasonic',
-                    'toshiba': 'Toshiba',
-                    'fujitsu': 'Fujitsu',
-                    'hitachi': 'Hitachi',
-                    'general': 'Multi-marques'
-                };
+                // Note: brandNames is already declared above in this function
                 const projectBrandName = brandNames[brand] || brand;
                 
                 // Add system context as FIRST message in each chat's history
@@ -4861,6 +4920,18 @@
                 // ═══ END FIX ═══
                 
                 openChat(defaultMode);
+                
+                // ═══ FIX: Show brand change message if brand was changed from main page ═══
+                if (brandWasChanged) {
+                    const oldBrandName = brandNames[projectOriginalBrand] || projectOriginalBrand;
+                    const newBrandName = brandNames[userSelectedBrand] || userSelectedBrand;
+                    
+                    setTimeout(() => {
+                        const confirmMsg = `<p style="color: var(--mode-color);">⚠️ Tu as sélectionné <strong>${newBrandName}</strong> sur la page d'accueil.</p><p style="font-size: 12px; opacity: 0.8;">Marque du projet: <strong>${oldBrandName}</strong> → <strong>${newBrandName}</strong></p><p style="font-size: 12px; opacity: 0.7;">On continue avec ${newBrandName}.</p>`;
+                        addMsg(defaultMode, 'ai', confirmMsg);
+                    }, 100);
+                }
+                // ═══ END FIX ═══
                 
                 console.log('✅ Project fully loaded:', currentProjectTitle);
                 
