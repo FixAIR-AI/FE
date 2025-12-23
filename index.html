@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FixAIR V43 - Speech-to-Text + Swipe Delete</title>
+    <title>FixAIR V44 - Glass Sphere + Expandable Input</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -1606,11 +1606,11 @@
             z-index: 10;
         }
         .chat-view.split .chat-input { padding-bottom: 12px; }
-        .input-row { display: flex; align-items: center; gap: 8px; padding: 6px; background: var(--card); border: 1px solid var(--border); border-radius: 24px; transition: border-color 0.2s; position: relative; overflow: hidden; }
+        .input-row { display: flex; align-items: flex-end; gap: 8px; padding: 6px; background: var(--card); border: 1px solid var(--border); border-radius: 24px; transition: border-color 0.2s; position: relative; overflow: hidden; }
         .input-row:focus-within { border-color: var(--mode-border); }
         .input-row.recording { border-color: var(--mode-border); }
         
-        .plus-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; z-index: 2; }
+        .plus-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; z-index: 2; align-self: flex-end; }
         .plus-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
         .plus-btn .icon { width: 16px; height: 16px; }
         /* Plus icon color matches mode */
@@ -1624,9 +1624,30 @@
         .attach-opt:hover { background: rgba(255,255,255,0.05); }
         .attach-opt .icon { width: 14px; height: 14px; color: var(--mode-color); }
         
-        /* Input area wrapper */
-        .input-area { flex: 1; position: relative; height: 36px; display: flex; align-items: center; }
-        .input-text { width: 100%; background: transparent; border: none; color: white; font-size: 13px; outline: none; padding: 6px 10px; position: relative; z-index: 1; }
+        /* Input area wrapper - supports expandable textarea */
+        .input-area { flex: 1; position: relative; min-height: 36px; display: flex; align-items: center; }
+        .input-text {
+            width: 100%;
+            min-height: 36px;
+            max-height: 25vh;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 13px;
+            outline: none;
+            padding: 8px 10px;
+            position: relative;
+            z-index: 1;
+            resize: none;
+            line-height: 1.4;
+            font-family: inherit;
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+        .input-text::-webkit-scrollbar { width: 4px; }
+        .input-text::-webkit-scrollbar-track { background: transparent; }
+        .input-text::-webkit-scrollbar-thumb { background: transparent; border-radius: 4px; transition: background 0.3s; }
+        .input-text.scrolling::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); }
         .input-text::placeholder { color: rgba(255,255,255,0.25); }
         .input-row.recording .input-text { opacity: 0; pointer-events: none; }
         
@@ -1640,7 +1661,7 @@
         .voice-timer { font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text); min-width: 36px; text-align: right; opacity: 0.7; padding-right: 4px; background: linear-gradient(to right, transparent, var(--card) 20%); padding-left: 12px; }
         
         /* Dynamic action button (mic/send/stop) */
-        .action-btn { width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; flex-shrink: 0; z-index: 2; position: relative; }
+        .action-btn { width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; flex-shrink: 0; z-index: 2; position: relative; align-self: flex-end; }
         .action-btn.copilot { background: linear-gradient(135deg, var(--copilot), #E55A2B); color: white; }
         .action-btn.assistant { background: linear-gradient(135deg, var(--assistant), #16a34a); color: white; }
         .action-btn:hover { transform: scale(1.05); }
@@ -1655,6 +1676,88 @@
         .action-btn.has-text .send-icon { opacity: 1; transform: scale(1) translateY(0); }
         .action-btn.recording .mic-icon { opacity: 0; transform: scale(0); }
         .action-btn.recording .stop-icon { opacity: 1; transform: scale(1); }
+        
+        /* ═══ TRANSCRIPTION GLASS SPHERE ═══ */
+        .action-btn.transcribing { display: none; }
+        .transcription-sphere {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+            z-index: 2;
+            display: none;
+            animation: sphereGlow 3s ease-in-out infinite;
+            align-self: flex-end;
+        }
+        .transcription-sphere.active { display: block; }
+        @keyframes sphereGlow {
+            0%, 100% { box-shadow: 0 0 14px rgba(255,107,53,0.7), 0 0 28px rgba(255,107,53,0.3); }
+            25% { box-shadow: 0 0 14px rgba(239,68,68,0.7), 0 0 28px rgba(239,68,68,0.3); }
+            50% { box-shadow: 0 0 14px rgba(59,130,246,0.7), 0 0 28px rgba(59,130,246,0.3); }
+            75% { box-shadow: 0 0 14px rgba(234,179,8,0.7), 0 0 28px rgba(234,179,8,0.3); }
+        }
+        .sphere-fog-wrap {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            overflow: hidden;
+            background: rgba(20,24,32,0.3);
+        }
+        .sphere-fog-transcribe {
+            position: absolute;
+            inset: -50%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 40%, currentColor, transparent 50%), radial-gradient(circle at 70% 60%, currentColor, transparent 40%);
+            filter: blur(3px);
+            animation: fogSwirlT 4s ease-in-out infinite, fogColorT 3s ease-in-out infinite;
+            opacity: 0.9;
+        }
+        .sphere-fog-transcribe-2 {
+            position: absolute;
+            inset: -30%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 60% 30%, currentColor, transparent 45%);
+            filter: blur(3px);
+            animation: fogSwirlT2 3s ease-in-out infinite reverse, fogColorT2 3s ease-in-out infinite;
+            opacity: 0.7;
+        }
+        .sphere-highlight {
+            position: absolute;
+            top: 4px;
+            left: 8px;
+            width: 8px;
+            height: 6px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.5), transparent 70%);
+            z-index: 10;
+        }
+        @keyframes fogSwirlT {
+            0% { transform: rotate(0deg) translate(0, 0); }
+            25% { transform: rotate(90deg) translate(2px, -2px); }
+            50% { transform: rotate(180deg) translate(0, 0); }
+            75% { transform: rotate(270deg) translate(-2px, 2px); }
+            100% { transform: rotate(360deg) translate(0, 0); }
+        }
+        @keyframes fogColorT {
+            0%, 100% { color: #FF6B35; }
+            25% { color: #ef4444; }
+            50% { color: #3B82F6; }
+            75% { color: #eab308; }
+        }
+        @keyframes fogSwirlT2 {
+            0% { transform: rotate(0deg) scale(0.9); }
+            50% { transform: rotate(180deg) scale(1.1); }
+            100% { transform: rotate(360deg) scale(0.9); }
+        }
+        @keyframes fogColorT2 {
+            0%, 100% { color: #3B82F6; }
+            25% { color: #eab308; }
+            50% { color: #FF6B35; }
+            75% { color: #ef4444; }
+        }
+        /* ═══ END TRANSCRIPTION SPHERE ═══ */
 
         /* DIVIDER */
         .divider { width: 8px; background: var(--border); cursor: col-resize; position: relative; flex-shrink: 0; transition: background 0.2s; display: flex; align-items: center; justify-content: center; touch-action: none; -webkit-user-select: none; user-select: none; }
@@ -2878,7 +2981,7 @@
                 <div class="input-row" id="copilotInputRow">
                     <button class="plus-btn" onclick="toggleAttach('copilot')"><span class="icon"><svg><use href="#icon-plus"/></svg></span></button>
                     <div class="input-area">
-                        <input type="text" class="input-text" id="copilotInput" placeholder="Posez votre question..." oninput="handleChatInput('copilot')" onkeypress="if(event.key==='Enter')handleSend('copilot')">
+                        <textarea class="input-text" id="copilotInput" placeholder="Posez votre question..." rows="1" oninput="handleChatInput('copilot'); autoResizeInput('copilot')" onkeypress="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();handleSend('copilot')}" onscroll="handleInputScroll(this)"></textarea>
                         <div class="voice-waveform copilot" id="copilotWaveform">
                             <div class="wave-bars" id="copilotBars"></div>
                             <div class="voice-timer" id="copilotTimer">0:00</div>
@@ -2891,6 +2994,14 @@
                             <span class="btn-icon stop-icon"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></span>
                         </div>
                     </button>
+                    <!-- Transcription Sphere -->
+                    <div class="transcription-sphere" id="copilotTranscriptionSphere">
+                        <div class="sphere-fog-wrap">
+                            <div class="sphere-fog-transcribe"></div>
+                            <div class="sphere-fog-transcribe-2"></div>
+                        </div>
+                        <div class="sphere-highlight"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2980,7 +3091,7 @@
                 <div class="input-row" id="assistantInputRow">
                     <button class="plus-btn" onclick="toggleAttach('assistant')"><span class="icon"><svg><use href="#icon-plus"/></svg></span></button>
                     <div class="input-area">
-                        <input type="text" class="input-text" id="assistantInput" placeholder="Décrivez l'intervention..." oninput="handleChatInput('assistant')" onkeypress="if(event.key==='Enter')handleSend('assistant')">
+                        <textarea class="input-text" id="assistantInput" placeholder="Décrivez l'intervention..." rows="1" oninput="handleChatInput('assistant'); autoResizeInput('assistant')" onkeypress="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();handleSend('assistant')}" onscroll="handleInputScroll(this)"></textarea>
                         <div class="voice-waveform assistant" id="assistantWaveform">
                             <div class="wave-bars" id="assistantBars"></div>
                             <div class="voice-timer" id="assistantTimer">0:00</div>
@@ -2993,6 +3104,14 @@
                             <span class="btn-icon stop-icon"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></span>
                         </div>
                     </button>
+                    <!-- Transcription Sphere -->
+                    <div class="transcription-sphere" id="assistantTranscriptionSphere">
+                        <div class="sphere-fog-wrap">
+                            <div class="sphere-fog-transcribe"></div>
+                            <div class="sphere-fog-transcribe-2"></div>
+                        </div>
+                        <div class="sphere-highlight"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -4318,6 +4437,10 @@
             const input = document.getElementById(panel + 'Input');
             if (input.value.trim()) {
                 sendMsg(panel);
+                // Reset input height to single line
+                setTimeout(() => {
+                    input.style.height = '36px';
+                }, 50);
             }
         }
         
@@ -4332,6 +4455,10 @@
             } else if (hasText) {
                 sendMsg(panel);
                 btn.classList.remove('has-text');
+                // Reset input height to single line
+                setTimeout(() => {
+                    input.style.height = '36px';
+                }, 50);
             } else {
                 startRecording(panel);
             }
@@ -5801,7 +5928,13 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
         
         async function transcribeWithElevenLabs(panel, audioBlob) {
             const input = document.getElementById(panel + 'Input');
-            input.placeholder = '🔄 Transcription...';
+            const btn = document.getElementById(panel + 'ActionBtn');
+            const sphere = document.getElementById(panel + 'TranscriptionSphere');
+            
+            // Show glass sphere, hide button
+            btn.style.display = 'none';
+            sphere.classList.add('active');
+            input.placeholder = '';
             
             try {
                 const formData = new FormData();
@@ -5824,20 +5957,30 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
                 const result = await response.json();
                 const transcription = result.text || '';
                 
+                // Hide sphere, show button
+                sphere.classList.remove('active');
+                btn.style.display = 'flex';
+                
                 if (transcription.trim()) {
                     input.value = transcription.trim();
-                    input.placeholder = 'Posez votre question...';
+                    input.placeholder = panel === 'assistant' ? 'Décrivez l\'intervention...' : 'Posez votre question...';
                     handleChatInput(panel);
+                    autoResizeInput(panel);
                     toast('🎤 Transcription terminée');
                     console.log('✅ ElevenLabs transcription:', transcription);
                 } else {
-                    input.placeholder = 'Posez votre question...';
+                    input.placeholder = panel === 'assistant' ? 'Décrivez l\'intervention...' : 'Posez votre question...';
                     toast('❌ Aucune parole détectée');
                 }
                 
             } catch (error) {
                 console.error('❌ ElevenLabs STT error:', error);
-                input.placeholder = 'Posez votre question...';
+                
+                // Hide sphere, show button
+                sphere.classList.remove('active');
+                btn.style.display = 'flex';
+                
+                input.placeholder = panel === 'assistant' ? 'Décrivez l\'intervention...' : 'Posez votre question...';
                 toast('❌ Erreur transcription');
                 
                 // Fallback to simulation for demo
@@ -5848,7 +5991,36 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
                 ];
                 input.value = transcriptions[Math.floor(Math.random() * transcriptions.length)];
                 handleChatInput(panel);
+                autoResizeInput(panel);
             }
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // EXPANDABLE INPUT FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════
+        
+        function autoResizeInput(panel) {
+            const input = document.getElementById(panel + 'Input');
+            if (!input) return;
+            
+            // Reset to single line to measure content
+            input.style.height = '36px';
+            
+            // Only expand if content exceeds single line
+            if (input.scrollHeight > 36) {
+                const maxHeight = window.innerHeight * 0.25; // 25% of screen
+                const newHeight = Math.min(input.scrollHeight, maxHeight);
+                input.style.height = `${newHeight}px`;
+            }
+        }
+        
+        let scrollbarTimeout = null;
+        function handleInputScroll(input) {
+            input.classList.add('scrolling');
+            if (scrollbarTimeout) clearTimeout(scrollbarTimeout);
+            scrollbarTimeout = setTimeout(() => {
+                input.classList.remove('scrolling');
+            }, 1000);
         }
         
         // Update timer
@@ -5869,6 +6041,16 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
             const btn = document.getElementById(panel + 'ActionBtn');
             const barsContainer = document.getElementById(panel + 'Bars');
             const input = document.getElementById(panel + 'Input');
+            const sphere = document.getElementById(panel + 'TranscriptionSphere');
+            
+            const isSimulated = recordings[panel]?.simulated;
+            const hasRealRecording = recordings[panel]?.mediaRecorder;
+            
+            // ═══ Show sphere immediately when stopping (for real recordings) ═══
+            if (hasRealRecording) {
+                btn.style.display = 'none';
+                sphere.classList.add('active');
+            }
             
             // ═══ ELEVENLABS: Stop MediaRecorder (triggers ondataavailable and onstop) ═══
             if (recordings[panel]?.mediaRecorder && recordings[panel].mediaRecorder.state === 'recording') {
@@ -5895,8 +6077,16 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
             btn.classList.remove('recording');
             
             // Handle simulated mode (fallback)
-            if (recordings[panel]?.simulated) {
+            if (isSimulated) {
+                // Show sphere for simulated mode too
+                btn.style.display = 'none';
+                sphere.classList.add('active');
+                
                 setTimeout(() => {
+                    // Hide sphere, show button
+                    sphere.classList.remove('active');
+                    btn.style.display = 'flex';
+                    
                     const transcriptions = [
                         "Erreur E6 sur groupe extérieur Mitsubishi",
                         "Le compresseur ne démarre pas correctement",
@@ -5904,8 +6094,9 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
                     ];
                     input.value = transcriptions[Math.floor(Math.random() * transcriptions.length)];
                     handleChatInput(panel);
+                    autoResizeInput(panel);
                     toast('🎤 Transcription (simulation)');
-                }, 300);
+                }, 1500); // Slightly longer delay to see the sphere
             }
             
             delete recordings[panel];
