@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FixAIR V38 - Brand Sync Fixed</title>
+    <title>FixAIR V40 - Brand Dropdown in Chat</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -1063,6 +1063,87 @@
         .panel-separator { width: 1px; height: 12px; background: rgba(255,255,255,0.15); }
         .panel-brand { font-size: 12px; color: var(--text-dim); }
         .panel-project { font-size: 11px; color: var(--text-dim); opacity: 0.7; max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* CLICKABLE BRAND TAG IN CHAT HEADER */
+        .panel-brand-wrapper { position: relative; }
+        .panel-brand-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+        .panel-brand-btn:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.2);
+            color: var(--text);
+        }
+        .panel-brand-btn .brand-arrow {
+            width: 10px;
+            height: 10px;
+            opacity: 0.5;
+            transition: transform 0.2s;
+        }
+        .panel-brand-wrapper.open .brand-arrow {
+            transform: rotate(180deg);
+        }
+        .panel-brand-dropdown {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            min-width: 160px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px);
+            transition: all 0.2s;
+            max-height: 280px;
+            overflow-y: auto;
+        }
+        .panel-brand-wrapper.open .panel-brand-dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .panel-brand-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: background 0.15s;
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+        .panel-brand-option:first-child { border-radius: 11px 11px 0 0; }
+        .panel-brand-option:last-child { border-radius: 0 0 11px 11px; }
+        .panel-brand-option:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--text);
+        }
+        .panel-brand-option.selected {
+            background: var(--mode-bg);
+            color: var(--mode-color);
+        }
+        .panel-brand-option .brand-check {
+            width: 14px;
+            height: 14px;
+            opacity: 0;
+            color: var(--mode-color);
+        }
+        .panel-brand-option.selected .brand-check {
+            opacity: 1;
+        }
 
         /* MODE TOGGLE */
         .mode-toggle { display: flex; background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; flex-shrink: 0; height: 32px; }
@@ -2646,7 +2727,54 @@
                 <div class="panel-info">
                     <div class="panel-title">FixAIR Copilot</div>
                     <div class="panel-separator"></div>
-                    <div class="panel-brand" id="copilotSub">Mitsubishi</div>
+                    <div class="panel-brand-wrapper" id="copilotBrandWrapper">
+                        <div class="panel-brand-btn" onclick="toggleChatBrandDropdown('copilot')">
+                            <span class="panel-brand-text" id="copilotSub">Mitsubishi</span>
+                            <svg class="brand-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                        </div>
+                        <div class="panel-brand-dropdown" id="copilotBrandDropdown">
+                            <div class="panel-brand-option" data-brand="mitsubishi" onclick="changeChatBrand('mitsubishi', 'copilot')">
+                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Mitsubishi</span>
+                            </div>
+                            <div class="panel-brand-option" data-brand="daikin" onclick="changeChatBrand('daikin', 'copilot')">
+                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Daikin</span>
+                            </div>
+                            <div class="panel-brand-option" data-brand="carrier" onclick="changeChatBrand('carrier', 'copilot')">
+                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Carrier</span>
+                            </div>
+                            <div class="panel-brand-option" data-brand="lg" onclick="changeChatBrand('lg', 'copilot')">
+                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>LG</span>
+                            </div>
+                            <div class="panel-brand-option" data-brand="samsung" onclick="changeChatBrand('samsung', 'copilot')">
+                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Samsung</span>
+                            </div>
+                            <div class="panel-brand-option" data-brand="panasonic" onclick="changeChatBrand('panasonic', 'copilot')">
+                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Panasonic</span>
+                            </div>
+                            <div class="panel-brand-option" data-brand="toshiba" onclick="changeChatBrand('toshiba', 'copilot')">
+                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Toshiba</span>
+                            </div>
+                            <div class="panel-brand-option" data-brand="fujitsu" onclick="changeChatBrand('fujitsu', 'copilot')">
+                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Fujitsu</span>
+                            </div>
+                            <div class="panel-brand-option" data-brand="hitachi" onclick="changeChatBrand('hitachi', 'copilot')">
+                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Hitachi</span>
+                            </div>
+                            <div class="panel-brand-option" data-brand="general" onclick="changeChatBrand('general', 'copilot')">
+                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Multi-marques</span>
+                            </div>
+                        </div>
+                    </div>
                     <div class="panel-separator panel-project-sep" id="copilotProjectSep" style="display:none;"></div>
                     <div class="panel-project" id="copilotProjectName" style="display:none;"></div>
                 </div>
@@ -2700,7 +2828,54 @@
                 <div class="panel-info">
                     <div class="panel-title">FixAIR Assistant</div>
                     <div class="panel-separator"></div>
-                    <div class="panel-brand" id="assistantSub">Mitsubishi</div>
+                    <div class="panel-brand-wrapper" id="assistantBrandWrapper">
+                        <div class="panel-brand-btn" onclick="toggleChatBrandDropdown('assistant')">
+                            <span class="panel-brand-text" id="assistantSub">Mitsubishi</span>
+                            <svg class="brand-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                        </div>
+                        <div class="panel-brand-dropdown" id="assistantBrandDropdown">
+                            <div class="panel-brand-option" data-brand="mitsubishi" onclick="changeChatBrand('mitsubishi', 'assistant')">
+                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Mitsubishi</span>
+                            </div>
+                            <div class="panel-brand-option" data-brand="daikin" onclick="changeChatBrand('daikin', 'assistant')">
+                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Daikin</span>
+                            </div>
+                            <div class="panel-brand-option" data-brand="carrier" onclick="changeChatBrand('carrier', 'assistant')">
+                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Carrier</span>
+                            </div>
+                            <div class="panel-brand-option" data-brand="lg" onclick="changeChatBrand('lg', 'assistant')">
+                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>LG</span>
+                            </div>
+                            <div class="panel-brand-option" data-brand="samsung" onclick="changeChatBrand('samsung', 'assistant')">
+                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Samsung</span>
+                            </div>
+                            <div class="panel-brand-option" data-brand="panasonic" onclick="changeChatBrand('panasonic', 'assistant')">
+                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Panasonic</span>
+                            </div>
+                            <div class="panel-brand-option" data-brand="toshiba" onclick="changeChatBrand('toshiba', 'assistant')">
+                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Toshiba</span>
+                            </div>
+                            <div class="panel-brand-option" data-brand="fujitsu" onclick="changeChatBrand('fujitsu', 'assistant')">
+                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Fujitsu</span>
+                            </div>
+                            <div class="panel-brand-option" data-brand="hitachi" onclick="changeChatBrand('hitachi', 'assistant')">
+                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Hitachi</span>
+                            </div>
+                            <div class="panel-brand-option" data-brand="general" onclick="changeChatBrand('general', 'assistant')">
+                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Multi-marques</span>
+                            </div>
+                        </div>
+                    </div>
                     <div class="panel-separator panel-project-sep" id="assistantProjectSep" style="display:none;"></div>
                     <div class="panel-project" id="assistantProjectName" style="display:none;"></div>
                 </div>
@@ -3563,8 +3738,8 @@
             // Update context for both panels
             ['assistant', 'copilot'].forEach(panel => {
                 const brandContext = panel === 'assistant' 
-                    ? `[CONTEXTE] Session de rapport d'intervention pour équipement ${brandName}. Toutes les questions et le rapport généré doivent être spécifiques à la marque ${brandName}.`
-                    : `[CONTEXTE] Session de diagnostic pour équipement ${brandName}. Utiliser la base de connaissances ${brandName} pour toutes les réponses techniques.`;
+                    ? `[CONTEXTE MARQUE] Cette intervention concerne un système ${brandName}. Tu connais déjà la marque = ${brandName}. NE DEMANDE JAMAIS la marque. Premier message: "Salut ! Tu travailles sur un système ${brandName}. C'est quoi aujourd'hui ? 1. Dépannage 2. Mise en service 3. Maintenance 4. Installation"`
+                    : `[CONTEXTE MARQUE] Ce diagnostic concerne un système ${brandName}. Tu connais déjà la marque = ${brandName}. NE DEMANDE JAMAIS la marque. Utilise la base de connaissances ${brandName}. Premier message: "Salut ! Tu travailles sur un système ${brandName}. Comment puis-je t'aider ?"`;
                 
                 // Find and update or add system message
                 const systemMsgIndex = chatHistory[panel].findIndex(m => m.role === 'system');
@@ -3576,6 +3751,125 @@
             });
             
             console.log('🏷️ Brand context updated:', brandName);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // CHAT HEADER BRAND DROPDOWN (Option B)
+        // ═══════════════════════════════════════════════════════════════
+        
+        // Toggle brand dropdown in chat header
+        function toggleChatBrandDropdown(panel) {
+            const wrapper = document.getElementById(panel + 'BrandWrapper');
+            const isOpen = wrapper.classList.contains('open');
+            
+            // Close all dropdowns first
+            closeChatBrandDropdowns();
+            
+            if (!isOpen) {
+                wrapper.classList.add('open');
+                updateChatBrandDropdownSelection(panel);
+                
+                // Close when clicking outside
+                setTimeout(() => {
+                    document.addEventListener('click', closeChatBrandDropdownsOnClick);
+                }, 10);
+            }
+        }
+        
+        // Close all chat brand dropdowns
+        function closeChatBrandDropdowns() {
+            document.getElementById('copilotBrandWrapper')?.classList.remove('open');
+            document.getElementById('assistantBrandWrapper')?.classList.remove('open');
+            document.removeEventListener('click', closeChatBrandDropdownsOnClick);
+        }
+        
+        // Close dropdowns when clicking outside
+        function closeChatBrandDropdownsOnClick(e) {
+            if (!e.target.closest('.panel-brand-wrapper')) {
+                closeChatBrandDropdowns();
+            }
+        }
+        
+        // Update dropdown selection indicators
+        function updateChatBrandDropdownSelection(panel) {
+            const dropdown = document.getElementById(panel + 'BrandDropdown');
+            if (!dropdown) return;
+            
+            dropdown.querySelectorAll('.panel-brand-option').forEach(opt => {
+                opt.classList.toggle('selected', opt.dataset.brand === brand);
+            });
+        }
+        
+        // Change brand from chat header dropdown
+        async function changeChatBrand(newBrand, panel) {
+            const oldBrand = brand;
+            
+            if (newBrand === oldBrand) {
+                closeChatBrandDropdowns();
+                return;
+            }
+            
+            const brandNames = {
+                'mitsubishi': 'Mitsubishi Electric',
+                'daikin': 'Daikin',
+                'carrier': 'Carrier',
+                'lg': 'LG',
+                'samsung': 'Samsung',
+                'panasonic': 'Panasonic',
+                'toshiba': 'Toshiba',
+                'fujitsu': 'Fujitsu',
+                'hitachi': 'Hitachi',
+                'general': 'Multi-marques'
+            };
+            
+            const oldBrandName = brandNames[oldBrand] || oldBrand;
+            const newBrandName = brandNames[newBrand] || newBrand;
+            
+            // Update global brand
+            brand = newBrand;
+            
+            // Update UI everywhere
+            document.getElementById('copilotSub').textContent = newBrandName;
+            document.getElementById('assistantSub').textContent = newBrandName;
+            document.getElementById('brandText').textContent = newBrandName;
+            
+            // Update home page dropdowns if visible
+            document.querySelectorAll('.brand-dropdown-item[data-b]').forEach(o => {
+                o.classList.toggle('selected', o.dataset.b === newBrand);
+            });
+            document.querySelectorAll('.brand-chip').forEach(c => {
+                c.classList.toggle('active', c.dataset.b === newBrand);
+            });
+            
+            // Update chat history with new brand context
+            updateBrandContextInHistory();
+            
+            // Update database if project exists
+            if (currentProjectId) {
+                try {
+                    const { error } = await db
+                        .from('projects')
+                        .update({ brand: newBrand })
+                        .eq('id', currentProjectId);
+                    
+                    if (error) {
+                        console.error('❌ Error updating project brand:', error);
+                    } else {
+                        console.log('✅ Project brand updated to:', newBrand);
+                    }
+                } catch (e) {
+                    console.error('❌ Failed to update brand in database:', e);
+                }
+            }
+            
+            // Close dropdown
+            closeChatBrandDropdowns();
+            
+            // Add confirmation message in chat
+            const confirmMsg = `<p style="color: var(--mode-color);">✓ Marque changée: <strong>${oldBrandName}</strong> → <strong>${newBrandName}</strong></p><p style="font-size: 12px; opacity: 0.7;">On continue avec ${newBrandName}.</p>`;
+            addMsg(panel, 'ai', confirmMsg);
+            
+            console.log('🏷️ Brand changed in chat:', oldBrand, '→', newBrand);
         }
 
         function updateRing(pct) {
@@ -3649,8 +3943,8 @@
                 
                 // Create brand context message for the AI
                 const brandContext = m === 'assistant' 
-                    ? `[CONTEXTE] Session de rapport d'intervention pour équipement ${brandName}. Toutes les questions et le rapport généré doivent être spécifiques à la marque ${brandName}.`
-                    : `[CONTEXTE] Session de diagnostic pour équipement ${brandName}. Utiliser la base de connaissances ${brandName} pour toutes les réponses techniques.`;
+                    ? `[CONTEXTE MARQUE] Cette intervention concerne un système ${brandName}. Tu connais déjà la marque = ${brandName}. NE DEMANDE JAMAIS la marque. Premier message: "Salut ! Tu travailles sur un système ${brandName}. C'est quoi aujourd'hui ? 1. Dépannage 2. Mise en service 3. Maintenance 4. Installation"`
+                    : `[CONTEXTE MARQUE] Ce diagnostic concerne un système ${brandName}. Tu connais déjà la marque = ${brandName}. NE DEMANDE JAMAIS la marque. Utilise la base de connaissances ${brandName}. Premier message: "Salut ! Tu travailles sur un système ${brandName}. Comment puis-je t'aider ?"`;
                 
                 chatHistory.assistant = [];
                 chatHistory.copilot = [];
@@ -4494,6 +4788,38 @@
                 // Update chat header with project name
                 updateChatHeader();
                 
+                // ═══ FIX: Add brand context to history for existing projects ═══
+                // This ensures the AI always knows the brand, even when loading existing conversations
+                const brandNames = {
+                    'mitsubishi': 'Mitsubishi Electric',
+                    'daikin': 'Daikin',
+                    'carrier': 'Carrier',
+                    'lg': 'LG',
+                    'samsung': 'Samsung',
+                    'panasonic': 'Panasonic',
+                    'toshiba': 'Toshiba',
+                    'fujitsu': 'Fujitsu',
+                    'hitachi': 'Hitachi',
+                    'general': 'Multi-marques'
+                };
+                const projectBrandName = brandNames[brand] || brand;
+                
+                // Add system context as FIRST message in each chat's history
+                ['assistant', 'copilot'].forEach(panel => {
+                    const brandContext = panel === 'assistant' 
+                        ? `[CONTEXTE MARQUE] Cette intervention concerne un système ${projectBrandName}. Toutes les questions et le rapport doivent être spécifiques à ${projectBrandName}. NE DEMANDE PAS la marque, tu la connais déjà.`
+                        : `[CONTEXTE MARQUE] Ce diagnostic concerne un système ${projectBrandName}. Utilise la base de connaissances ${projectBrandName}. NE DEMANDE PAS la marque, tu la connais déjà.`;
+                    
+                    // Insert system message at the beginning if not already there
+                    const hasSystemMsg = chatHistory[panel].some(m => m.role === 'system');
+                    if (!hasSystemMsg) {
+                        chatHistory[panel].unshift({ role: 'system', content: brandContext });
+                    }
+                });
+                
+                console.log('🏷️ Brand context added for existing project:', projectBrandName);
+                // ═══ END FIX ═══
+                
                 // Open chat with the appropriate mode
                 const hasAssistant = currentChatId.assistant;
                 const defaultMode = hasAssistant ? 'assistant' : 'copilot';
@@ -4907,14 +5233,14 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        // ═══ BRAND CONTEXT (PRIORITY) ═══
+                        // ═══ BRAND CONTEXT (PRIORITY - AI MUST USE THIS) ═══
                         brand: brand,
                         brand_name: brandNames[brand] || brand,
                         
                         // ═══ MESSAGE DATA ═══
                         panel: panel,
                         message: text,
-                        history: chatHistory[panel], // Now includes brand context as first system message
+                        history: chatHistory[panel], // Contains system message with brand at position 0
                         
                         // ═══ SESSION DATA ═══
                         session_id: sessionIds[panel],
@@ -4925,10 +5251,18 @@
                         // ═══ FLAGS ═══
                         is_first_message: chatHistory[panel].filter(m => m.role === 'user').length === 1,
                         
-                        // ═══ SYSTEM CONTEXT FOR AI ═══
+                        // ═══ CRITICAL: SYSTEM PROMPT INJECTION FOR AI ═══
+                        // This MUST be prepended to the AI's system prompt in n8n
+                        brand_instruction: `🚨 MARQUE DU SYSTÈME: ${brandNames[brand] || brand}
+                        
+TU CONNAIS DÉJÀ LA MARQUE - NE LA DEMANDE JAMAIS.
+Toute ta réponse doit être spécifique à ${brandNames[brand] || brand}.
+Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brandNames[brand] || brand}. C'est quoi aujourd'hui ?"`,
+                        
+                        // Legacy field for compatibility
                         system_context: panel === 'assistant'
-                            ? `IMPORTANT: Cette session est pour un rapport d'intervention sur équipement ${brandNames[brand] || brand}. Pose des questions spécifiques à ${brandNames[brand] || brand} et génère un rapport ${brandNames[brand] || brand}.`
-                            : `IMPORTANT: Cette session est pour du diagnostic technique sur équipement ${brandNames[brand] || brand}. Utilise UNIQUEMENT la base de connaissances ${brandNames[brand] || brand} pour répondre.`
+                            ? `MARQUE: ${brandNames[brand] || brand}. Rapport d'intervention ${brandNames[brand] || brand}. NE DEMANDE PAS la marque.`
+                            : `MARQUE: ${brandNames[brand] || brand}. Diagnostic ${brandNames[brand] || brand}. NE DEMANDE PAS la marque.`
                     })
                 });
                 
