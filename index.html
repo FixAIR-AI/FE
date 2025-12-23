@@ -1606,7 +1606,8 @@
             z-index: 10;
         }
         .chat-view.split .chat-input { padding-bottom: 12px; }
-        .input-row { display: flex; align-items: flex-end; gap: 8px; padding: 6px; background: var(--card); border: 1px solid var(--border); border-radius: 24px; transition: border-color 0.2s; position: relative; overflow: hidden; }
+        .input-row { display: flex; align-items: flex-end; gap: 8px; padding: 6px; background: var(--card); border: 1px solid var(--border); border-radius: 24px; transition: border-color 0.2s, border-radius 0.2s; position: relative; }
+        .input-row.expanded { border-radius: 16px; }
         .input-row:focus-within { border-color: var(--mode-border); }
         .input-row.recording { border-color: var(--mode-border); }
         
@@ -1625,10 +1626,11 @@
         .attach-opt .icon { width: 14px; height: 14px; color: var(--mode-color); }
         
         /* Input area wrapper - supports expandable textarea */
-        .input-area { flex: 1; position: relative; min-height: 36px; display: flex; align-items: center; }
+        .input-area { flex: 1; position: relative; min-height: 36px; display: flex; align-items: flex-end; }
         .input-text {
             width: 100%;
             min-height: 36px;
+            height: auto;
             max-height: 25vh;
             background: transparent;
             border: none;
@@ -1643,6 +1645,7 @@
             font-family: inherit;
             overflow-y: auto;
             scrollbar-width: none;
+            box-sizing: border-box;
         }
         .input-text::-webkit-scrollbar { width: 4px; }
         .input-text::-webkit-scrollbar-track { background: transparent; }
@@ -1652,7 +1655,7 @@
         .input-row.recording .input-text { opacity: 0; pointer-events: none; }
         
         /* Voice waveform */
-        .voice-waveform { position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: space-between; padding: 0; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .voice-waveform { position: absolute; left: 0; right: 0; bottom: 0; height: 36px; display: flex; align-items: center; justify-content: space-between; padding: 0; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
         .input-row.recording .voice-waveform { opacity: 1; }
         .wave-bars { flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 2px; height: 100%; padding: 0; overflow: hidden; }
         .wave-bar { width: 3px; min-width: 3px; height: 3px; border-radius: 2px; flex-shrink: 0; }
@@ -1676,6 +1679,8 @@
         .action-btn.has-text .send-icon { opacity: 1; transform: scale(1) translateY(0); }
         .action-btn.recording .mic-icon { opacity: 0; transform: scale(0); }
         .action-btn.recording .stop-icon { opacity: 1; transform: scale(1); }
+        /* Red stop button during recording */
+        .action-btn.recording { background: rgb(174, 62, 50) !important; }
         
         /* ═══ TRANSCRIPTION GLASS SPHERE ═══ */
         .action-btn.transcribing { display: none; }
@@ -4440,6 +4445,7 @@
                 // Reset input height to single line
                 setTimeout(() => {
                     input.style.height = '36px';
+                    document.getElementById(panel + 'InputRow').classList.remove('expanded');
                 }, 50);
             }
         }
@@ -4458,6 +4464,7 @@
                 // Reset input height to single line
                 setTimeout(() => {
                     input.style.height = '36px';
+                    document.getElementById(panel + 'InputRow').classList.remove('expanded');
                 }, 50);
             } else {
                 startRecording(panel);
@@ -6001,17 +6008,31 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
         
         function autoResizeInput(panel) {
             const input = document.getElementById(panel + 'Input');
-            if (!input) return;
+            const inputRow = document.getElementById(panel + 'InputRow');
+            if (!input || !inputRow) return;
             
-            // Reset to single line to measure content
-            input.style.height = '36px';
+            // Reset height to measure content
+            input.style.height = 'auto';
             
-            // Only expand if content exceeds single line
-            if (input.scrollHeight > 36) {
-                const maxHeight = window.innerHeight * 0.25; // 25% of screen
-                const newHeight = Math.min(input.scrollHeight, maxHeight);
-                input.style.height = `${newHeight}px`;
+            // Calculate new height
+            const scrollHeight = input.scrollHeight;
+            const minHeight = 36;
+            const maxHeight = window.innerHeight * 0.25; // 25% of screen
+            
+            // Set height based on content
+            let newHeight;
+            if (scrollHeight <= minHeight) {
+                newHeight = minHeight;
+                inputRow.classList.remove('expanded');
+            } else if (scrollHeight >= maxHeight) {
+                newHeight = maxHeight;
+                inputRow.classList.add('expanded');
+            } else {
+                newHeight = scrollHeight;
+                inputRow.classList.add('expanded');
             }
+            
+            input.style.height = newHeight + 'px';
         }
         
         let scrollbarTimeout = null;
