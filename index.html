@@ -3696,10 +3696,48 @@
         function parseMarkdown(text) {
             if (!text) return '';
             
-            // Strip any literal HTML tags the AI might output
-            text = text.replace(/<div class="report-card">/gi, '');
+            // Strip ALL HTML tags the AI might output (inline styles, divs, etc.)
+            // This is necessary because sometimes AI generates HTML instead of markdown
+            text = text.replace(/<[^>]*style="[^"]*"[^>]*>/gi, ''); // Remove tags with style attributes
+            text = text.replace(/<div[^>]*>/gi, '');
             text = text.replace(/<\/div>/gi, '');
-            text = text.replace(/<div class="report-footer">/gi, '');
+            text = text.replace(/<span[^>]*>/gi, '');
+            text = text.replace(/<\/span>/gi, '');
+            text = text.replace(/<table[^>]*>/gi, '');
+            text = text.replace(/<\/table>/gi, '');
+            text = text.replace(/<tr[^>]*>/gi, '');
+            text = text.replace(/<\/tr>/gi, '');
+            text = text.replace(/<td[^>]*>/gi, ' ');
+            text = text.replace(/<\/td>/gi, '');
+            text = text.replace(/<th[^>]*>/gi, ' ');
+            text = text.replace(/<\/th>/gi, '');
+            text = text.replace(/<thead[^>]*>/gi, '');
+            text = text.replace(/<\/thead>/gi, '');
+            text = text.replace(/<tbody[^>]*>/gi, '');
+            text = text.replace(/<\/tbody>/gi, '');
+            text = text.replace(/<h[1-6][^>]*>/gi, '\n');
+            text = text.replace(/<\/h[1-6]>/gi, '\n');
+            text = text.replace(/<p[^>]*>/gi, '\n');
+            text = text.replace(/<\/p>/gi, '\n');
+            text = text.replace(/<br\s*\/?>/gi, '\n');
+            text = text.replace(/<ul[^>]*>/gi, '');
+            text = text.replace(/<\/ul>/gi, '');
+            text = text.replace(/<li[^>]*>/gi, '• ');
+            text = text.replace(/<\/li>/gi, '\n');
+            text = text.replace(/<strong[^>]*>/gi, '**');
+            text = text.replace(/<\/strong>/gi, '**');
+            text = text.replace(/<em[^>]*>/gi, '*');
+            text = text.replace(/<\/em>/gi, '*');
+            text = text.replace(/<b[^>]*>/gi, '**');
+            text = text.replace(/<\/b>/gi, '**');
+            text = text.replace(/<i[^>]*>/gi, '*');
+            text = text.replace(/<\/i>/gi, '*');
+            // Remove any remaining HTML tags
+            text = text.replace(/<[^>]+>/g, '');
+            // Clean up multiple newlines
+            text = text.replace(/\n{3,}/g, '\n\n');
+            // Remove leading/trailing whitespace from lines
+            text = text.split('\n').map(line => line.trim()).join('\n');
             
             // Check if this contains a report
             const reportMarker = 'RAPPORT D\'INTERVENTION';
