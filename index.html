@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FixAIR V13 - Assistant HVAC</title>
+    <title>FixAIR V36 - Safe DB Fix</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -4026,43 +4026,70 @@
             }
         }
         
-        // Load user's projects list
+        // Load user's projects list (FIXED: uses separate queries for reliability)
         async function loadProjectsList() {
+            console.log('🔄 Loading projects list...');
+            
             const userId = await getCurrentUserId();
             if (!userId || userId.startsWith('demo-')) {
-                // Demo mode - show placeholder projects
+                console.log('⚠️ Demo mode - not loading from Supabase');
                 return;
             }
             
-            const { data: projects, error } = await db
-                .from('projects')
-                .select(`
-                    id,
-                    title,
-                    brand,
-                    status,
-                    created_at,
-                    updated_at,
-                    chats (
-                        id,
-                        chat_type,
-                        message_count
-                    )
-                `)
-                .eq('user_id', userId)
-                .order('updated_at', { ascending: false })
-                .limit(20);
-            
-            if (error) {
-                console.error('Error loading projects:', error);
-                return;
+            try {
+                // Step 1: Get projects (separate query - more reliable than nested)
+                const { data: projects, error: projectsError } = await db
+                    .from('projects')
+                    .select('id, title, brand, status, created_at, updated_at')
+                    .eq('user_id', userId)
+                    .order('updated_at', { ascending: false })
+                    .limit(20);
+                
+                if (projectsError) {
+                    console.error('❌ Error loading projects:', projectsError);
+                    return;
+                }
+                
+                console.log('✅ Projects loaded:', projects?.length || 0);
+                
+                // Step 2: Get chats for all projects in one query (efficient)
+                const projectIds = projects?.map(p => p.id) || [];
+                let chatsByProject = {};
+                
+                if (projectIds.length > 0) {
+                    const { data: chats, error: chatsError } = await db
+                        .from('chats')
+                        .select('id, project_id, chat_type, message_count')
+                        .in('project_id', projectIds);
+                    
+                    if (!chatsError && chats) {
+                        // Group chats by project_id
+                        for (const chat of chats) {
+                            if (!chatsByProject[chat.project_id]) {
+                                chatsByProject[chat.project_id] = [];
+                            }
+                            chatsByProject[chat.project_id].push(chat);
+                        }
+                    }
+                }
+                
+                // Step 3: Combine projects with their chats
+                const projectsWithChats = projects?.map(project => ({
+                    ...project,
+                    chats: chatsByProject[project.id] || []
+                })) || [];
+                
+                // Store projects globally for context menu
+                window.projectsData = projectsWithChats;
+                
+                renderProjectsList(projectsWithChats);
+                renderRecentProjects(projectsWithChats?.slice(0, 2) || []);
+                
+                console.log('✅ Projects list rendered');
+                
+            } catch (e) {
+                console.error('❌ Unexpected error loading projects:', e);
             }
-            
-            // Store projects globally for context menu
-            window.projectsData = projects || [];
-            
-            renderProjectsList(projects);
-            renderRecentProjects(projects?.slice(0, 2) || []); // First 2 for home page
         }
         
         // Variable to track which project is being edited
@@ -4271,68 +4298,107 @@
             return div.innerHTML;
         }
         
-        // Load a specific project
+        // Load a specific project (FIXED: uses separate queries for reliability)
         async function loadProject(projectId) {
+            console.log('🔄 Loading project:', projectId);
+            
             currentProjectId = projectId;
             currentChatId = { assistant: null, copilot: null };
             projectMessageCount = 0;
             
-            // Get project details
-            const { data: project } = await db
-                .from('projects')
-                .select('*, chats(*)')
-                .eq('id', projectId)
-                .single();
-            
-            if (!project) return;
-            
-            // Store project title for header
-            currentProjectTitle = project.title || 'Sans titre';
-            
-            // Set brand
-            if (project.brand) {
-                brand = project.brand;
-                updateBrandUI();
-            }
-            
-            // Load chats
-            for (const chat of project.chats || []) {
-                currentChatId[chat.chat_type] = chat.id;
+            try {
+                // Step 1: Get project details (separate query - more reliable)
+                const { data: project, error: projectError } = await db
+                    .from('projects')
+                    .select('id, title, brand, status, created_at, updated_at')
+                    .eq('id', projectId)
+                    .single();
                 
-                // Load messages for this chat
-                const { data: messages } = await db
-                    .from('messages')
-                    .select('*')
-                    .eq('chat_id', chat.id)
-                    .order('created_at', { ascending: true });
-                
-                // Clear existing chat UI
-                chatHistory[chat.chat_type] = [];
-                const body = document.getElementById(chat.chat_type + 'Body');
-                if (body) {
-                    body.innerHTML = '';
+                if (projectError) {
+                    console.error('❌ Error loading project:', projectError);
+                    return;
                 }
                 
-                // Add messages to UI
-                for (const msg of messages || []) {
-                    const role = msg.role === 'assistant' ? 'ai' : msg.role;
-                    if (role === 'user' || role === 'ai') {
-                        const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
-                        addMsg(chat.chat_type, role, content);
-                        chatHistory[chat.chat_type].push({ role: msg.role, content: msg.content });
+                if (!project) {
+                    console.error('❌ Project not found:', projectId);
+                    return;
+                }
+                
+                console.log('✅ Project loaded:', project.title, 'brand:', project.brand);
+                
+                // Store project title for header
+                currentProjectTitle = project.title || 'Sans titre';
+                
+                // Set brand
+                if (project.brand) {
+                    brand = project.brand;
+                    updateBrandUI();
+                }
+                
+                // Step 2: Get chats for this project (SEPARATE QUERY - fixes nested query issue)
+                const { data: chats, error: chatsError } = await db
+                    .from('chats')
+                    .select('id, chat_type, project_id, started_at')
+                    .eq('project_id', projectId);
+                
+                if (chatsError) {
+                    console.error('❌ Error loading chats:', chatsError);
+                }
+                
+                console.log('✅ Chats found:', chats?.length || 0);
+                
+                // Step 3: Load messages for each chat
+                for (const chat of chats || []) {
+                    console.log(`🔄 Loading messages for ${chat.chat_type} chat:`, chat.id);
+                    
+                    currentChatId[chat.chat_type] = chat.id;
+                    
+                    // Load messages for this chat
+                    const { data: messages, error: msgError } = await db
+                        .from('messages')
+                        .select('*')
+                        .eq('chat_id', chat.id)
+                        .order('created_at', { ascending: true });
+                    
+                    if (msgError) {
+                        console.error('❌ Error loading messages:', msgError);
+                        continue;
+                    }
+                    
+                    console.log(`✅ Found ${messages?.length || 0} messages for ${chat.chat_type}`);
+                    
+                    // Clear existing chat UI
+                    chatHistory[chat.chat_type] = [];
+                    const body = document.getElementById(chat.chat_type + 'Body');
+                    if (body) {
+                        body.innerHTML = '';
+                    }
+                    
+                    // Add messages to UI
+                    for (const msg of messages || []) {
+                        const role = msg.role === 'assistant' ? 'ai' : msg.role;
+                        if (role === 'user' || role === 'ai') {
+                            const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
+                            addMsg(chat.chat_type, role, content);
+                            chatHistory[chat.chat_type].push({ role: msg.role, content: msg.content });
+                            projectMessageCount++;
+                        }
                     }
                 }
                 
-                console.log(`✅ Loaded ${messages?.length || 0} messages for ${chat.chat_type}`);
+                // Update chat header with project name
+                updateChatHeader();
+                
+                // Open chat with the appropriate mode
+                const hasAssistant = currentChatId.assistant;
+                const defaultMode = hasAssistant ? 'assistant' : 'copilot';
+                openChat(defaultMode);
+                
+                console.log('✅ Project fully loaded:', currentProjectTitle);
+                
+            } catch (e) {
+                console.error('❌ Unexpected error loading project:', e);
             }
-            
-            // Update chat header with project name
-            updateChatHeader();
-            
-            // Open chat with the appropriate mode
-            const hasAssistant = currentChatId.assistant;
-            const defaultMode = hasAssistant ? 'assistant' : 'copilot';
-            openChat(defaultMode);
         }
         
         // Update chat header to show project name
@@ -4406,6 +4472,57 @@
         // ═══════════════════════════════════════════════════════════════
         // END SUPABASE FUNCTIONS
         // ═══════════════════════════════════════════════════════════════
+        
+        // Debug function - run debugFixAIR() in browser console to diagnose issues
+        async function debugFixAIR() {
+            console.log('🔍 ═══════════════════════════════════════');
+            console.log('🔍 FIXAIR DEBUG REPORT');
+            console.log('🔍 ═══════════════════════════════════════');
+            
+            const userId = await getCurrentUserId();
+            console.log('👤 User ID:', userId);
+            console.log('🏷️ Current Brand:', brand);
+            console.log('📁 Current Project ID:', currentProjectId);
+            console.log('💬 Current Chat IDs:', currentChatId);
+            
+            if (!userId || userId.startsWith('demo-')) {
+                console.log('⚠️ Demo mode - no Supabase data');
+                return;
+            }
+            
+            // Check projects
+            const { data: projects, error: pe } = await db
+                .from('projects')
+                .select('*')
+                .eq('user_id', userId)
+                .limit(5);
+            console.log('📁 Projects:', projects?.length || 0, pe ? 'ERROR: ' + pe.message : '');
+            if (projects?.[0]) console.log('   Sample:', projects[0].title, '| Brand:', projects[0].brand);
+            
+            // Check chats for first project
+            if (projects?.[0]) {
+                const { data: chats, error: ce } = await db
+                    .from('chats')
+                    .select('*')
+                    .eq('project_id', projects[0].id);
+                console.log('💬 Chats for project:', chats?.length || 0, ce ? 'ERROR: ' + ce.message : '');
+                
+                // Check messages for first chat
+                if (chats?.[0]) {
+                    const { data: messages, error: me } = await db
+                        .from('messages')
+                        .select('*')
+                        .eq('chat_id', chats[0].id)
+                        .limit(5);
+                    console.log('📝 Messages for chat:', messages?.length || 0, me ? 'ERROR: ' + me.message : '');
+                    if (messages?.[0]) console.log('   Sample:', messages[0].role, ':', messages[0].content?.substring(0, 50) + '...');
+                }
+            }
+            
+            console.log('🔍 ═══════════════════════════════════════');
+            console.log('🔍 Run loadProject("project-id") to test loading');
+            console.log('🔍 ═══════════════════════════════════════');
+        }
         
         
         // Simple markdown parser
