@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FixAIR V44 - Glass Sphere + Expandable Input</title>
+    <title>FixAIR V45 - Fast Load + Swipe Delete Fix</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -890,6 +890,7 @@
             position: relative;
             z-index: 2;
             transition: transform 0.3s ease;
+            background: var(--card);
         }
         .proj-swipe-container.swiped .proj {
             transform: translateX(-70px);
@@ -905,10 +906,11 @@
             align-items: center;
             justify-content: center;
             z-index: 1;
-            border-radius: 0 12px 12px 0;
             cursor: pointer;
             opacity: 0;
             transition: opacity 0.3s ease;
+            /* Rounded corners only on the right to match container */
+            border-radius: 0 12px 12px 0;
         }
         .proj-swipe-container.swiped .proj-delete-btn {
             opacity: 1;
@@ -920,6 +922,10 @@
         }
         .proj-delete-btn:active {
             background: #dc2626;
+        }
+        /* Remove right border-radius from card when swiped so red fills gap */
+        .proj-swipe-container.swiped .proj {
+            border-radius: 12px 0 0 12px;
         }
         /* ═══ END SWIPE TO DELETE ═══ */
         
@@ -3503,7 +3509,12 @@
         // Check if already logged in
         if (authToken && currentUser && currentUser.id) {
             console.log('Auto-login with saved session:', currentUser.email);
-            // Auto-login
+            
+            // ═══ SUPABASE: Start loading projects immediately (don't wait for animation) ═══
+            loadProjectsList();
+            // ═══ END SUPABASE ═══
+            
+            // Auto-login UI transition (reduced delay)
             setTimeout(() => {
                 document.getElementById('userName').textContent = currentUser.first_name;
                 document.getElementById('profileFirstName').value = currentUser.first_name;
@@ -3524,11 +3535,7 @@
                 
                 document.getElementById('loginScreen').classList.remove('active');
                 document.getElementById('mainApp').classList.add('active');
-                
-                // ═══ SUPABASE: Load projects list ═══
-                loadProjectsList();
-                // ═══ END SUPABASE ═══
-            }, 500);
+            }, 100);
         } else {
             // Clear any partial/invalid auth data
             localStorage.removeItem('fixair_token');
@@ -4653,9 +4660,26 @@
         async function loadProjectsList() {
             console.log('🔄 Loading projects list...');
             
+            // Show loading indicator immediately
+            const projectsContainer = document.getElementById('projectsList');
+            const recentContainer = document.getElementById('recentProjectsHome');
+            
+            const loadingHtml = `
+                <div style="display: flex; flex-direction: column; gap: 8px; padding: 8px 0;">
+                    <div style="height: 60px; background: linear-gradient(90deg, var(--card) 25%, rgba(255,255,255,0.05) 50%, var(--card) 75%); background-size: 200% 100%; border-radius: 12px; animation: shimmer 1.5s infinite;"></div>
+                    <div style="height: 60px; background: linear-gradient(90deg, var(--card) 25%, rgba(255,255,255,0.05) 50%, var(--card) 75%); background-size: 200% 100%; border-radius: 12px; animation: shimmer 1.5s infinite; animation-delay: 0.2s;"></div>
+                </div>
+                <style>@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }</style>
+            `;
+            
+            if (projectsContainer) projectsContainer.innerHTML = loadingHtml;
+            if (recentContainer) recentContainer.innerHTML = loadingHtml;
+            
             const userId = await getCurrentUserId();
             if (!userId || userId.startsWith('demo-')) {
                 console.log('⚠️ Demo mode - not loading from Supabase');
+                if (projectsContainer) projectsContainer.innerHTML = '';
+                if (recentContainer) recentContainer.innerHTML = '';
                 return;
             }
             
@@ -4751,12 +4775,11 @@
             
             const modeLabel = hasBoth ? 'Diagnostic + Rapport' : (hasAssistant ? 'Rapport' : 'Diagnostic');
             
-            const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextMenu(event, '${project.id}', '${escapeHtml(project.title || 'Sans titre')}')"` : '';
-            
             // ═══ SWIPE TO DELETE: Wrap project card with swipe container ═══
+            // Context menu removed - only swipe-to-delete is available
             return `
                 <div class="proj-swipe-container" data-project-id="${project.id}">
-                    <div class="proj" onclick="handleProjectClick('${project.id}', event)" ${contextMenuAttr}>
+                    <div class="proj" onclick="handleProjectClick('${project.id}', event)">
                         ${iconHtml}
                         <div class="proj-info">
                             <div class="proj-title">${escapeHtml(project.title || 'Sans titre')}</div>
@@ -4788,6 +4811,9 @@
             }
             
             container.innerHTML = projects.map(project => generateProjectCardHtml(project, true)).join('');
+            
+            // Re-initialize swipe gestures after rendering
+            initSwipeToDelete();
         }
         
         // Render recent projects on home page
@@ -4805,6 +4831,9 @@
             }
             
             container.innerHTML = projects.map(project => generateProjectCardHtml(project, true)).join('');
+            
+            // Re-initialize swipe gestures after rendering
+            initSwipeToDelete();
         }
         
         // Show context menu for project
