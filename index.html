@@ -2479,6 +2479,168 @@
                 overflow: hidden;
             }
         }
+        
+        /* ═══════════════════════════════════════════════════════════════
+           REPORT TEMPLATE V2 - Beautiful Structured Reports
+        ═══════════════════════════════════════════════════════════════ */
+        .rpt { max-width: 100%; margin-top: 8px; }
+        .rpt-header { margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+        .rpt-header-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+        .rpt-brand { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 4px; }
+        .rpt-brand.mitsubishi { color: #E60012; }
+        .rpt-brand.daikin { color: #00A0E4; }
+        .rpt-brand.carrier { color: #0033A0; }
+        .rpt-brand.lg { color: #A50034; }
+        .rpt-brand.samsung { color: #1428A0; }
+        .rpt-brand.panasonic { color: #0F58A8; }
+        .rpt-brand.toshiba { color: #FF0000; }
+        .rpt-brand.fujitsu { color: #E60012; }
+        .rpt-brand.hitachi { color: #E60012; }
+        .rpt-brand.general { color: var(--assistant); }
+        .rpt-title { font-size: 18px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; }
+        .rpt-status { display: flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 6px; white-space: nowrap; flex-shrink: 0; }
+        .rpt-status.conforme { background: rgba(34,197,94,0.12); }
+        .rpt-status.non-conforme { background: rgba(239,68,68,0.1); }
+        .rpt-status.en-cours { background: rgba(245,158,11,0.12); }
+        .rpt-status-dot { width: 5px; height: 5px; border-radius: 50%; }
+        .rpt-status.conforme .rpt-status-dot { background: #22c55e; }
+        .rpt-status.conforme .rpt-status-text { color: #22c55e; }
+        .rpt-status.non-conforme .rpt-status-dot { background: #ef4444; }
+        .rpt-status.non-conforme .rpt-status-text { color: #ef4444; }
+        .rpt-status.en-cours .rpt-status-dot { background: #f59e0b; }
+        .rpt-status.en-cours .rpt-status-text { color: #f59e0b; }
+        .rpt-status-text { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+        .rpt-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 11px; color: var(--text-dim); }
+        .rpt-meta .val { color: rgba(255,255,255,0.65); font-weight: 500; }
+        
+        .rpt-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+        .rpt-section { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .rpt-section:last-child { border-bottom: none; }
+        .rpt-label { font-size: 9px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        
+        .rpt-text { font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.6; }
+        .rpt-text strong { color: #ef4444; font-weight: 600; }
+        .rpt-text.success strong { color: #22c55e; }
+        
+        .rpt-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+        .rpt-group { display: flex; flex-direction: column; gap: 5px; }
+        .rpt-row { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.04); gap: 8px; }
+        .rpt-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .rpt-row-label { font-size: 11px; color: var(--text-dim); flex-shrink: 0; }
+        .rpt-row-value { font-size: 12px; color: var(--text); font-weight: 500; text-align: right; word-break: break-word; }
+        .rpt-row-value.mono { font-family: 'SF Mono', Monaco, monospace; font-size: 11px; }
+        .rpt-row-value.error { color: #ef4444; }
+        .rpt-row-value.success { color: #22c55e; }
+        
+        .rpt-measures { display: flex; flex-direction: column; gap: 5px; }
+        .rpt-measure { background: rgba(255,255,255,0.03); border-radius: 8px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; }
+        .rpt-measure-info { display: flex; flex-direction: column; gap: 1px; }
+        .rpt-measure-name { font-size: 11px; color: rgba(255,255,255,0.7); font-weight: 500; }
+        .rpt-measure-note { font-size: 10px; color: var(--text-dim); }
+        .rpt-measure-note.ok { color: #22c55e; }
+        .rpt-measure-note.error { color: #ef4444; }
+        .rpt-measure-val { font-size: 13px; font-weight: 600; font-family: 'SF Mono', Monaco, monospace; }
+        .rpt-measure-val.ok { color: #22c55e; }
+        .rpt-measure-val.error { color: #ef4444; }
+        .rpt-measure-val.neutral { color: var(--text); }
+        
+        .rpt-list { display: flex; flex-direction: column; gap: 2px; }
+        .rpt-item { display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px; background: rgba(255,255,255,0.03); border-radius: 6px; }
+        .rpt-item:first-child { border-radius: 6px 6px 2px 2px; }
+        .rpt-item:last-child { border-radius: 2px 2px 6px 6px; }
+        .rpt-item:only-child { border-radius: 6px; }
+        .rpt-icon { width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 8px; font-weight: 700; margin-top: 2px; }
+        .rpt-icon.done { background: rgba(34,197,94,0.12); color: #22c55e; }
+        .rpt-icon.pending { background: rgba(245,158,11,0.12); color: #f59e0b; }
+        .rpt-icon.error { background: rgba(239,68,68,0.1); color: #ef4444; }
+        .rpt-icon.num { background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.6); border: 1px solid var(--border); font-size: 9px; }
+        .rpt-item-text { font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.5; }
+        
+        .rpt-alerts { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+        .rpt-alert { padding-left: 10px; border-left: 2px solid #ef4444; }
+        .rpt-alert.warning { border-left-color: #f59e0b; }
+        .rpt-alert.info { border-left-color: #3b82f6; }
+        .rpt-alert.success { border-left-color: #22c55e; }
+        .rpt-alert-title { font-size: 11px; font-weight: 600; color: #ef4444; margin-bottom: 2px; }
+        .rpt-alert.warning .rpt-alert-title { color: #f59e0b; }
+        .rpt-alert.info .rpt-alert-title { color: #3b82f6; }
+        .rpt-alert.success .rpt-alert-title { color: #22c55e; }
+        .rpt-alert-text { font-size: 12px; color: rgba(255,255,255,0.65); line-height: 1.5; }
+        
+        .rpt-table { background: rgba(255,255,255,0.03); border-radius: 8px; overflow: hidden; margin-bottom: 10px; }
+        .rpt-table:last-child { margin-bottom: 0; }
+        .rpt-table-title { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .rpt-th { display: grid; padding: 7px 10px; background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .rpt-th span { font-size: 9px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.3px; }
+        .rpt-th span.r { text-align: right; }
+        .rpt-tr { display: grid; padding: 7px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .rpt-tr:last-child { border-bottom: none; }
+        .rpt-tr span { font-size: 11px; color: rgba(255,255,255,0.7); overflow: hidden; text-overflow: ellipsis; }
+        .rpt-tr span.r { text-align: right; }
+        .rpt-tr span.mono { font-family: 'SF Mono', Monaco, monospace; font-size: 10px; color: var(--text); }
+        .rpt-tr span.ok { color: #22c55e; font-weight: 500; }
+        .rpt-tr span.err { color: #ef4444; font-weight: 500; }
+        .rpt-tr span.warn { color: #f59e0b; font-weight: 500; }
+        .rpt-cols-3 { grid-template-columns: 50px 1fr 40px; }
+        .rpt-cols-4 { grid-template-columns: 36px 1fr 70px 44px; }
+        .rpt-cols-5 { grid-template-columns: 36px 1fr 60px 40px 40px; }
+        
+        .rpt-photos { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+        .rpt-photo { position: relative; aspect-ratio: 4/3; border-radius: 8px; overflow: hidden; background: rgba(255,255,255,0.03); }
+        .rpt-photo img { width: 100%; height: 100%; object-fit: cover; }
+        .rpt-photo.full { grid-column: span 2; aspect-ratio: 16/9; }
+        .rpt-photo-cap { position: absolute; bottom: 0; left: 0; right: 0; padding: 6px 8px; background: linear-gradient(transparent, rgba(0,0,0,0.8)); font-size: 10px; color: white; }
+        
+        .rpt-result { margin-bottom: 10px; }
+        .rpt-result-status { font-size: 14px; line-height: 1.4; margin-bottom: 4px; }
+        .rpt-result-status .err { color: #ef4444; font-weight: 600; }
+        .rpt-result-status .ok { color: #22c55e; font-weight: 600; }
+        .rpt-result-status .lbl { color: var(--text); font-weight: 500; }
+        .rpt-result-desc { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+        
+        .rpt-sigs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .rpt-sig { background: rgba(255,255,255,0.03); border-radius: 8px; padding: 10px; }
+        .rpt-sig-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .rpt-sig-line { height: 36px; border-bottom: 1px dashed var(--border); margin-bottom: 6px; }
+        .rpt-sig-name { font-size: 11px; color: rgba(255,255,255,0.65); }
+        .rpt-sig-date { font-size: 10px; color: var(--text-dim); }
+        
+        .rpt-footer { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: rgba(255,255,255,0.03); gap: 10px; flex-wrap: wrap; }
+        .rpt-tech { display: flex; align-items: center; gap: 10px; }
+        .rpt-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--assistant), #16a34a); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 10px; color: white; flex-shrink: 0; }
+        .rpt-tech-name { font-size: 12px; font-weight: 500; color: var(--text); }
+        .rpt-tech-time { font-size: 10px; color: var(--text-dim); }
+        .rpt-actions { display: flex; gap: 6px; }
+        .rpt-btn { padding: 7px 12px; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer; border: none; transition: all 0.2s; }
+        .rpt-btn.primary { background: var(--assistant); color: white; }
+        .rpt-btn.secondary { background: transparent; color: rgba(255,255,255,0.6); border: 1px solid var(--border); }
+        .rpt-btn:hover { opacity: 0.9; }
+        
+        @media (min-width: 500px) {
+            .rpt-grid { grid-template-columns: 1fr 1fr; }
+            .rpt-measures { flex-direction: row; flex-wrap: wrap; }
+            .rpt-measure { flex: 1; min-width: 110px; }
+            .rpt-photos { grid-template-columns: repeat(3, 1fr); }
+            .rpt-photo.full { grid-column: span 3; }
+        }
+        
+        /* Light theme report */
+        [data-theme="light"] .rpt-card { background: #f8fafc; border-color: rgba(0,0,0,0.06); }
+        [data-theme="light"] .rpt-section { border-color: rgba(0,0,0,0.04); }
+        [data-theme="light"] .rpt-text { color: #374151; }
+        [data-theme="light"] .rpt-row { border-color: rgba(0,0,0,0.04); }
+        [data-theme="light"] .rpt-row-value { color: #1f2937; }
+        [data-theme="light"] .rpt-measure { background: rgba(0,0,0,0.02); }
+        [data-theme="light"] .rpt-measure-name { color: #374151; }
+        [data-theme="light"] .rpt-item { background: rgba(0,0,0,0.02); }
+        [data-theme="light"] .rpt-item-text { color: #374151; }
+        [data-theme="light"] .rpt-alert-text { color: #4b5563; }
+        [data-theme="light"] .rpt-table { background: rgba(0,0,0,0.02); }
+        [data-theme="light"] .rpt-tr span { color: #374151; }
+        [data-theme="light"] .rpt-photo { background: rgba(0,0,0,0.03); }
+        [data-theme="light"] .rpt-sig { background: rgba(0,0,0,0.02); }
+        [data-theme="light"] .rpt-footer { background: rgba(0,0,0,0.02); }
+        [data-theme="light"] .rpt-tech-name { color: #1f2937; }
     </style>
     
     <!-- Supabase Client -->
@@ -5195,9 +5357,361 @@
         }
         
         
+        // ═══════════════════════════════════════════════════════════════
+        // RENDER STRUCTURED REPORT - Beautiful Template
+        // ═══════════════════════════════════════════════════════════════
+        function renderReport(data) {
+            // Helper: only show section if it has content
+            const has = (val) => val && (Array.isArray(val) ? val.length > 0 : true);
+            const esc = (str) => str ? String(str).replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+            
+            // Brand class
+            const brandClass = data.brand_key || 'general';
+            
+            // Status class
+            let statusClass = 'en-cours';
+            let statusText = 'En cours';
+            if (data.status) {
+                const s = data.status.toLowerCase();
+                if (s.includes('conforme') && !s.includes('non')) {
+                    statusClass = 'conforme';
+                    statusText = 'Conforme';
+                } else if (s.includes('non') || s.includes('refus')) {
+                    statusClass = 'non-conforme';
+                    statusText = 'Non conforme';
+                } else {
+                    statusText = data.status;
+                }
+            }
+            
+            // Technician initials
+            const getInitials = (name) => {
+                if (!name) return '??';
+                return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+            };
+            
+            let html = `<div class="rpt">`;
+            
+            // ═══ HEADER ═══
+            html += `
+            <div class="rpt-header">
+                <div class="rpt-header-top">
+                    <div>
+                        <div class="rpt-brand ${brandClass}">${esc(data.brand || 'FixAIR')}</div>
+                        <h1 class="rpt-title">Rapport d'intervention</h1>
+                    </div>
+                    <div class="rpt-status ${statusClass}">
+                        <span class="rpt-status-dot"></span>
+                        <span class="rpt-status-text">${esc(statusText)}</span>
+                    </div>
+                </div>
+                <div class="rpt-meta">
+                    ${data.reference ? `<span>Réf <span class="val">${esc(data.reference)}</span></span>` : ''}
+                    ${data.type_intervention ? `<span>Type <span class="val">${esc(data.type_intervention)}</span></span>` : ''}
+                    ${data.date ? `<span>Date <span class="val">${esc(data.date)}</span></span>` : ''}
+                    ${data.bon_livraison ? `<span>BL <span class="val">${esc(data.bon_livraison)}</span></span>` : ''}
+                </div>
+            </div>`;
+            
+            // ═══ MAIN CARD ═══
+            html += `<div class="rpt-card">`;
+            
+            // 1. RÉSUMÉ
+            if (has(data.resume)) {
+                const resumeText = data.resume.replace(/NON CONFORME/gi, '<strong>NON CONFORME</strong>')
+                                              .replace(/CONFORME/gi, '<strong>CONFORME</strong>');
+                html += `
+                <div class="rpt-section">
+                    <div class="rpt-label">Résumé</div>
+                    <p class="rpt-text">${resumeText}</p>
+                </div>`;
+            }
+            
+            // 2. CLIENT + SITE (2 cols)
+            if (has(data.client) || has(data.site)) {
+                html += `<div class="rpt-section"><div class="rpt-grid">`;
+                
+                if (has(data.client)) {
+                    html += `<div class="rpt-group"><div class="rpt-label">Client</div>`;
+                    if (data.client.societe) html += `<div class="rpt-row"><span class="rpt-row-label">Société</span><span class="rpt-row-value">${esc(data.client.societe)}</span></div>`;
+                    if (data.client.contact) html += `<div class="rpt-row"><span class="rpt-row-label">Contact</span><span class="rpt-row-value">${esc(data.client.contact)}</span></div>`;
+                    if (data.client.telephone) html += `<div class="rpt-row"><span class="rpt-row-label">Téléphone</span><span class="rpt-row-value">${esc(data.client.telephone)}</span></div>`;
+                    if (data.client.dossier) html += `<div class="rpt-row"><span class="rpt-row-label">N° Dossier</span><span class="rpt-row-value mono">${esc(data.client.dossier)}</span></div>`;
+                    html += `</div>`;
+                }
+                
+                if (has(data.site)) {
+                    html += `<div class="rpt-group"><div class="rpt-label">Site d'intervention</div>`;
+                    if (data.site.adresse) html += `<div class="rpt-row"><span class="rpt-row-label">Adresse</span><span class="rpt-row-value">${esc(data.site.adresse)}</span></div>`;
+                    if (data.site.ville) html += `<div class="rpt-row"><span class="rpt-row-label">Ville</span><span class="rpt-row-value">${esc(data.site.ville)}</span></div>`;
+                    if (data.site.batiment) html += `<div class="rpt-row"><span class="rpt-row-label">Bâtiment</span><span class="rpt-row-value">${esc(data.site.batiment)}</span></div>`;
+                    if (data.site.acces) html += `<div class="rpt-row"><span class="rpt-row-label">Accès</span><span class="rpt-row-value">${esc(data.site.acces)}</span></div>`;
+                    html += `</div>`;
+                }
+                
+                html += `</div></div>`;
+            }
+            
+            // 3. SYSTÈME + INTERVENTION (2 cols)
+            if (has(data.systeme) || has(data.intervention)) {
+                html += `<div class="rpt-section"><div class="rpt-grid">`;
+                
+                if (has(data.systeme)) {
+                    html += `<div class="rpt-group"><div class="rpt-label">Système</div>`;
+                    if (data.systeme.type) html += `<div class="rpt-row"><span class="rpt-row-label">Type</span><span class="rpt-row-value">${esc(data.systeme.type)}</span></div>`;
+                    if (data.systeme.modele) html += `<div class="rpt-row"><span class="rpt-row-label">Modèle UE</span><span class="rpt-row-value mono">${esc(data.systeme.modele)}</span></div>`;
+                    if (data.systeme.serie) html += `<div class="rpt-row"><span class="rpt-row-label">N° Série</span><span class="rpt-row-value mono">${esc(data.systeme.serie)}</span></div>`;
+                    if (data.systeme.fluide) html += `<div class="rpt-row"><span class="rpt-row-label">Fluide</span><span class="rpt-row-value">${esc(data.systeme.fluide)}</span></div>`;
+                    html += `</div>`;
+                }
+                
+                if (has(data.intervention)) {
+                    html += `<div class="rpt-group"><div class="rpt-label">Intervention</div>`;
+                    if (data.intervention.type) html += `<div class="rpt-row"><span class="rpt-row-label">Type</span><span class="rpt-row-value">${esc(data.intervention.type)}</span></div>`;
+                    if (data.intervention.statut) {
+                        const statClass = data.intervention.statut.toLowerCase().includes('refus') ? 'error' : '';
+                        html += `<div class="rpt-row"><span class="rpt-row-label">Statut</span><span class="rpt-row-value ${statClass}">${esc(data.intervention.statut)}</span></div>`;
+                    }
+                    if (data.intervention.diagnostic) html += `<div class="rpt-row"><span class="rpt-row-label">Diagnostic</span><span class="rpt-row-value">${esc(data.intervention.diagnostic)}</span></div>`;
+                    if (data.intervention.probleme) html += `<div class="rpt-row"><span class="rpt-row-label">Problème</span><span class="rpt-row-value">${esc(data.intervention.probleme)}</span></div>`;
+                    html += `</div>`;
+                }
+                
+                html += `</div></div>`;
+            }
+            
+            // 4. ADRESSAGE - Unités Intérieures (full width table)
+            if (has(data.unites_interieures)) {
+                html += `
+                <div class="rpt-section">
+                    <div class="rpt-label">Adressage - Unités Intérieures</div>
+                    <div class="rpt-table">
+                        <div class="rpt-th rpt-cols-5">
+                            <span>Adr</span><span>Modèle</span><span>Zone</span><span>kW</span><span class="r">État</span>
+                        </div>`;
+                data.unites_interieures.forEach(ui => {
+                    const statusCls = ui.etat === 'OK' ? 'ok' : (ui.etat && ui.etat !== 'N/A' ? 'err' : 'warn');
+                    html += `
+                        <div class="rpt-tr rpt-cols-5">
+                            <span class="mono">${esc(ui.adresse || '')}</span>
+                            <span>${esc(ui.modele || '')}</span>
+                            <span>${esc(ui.zone || '')}</span>
+                            <span>${esc(ui.puissance || '')}</span>
+                            <span class="r ${statusCls}">${esc(ui.etat || '')}</span>
+                        </div>`;
+                });
+                html += `</div></div>`;
+            }
+            
+            // 4b. CODES DÉFAUT (separate table)
+            if (has(data.codes_defaut)) {
+                html += `
+                <div class="rpt-section">
+                    <div class="rpt-label">Codes Défaut</div>
+                    <div class="rpt-table">
+                        <div class="rpt-th rpt-cols-3">
+                            <span>Code</span><span>Description</span><span class="r">UI</span>
+                        </div>`;
+                data.codes_defaut.forEach(cd => {
+                    html += `
+                        <div class="rpt-tr rpt-cols-3">
+                            <span class="mono">${esc(cd.code || '')}</span>
+                            <span>${esc(cd.description || '')}</span>
+                            <span class="r">${esc(cd.ui || '—')}</span>
+                        </div>`;
+                });
+                html += `</div></div>`;
+            }
+            
+            // 5. TRAVAUX EFFECTUÉS
+            if (has(data.travaux_effectues)) {
+                html += `
+                <div class="rpt-section">
+                    <div class="rpt-label">Travaux effectués</div>
+                    <div class="rpt-list">`;
+                data.travaux_effectues.forEach(t => {
+                    const iconClass = t.status === 'done' ? 'done' : (t.status === 'error' ? 'error' : 'pending');
+                    const iconChar = t.status === 'done' ? '✓' : (t.status === 'error' ? '✗' : '→');
+                    html += `
+                        <div class="rpt-item">
+                            <span class="rpt-icon ${iconClass}">${iconChar}</span>
+                            <span class="rpt-item-text">${esc(t.texte || t.text || t)}</span>
+                        </div>`;
+                });
+                html += `</div></div>`;
+            }
+            
+            // 6. MESURES (only if we have data)
+            if (has(data.mesures)) {
+                html += `
+                <div class="rpt-section">
+                    <div class="rpt-label">Mesures</div>
+                    <div class="rpt-measures">`;
+                data.mesures.forEach(m => {
+                    const valClass = m.status === 'ok' ? 'ok' : (m.status === 'error' ? 'error' : 'neutral');
+                    const noteClass = m.status === 'ok' ? 'ok' : (m.status === 'error' ? 'error' : '');
+                    html += `
+                        <div class="rpt-measure">
+                            <div class="rpt-measure-info">
+                                <div class="rpt-measure-name">${esc(m.label || m.nom)}</div>
+                                ${m.note ? `<div class="rpt-measure-note ${noteClass}">${esc(m.note)}</div>` : ''}
+                            </div>
+                            <div class="rpt-measure-val ${valClass}">${esc(m.valeur || m.value)}</div>
+                        </div>`;
+                });
+                html += `</div></div>`;
+            }
+            
+            // 7. PHOTOS (only if we have them)
+            if (has(data.photos)) {
+                html += `
+                <div class="rpt-section">
+                    <div class="rpt-label">Photos & Documents</div>
+                    <div class="rpt-photos">`;
+                data.photos.forEach((p, i) => {
+                    const fullClass = p.full ? 'full' : '';
+                    if (p.url) {
+                        html += `
+                            <div class="rpt-photo ${fullClass}">
+                                <img src="${esc(p.url)}" alt="${esc(p.caption || '')}">
+                                ${p.caption ? `<div class="rpt-photo-cap">${esc(p.caption)}</div>` : ''}
+                            </div>`;
+                    } else {
+                        html += `
+                            <div class="rpt-photo ${fullClass}" style="display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:11px;">
+                                📷 ${esc(p.caption || 'Photo ' + (i + 1))}
+                            </div>`;
+                    }
+                });
+                html += `</div></div>`;
+            }
+            
+            // 8. RÉSULTAT + RÉSERVES
+            if (has(data.resultat)) {
+                const r = data.resultat;
+                const resClass = r.status === 'resolu' ? 'ok' : 'err';
+                const resText = r.status === 'resolu' ? 'Résolu' : 'Non résolu';
+                
+                html += `
+                <div class="rpt-section">
+                    <div class="rpt-label">Résultat</div>
+                    <div class="rpt-result">
+                        <div class="rpt-result-status">
+                            <span class="${resClass}">${resText}</span>
+                            ${r.label ? `<span class="lbl"> — ${esc(r.label)}</span>` : ''}
+                        </div>
+                        ${r.description ? `<div class="rpt-result-desc">${esc(r.description)}</div>` : ''}
+                    </div>`;
+                
+                // Alerts/Réserves
+                if (has(data.reserves) || has(data.alerts)) {
+                    const alerts = data.reserves || data.alerts;
+                    html += `<div class="rpt-alerts">`;
+                    alerts.forEach(a => {
+                        const alertClass = a.type === 'warning' ? 'warning' : (a.type === 'info' ? 'info' : (a.type === 'success' ? 'success' : ''));
+                        html += `
+                            <div class="rpt-alert ${alertClass}">
+                                <div class="rpt-alert-title">${esc(a.titre || a.title)}</div>
+                                <div class="rpt-alert-text">${esc(a.texte || a.text)}</div>
+                            </div>`;
+                    });
+                    html += `</div>`;
+                }
+                
+                html += `</div>`;
+            }
+            
+            // 9. TRAVAUX À PRÉVOIR
+            if (has(data.travaux_prevoir)) {
+                html += `
+                <div class="rpt-section">
+                    <div class="rpt-label">Travaux à prévoir</div>
+                    <div class="rpt-list">`;
+                data.travaux_prevoir.forEach((t, i) => {
+                    html += `
+                        <div class="rpt-item">
+                            <span class="rpt-icon num">${i + 1}</span>
+                            <span class="rpt-item-text">${esc(t.texte || t.text || t)}</span>
+                        </div>`;
+                });
+                html += `</div></div>`;
+            }
+            
+            // 10. SIGNATURES
+            if (has(data.signatures) || has(data.technicien)) {
+                html += `
+                <div class="rpt-section">
+                    <div class="rpt-label">Signatures</div>
+                    <div class="rpt-sigs">
+                        <div class="rpt-sig">
+                            <div class="rpt-sig-label">Technicien</div>
+                            <div class="rpt-sig-line"></div>
+                            <div class="rpt-sig-name">${esc(data.technicien?.nom || '')}</div>
+                            <div class="rpt-sig-date">${esc(data.date || '')} ${data.technicien?.heure_depart ? 'à ' + data.technicien.heure_depart : ''}</div>
+                        </div>
+                        <div class="rpt-sig">
+                            <div class="rpt-sig-label">Client</div>
+                            <div class="rpt-sig-line"></div>
+                            <div class="rpt-sig-name">${esc(data.client?.contact || '')}</div>
+                            <div class="rpt-sig-date">${esc(data.date || '')}</div>
+                        </div>
+                    </div>
+                </div>`;
+            }
+            
+            // 11. FOOTER
+            if (has(data.technicien)) {
+                const tech = data.technicien;
+                html += `
+                <div class="rpt-footer">
+                    <div class="rpt-tech">
+                        <div class="rpt-avatar">${getInitials(tech.nom)}</div>
+                        <div>
+                            <div class="rpt-tech-name">${esc(tech.nom)}</div>
+                            <div class="rpt-tech-time">${tech.heure_arrivee ? 'Arrivée ' + tech.heure_arrivee : ''} ${tech.heure_depart ? '— Départ ' + tech.heure_depart : ''}</div>
+                        </div>
+                    </div>
+                    <div class="rpt-actions">
+                        <button class="rpt-btn secondary" onclick="shareReport()">Partager</button>
+                        <button class="rpt-btn primary" onclick="exportReportPDF()">Export PDF</button>
+                    </div>
+                </div>`;
+            }
+            
+            html += `</div></div>`; // Close rpt-card and rpt
+            
+            return html;
+        }
+        
+        // Export/Share report functions (placeholders)
+        function shareReport() {
+            alert('Fonction de partage à implémenter');
+        }
+        
+        function exportReportPDF() {
+            alert('Export PDF à implémenter');
+        }
+        
         // Simple markdown parser
         function parseMarkdown(text) {
             if (!text) return '';
+            
+            // ═══ CHECK FOR JSON REPORT ═══
+            // If the AI returns structured JSON, use the beautiful template
+            const trimmed = text.trim();
+            if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+                try {
+                    const jsonData = JSON.parse(trimmed);
+                    // Check if this is a report (has type: 'report' or has typical report fields)
+                    if (jsonData.type === 'report' || jsonData.resume || jsonData.travaux_effectues || jsonData.resultat) {
+                        console.log('📊 Detected JSON report, rendering with template');
+                        return renderReport(jsonData.data || jsonData);
+                    }
+                } catch (e) {
+                    // Not valid JSON, continue with markdown parsing
+                    console.log('Not JSON, parsing as markdown');
+                }
+            }
             
             // Strip ALL HTML tags the AI might output (inline styles, divs, etc.)
             // This is necessary because sometimes AI generates HTML instead of markdown
