@@ -3485,10 +3485,6 @@
         if (authToken && currentUser && currentUser.id) {
             console.log('Auto-login with saved session:', currentUser.email);
             
-            // ═══ SUPABASE: Start loading projects immediately (don't wait for animation) ═══
-            loadProjectsList();
-            // ═══ END SUPABASE ═══
-            
             // Auto-login UI transition (reduced delay)
             setTimeout(() => {
                 document.getElementById('userName').textContent = currentUser.first_name;
@@ -3510,6 +3506,10 @@
                 
                 document.getElementById('loginScreen').classList.remove('active');
                 document.getElementById('mainApp').classList.add('active');
+                
+                // ═══ SUPABASE: Load projects after UI is ready ═══
+                loadProjectsList();
+                // ═══ END SUPABASE ═══
             }, 100);
         } else {
             // Clear any partial/invalid auth data
