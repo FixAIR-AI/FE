@@ -5698,18 +5698,54 @@
             
             // ═══ CHECK FOR JSON REPORT ═══
             // If the AI returns structured JSON, use the beautiful template
-            const trimmed = text.trim();
+            let trimmed = text.trim();
+            
+            // Check if JSON is wrapped in markdown code block
+            // Pattern handles: ```json, ``` json, ```\njson, ``` \n json, etc.
+            const codeBlockMatch = trimmed.match(/```\s*(?:json)?\s*([\s\S]*?)\s*```/);
+            if (codeBlockMatch) {
+                const jsonContent = codeBlockMatch[1].trim();
+                if (jsonContent.startsWith('{')) {
+                    try {
+                        const jsonData = JSON.parse(jsonContent);
+                        if (jsonData.type === 'report' || jsonData.resume || jsonData.travaux_effectues || jsonData.resultat) {
+                            console.log('📊 Detected JSON report in code block, rendering with template');
+                            // Extract intro text before the code block
+                            const introMatch = trimmed.match(/^([\s\S]*?)```/);
+                            const introText = introMatch ? introMatch[1].trim() : '';
+                            const reportHtml = renderReport(jsonData.data || jsonData);
+                            return introText ? `<p>${introText.replace(/\n/g, '<br>')}</p>${reportHtml}` : reportHtml;
+                        }
+                    } catch (e) {
+                        console.log('Code block is not valid JSON report:', e.message);
+                    }
+                }
+            }
+            
+            // Check for raw JSON (starts with { and ends with })
             if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
                 try {
                     const jsonData = JSON.parse(trimmed);
-                    // Check if this is a report (has type: 'report' or has typical report fields)
                     if (jsonData.type === 'report' || jsonData.resume || jsonData.travaux_effectues || jsonData.resultat) {
-                        console.log('📊 Detected JSON report, rendering with template');
+                        console.log('📊 Detected raw JSON report, rendering with template');
                         return renderReport(jsonData.data || jsonData);
                     }
                 } catch (e) {
-                    // Not valid JSON, continue with markdown parsing
-                    console.log('Not JSON, parsing as markdown');
+                    console.log('Not valid JSON, parsing as markdown');
+                }
+            }
+            
+            // Check for JSON embedded in text (intro text + JSON)
+            const embeddedJsonMatch = trimmed.match(/^([\s\S]*?)\s*(\{[\s\S]*"type"\s*:\s*"report"[\s\S]*\})\s*$/);
+            if (embeddedJsonMatch) {
+                try {
+                    const jsonData = JSON.parse(embeddedJsonMatch[2]);
+                    console.log('📊 Detected embedded JSON report, rendering with template');
+                    const introText = embeddedJsonMatch[1].trim();
+                    const reportHtml = renderReport(jsonData.data || jsonData);
+                    return introText ? `<p>${introText.replace(/\n/g, '<br>')}</p>${reportHtml}` : reportHtml;
+                } catch (e) {
+                    console.log('Embedded JSON parse failed:', e.message);
                 }
             }
             
