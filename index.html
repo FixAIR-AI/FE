@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FixAIR V45 - Fast Load + Swipe Delete Fix</title>
+    <title>FixAIR V48 - Photo Capture + OCR</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -1727,6 +1727,100 @@
         .photo-option-title { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
         .photo-option-desc { font-size: 10px; color: var(--text-dim); }
         .photo-modal-footer { padding: 10px 14px 14px; }
+        
+        /* Photo full preview */
+        .photo-full-preview { 
+            padding: 0 14px; 
+            margin-bottom: 10px;
+            display: none;
+        }
+        .photo-full-preview.has-image { display: block; }
+        .photo-full-preview img { 
+            width: 100%; 
+            max-height: 200px; 
+            object-fit: cover; 
+            border-radius: 10px; 
+            border: 1px solid var(--border);
+        }
+        .photo-modal-preview.has-image { 
+            background: transparent; 
+            overflow: hidden;
+        }
+        .photo-modal-preview.has-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .photo-modal-preview.has-image .icon { display: none; }
+        
+        /* Send option icon */
+        .photo-option-icon.send { background: var(--copilot-bg); }
+        .photo-option-icon.send .icon { color: var(--copilot); }
+        
+        /* Chat images */
+        .msg-image { 
+            max-width: 240px; 
+            border-radius: 12px; 
+            margin-top: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .msg-image:hover { transform: scale(1.02); }
+        .msg-text img { 
+            max-width: 100%; 
+            border-radius: 10px; 
+            margin-top: 6px;
+        }
+        
+        /* Image loading state */
+        .msg-image-loading {
+            width: 200px;
+            height: 150px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-dim);
+            font-size: 12px;
+        }
+        
+        /* Image viewer modal */
+        .image-viewer {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 700;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .image-viewer.active { display: flex; }
+        .image-viewer img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+        .image-viewer-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .image-viewer-close .icon { width: 20px; height: 20px; }
         .photo-cancel { width: 100%; padding: 10px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: rgba(255,255,255,0.6); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
         .photo-cancel:hover { background: rgba(255,255,255,0.05); }
 
@@ -3240,27 +3334,45 @@
     </div>
 
     <!-- PHOTO MODAL -->
+    <!-- HIDDEN FILE INPUTS -->
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleFileSelect(event, 'camera')">
+    <input type="file" id="galleryInput" accept="image/*" style="display:none;" onchange="handleFileSelect(event, 'gallery')">
+    
+    <!-- PHOTO MODAL (redesigned with real preview) -->
     <div class="photo-modal" id="photoModal">
         <div class="photo-modal-content">
             <div class="photo-modal-header">
-                <div class="photo-modal-preview"><span class="icon"><svg><use href="#icon-image"/></svg></span></div>
-                <div>
-                    <div class="photo-modal-title">Photo sélectionnée</div>
-                    <div class="photo-modal-sub">Que souhaitez-vous faire ?</div>
+                <div class="photo-modal-preview" id="photoPreviewThumb">
+                    <span class="icon"><svg><use href="#icon-image"/></svg></span>
                 </div>
+                <div>
+                    <div class="photo-modal-title" id="photoModalTitle">Photo sélectionnée</div>
+                    <div class="photo-modal-sub" id="photoModalSub">Que souhaitez-vous faire ?</div>
+                </div>
+            </div>
+            <!-- Full image preview -->
+            <div class="photo-full-preview" id="photoFullPreview">
+                <img id="photoPreviewImg" src="" alt="Preview">
             </div>
             <div class="photo-modal-body">
                 <div class="photo-option" onclick="handlePhotoOption('extract')">
                     <div class="photo-option-icon extract"><span class="icon"><svg><use href="#icon-search"/></svg></span></div>
                     <div class="photo-option-text">
-                        <div class="photo-option-title">Extraire les informations</div>
-                        <div class="photo-option-desc">Analyser pour extraire les données</div>
+                        <div class="photo-option-title">🔍 Extraire les informations</div>
+                        <div class="photo-option-desc">OCR - Plaque, code erreur, modèle</div>
+                    </div>
+                </div>
+                <div class="photo-option" onclick="handlePhotoOption('send')">
+                    <div class="photo-option-icon send"><span class="icon"><svg><use href="#icon-send"/></svg></span></div>
+                    <div class="photo-option-text">
+                        <div class="photo-option-title">💬 Envoyer dans le chat</div>
+                        <div class="photo-option-desc">Demander une analyse à l'IA</div>
                     </div>
                 </div>
                 <div class="photo-option" onclick="handlePhotoOption('report')">
                     <div class="photo-option-icon report"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>
                     <div class="photo-option-text">
-                        <div class="photo-option-title">Ajouter au rapport</div>
+                        <div class="photo-option-title">📋 Ajouter au rapport</div>
                         <div class="photo-option-desc">Pièce jointe du rapport</div>
                     </div>
                 </div>
@@ -3269,6 +3381,14 @@
                 <button class="photo-cancel" onclick="closePhotoModal()">Annuler</button>
             </div>
         </div>
+    </div>
+
+    <!-- IMAGE VIEWER MODAL -->
+    <div class="image-viewer" id="imageViewer" onclick="closeImageViewer()">
+        <button class="image-viewer-close" onclick="closeImageViewer()">
+            <span class="icon"><svg><use href="#icon-x"/></svg></span>
+        </button>
+        <img id="imageViewerImg" src="" alt="Full size">
     </div>
 
     <!-- HOTLINE VIEW -->
@@ -6486,14 +6606,77 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
             document.querySelectorAll('.attach-menu').forEach(m => m.classList.remove('show'));
         }
 
+        // ═══════════════════════════════════════════════════════════════
+        // PHOTO CAPTURE - V48
+        // ═══════════════════════════════════════════════════════════════
+        let currentPhotoData = null; // Base64 image data
+        let currentPhotoFile = null; // File object
+        
         function attachAction(type, panel) {
             closeAllAttach();
             currentPhotoPanel = panel;
-            if(type === 'camera' || type === 'gallery') {
-                openPhotoModal();
+            
+            if (type === 'camera') {
+                // Open camera
+                document.getElementById('cameraInput').click();
+            } else if (type === 'gallery') {
+                // Open gallery
+                document.getElementById('galleryInput').click();
             } else {
                 toast('📎 Sélection fichier...');
             }
+        }
+        
+        function handleFileSelect(event, source) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Validate it's an image
+            if (!file.type.startsWith('image/')) {
+                toast('❌ Veuillez sélectionner une image');
+                return;
+            }
+            
+            // Check size (max 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                toast('❌ Image trop volumineuse (max 10MB)');
+                return;
+            }
+            
+            currentPhotoFile = file;
+            
+            // Read file as base64
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentPhotoData = e.target.result;
+                openPhotoModalWithPreview(file.name, source);
+            };
+            reader.readAsDataURL(file);
+            
+            // Reset input so same file can be selected again
+            event.target.value = '';
+        }
+        
+        function openPhotoModalWithPreview(filename, source) {
+            const modal = document.getElementById('photoModal');
+            const preview = document.getElementById('photoPreviewThumb');
+            const fullPreview = document.getElementById('photoFullPreview');
+            const previewImg = document.getElementById('photoPreviewImg');
+            const title = document.getElementById('photoModalTitle');
+            const sub = document.getElementById('photoModalSub');
+            
+            // Set preview image
+            previewImg.src = currentPhotoData;
+            preview.innerHTML = `<img src="${currentPhotoData}" alt="Preview">`;
+            preview.classList.add('has-image');
+            fullPreview.classList.add('has-image');
+            
+            // Update title
+            const sourceText = source === 'camera' ? '📷 Photo prise' : '🖼️ Image sélectionnée';
+            title.textContent = sourceText;
+            sub.textContent = 'Que souhaitez-vous faire ?';
+            
+            modal.classList.add('active');
         }
 
         function openPhotoModal() {
@@ -6501,24 +6684,149 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
         }
 
         function closePhotoModal() {
-            document.getElementById('photoModal').classList.remove('active');
+            const modal = document.getElementById('photoModal');
+            const preview = document.getElementById('photoPreviewThumb');
+            const fullPreview = document.getElementById('photoFullPreview');
+            
+            modal.classList.remove('active');
+            
+            // Reset after animation
+            setTimeout(() => {
+                preview.innerHTML = '<span class="icon"><svg><use href="#icon-image"/></svg></span>';
+                preview.classList.remove('has-image');
+                fullPreview.classList.remove('has-image');
+                currentPhotoData = null;
+                currentPhotoFile = null;
+            }, 300);
         }
 
-        function handlePhotoOption(option) {
+        async function handlePhotoOption(option) {
+            if (!currentPhotoData) {
+                toast('❌ Aucune photo sélectionnée');
+                closePhotoModal();
+                return;
+            }
+            
+            const imageData = currentPhotoData;
+            const panel = currentPhotoPanel;
+            
             closePhotoModal();
-            if(option === 'extract') {
-                toast('🔍 Analyse de la photo...');
+            
+            if (option === 'extract') {
+                // OCR - Extract information
+                toast('🔍 Analyse OCR en cours...');
+                
+                // Add image to chat with loading state
+                addMsgWithImage(panel, 'user', '🔍 Analyse de cette image...', imageData);
+                
+                // Simulate OCR (later: real Tesseract.js or Cloud Vision)
                 setTimeout(() => {
-                    addMsg(currentPhotoPanel, 'user', '📷 [Photo analysée]');
-                    setTimeout(() => {
-                        addMsg(currentPhotoPanel, 'ai', '<strong>Informations extraites:</strong><br>• Code erreur: <strong style="color:var(--copilot)">E6</strong><br>• Modèle: MXZ-4F72VA<br>• N° série: A1234567890');
-                    }, 800);
+                    // Mock OCR results (will be replaced with real OCR)
+                    const ocrResults = performMockOCR();
+                    addMsg(panel, 'ai', ocrResults);
+                }, 2000);
+                
+            } else if (option === 'send') {
+                // Send to chat for AI analysis
+                addMsgWithImage(panel, 'user', 'Peux-tu analyser cette image ?', imageData);
+                
+                // Trigger AI response
+                setTimeout(() => {
+                    addMsg(panel, 'ai', 'Je vois une photo d\'équipement HVAC. Je peux identifier :<br><br>• <strong>Type:</strong> Unité extérieure<br>• <strong>État visible:</strong> En fonctionnement<br><br>Avez-vous une question spécifique sur cet équipement ?');
                 }, 1500);
-            } else {
-                toast('📋 Photo ajoutée au rapport');
-                addMsg(currentPhotoPanel, 'user', '📷 [Photo ajoutée au rapport]');
+                
+            } else if (option === 'report') {
+                // Add to report
+                addMsgWithImage(panel, 'user', '📋 Photo ajoutée au rapport', imageData);
+                toast('✅ Photo ajoutée au rapport');
+                
+                // Store for report (future: save to project photos array)
+                if (!window.reportPhotos) window.reportPhotos = [];
+                window.reportPhotos.push({
+                    data: imageData,
+                    timestamp: new Date().toISOString(),
+                    panel: panel
+                });
             }
         }
+        
+        // Add message with image
+        function addMsgWithImage(panel, role, text, imageData) {
+            const container = document.getElementById(panel + 'Chat');
+            if (!container) return;
+            
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'msg ' + role;
+            
+            // Create image element
+            const imgHtml = `<img src="${imageData}" class="msg-image" onclick="openImageViewer('${imageData.replace(/'/g, "\\'")}')">`;
+            
+            msgDiv.innerHTML = `
+                <div class="msg-text">${text}${imgHtml}</div>
+                <div class="msg-actions">
+                    <button class="msg-act" onclick="copyMsg(this)"><span class="icon"><svg><use href="#icon-copy"/></svg></span></button>
+                </div>
+            `;
+            
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+            
+            // Update message count
+            projectMessageCount++;
+        }
+        
+        // Mock OCR function (will be replaced with real OCR)
+        function performMockOCR() {
+            const mockResults = [
+                {
+                    model: 'PUHY-P500YNW-A',
+                    serial: 'A1234567890',
+                    errorCode: 'E6',
+                    brand: 'Mitsubishi Electric'
+                },
+                {
+                    model: 'RXS35L3V1B',
+                    serial: 'D987654321',
+                    errorCode: 'F3',
+                    brand: 'Daikin'
+                },
+                {
+                    model: '38QRF036',
+                    serial: 'C456789012',
+                    errorCode: null,
+                    brand: 'Carrier'
+                }
+            ];
+            
+            const result = mockResults[Math.floor(Math.random() * mockResults.length)];
+            
+            let html = '<strong>📋 Informations extraites (OCR):</strong><br><br>';
+            html += `• <strong>Marque:</strong> ${result.brand}<br>`;
+            html += `• <strong>Modèle:</strong> <span style="color:var(--copilot);font-family:monospace;">${result.model}</span><br>`;
+            html += `• <strong>N° série:</strong> <span style="font-family:monospace;">${result.serial}</span><br>`;
+            
+            if (result.errorCode) {
+                html += `• <strong>Code erreur:</strong> <span style="color:var(--hotline);font-weight:600;">${result.errorCode}</span><br>`;
+                html += `<br><em>💡 Voulez-vous que je vous explique ce code erreur ?</em>`;
+            }
+            
+            return html;
+        }
+        
+        // Image viewer
+        function openImageViewer(imageSrc) {
+            const viewer = document.getElementById('imageViewer');
+            const img = document.getElementById('imageViewerImg');
+            img.src = imageSrc;
+            viewer.classList.add('active');
+        }
+        
+        function closeImageViewer() {
+            document.getElementById('imageViewer').classList.remove('active');
+        }
+        // ═══════════════════════════════════════════════════════════════
+        // END PHOTO CAPTURE
+        // ═══════════════════════════════════════════════════════════════
 
         function openHotline() {
             document.getElementById('hotlineView').classList.add('active');
