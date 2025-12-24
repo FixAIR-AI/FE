@@ -880,55 +880,6 @@
         .proj-meta { font-size: 11px; color: var(--text-dim); }
         .proj-time { font-size: 11px; color: rgba(255,255,255,0.25); }
         
-        /* ═══ SWIPE TO DELETE - Mobile ═══ */
-        .proj-swipe-container {
-            position: relative;
-            overflow: hidden;
-            border-radius: 12px;
-        }
-        .proj-swipe-container .proj {
-            position: relative;
-            z-index: 2;
-            transition: transform 0.3s ease;
-            background: var(--card);
-        }
-        .proj-swipe-container.swiped .proj {
-            transform: translateX(-70px);
-        }
-        .proj-delete-btn {
-            position: absolute;
-            right: 0;
-            top: 0;
-            bottom: 0;
-            width: 70px;
-            background: #ef4444;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1;
-            cursor: pointer;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            /* Rounded corners only on the right to match container */
-            border-radius: 0 12px 12px 0;
-        }
-        .proj-swipe-container.swiped .proj-delete-btn {
-            opacity: 1;
-        }
-        .proj-delete-btn .icon {
-            width: 22px;
-            height: 22px;
-            color: white;
-        }
-        .proj-delete-btn:active {
-            background: #dc2626;
-        }
-        /* Remove right border-radius from card when swiped so red fills gap */
-        .proj-swipe-container.swiped .proj {
-            border-radius: 12px 0 0 12px;
-        }
-        /* ═══ END SWIPE TO DELETE ═══ */
-        
         /* PROJECT CONTEXT MENU */
         .project-context-menu {
             position: fixed;
@@ -4695,34 +4646,27 @@
             
             const brandLabel = project.brand ? project.brand.charAt(0).toUpperCase() + project.brand.slice(1) : '';
             
-            // ═══ FIX: Show brand history if changed (Original → Current) ═══
+            // Show brand history if changed (Original → Current)
             let brandDisplay = brandLabel;
             if (project.original_brand && project.original_brand !== project.brand) {
                 const originalBrandLabel = project.original_brand.charAt(0).toUpperCase() + project.original_brand.slice(1);
                 brandDisplay = `${originalBrandLabel} → ${brandLabel}`;
             }
-            // ═══ END FIX ═══
             
             const modeLabel = hasBoth ? 'Diagnostic + Rapport' : (hasAssistant ? 'Rapport' : 'Diagnostic');
             
-            // ═══ SWIPE TO DELETE: Wrap project card with swipe container ═══
-            // Context menu removed - only swipe-to-delete is available
+            const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextMenu(event, '${project.id}', '${escapeHtml(project.title || 'Sans titre')}')"` : '';
+            
             return `
-                <div class="proj-swipe-container" data-project-id="${project.id}">
-                    <div class="proj" onclick="handleProjectClick('${project.id}', event)">
-                        ${iconHtml}
-                        <div class="proj-info">
-                            <div class="proj-title">${escapeHtml(project.title || 'Sans titre')}</div>
-                            <div class="proj-meta">${modeLabel}${brandDisplay ? ' • ' + brandDisplay : ''}</div>
-                        </div>
-                        <span class="proj-time">${timeAgo}</span>
+                <div class="proj" onclick="loadProject('${project.id}')" ${contextMenuAttr} data-project-id="${project.id}">
+                    ${iconHtml}
+                    <div class="proj-info">
+                        <div class="proj-title">${escapeHtml(project.title || 'Sans titre')}</div>
+                        <div class="proj-meta">${modeLabel}${brandDisplay ? ' • ' + brandDisplay : ''}</div>
                     </div>
-                    <div class="proj-delete-btn" onclick="deleteProjectSwipe('${project.id}', event)">
-                        <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></span>
-                    </div>
+                    <span class="proj-time">${timeAgo}</span>
                 </div>
             `;
-            // ═══ END SWIPE TO DELETE ═══
         }
         
         // Render projects in the projects page
@@ -4741,9 +4685,6 @@
             }
             
             container.innerHTML = projects.map(project => generateProjectCardHtml(project, true)).join('');
-            
-            // Re-initialize swipe gestures after rendering
-            initSwipeToDelete();
         }
         
         // Render recent projects on home page
@@ -4761,9 +4702,6 @@
             }
             
             container.innerHTML = projects.map(project => generateProjectCardHtml(project, true)).join('');
-            
-            // Re-initialize swipe gestures after rendering
-            initSwipeToDelete();
         }
         
         // Show context menu for project
@@ -4873,162 +4811,6 @@
             console.log('✅ Project deleted');
         }
         
-        // ═══════════════════════════════════════════════════════════════
-        // SWIPE TO DELETE - Mobile Touch Gestures
-        // ═══════════════════════════════════════════════════════════════
-        
-        let swipeStartX = 0;
-        let swipeCurrentX = 0;
-        let swipeThreshold = 50;
-        let activeSwipeContainer = null;
-        
-        // Initialize swipe listeners
-        function initSwipeToDelete() {
-            document.addEventListener('touchstart', handleSwipeStart, { passive: true });
-            document.addEventListener('touchmove', handleSwipeMove, { passive: false });
-            document.addEventListener('touchend', handleSwipeEnd, { passive: true });
-            
-            // Close swipe when clicking outside
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('.proj-swipe-container')) {
-                    document.querySelectorAll('.proj-swipe-container.swiped').forEach(c => {
-                        c.classList.remove('swiped');
-                        c.querySelector('.proj').style.transform = 'translateX(0)';
-                    });
-                }
-            });
-        }
-        
-        function handleSwipeStart(e) {
-            const container = e.target.closest('.proj-swipe-container');
-            if (!container) return;
-            
-            // Close any other open swipes
-            document.querySelectorAll('.proj-swipe-container.swiped').forEach(c => {
-                if (c !== container) c.classList.remove('swiped');
-            });
-            
-            swipeStartX = e.touches[0].clientX;
-            activeSwipeContainer = container;
-        }
-        
-        function handleSwipeMove(e) {
-            if (!activeSwipeContainer) return;
-            
-            swipeCurrentX = e.touches[0].clientX;
-            const diff = swipeStartX - swipeCurrentX;
-            
-            // Only handle left swipes (diff > 0)
-            if (diff > 10) {
-                e.preventDefault();
-                const proj = activeSwipeContainer.querySelector('.proj');
-                const translateX = Math.min(diff, 70);
-                proj.style.transform = `translateX(-${translateX}px)`;
-                proj.style.transition = 'none';
-            }
-        }
-        
-        function handleSwipeEnd(e) {
-            if (!activeSwipeContainer) return;
-            
-            const diff = swipeStartX - swipeCurrentX;
-            const proj = activeSwipeContainer.querySelector('.proj');
-            
-            proj.style.transition = 'transform 0.3s ease';
-            
-            if (diff > swipeThreshold) {
-                // Swiped enough - show delete button
-                activeSwipeContainer.classList.add('swiped');
-                proj.style.transform = 'translateX(-70px)';
-            } else {
-                // Not enough - reset
-                activeSwipeContainer.classList.remove('swiped');
-                proj.style.transform = 'translateX(0)';
-            }
-            
-            activeSwipeContainer = null;
-            swipeStartX = 0;
-            swipeCurrentX = 0;
-        }
-        
-        // Delete project from swipe action
-        async function deleteProjectSwipe(projectId, event) {
-            event.stopPropagation();
-            
-            if (!confirm('Supprimer ce projet ?')) {
-                // Reset swipe
-                const container = event.target.closest('.proj-swipe-container');
-                if (container) {
-                    container.classList.remove('swiped');
-                    container.querySelector('.proj').style.transform = 'translateX(0)';
-                }
-                return;
-            }
-            
-            const userId = await getCurrentUserId();
-            if (!userId || userId.startsWith('demo-')) {
-                toast('Mode démo - suppression simulée');
-                event.target.closest('.proj-swipe-container').remove();
-                return;
-            }
-            
-            try {
-                // Delete messages first
-                const { data: chats } = await db
-                    .from('chats')
-                    .select('id')
-                    .eq('project_id', projectId);
-                
-                for (const chat of chats || []) {
-                    await db.from('messages').delete().eq('chat_id', chat.id);
-                }
-                
-                // Delete chats
-                await db.from('chats').delete().eq('project_id', projectId);
-                
-                // Delete project
-                const { error } = await db
-                    .from('projects')
-                    .delete()
-                    .eq('id', projectId);
-                
-                if (error) {
-                    console.error('Error deleting project:', error);
-                    toast('Erreur lors de la suppression');
-                    return;
-                }
-                
-                // Remove from UI with animation
-                const container = event.target.closest('.proj-swipe-container');
-                if (container) {
-                    container.style.transition = 'all 0.3s ease';
-                    container.style.transform = 'translateX(-100%)';
-                    container.style.opacity = '0';
-                    container.style.height = '0';
-                    container.style.marginBottom = '0';
-                    container.style.padding = '0';
-                    setTimeout(() => container.remove(), 300);
-                }
-                
-                // If this project was open, close chat
-                if (currentProjectId === projectId) {
-                    closeChat();
-                    startNewProject();
-                }
-                
-                toast('✅ Projet supprimé');
-                console.log('✅ Project deleted via swipe');
-                
-            } catch (e) {
-                console.error('Error deleting project:', e);
-                toast('Erreur lors de la suppression');
-            }
-        }
-        
-        // Initialize swipe on page load
-        document.addEventListener('DOMContentLoaded', initSwipeToDelete);
-        // ═══ END SWIPE TO DELETE ═══
-        
         // Format time ago
         function formatTimeAgo(date) {
             const now = new Date();
@@ -5050,18 +4832,6 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
-        }
-        
-        // Handle project card click (check if swiped first)
-        function handleProjectClick(projectId, event) {
-            const container = event.target.closest('.proj-swipe-container');
-            if (container && container.classList.contains('swiped')) {
-                // Reset swipe instead of loading
-                container.classList.remove('swiped');
-                container.querySelector('.proj').style.transform = 'translateX(0)';
-                return;
-            }
-            loadProject(projectId);
         }
         
         // Load a specific project (FIXED: uses separate queries for reliability)
