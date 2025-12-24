@@ -3484,8 +3484,7 @@
         // Check if already logged in
         if (authToken && currentUser && currentUser.id) {
             console.log('Auto-login with saved session:', currentUser.email);
-            
-            // Auto-login UI transition (reduced delay)
+            // Auto-login
             setTimeout(() => {
                 document.getElementById('userName').textContent = currentUser.first_name;
                 document.getElementById('profileFirstName').value = currentUser.first_name;
@@ -3507,10 +3506,10 @@
                 document.getElementById('loginScreen').classList.remove('active');
                 document.getElementById('mainApp').classList.add('active');
                 
-                // ═══ SUPABASE: Load projects after UI is ready ═══
+                // ═══ SUPABASE: Load projects list ═══
                 loadProjectsList();
                 // ═══ END SUPABASE ═══
-            }, 100);
+            }, 500);
         } else {
             // Clear any partial/invalid auth data
             localStorage.removeItem('fixair_token');
@@ -4621,94 +4620,52 @@
             }
         }
         
-        // Load user's projects list (FIXED: uses separate queries for reliability)
+        // Load user's projects list
         async function loadProjectsList() {
             console.log('🔄 Loading projects list...');
-            
-            // Show loading indicator immediately
-            const projectsContainer = document.getElementById('projectsList');
-            const recentContainer = document.getElementById('recentProjectsHome');
-            
-            const loadingHtml = `
-                <div style="display: flex; flex-direction: column; gap: 8px; padding: 8px 0;">
-                    <div style="height: 60px; background: linear-gradient(90deg, var(--card) 25%, rgba(255,255,255,0.05) 50%, var(--card) 75%); background-size: 200% 100%; border-radius: 12px; animation: shimmer 1.5s infinite;"></div>
-                    <div style="height: 60px; background: linear-gradient(90deg, var(--card) 25%, rgba(255,255,255,0.05) 50%, var(--card) 75%); background-size: 200% 100%; border-radius: 12px; animation: shimmer 1.5s infinite; animation-delay: 0.2s;"></div>
-                </div>
-                <style>@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }</style>
-            `;
-            
-            if (projectsContainer) projectsContainer.innerHTML = loadingHtml;
-            if (recentContainer) recentContainer.innerHTML = loadingHtml;
             
             const userId = await getCurrentUserId();
             if (!userId || userId.startsWith('demo-')) {
                 console.log('⚠️ Demo mode - not loading from Supabase');
-                if (projectsContainer) projectsContainer.innerHTML = '';
-                if (recentContainer) recentContainer.innerHTML = '';
                 return;
             }
             
             try {
-                // Step 1: Get projects (separate query - more reliable than nested)
-                const { data: projects, error: projectsError } = await db
+                const { data: projects, error } = await db
                     .from('projects')
-                    .select('id, title, brand, original_brand, status, created_at, updated_at')
+                    .select(`
+                        id,
+                        title,
+                        brand,
+                        original_brand,
+                        status,
+                        created_at,
+                        updated_at,
+                        chats (
+                            id,
+                            chat_type,
+                            message_count
+                        )
+                    `)
                     .eq('user_id', userId)
                     .order('updated_at', { ascending: false })
                     .limit(20);
                 
-                if (projectsError) {
-                    console.error('❌ Error loading projects:', projectsError);
-                    // Clear loading state on error
-                    if (projectsContainer) projectsContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-dim);">Erreur de chargement</div>';
-                    if (recentContainer) recentContainer.innerHTML = '';
+                if (error) {
+                    console.error('❌ Error loading projects:', error);
                     return;
                 }
                 
                 console.log('✅ Projects loaded:', projects?.length || 0);
                 
-                // Step 2: Get chats for all projects in one query (efficient)
-                const projectIds = projects?.map(p => p.id) || [];
-                let chatsByProject = {};
-                
-                if (projectIds.length > 0) {
-                    const { data: chats, error: chatsError } = await db
-                        .from('chats')
-                        .select('id, project_id, chat_type, message_count')
-                        .in('project_id', projectIds);
-                    
-                    if (!chatsError && chats) {
-                        // Group chats by project_id
-                        for (const chat of chats) {
-                            if (!chatsByProject[chat.project_id]) {
-                                chatsByProject[chat.project_id] = [];
-                            }
-                            chatsByProject[chat.project_id].push(chat);
-                        }
-                    }
-                }
-                
-                // Step 3: Combine projects with their chats
-                const projectsWithChats = projects?.map(project => ({
-                    ...project,
-                    chats: chatsByProject[project.id] || []
-                })) || [];
-                
                 // Store projects globally for context menu
-                window.projectsData = projectsWithChats;
+                window.projectsData = projects || [];
                 
-                renderProjectsList(projectsWithChats);
-                renderRecentProjects(projectsWithChats?.slice(0, 2) || []);
-                
-                console.log('✅ Projects list rendered');
+                renderProjectsList(projects);
+                renderRecentProjects(projects?.slice(0, 2) || []);
                 
             } catch (e) {
                 console.error('❌ Unexpected error loading projects:', e);
-                // Clear loading state on error
-                const projectsContainer = document.getElementById('projectsList');
-                const recentContainer = document.getElementById('recentProjectsHome');
-                if (projectsContainer) projectsContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-dim);">Erreur de chargement</div>';
-                if (recentContainer) recentContainer.innerHTML = '';
             }
         }
         
