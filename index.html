@@ -1563,7 +1563,6 @@
             z-index: 10;
         }
         .chat-view.split .chat-input { padding-bottom: 12px; }
-        .input-row { display: flex; align-items: center; gap: 8px; padding: 6px; background: var(--card); border: 1px solid var(--border); border-radius: 24px; transition: border-color 0.2s; position: relative; }
         .input-row:focus-within { border-color: var(--mode-border); }
         .input-row.recording { border-color: var(--mode-border); }
         
@@ -1582,10 +1581,13 @@
         .attach-opt .icon { width: 14px; height: 14px; color: var(--mode-color); }
         
         /* Input area wrapper */
-        .input-area { flex: 1; position: relative; height: 36px; display: flex; align-items: center; }
-        .input-text { width: 100%; background: transparent; border: none; color: white; font-size: 13px; outline: none; padding: 6px 10px; position: relative; z-index: 1; }
+        .input-area { flex: 1; position: relative; min-height: 36px; display: flex; align-items: flex-end; }
+        .input-text { width: 100%; background: transparent; border: none; color: white; font-family: inherit; font-size: 13px; line-height: 1.5; outline: none; padding: 8px 10px; position: relative; z-index: 1; resize: none; overflow-y: hidden; min-height: 36px; max-height: 25vh; }
         .input-text::placeholder { color: rgba(255,255,255,0.25); }
+        .input-text.scrollable { overflow-y: auto; }
         .input-row.recording .input-text { opacity: 0; pointer-events: none; }
+        .input-row.expanded { border-radius: 16px; }
+        .input-row { display: flex; align-items: flex-end; gap: 8px; padding: 6px; background: var(--card); border: 1px solid var(--border); border-radius: 24px; transition: border-color 0.2s, border-radius 0.2s; position: relative; }
         
         /* Voice waveform */
         .voice-waveform { position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: space-between; padding: 0; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
@@ -2059,7 +2061,7 @@
         .action-btn .btn-icon { width: 18px; height: 18px; }
         .action-btn .btn-icon svg { width: 18px; height: 18px; }
         .input-text { font-size: 15px; padding: 8px 12px; }
-        .input-area { height: 40px; }
+        .input-area { min-height: 40px; }
         
         /* Panel header */
         .panel-header { 
@@ -2918,7 +2920,7 @@
                 <div class="input-row" id="copilotInputRow">
                     <button class="plus-btn" onclick="toggleAttach('copilot')"><span class="icon"><svg><use href="#icon-plus"/></svg></span></button>
                     <div class="input-area">
-                        <input type="text" class="input-text" id="copilotInput" placeholder="Posez votre question..." oninput="handleChatInput('copilot')" onkeypress="if(event.key==='Enter')handleSend('copilot')">
+                        <textarea class="input-text" id="copilotInput" placeholder="Posez votre question..." rows="1" oninput="handleChatInput('copilot')" onkeydown="handleKeydown(event,'copilot')"></textarea>
                         <div class="voice-waveform copilot" id="copilotWaveform">
                             <div class="wave-bars" id="copilotBars"></div>
                             <div class="voice-timer" id="copilotTimer">0:00</div>
@@ -3028,7 +3030,7 @@
                 <div class="input-row" id="assistantInputRow">
                     <button class="plus-btn" onclick="toggleAttach('assistant')"><span class="icon"><svg><use href="#icon-plus"/></svg></span></button>
                     <div class="input-area">
-                        <input type="text" class="input-text" id="assistantInput" placeholder="Décrivez l'intervention..." oninput="handleChatInput('assistant')" onkeypress="if(event.key==='Enter')handleSend('assistant')">
+                        <textarea class="input-text" id="assistantInput" placeholder="Décrivez l'intervention..." rows="1" oninput="handleChatInput('assistant')" onkeydown="handleKeydown(event,'assistant')"></textarea>
                         <div class="voice-waveform assistant" id="assistantWaveform">
                             <div class="wave-bars" id="assistantBars"></div>
                             <div class="voice-timer" id="assistantTimer">0:00</div>
@@ -4355,18 +4357,66 @@
         let simulatedIntensityTarget = {};
         let simulatedIntensityCurrent = {};
         
-        // Handle input text changes - switch between mic and send
+        // Handle input text changes - auto-resize and switch between mic/send
         function handleChatInput(panel) {
             const input = document.getElementById(panel + 'Input');
+            const inputRow = document.getElementById(panel + 'InputRow');
             const btn = document.getElementById(panel + 'ActionBtn');
             const hasText = input.value.trim().length > 0;
             
+            // Auto-resize textarea
+            const maxHeight = Math.floor(window.innerHeight * 0.25); // 25% of viewport
+            input.style.height = 'auto';
+            const scrollHeight = input.scrollHeight;
+            
+            if (scrollHeight <= maxHeight) {
+                input.style.height = scrollHeight + 'px';
+                input.classList.remove('scrollable');
+                input.style.overflowY = 'hidden';
+            } else {
+                input.style.height = maxHeight + 'px';
+                input.classList.add('scrollable');
+                input.style.overflowY = 'auto';
+            }
+            
+            // Update border radius based on height
+            if (scrollHeight > 50) {
+                inputRow.classList.add('expanded');
+            } else {
+                inputRow.classList.remove('expanded');
+            }
+            
+            // Toggle mic/send icon
             if (hasText) {
                 btn.classList.add('has-text');
                 btn.classList.remove('recording');
             } else {
                 btn.classList.remove('has-text');
             }
+        }
+        
+        // Handle keydown for Enter/Shift+Enter behavior
+        function handleKeydown(event, panel) {
+            if (event.key === 'Enter') {
+                if (event.shiftKey) {
+                    // Shift+Enter: allow new line (default behavior)
+                    return;
+                } else {
+                    // Enter alone: send message
+                    event.preventDefault();
+                    handleSend(panel);
+                }
+            }
+        }
+        
+        // Reset textarea after sending
+        function resetTextarea(panel) {
+            const input = document.getElementById(panel + 'Input');
+            const inputRow = document.getElementById(panel + 'InputRow');
+            input.style.height = '36px';
+            input.classList.remove('scrollable');
+            input.style.overflowY = 'hidden';
+            inputRow.classList.remove('expanded');
         }
         
         // Handle send (Enter key)
@@ -5377,6 +5427,7 @@
             addMsg(panel, 'user', text);
             input.value = '';
             btn.classList.remove('has-text');
+            resetTextarea(panel); // Reset textarea height
             
             // Add to history
             chatHistory[panel].push({ role: 'user', content: text });
