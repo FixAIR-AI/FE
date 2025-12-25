@@ -1888,6 +1888,106 @@
             transform: rotate(-90deg);
         }
         
+        /* Photo name modal (for report) */
+        .photo-name-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            z-index: 650;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .photo-name-modal.active { display: flex; }
+        .photo-name-content {
+            width: 100%;
+            max-width: 320px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        .photo-name-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .photo-name-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .photo-name-sub {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+        .photo-name-preview {
+            padding: 12px;
+        }
+        .photo-name-preview img {
+            width: 100%;
+            max-height: 180px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+        .photo-name-input-wrap {
+            padding: 0 16px 16px;
+        }
+        .photo-name-input {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .photo-name-input:focus {
+            border-color: var(--assistant);
+        }
+        .photo-name-input::placeholder {
+            color: var(--text-dim);
+        }
+        .photo-name-actions {
+            display: flex;
+            gap: 10px;
+            padding: 0 16px 16px;
+        }
+        .photo-name-cancel {
+            flex: 1;
+            padding: 12px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-dim);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .photo-name-cancel:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        .photo-name-confirm {
+            flex: 1.5;
+            padding: 12px;
+            background: var(--assistant);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .photo-name-confirm:hover {
+            filter: brightness(1.1);
+        }
+        
         /* Image loading state */
         .msg-image-loading {
             width: 200px;
@@ -3288,8 +3388,8 @@
             </button>
             <div class="chat-input">
                 <div class="attach-menu" id="attachCopilot">
-                    <div class="attach-opt" onclick="attachAction('camera','copilot')"><span class="icon"><svg><use href="#icon-camera"/></svg></span>Prendre une photo</div>
-                    <div class="attach-opt" onclick="attachAction('file','copilot')"><span class="icon"><svg><use href="#icon-paperclip"/></svg></span>Fichier</div>
+                    <div class="attach-opt" onclick="attachAction('camera','copilot')"><span class="icon"><svg><use href="#icon-camera"/></svg></span>Photo / Scan</div>
+                    <div class="attach-opt" onclick="attachAction('file','copilot')"><span class="icon"><svg><use href="#icon-paperclip"/></svg></span>Importer</div>
                 </div>
                 <div class="input-row" id="copilotInputRow">
                     <button class="plus-btn" onclick="toggleAttach('copilot')"><span class="icon"><svg><use href="#icon-plus"/></svg></span></button>
@@ -3400,8 +3500,8 @@
             </button>
             <div class="chat-input">
                 <div class="attach-menu" id="attachAssistant">
-                    <div class="attach-opt" onclick="attachAction('camera','assistant')"><span class="icon"><svg><use href="#icon-camera"/></svg></span>Prendre une photo</div>
-                    <div class="attach-opt" onclick="attachAction('file','assistant')"><span class="icon"><svg><use href="#icon-paperclip"/></svg></span>Fichier</div>
+                    <div class="attach-opt" onclick="attachAction('camera','assistant')"><span class="icon"><svg><use href="#icon-camera"/></svg></span>Photo / Scan</div>
+                    <div class="attach-opt" onclick="attachAction('file','assistant')"><span class="icon"><svg><use href="#icon-paperclip"/></svg></span>Importer</div>
                 </div>
                 <div class="input-row" id="assistantInputRow">
                     <button class="plus-btn" onclick="toggleAttach('assistant')"><span class="icon"><svg><use href="#icon-plus"/></svg></span></button>
@@ -3457,6 +3557,26 @@
     <!-- HIDDEN FILE INPUTS -->
     <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleFileSelect(event, 'camera')">
     <input type="file" id="fileInput" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" style="display:none;" onchange="handleFileSelect(event, 'file')">
+    
+    <!-- PHOTO NAME MODAL (for adding to report) -->
+    <div class="photo-name-modal" id="photoNameModal" onclick="if(event.target === this) closePhotoNameModal()">
+        <div class="photo-name-content">
+            <div class="photo-name-header">
+                <div class="photo-name-title">Nommer la photo</div>
+                <div class="photo-name-sub">Cette légende apparaîtra dans le rapport</div>
+            </div>
+            <div class="photo-name-preview">
+                <img id="photoNamePreviewImg" src="" alt="Preview">
+            </div>
+            <div class="photo-name-input-wrap">
+                <input type="text" id="photoNameInput" class="photo-name-input" placeholder="Ex: Plaque signalétique, Code erreur E6..." maxlength="100" onkeydown="if(event.key==='Enter')confirmAddToReport()">
+            </div>
+            <div class="photo-name-actions">
+                <button class="photo-name-cancel" onclick="closePhotoNameModal()">Annuler</button>
+                <button class="photo-name-confirm" onclick="confirmAddToReport()">Ajouter au rapport</button>
+            </div>
+        </div>
+    </div>
 
     <!-- IMAGE VIEWER MODAL -->
     <div class="image-viewer" id="imageViewer" onclick="closeImageViewer()">
@@ -4430,6 +4550,7 @@
                 currentChatId = { assistant: null, copilot: null };
                 currentProjectTitle = null;
                 projectMessageCount = 0;
+                window.reportPhotos = []; // Reset photos for new project
                 
                 // ═══ FIX: Add brand context as FIRST message in history ═══
                 const brandNames = {
@@ -5259,7 +5380,7 @@
                 // Step 1: Get project details (separate query - more reliable)
                 const { data: project, error: projectError } = await db
                     .from('projects')
-                    .select('id, title, brand, original_brand, status, created_at, updated_at')
+                    .select('id, title, brand, original_brand, status, created_at, updated_at, photos')
                     .eq('id', projectId)
                     .single();
                 
@@ -5274,6 +5395,10 @@
                 }
                 
                 console.log('✅ Project loaded:', project.title, 'brand:', project.brand);
+                
+                // Load photos into reportPhotos for this project
+                window.reportPhotos = project.photos || [];
+                console.log('📷 Loaded', window.reportPhotos.length, 'photos for project');
                 
                 // Store project title for header
                 currentProjectTitle = project.title || 'Sans titre';
@@ -5763,24 +5888,29 @@
                 html += `</div></div>`;
             }
             
-            // 7. PHOTOS (only if we have them)
-            if (has(data.photos)) {
+            // 7. PHOTOS (only if we have them - merge AI photos + manually added)
+            const aiPhotos = data.photos || [];
+            const manualPhotos = window.reportPhotos || [];
+            const allPhotos = [...aiPhotos, ...manualPhotos];
+            
+            if (allPhotos.length > 0) {
                 html += `
                 <div class="rpt-section">
                     <div class="rpt-label">Photos & Documents</div>
                     <div class="rpt-photos">`;
-                data.photos.forEach((p, i) => {
+                allPhotos.forEach((p, i) => {
                     const fullClass = p.full ? 'full' : '';
-                    if (p.url) {
+                    const photoUrl = p.url || p.data; // Support both url and base64 data
+                    if (photoUrl) {
                         html += `
                             <div class="rpt-photo ${fullClass}">
-                                <img src="${esc(p.url)}" alt="${esc(p.caption || '')}">
+                                <img src="${esc(photoUrl)}" alt="${esc(p.caption || '')}">
                                 ${p.caption ? `<div class="rpt-photo-cap">${esc(p.caption)}</div>` : ''}
                             </div>`;
                     } else {
                         html += `
                             <div class="rpt-photo ${fullClass}" style="display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:11px;">
-                                📷 ${esc(p.caption || 'Photo ' + (i + 1))}
+                                Photo ${i + 1}${p.caption ? ': ' + esc(p.caption) : ''}
                             </div>`;
                     }
                 });
@@ -6873,30 +7003,161 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
             }, 1500);
         }
         
-        // Add photo to report
+        // Add photo to report - opens naming modal
+        let pendingReportPhoto = null;
+        
         function addPhotoToReport(msgId, panel) {
             const msg = document.getElementById(msgId);
             if (!msg) return;
             
             const imageData = msg.dataset.imageData;
             
-            // Store for report
-            if (!window.reportPhotos) window.reportPhotos = [];
-            window.reportPhotos.push({
-                data: imageData,
-                timestamp: new Date().toISOString(),
-                panel: panel
-            });
+            // Store pending data
+            pendingReportPhoto = {
+                msgId: msgId,
+                panel: panel,
+                imageData: imageData
+            };
             
-            // Visual feedback - change button to "Added"
-            const reportBtn = msg.querySelector('.photo-action-btn:last-child');
-            if (reportBtn) {
-                reportBtn.innerHTML = '<span class="icon"><svg><use href="#icon-check"/></svg></span> Ajouté';
-                reportBtn.classList.add('success');
-                reportBtn.disabled = true;
+            // Show naming modal
+            const modal = document.getElementById('photoNameModal');
+            const previewImg = document.getElementById('photoNamePreviewImg');
+            const input = document.getElementById('photoNameInput');
+            
+            previewImg.src = imageData;
+            input.value = '';
+            modal.classList.add('active');
+            
+            // Focus input after animation
+            setTimeout(() => input.focus(), 100);
+        }
+        
+        function closePhotoNameModal() {
+            document.getElementById('photoNameModal').classList.remove('active');
+            pendingReportPhoto = null;
+        }
+        
+        async function confirmAddToReport() {
+            if (!pendingReportPhoto) return;
+            
+            const caption = document.getElementById('photoNameInput').value.trim() || 'Photo';
+            const { msgId, panel, imageData } = pendingReportPhoto;
+            
+            closePhotoNameModal();
+            toast('Sauvegarde en cours...');
+            
+            try {
+                let photoUrl = imageData; // Fallback to base64
+                
+                // Upload to Supabase Storage if we have a project
+                if (currentProjectId) {
+                    const uploadResult = await uploadPhotoToStorage(imageData, currentProjectId);
+                    if (uploadResult) {
+                        photoUrl = uploadResult;
+                    }
+                }
+                
+                // Store for report
+                if (!window.reportPhotos) window.reportPhotos = [];
+                window.reportPhotos.push({
+                    url: photoUrl,
+                    caption: caption,
+                    timestamp: new Date().toISOString(),
+                    panel: panel
+                });
+                
+                // Also save to project in database
+                if (currentProjectId) {
+                    await savePhotoToProject(currentProjectId, photoUrl, caption);
+                }
+                
+                // Visual feedback
+                const msg = document.getElementById(msgId);
+                if (msg) {
+                    const reportBtn = msg.querySelector('.photo-action-btn:last-child');
+                    if (reportBtn) {
+                        reportBtn.innerHTML = '<span class="icon"><svg><use href="#icon-check"/></svg></span> Ajouté';
+                        reportBtn.classList.add('success');
+                        reportBtn.disabled = true;
+                    }
+                }
+                
+                toast('Photo "' + caption + '" ajoutée au rapport');
+                
+            } catch (error) {
+                console.error('Error saving photo:', error);
+                toast('Erreur sauvegarde photo');
             }
-            
-            toast('Photo ajoutée au rapport');
+        }
+        
+        // Upload photo to Supabase Storage
+        async function uploadPhotoToStorage(base64Data, projectId) {
+            try {
+                // Convert base64 to blob
+                const base64Response = await fetch(base64Data);
+                const blob = await base64Response.blob();
+                
+                // Generate unique filename
+                const timestamp = Date.now();
+                const filename = `${projectId}/${timestamp}.jpg`;
+                
+                // Upload to Supabase Storage
+                const { data, error } = await db.storage
+                    .from('project-photos')
+                    .upload(filename, blob, {
+                        contentType: 'image/jpeg',
+                        upsert: false
+                    });
+                
+                if (error) {
+                    console.error('Storage upload error:', error);
+                    return null;
+                }
+                
+                // Get public URL
+                const { data: urlData } = db.storage
+                    .from('project-photos')
+                    .getPublicUrl(filename);
+                
+                console.log('Photo uploaded:', urlData.publicUrl);
+                return urlData.publicUrl;
+                
+            } catch (error) {
+                console.error('Upload error:', error);
+                return null;
+            }
+        }
+        
+        // Save photo reference to project
+        async function savePhotoToProject(projectId, photoUrl, caption) {
+            try {
+                // Get current photos from project
+                const { data: project } = await db
+                    .from('projects')
+                    .select('photos')
+                    .eq('id', projectId)
+                    .single();
+                
+                const existingPhotos = project?.photos || [];
+                
+                // Add new photo
+                const updatedPhotos = [...existingPhotos, {
+                    url: photoUrl,
+                    caption: caption,
+                    timestamp: new Date().toISOString()
+                }];
+                
+                // Update project
+                await db
+                    .from('projects')
+                    .update({ photos: updatedPhotos })
+                    .eq('id', projectId);
+                
+                console.log('Photo saved to project:', projectId);
+                
+            } catch (error) {
+                console.error('Error saving photo to project:', error);
+            }
         }
         
         // Mock OCR function (will be replaced with real OCR)
