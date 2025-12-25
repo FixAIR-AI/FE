@@ -3079,6 +3079,7 @@
     
     <!-- Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 <body>
     <!-- App wrapper to contain everything and prevent gaps -->
@@ -7286,38 +7287,73 @@ EXTRACTION REQUISE:
 
 Formate les résultats de manière claire et structurée. Si tu détectes un code erreur, propose d'expliquer sa signification.`;
 
-                const ocrResponse = await fetch(N8N_WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        message: ocrPrompt,
-                        image: imageData,
-                        mode: 'ocr',
-                        brand: brand || 'general',
-                        chat_history: []
-                    })
-                });
+                // Generate session ID
+                const sessionId = currentProjectId || 'ocr-' + Date.now();
                 
-                if (!ocrResponse.ok) {
-                    throw new Error(`OCR API error: ${ocrResponse.status}`);
-                }
-                
-                const ocrResult = await ocrResponse.json();
-                console.log('📝 OCR Result:', ocrResult);
-                
-                // Extract the output text
                 let outputText = '';
-                if (typeof ocrResult === 'string') {
-                    outputText = ocrResult;
-                } else if (ocrResult.output) {
-                    outputText = ocrResult.output;
-                } else if (ocrResult.response) {
-                    outputText = ocrResult.response;
-                } else if (ocrResult.text) {
-                    outputText = ocrResult.text;
-                } else {
-                    outputText = JSON.stringify(ocrResult);
+                let useLocalOCR = false;
+                
+                // Try n8n webhook first
+                try {
+                    const ocrResponse = await fetch(N8N_WEBHOOK_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            message: ocrPrompt,
+                            image: imageData,
+                            mode: 'ocr',
+                            brand: brand || 'general',
+                            chat_history: [],
+                            sessionId: sessionId,
+                            session_id: sessionId
+                        })
+                    });
+                    
+                    if (!ocrResponse.ok) {
+                        console.log('⚠️ n8n OCR failed, falling back to Tesseract.js');
+                        useLocalOCR = true;
+                    } else {
+                        const ocrResult = await ocrResponse.json();
+                        console.log('📝 n8n OCR Result:', ocrResult);
+                        
+                        if (typeof ocrResult === 'string') {
+                            outputText = ocrResult;
+                        } else if (ocrResult.output) {
+                            outputText = ocrResult.output;
+                        } else if (ocrResult.response) {
+                            outputText = ocrResult.response;
+                        } else if (ocrResult.text) {
+                            outputText = ocrResult.text;
+                        } else {
+                            outputText = JSON.stringify(ocrResult);
+                        }
+                    }
+                } catch (e) {
+                    console.log('⚠️ n8n OCR error, falling back to Tesseract.js:', e);
+                    useLocalOCR = true;
                 }
+                
+                // Fallback to local Tesseract.js OCR
+                if (useLocalOCR || !outputText || outputText.length < 10) {
+                    console.log('🔍 Using Tesseract.js for local OCR...');
+                    
+                    if (typeof Tesseract !== 'undefined') {
+                        if (extractBtn) {
+                            extractBtn.innerHTML = '<span class="icon"><svg><use href="#icon-search"/></svg></span> OCR...';
+                        }
+                        
+                        const worker = await Tesseract.createWorker('fra+eng');
+                        const { data } = await worker.recognize(imageData);
+                        outputText = data.text.trim();
+                        await worker.terminate();
+                        
+                        console.log('📝 Tesseract OCR Result:', outputText);
+                    } else {
+                        throw new Error('OCR non disponible');
+                    }
+                }
+                
+                console.log('📝 Final OCR text length:', outputText.length);
                 
                 // Parse markdown and format the main content
                 const resultHtml = parseMarkdown(outputText);
