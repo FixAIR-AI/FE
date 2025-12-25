@@ -1863,7 +1863,7 @@
         }
         .ocr-result {
             font-size: 13px;
-            line-height: 1.5;
+            line-height: 1.6;
         }
         .ocr-loading {
             display: flex;
@@ -1882,6 +1882,80 @@
         }
         @keyframes spin {
             to { transform: rotate(360deg); }
+        }
+        
+        /* OCR raw text display - NO HEIGHT LIMIT */
+        .ocr-raw-text {
+            font-family: monospace;
+            font-size: 12px;
+            background: var(--card);
+            padding: 14px;
+            border-radius: 10px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            border: 1px solid var(--border);
+            line-height: 1.6;
+        }
+        
+        /* OCR structured summary */
+        .ocr-summary {
+            background: rgba(34, 197, 94, 0.08);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            border-radius: 10px;
+            padding: 14px;
+            margin-top: 12px;
+        }
+        .ocr-summary-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--assistant);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .ocr-summary-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 6px 12px;
+            font-size: 12px;
+        }
+        .ocr-summary-label {
+            color: var(--text-dim);
+        }
+        .ocr-summary-value {
+            font-weight: 500;
+            font-family: monospace;
+        }
+        .ocr-summary-value.error {
+            color: var(--hotline);
+            font-weight: 700;
+        }
+        .ocr-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .ocr-action-btn {
+            padding: 8px 14px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .ocr-action-btn:hover {
+            background: rgba(255,255,255,0.08);
+        }
+        .ocr-action-btn .icon {
+            width: 14px;
+            height: 14px;
         }
         
         /* File attachment style */
@@ -3005,7 +3079,6 @@
     
     <!-- Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 <body>
     <!-- App wrapper to contain everything and prevent gaps -->
@@ -4772,6 +4845,16 @@
                                 msgDiv.dataset.imageData = msg.content;
                                 
                                 body.appendChild(msgDiv);
+                            } else if (msg.content_type === 'ocr') {
+                                // Render OCR result message
+                                try {
+                                    const ocrData = JSON.parse(msg.content);
+                                    // Find source image from previous messages
+                                    const sourceImg = findSourceImage(messages, ocrData.sourcePhotoId);
+                                    renderOCRMessage(m, ocrData, sourceImg);
+                                } catch (e) {
+                                    console.error('Error parsing OCR message:', e);
+                                }
                             } else {
                                 // Regular text message
                                 const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
@@ -5650,6 +5733,15 @@
                                 msgDiv.dataset.imageData = msg.content;
                                 
                                 body.appendChild(msgDiv);
+                            } else if (msg.content_type === 'ocr') {
+                                // Render OCR result message
+                                try {
+                                    const ocrData = JSON.parse(msg.content);
+                                    const sourceImg = findSourceImage(messages, ocrData.sourcePhotoId);
+                                    renderOCRMessage(chat.chat_type, ocrData, sourceImg);
+                                } catch (e) {
+                                    console.error('Error parsing OCR message:', e);
+                                }
                             } else {
                                 // Regular text message
                                 const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
@@ -7157,7 +7249,7 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
             }
         }
         
-        // Extract info from photo (OCR) with Tesseract.js
+        // Extract info from photo using Claude Vision via n8n (HIGH QUALITY OCR)
         async function extractFromPhoto(msgId, panel) {
             const msg = document.getElementById(msgId);
             if (!msg) return;
@@ -7168,52 +7260,157 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
                 return;
             }
             
-            // Disable buttons to prevent double-click
+            // Disable button
             const extractBtn = msg.querySelector('.photo-action-btn:first-child');
             if (extractBtn) {
                 extractBtn.disabled = true;
                 extractBtn.innerHTML = '<span class="icon"><svg><use href="#icon-search"/></svg></span> Analyse...';
             }
             
-            toast('Analyse OCR en cours...');
+            toast('Analyse en cours...');
             
             // Add linked photo quote in chat (like WhatsApp reply)
             const quoteId = 'ocr-' + Date.now();
             addOCRQuoteMessage(panel, msgId, imageData, quoteId);
             
             try {
-                // Real OCR with Tesseract.js
-                const result = await Tesseract.recognize(
-                    imageData,
-                    'fra+eng', // French + English
-                    {
-                        logger: m => {
-                            if (m.status === 'recognizing text') {
-                                const progress = Math.round(m.progress * 100);
-                                if (extractBtn) {
-                                    extractBtn.innerHTML = `<span class="icon"><svg><use href="#icon-search"/></svg></span> ${progress}%`;
-                                }
-                            }
-                        }
-                    }
-                );
+                // ═══ Use existing assistant webhook WITH image for OCR ═══
+                const ocrPrompt = `Tu es un expert en extraction de données techniques. Analyse cette image en détail et extrait TOUTES les informations visibles.
+
+EXTRACTION REQUISE:
+1. IDENTIFICATION: Marque, Modèle, Type, N° série, Date fabrication
+2. CARACTÉRISTIQUES: Puissance, Tension, Ampérage, Fréquence, Pression, Réfrigérant
+3. CODES ERREUR: Liste tous les codes affichés (TRÈS IMPORTANT - mets-les en évidence)
+4. VALEURS MESURÉES: Températures, Pressions, Paramètres
+5. TOUT AUTRE TEXTE visible
+
+Formate les résultats de manière claire et structurée. Si tu détectes un code erreur, propose d'expliquer sa signification.`;
+
+                const ocrResponse = await fetch(N8N_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: ocrPrompt,
+                        image: imageData,
+                        mode: 'ocr',
+                        brand: brand || 'general',
+                        chat_history: []
+                    })
+                });
                 
-                const extractedText = result.data.text.trim();
-                console.log('📝 OCR Result:', extractedText);
+                if (!ocrResponse.ok) {
+                    throw new Error(`OCR API error: ${ocrResponse.status}`);
+                }
                 
-                // Analyze extracted text for HVAC-relevant info
-                const analysis = analyzeOCRText(extractedText);
+                const ocrResult = await ocrResponse.json();
+                console.log('📝 OCR Result:', ocrResult);
+                
+                // Extract the output text
+                let outputText = '';
+                if (typeof ocrResult === 'string') {
+                    outputText = ocrResult;
+                } else if (ocrResult.output) {
+                    outputText = ocrResult.output;
+                } else if (ocrResult.response) {
+                    outputText = ocrResult.response;
+                } else if (ocrResult.text) {
+                    outputText = ocrResult.text;
+                } else {
+                    outputText = JSON.stringify(ocrResult);
+                }
+                
+                // Parse markdown and format the main content
+                const resultHtml = parseMarkdown(outputText);
+                
+                // Parse for structured info (for AI context)
+                const structuredInfo = parseOCRForStructuredInfo(outputText);
+                
+                // Build final HTML with summary + raw extraction
+                let finalHtml = '';
+                
+                // Add structured summary if we found useful info
+                if (structuredInfo.hasData) {
+                    finalHtml += `
+                        <div class="ocr-summary">
+                            <div class="ocr-summary-title">📋 Résumé des informations</div>
+                            <div class="ocr-summary-grid">
+                                ${structuredInfo.brand ? `<span class="ocr-summary-label">Marque:</span><span class="ocr-summary-value">${structuredInfo.brand}</span>` : ''}
+                                ${structuredInfo.model ? `<span class="ocr-summary-label">Modèle:</span><span class="ocr-summary-value">${structuredInfo.model}</span>` : ''}
+                                ${structuredInfo.serial ? `<span class="ocr-summary-label">N° série:</span><span class="ocr-summary-value">${structuredInfo.serial}</span>` : ''}
+                                ${structuredInfo.errorCodes.length > 0 ? `<span class="ocr-summary-label">Code erreur:</span><span class="ocr-summary-value error">${structuredInfo.errorCodes.join(', ')}</span>` : ''}
+                                ${structuredInfo.power ? `<span class="ocr-summary-label">Puissance:</span><span class="ocr-summary-value">${structuredInfo.power}</span>` : ''}
+                                ${structuredInfo.voltage ? `<span class="ocr-summary-label">Tension:</span><span class="ocr-summary-value">${structuredInfo.voltage}</span>` : ''}
+                                ${structuredInfo.refrigerant ? `<span class="ocr-summary-label">Réfrigérant:</span><span class="ocr-summary-value">${structuredInfo.refrigerant}</span>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Add the full extraction
+                finalHtml += `
+                    <div style="margin-top: 12px;">
+                        <strong>Texte extrait:</strong>
+                    </div>
+                    ${resultHtml}
+                `;
+                
+                // Add action buttons if error codes found
+                if (structuredInfo.errorCodes.length > 0) {
+                    finalHtml += `
+                        <div class="ocr-actions">
+                            <button class="ocr-action-btn" onclick="explainErrorCode('${structuredInfo.errorCodes[0]}', '${panel}')">
+                                <span class="icon"><svg><use href="#icon-zap"/></svg></span>
+                                Expliquer le code ${structuredInfo.errorCodes[0]}
+                            </button>
+                        </div>
+                    `;
+                }
                 
                 // Update the quote message with results
-                updateOCRQuoteWithResults(quoteId, analysis, extractedText);
+                updateOCRQuoteWithResults(quoteId, finalHtml);
                 
-                // Re-enable button
+                // ═══ ADD OCR INFO TO CHAT HISTORY FOR AI CONTEXT ═══
+                const ocrContext = `[INFORMATIONS EXTRAITES DE LA PHOTO]
+${structuredInfo.brand ? `Marque: ${structuredInfo.brand}` : ''}
+${structuredInfo.model ? `Modèle: ${structuredInfo.model}` : ''}
+${structuredInfo.serial ? `N° série: ${structuredInfo.serial}` : ''}
+${structuredInfo.errorCodes.length > 0 ? `Codes erreur: ${structuredInfo.errorCodes.join(', ')}` : ''}
+${structuredInfo.power ? `Puissance: ${structuredInfo.power}` : ''}
+${structuredInfo.voltage ? `Tension: ${structuredInfo.voltage}` : ''}
+${structuredInfo.refrigerant ? `Réfrigérant: ${structuredInfo.refrigerant}` : ''}
+
+Texte complet extrait:
+${outputText}`;
+                
+                // Add to chat history so AI knows about the extraction
+                chatHistory[panel].push({ 
+                    role: 'assistant', 
+                    content: ocrContext 
+                });
+                
+                // ═══ SAVE OCR RESULT TO DATABASE ═══
+                if (currentProjectId && currentChatId[panel]) {
+                    const ocrContent = JSON.stringify({
+                        type: 'ocr_result',
+                        sourcePhotoId: msgId,
+                        result: outputText,
+                        structuredInfo: structuredInfo,
+                        htmlContent: finalHtml
+                    });
+                    
+                    await saveMessage(currentChatId[panel], 'assistant', ocrContent, 'ocr');
+                    console.log('📝 OCR result saved to database');
+                }
+                
+                // Re-enable button with success state
                 if (extractBtn) {
                     extractBtn.disabled = false;
-                    extractBtn.innerHTML = '<span class="icon"><svg><use href="#icon-search"/></svg></span> Extraire';
+                    extractBtn.innerHTML = '<span class="icon"><svg><use href="#icon-check"/></svg></span> Extrait';
+                    extractBtn.classList.add('success');
                 }
                 
                 toast('Extraction terminée');
+                scrollToBottom(panel);
                 
             } catch (error) {
                 console.error('OCR Error:', error);
@@ -7223,7 +7420,7 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
                 if (quoteMsg) {
                     const resultDiv = quoteMsg.querySelector('.ocr-result');
                     if (resultDiv) {
-                        resultDiv.innerHTML = '<span style="color:var(--hotline);">Erreur d\'analyse. Réessayez.</span>';
+                        resultDiv.innerHTML = `<span style="color:var(--hotline);">Erreur d'analyse: ${error.message}</span>`;
                     }
                 }
                 
@@ -7232,7 +7429,7 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
                     extractBtn.innerHTML = '<span class="icon"><svg><use href="#icon-search"/></svg></span> Extraire';
                 }
                 
-                toast('Erreur OCR');
+                toast('Erreur extraction');
             }
         }
         
@@ -7244,17 +7441,22 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
             const msgDiv = document.createElement('div');
             msgDiv.className = 'msg ai';
             msgDiv.id = quoteId;
+            msgDiv.dataset.sourcePhotoId = originalMsgId;
+            msgDiv.dataset.contentType = 'ocr';
+            
+            // Use thumbnail version of image for quote
+            const thumbSrc = imageData;
             
             msgDiv.innerHTML = `
                 <div class="msg-text">
                     <div class="ocr-quote" onclick="scrollToMessage('${originalMsgId}')">
-                        <img src="${imageData}" class="ocr-quote-thumb" alt="Photo analysée">
-                        <div class="ocr-quote-label">Analyse de cette photo</div>
+                        <img src="${thumbSrc}" class="ocr-quote-thumb" alt="Photo analysée">
+                        <div class="ocr-quote-label">📷 Analyse de cette photo</div>
                     </div>
                     <div class="ocr-result">
                         <div class="ocr-loading">
                             <span class="ocr-spinner"></span>
-                            Extraction en cours...
+                            Extraction en cours avec Claude Vision...
                         </div>
                     </div>
                 </div>
@@ -7265,44 +7467,73 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
         }
         
         // Update OCR quote with results
-        function updateOCRQuoteWithResults(quoteId, analysis, rawText) {
+        function updateOCRQuoteWithResults(quoteId, htmlContent) {
             const quoteMsg = document.getElementById(quoteId);
             if (!quoteMsg) return;
             
             const resultDiv = quoteMsg.querySelector('.ocr-result');
             if (!resultDiv) return;
             
-            let html = '<strong>Informations extraites:</strong><br><br>';
+            resultDiv.innerHTML = htmlContent;
+        }
+        
+        // Render saved OCR message from database
+        function renderOCRMessage(panel, ocrData, sourceImageData) {
+            const container = document.getElementById(panel + 'Body');
+            if (!container) return;
             
-            if (analysis.brand) {
-                html += `• <strong>Marque:</strong> ${analysis.brand}<br>`;
-            }
-            if (analysis.model) {
-                html += `• <strong>Modèle:</strong> <span style="color:var(--copilot);font-family:monospace;">${analysis.model}</span><br>`;
-            }
-            if (analysis.serial) {
-                html += `• <strong>N° série:</strong> <span style="font-family:monospace;">${analysis.serial}</span><br>`;
-            }
-            if (analysis.errorCodes.length > 0) {
-                html += `• <strong>Code(s) erreur:</strong> <span style="color:var(--hotline);font-weight:600;">${analysis.errorCodes.join(', ')}</span><br>`;
-                html += `<br><em>Voulez-vous que je vous explique ${analysis.errorCodes.length > 1 ? 'ces codes erreur' : 'ce code erreur'} ?</em>`;
-            }
+            const quoteId = 'ocr-saved-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'msg ai';
+            msgDiv.id = quoteId;
+            msgDiv.dataset.contentType = 'ocr';
             
-            if (!analysis.brand && !analysis.model && !analysis.serial && analysis.errorCodes.length === 0) {
-                if (rawText.length > 10) {
-                    html = '<strong>Texte extrait:</strong><br><br>';
-                    html += `<div style="font-family:monospace;font-size:11px;background:var(--card);padding:10px;border-radius:8px;max-height:150px;overflow-y:auto;">${rawText.replace(/\n/g, '<br>')}</div>`;
-                } else {
-                    html = '<em style="color:var(--text-dim);">Aucune information pertinente détectée. Essayez avec une photo plus nette de la plaque signalétique.</em>';
-                }
-            }
+            // Find the source photo for linking
+            const sourcePhotoId = ocrData.sourcePhotoId || '';
             
-            resultDiv.innerHTML = html;
+            msgDiv.innerHTML = `
+                <div class="msg-text">
+                    ${sourceImageData ? `
+                    <div class="ocr-quote" onclick="scrollToMessage('${sourcePhotoId}')">
+                        <img src="${sourceImageData}" class="ocr-quote-thumb" alt="Photo analysée">
+                        <div class="ocr-quote-label">📷 Analyse de cette photo</div>
+                    </div>
+                    ` : ''}
+                    <div class="ocr-result">
+                        ${ocrData.htmlContent || formatOCRResponse(ocrData.result)}
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(msgDiv);
         }
         
         // Analyze OCR text for HVAC-relevant patterns
-        function analyzeOCRText(text) {
+        // Find source image data from messages array
+        function findSourceImage(messages, sourcePhotoId) {
+            // Look for the most recent image message that could be the source
+            for (let i = messages.length - 1; i >= 0; i--) {
+                const msg = messages[i];
+                if (msg.content_type === 'image' && msg.content.startsWith('data:image')) {
+                    return msg.content;
+                }
+            }
+            return null;
+        }
+        
+        // Parse OCR text for structured information
+        function parseOCRForStructuredInfo(text) {
             const upperText = text.toUpperCase();
+            const result = {
+                brand: null,
+                model: null,
+                serial: null,
+                errorCodes: [],
+                power: null,
+                voltage: null,
+                refrigerant: null,
+                hasData: false
+            };
             
             // Known brands
             const brands = {
@@ -7319,79 +7550,111 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
                 'FUJITSU': 'Fujitsu',
                 'HITACHI': 'Hitachi',
                 'MIDEA': 'Midea',
-                'GREE': 'Gree'
+                'GREE': 'Gree',
+                'ATLANTIC': 'Atlantic',
+                'BOSCH': 'Bosch',
+                'VIESSMANN': 'Viessmann'
             };
             
-            let detectedBrand = null;
             for (const [key, value] of Object.entries(brands)) {
                 if (upperText.includes(key)) {
-                    detectedBrand = value;
+                    result.brand = value;
+                    result.hasData = true;
                     break;
                 }
             }
             
-            // Model patterns (various formats)
+            // Model patterns
             const modelPatterns = [
-                /MODEL\s*[:#]?\s*([A-Z0-9\-]+)/i,
-                /MOD[EÈ]LE\s*[:#]?\s*([A-Z0-9\-]+)/i,
-                /TYPE\s*[:#]?\s*([A-Z0-9\-]+)/i,
-                /([A-Z]{2,4}[\-]?[0-9]{2,4}[A-Z0-9\-]*)/,
-                /(PUHY|PURY|PEFY|PLFY|PKFY|PEAD|FDUM|RXS|FTX|FAA|FBA)[A-Z0-9\-]+/i
+                /MOD[EÈ]LE\s*[:#]?\s*([A-Z0-9\-\/]+)/i,
+                /MODEL\s*[:#]?\s*([A-Z0-9\-\/]+)/i,
+                /TYPE\s*[:#]?\s*([A-Z0-9\-\/]+)/i,
+                /(PUHY|PURY|PEFY|PLFY|PKFY|PEAD|FDUM|RXS|FTX|FAA|FBA|FTXM|RXM)[A-Z0-9\-\/]+/i
             ];
             
-            let detectedModel = null;
             for (const pattern of modelPatterns) {
                 const match = text.match(pattern);
-                if (match && match[1] && match[1].length > 4) {
-                    detectedModel = match[1].toUpperCase();
+                if (match && match[1] && match[1].length > 3) {
+                    result.model = match[1].toUpperCase();
+                    result.hasData = true;
                     break;
                 }
             }
             
-            // Serial number patterns
+            // Serial number
             const serialPatterns = [
+                /S[ÉE]RIE\s*[:#]?\s*([A-Z0-9]+)/i,
                 /SERIAL\s*[:#]?\s*([A-Z0-9]+)/i,
                 /S\/?N\s*[:#]?\s*([A-Z0-9]+)/i,
-                /N[°º]?\s*S[ÉE]RIE\s*[:#]?\s*([A-Z0-9]+)/i,
-                /([A-Z][0-9]{8,12})/
+                /N[°º]?\s*[:#]?\s*([A-Z][0-9]{6,12})/i
             ];
             
-            let detectedSerial = null;
             for (const pattern of serialPatterns) {
                 const match = text.match(pattern);
-                if (match && match[1] && match[1].length >= 8) {
-                    detectedSerial = match[1].toUpperCase();
+                if (match && match[1] && match[1].length >= 6) {
+                    result.serial = match[1].toUpperCase();
+                    result.hasData = true;
                     break;
                 }
             }
             
-            // Error codes (common patterns)
+            // Error codes (very important)
             const errorPatterns = [
-                /(?:ERROR|ERREUR|CODE|FAULT|DÉFAUT)\s*[:#]?\s*([A-Z][0-9]{1,3})/gi,
+                /(?:ERREUR|ERROR|CODE|FAULT|D[ÉE]FAUT|ALARME)\s*[:#]?\s*([A-Z]?[0-9]{1,4})/gi,
                 /\b([EUFPLAH][0-9]{1,3})\b/g,
                 /\b(E[0-9]{1,2})\b/g,
-                /\b(F[0-9]{1,2})\b/g
+                /\b(F[0-9]{1,2})\b/g,
+                /\b(A[0-9]{1,3})\b/g
             ];
             
-            const errorCodes = new Set();
+            const errorSet = new Set();
             for (const pattern of errorPatterns) {
                 let match;
                 while ((match = pattern.exec(upperText)) !== null) {
-                    if (match[1] && match[1].length >= 2 && match[1].length <= 4) {
-                        errorCodes.add(match[1]);
+                    if (match[1] && match[1].length >= 2 && match[1].length <= 5) {
+                        errorSet.add(match[1]);
                     }
                 }
             }
+            result.errorCodes = Array.from(errorSet);
+            if (result.errorCodes.length > 0) result.hasData = true;
             
-            return {
-                brand: detectedBrand,
-                model: detectedModel,
-                serial: detectedSerial,
-                errorCodes: Array.from(errorCodes)
-            };
+            // Power
+            const powerMatch = text.match(/(\d+(?:[.,]\d+)?)\s*(?:kW|KW|BTU|CV)/i);
+            if (powerMatch) {
+                result.power = powerMatch[0];
+                result.hasData = true;
+            }
+            
+            // Voltage
+            const voltageMatch = text.match(/(\d{2,3})\s*V(?:olts?)?/i);
+            if (voltageMatch) {
+                result.voltage = voltageMatch[0];
+                result.hasData = true;
+            }
+            
+            // Refrigerant
+            const refrigerantMatch = text.match(/R[- ]?(410A|32|134a|407C|404A|22)/i);
+            if (refrigerantMatch) {
+                result.refrigerant = 'R' + refrigerantMatch[1].toUpperCase();
+                result.hasData = true;
+            }
+            
+            return result;
         }
         
-        // Scroll to a specific message
+        // Explain error code - sends to AI
+        async function explainErrorCode(code, panel) {
+            const message = `Explique-moi le code erreur ${code}. Quelles sont les causes possibles et comment le résoudre ?`;
+            
+            // Add to input and send
+            const input = document.getElementById(panel + 'Input');
+            if (input) {
+                input.value = message;
+                sendMessage(panel);
+            }
+        }
+        
         function scrollToMessage(msgId) {
             const msg = document.getElementById(msgId);
             if (msg) {
