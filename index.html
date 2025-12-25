@@ -1898,6 +1898,55 @@
             line-height: 1.6;
         }
         
+        /* OCR section titles */
+        .ocr-section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-dim);
+            margin: 14px 0 8px 0;
+        }
+        
+        /* OCR structured content from AI */
+        .ocr-structured {
+            margin-top: 12px;
+        }
+        .ocr-structured-content {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .ocr-structured-content strong {
+            color: var(--copilot);
+        }
+        
+        /* Collapsible raw text */
+        .ocr-raw-details {
+            margin-top: 12px;
+        }
+        .ocr-raw-details summary {
+            cursor: pointer;
+            color: var(--text-dim);
+            font-size: 12px;
+            padding: 8px 0;
+            user-select: none;
+        }
+        .ocr-raw-details summary:hover {
+            color: var(--text);
+        }
+        .ocr-raw-details[open] summary {
+            color: var(--copilot);
+        }
+        
+        /* No text detected */
+        .ocr-no-text {
+            padding: 16px;
+            text-align: center;
+            color: var(--text-dim);
+        }
+        
         /* OCR structured summary */
         .ocr-summary {
             background: rgba(34, 197, 94, 0.08);
@@ -1956,6 +2005,14 @@
         .ocr-action-btn .icon {
             width: 14px;
             height: 14px;
+        }
+        .ocr-action-btn.error-btn {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: var(--hotline);
+        }
+        .ocr-action-btn.error-btn:hover {
+            background: rgba(239, 68, 68, 0.25);
         }
         
         /* File attachment style */
@@ -7265,113 +7322,220 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
             const extractBtn = msg.querySelector('.photo-action-btn:first-child');
             if (extractBtn) {
                 extractBtn.disabled = true;
-                extractBtn.innerHTML = '<span class="icon"><svg><use href="#icon-search"/></svg></span> Analyse...';
+                extractBtn.innerHTML = '<span class="icon"><svg><use href="#icon-search"/></svg></span> Lecture...';
             }
             
-            toast('Analyse en cours...');
+            toast('Extraction en cours...');
             
-            // Add linked photo quote in chat (like WhatsApp reply)
+            // Add linked photo quote in chat
             const quoteId = 'ocr-' + Date.now();
             addOCRQuoteMessage(panel, msgId, imageData, quoteId);
             
             try {
-                // Generate session ID for context
-                const sessionId = currentProjectId || 'ocr-' + Date.now();
+                let rawText = '';
                 
-                let outputText = '';
+                // ═══════════════════════════════════════════════════════════
+                // ÉTAPE 1: EXTRACTION TESSERACT.JS (texte brut)
+                // ═══════════════════════════════════════════════════════════
+                console.log('🔍 ÉTAPE 1: Extraction Tesseract.js...');
                 
-                // ═══ STEP 1: Use Tesseract.js for ACTUAL text extraction ═══
-                console.log('🔍 Starting Tesseract.js OCR...');
+                if (typeof Tesseract === 'undefined') {
+                    throw new Error('Module OCR non chargé');
+                }
                 
-                if (typeof Tesseract !== 'undefined') {
-                    if (extractBtn) {
-                        extractBtn.innerHTML = '<span class="icon"><svg><use href="#icon-search"/></svg></span> Extraction...';
+                const worker = await Tesseract.createWorker('fra+eng', 1, {
+                    logger: m => {
+                        if (m.status === 'recognizing text' && extractBtn) {
+                            const progress = Math.round(m.progress * 100);
+                            extractBtn.innerHTML = `<span class="icon"><svg><use href="#icon-search"/></svg></span> ${progress}%`;
+                        }
                     }
+                });
+                
+                const { data } = await worker.recognize(imageData);
+                rawText = data.text.trim();
+                await worker.terminate();
+                
+                console.log('📝 Texte brut extrait:', rawText);
+                console.log('📝 Longueur:', rawText.length, 'caractères');
+                
+                // Si aucun texte détecté
+                if (!rawText || rawText.length < 5) {
+                    const noTextHtml = `
+                        <div class="ocr-no-text">
+                            <span style="color:var(--text-dim);">Aucun texte détecté sur cette image.</span>
+                            <br><small>Essayez avec une photo plus nette ou mieux éclairée.</small>
+                        </div>
+                    `;
+                    updateOCRQuoteWithResults(quoteId, noTextHtml);
                     
-                    try {
-                        const worker = await Tesseract.createWorker('fra+eng', 1, {
-                            logger: m => {
-                                if (m.status === 'recognizing text' && extractBtn) {
-                                    const progress = Math.round(m.progress * 100);
-                                    extractBtn.innerHTML = `<span class="icon"><svg><use href="#icon-search"/></svg></span> ${progress}%`;
-                                }
-                            }
-                        });
-                        
-                        const { data } = await worker.recognize(imageData);
-                        outputText = data.text.trim();
-                        await worker.terminate();
-                        
-                        console.log('📝 Tesseract OCR Result:', outputText);
-                        console.log('📝 Text length:', outputText.length);
-                        
-                    } catch (tessErr) {
-                        console.error('Tesseract error:', tessErr);
-                        throw new Error('Erreur OCR: ' + tessErr.message);
+                    if (extractBtn) {
+                        extractBtn.disabled = false;
+                        extractBtn.innerHTML = '<span class="icon"><svg><use href="#icon-search"/></svg></span> Extraire';
                     }
-                } else {
-                    throw new Error('Tesseract.js non chargé');
+                    toast('Aucun texte détecté');
+                    return;
                 }
                 
-                // If no text extracted, show message
-                if (!outputText || outputText.length < 5) {
-                    outputText = '(Aucun texte détecté. Essayez avec une photo plus nette ou mieux éclairée.)';
+                // ═══════════════════════════════════════════════════════════
+                // ÉTAPE 2: RESTRUCTURATION IA (rendre lisible)
+                // ═══════════════════════════════════════════════════════════
+                console.log('🤖 ÉTAPE 2: Restructuration IA...');
+                
+                if (extractBtn) {
+                    extractBtn.innerHTML = '<span class="icon"><svg><use href="#icon-search"/></svg></span> Analyse...';
                 }
                 
-                console.log('📝 Final OCR text length:', outputText.length);
+                let structuredText = '';
+                let aiSuccess = false;
                 
-                // Parse markdown and format the main content
-                const resultHtml = parseMarkdown(outputText);
+                try {
+                    const restructurePrompt = `Voici du texte extrait par OCR d'une photo. Restructure ce texte de manière lisible et organisée.
+
+TEXTE BRUT EXTRAIT:
+${rawText}
+
+INSTRUCTIONS:
+1. Corrige les erreurs de reconnaissance évidentes
+2. Organise les informations de manière logique
+3. Si c'est une plaque signalétique technique, identifie: Marque, Modèle, N° série, Puissance, Tension, Réfrigérant, Codes erreur
+4. Si c'est du texte général, reformate-le proprement
+5. Mets en évidence les informations importantes
+
+Réponds UNIQUEMENT avec le texte restructuré, sans commentaires.`;
+
+                    const aiResponse = await fetch(N8N_WEBHOOK_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            message: restructurePrompt,
+                            mode: 'restructure_ocr',
+                            brand: brand || 'general',
+                            session_id: currentProjectId || 'ocr-session',
+                            chat_history: []
+                        })
+                    });
+                    
+                    if (aiResponse.ok) {
+                        const aiResult = await aiResponse.json();
+                        structuredText = aiResult.output || aiResult.response || aiResult.text || '';
+                        
+                        // Vérifier que c'est bien du texte restructuré (pas une réponse IA générique)
+                        if (structuredText && 
+                            structuredText.length > 20 && 
+                            !structuredText.includes('Je suis prêt') &&
+                            !structuredText.includes('Envoie-moi') &&
+                            !structuredText.includes('télécharge')) {
+                            aiSuccess = true;
+                            console.log('✅ Restructuration IA réussie');
+                        }
+                    }
+                } catch (aiError) {
+                    console.log('⚠️ Restructuration IA non disponible:', aiError.message);
+                }
                 
-                // Parse for structured info (for AI context)
-                const structuredInfo = parseOCRForStructuredInfo(outputText);
+                // ═══════════════════════════════════════════════════════════
+                // AFFICHAGE DES RÉSULTATS
+                // ═══════════════════════════════════════════════════════════
                 
-                // Build final HTML with summary + raw extraction
+                // Nettoyer le texte brut
+                const cleanedText = cleanOCRText(rawText);
+                
+                // Parsing local pour le résumé structuré
+                const structuredInfo = parseOCRForStructuredInfo(cleanedText);
+                
                 let finalHtml = '';
                 
-                // Add structured summary if we found useful info
+                // ══ RÉSUMÉ TOUJOURS AFFICHÉ ══
+                const wordCount = cleanedText.split(/\s+/).filter(w => w.length > 0).length;
+                const lineCount = cleanedText.split('\n').filter(l => l.trim().length > 0).length;
+                
+                finalHtml += `<div class="ocr-summary">`;
+                
                 if (structuredInfo.hasData) {
+                    // Résumé technique HVAC
                     finalHtml += `
-                        <div class="ocr-summary">
-                            <div class="ocr-summary-title">📋 Résumé des informations</div>
-                            <div class="ocr-summary-grid">
-                                ${structuredInfo.brand ? `<span class="ocr-summary-label">Marque:</span><span class="ocr-summary-value">${structuredInfo.brand}</span>` : ''}
-                                ${structuredInfo.model ? `<span class="ocr-summary-label">Modèle:</span><span class="ocr-summary-value">${structuredInfo.model}</span>` : ''}
-                                ${structuredInfo.serial ? `<span class="ocr-summary-label">N° série:</span><span class="ocr-summary-value">${structuredInfo.serial}</span>` : ''}
-                                ${structuredInfo.errorCodes.length > 0 ? `<span class="ocr-summary-label">Code erreur:</span><span class="ocr-summary-value error">${structuredInfo.errorCodes.join(', ')}</span>` : ''}
-                                ${structuredInfo.power ? `<span class="ocr-summary-label">Puissance:</span><span class="ocr-summary-value">${structuredInfo.power}</span>` : ''}
-                                ${structuredInfo.voltage ? `<span class="ocr-summary-label">Tension:</span><span class="ocr-summary-value">${structuredInfo.voltage}</span>` : ''}
-                                ${structuredInfo.refrigerant ? `<span class="ocr-summary-label">Réfrigérant:</span><span class="ocr-summary-value">${structuredInfo.refrigerant}</span>` : ''}
-                            </div>
+                        <div class="ocr-summary-title">📋 Informations techniques détectées</div>
+                        <div class="ocr-summary-grid">
+                            ${structuredInfo.brand ? `<span class="ocr-summary-label">Marque:</span><span class="ocr-summary-value">${structuredInfo.brand}</span>` : ''}
+                            ${structuredInfo.model ? `<span class="ocr-summary-label">Modèle:</span><span class="ocr-summary-value">${structuredInfo.model}</span>` : ''}
+                            ${structuredInfo.serial ? `<span class="ocr-summary-label">N° série:</span><span class="ocr-summary-value">${structuredInfo.serial}</span>` : ''}
+                            ${structuredInfo.errorCodes.length > 0 ? `<span class="ocr-summary-label">Code erreur:</span><span class="ocr-summary-value error">${structuredInfo.errorCodes.join(', ')}</span>` : ''}
+                            ${structuredInfo.power ? `<span class="ocr-summary-label">Puissance:</span><span class="ocr-summary-value">${structuredInfo.power}</span>` : ''}
+                            ${structuredInfo.voltage ? `<span class="ocr-summary-label">Tension:</span><span class="ocr-summary-value">${structuredInfo.voltage}</span>` : ''}
+                            ${structuredInfo.refrigerant ? `<span class="ocr-summary-label">Réfrigérant:</span><span class="ocr-summary-value">${structuredInfo.refrigerant}</span>` : ''}
+                        </div>
+                    `;
+                } else {
+                    // Résumé général pour texte non-technique
+                    finalHtml += `
+                        <div class="ocr-summary-title">📋 Extraction réussie</div>
+                        <div class="ocr-summary-grid">
+                            <span class="ocr-summary-label">Contenu:</span><span class="ocr-summary-value">${wordCount} mots, ${lineCount} lignes</span>
                         </div>
                     `;
                 }
                 
-                // Add the full extraction
+                finalHtml += `</div>`;
+                
+                // ══ TEXTE RESTRUCTURÉ PAR IA (si disponible) ══
+                if (aiSuccess && structuredText) {
+                    finalHtml += `
+                        <div class="ocr-structured">
+                            <div class="ocr-section-title">📄 Contenu analysé</div>
+                            <div class="ocr-structured-content">${parseMarkdown(structuredText)}</div>
+                        </div>
+                    `;
+                }
+                
+                // ══ TEXTE EXTRAIT ══
                 finalHtml += `
-                    <div style="margin-top: 12px;">
-                        <strong>Texte extrait:</strong>
-                    </div>
-                    ${resultHtml}
+                    <div class="ocr-section-title">📝 Texte extrait</div>
+                    <div class="ocr-raw-text">${escapeHtml(cleanedText).replace(/\n/g, '<br>')}</div>
                 `;
                 
-                // Add action buttons if error codes found
+                // ══ BOUTONS D'ACTION ══
+                finalHtml += `<div class="ocr-actions">`;
+                
+                // Bouton code erreur si détecté
                 if (structuredInfo.errorCodes.length > 0) {
                     finalHtml += `
-                        <div class="ocr-actions">
-                            <button class="ocr-action-btn" onclick="explainErrorCode('${structuredInfo.errorCodes[0]}', '${panel}')">
-                                <span class="icon"><svg><use href="#icon-zap"/></svg></span>
-                                Expliquer le code ${structuredInfo.errorCodes[0]}
-                            </button>
-                        </div>
+                        <button class="ocr-action-btn error-btn" onclick="explainErrorCode('${structuredInfo.errorCodes[0]}', '${panel}')">
+                            <span class="icon"><svg><use href="#icon-zap"/></svg></span>
+                            Expliquer ${structuredInfo.errorCodes[0]}
+                        </button>
                     `;
                 }
                 
-                // Update the quote message with results
+                // Bouton pour analyser avec IA (toujours disponible)
+                if (!aiSuccess) {
+                    finalHtml += `
+                        <button class="ocr-action-btn" onclick="analyzeTextWithAI('${quoteId}', '${panel}')">
+                            <span class="icon"><svg><use href="#icon-cpu"/></svg></span>
+                            Analyser avec IA
+                        </button>
+                    `;
+                }
+                
+                // Bouton copier
+                finalHtml += `
+                    <button class="ocr-action-btn" onclick="copyOCRText('${quoteId}')">
+                        <span class="icon"><svg><use href="#icon-copy"/></svg></span>
+                        Copier
+                    </button>
+                `;
+                
+                finalHtml += `</div>`;
+                
+                // Afficher les résultats
                 updateOCRQuoteWithResults(quoteId, finalHtml);
                 
-                // ═══ ADD OCR INFO TO CHAT HISTORY FOR AI CONTEXT ═══
-                const ocrContext = `[INFORMATIONS EXTRAITES DE LA PHOTO]
+                // ═══════════════════════════════════════════════════════════
+                // SAUVEGARDE EN BASE DE DONNÉES
+                // ═══════════════════════════════════════════════════════════
+                
+                // Ajouter au contexte pour l'IA
+                const ocrContext = `[EXTRACTION DE PHOTO]
 ${structuredInfo.brand ? `Marque: ${structuredInfo.brand}` : ''}
 ${structuredInfo.model ? `Modèle: ${structuredInfo.model}` : ''}
 ${structuredInfo.serial ? `N° série: ${structuredInfo.serial}` : ''}
@@ -7380,30 +7544,30 @@ ${structuredInfo.power ? `Puissance: ${structuredInfo.power}` : ''}
 ${structuredInfo.voltage ? `Tension: ${structuredInfo.voltage}` : ''}
 ${structuredInfo.refrigerant ? `Réfrigérant: ${structuredInfo.refrigerant}` : ''}
 
-Texte complet extrait:
-${outputText}`;
+Texte extrait:
+${aiSuccess ? structuredText : rawText}`;
                 
-                // Add to chat history so AI knows about the extraction
                 chatHistory[panel].push({ 
                     role: 'assistant', 
                     content: ocrContext 
                 });
                 
-                // ═══ SAVE OCR RESULT TO DATABASE ═══
+                // Sauvegarder en base
                 if (currentProjectId && currentChatId[panel]) {
                     const ocrContent = JSON.stringify({
                         type: 'ocr_result',
                         sourcePhotoId: msgId,
-                        result: outputText,
+                        rawText: rawText,
+                        structuredText: structuredText || null,
                         structuredInfo: structuredInfo,
                         htmlContent: finalHtml
                     });
                     
                     await saveMessage(currentChatId[panel], 'assistant', ocrContent, 'ocr');
-                    console.log('📝 OCR result saved to database');
+                    console.log('💾 OCR sauvegardé en base');
                 }
                 
-                // Re-enable button with success state
+                // Bouton succès
                 if (extractBtn) {
                     extractBtn.disabled = false;
                     extractBtn.innerHTML = '<span class="icon"><svg><use href="#icon-check"/></svg></span> Extrait';
@@ -7414,14 +7578,13 @@ ${outputText}`;
                 scrollToBottom(panel);
                 
             } catch (error) {
-                console.error('OCR Error:', error);
+                console.error('❌ Erreur OCR:', error);
                 
-                // Update quote with error
                 const quoteMsg = document.getElementById(quoteId);
                 if (quoteMsg) {
                     const resultDiv = quoteMsg.querySelector('.ocr-result');
                     if (resultDiv) {
-                        resultDiv.innerHTML = `<span style="color:var(--hotline);">Erreur d'analyse: ${error.message}</span>`;
+                        resultDiv.innerHTML = `<span style="color:var(--hotline);">Erreur: ${error.message}</span>`;
                     }
                 }
                 
@@ -7523,6 +7686,23 @@ ${outputText}`;
         }
         
         // Parse OCR text for structured information
+        // Nettoyer le texte OCR brut
+        function cleanOCRText(text) {
+            if (!text) return '';
+            
+            return text
+                // Supprimer les caractères de contrôle
+                .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')
+                // Normaliser les espaces
+                .replace(/[ \t]+/g, ' ')
+                // Supprimer les lignes vides multiples
+                .replace(/\n\s*\n\s*\n/g, '\n\n')
+                // Supprimer les espaces en début/fin de ligne
+                .split('\n').map(l => l.trim()).join('\n')
+                // Trim global
+                .trim();
+        }
+        
         function parseOCRForStructuredInfo(text) {
             const upperText = text.toUpperCase();
             const result = {
@@ -7654,6 +7834,60 @@ ${outputText}`;
                 input.value = message;
                 sendMessage(panel);
             }
+        }
+        
+        // Analyser le texte extrait avec l'IA
+        async function analyzeTextWithAI(quoteId, panel) {
+            const quoteMsg = document.getElementById(quoteId);
+            if (!quoteMsg) return;
+            
+            // Trouver le texte brut dans la bulle
+            const rawTextDiv = quoteMsg.querySelector('.ocr-raw-text');
+            if (!rawTextDiv) {
+                toast('Texte non trouvé');
+                return;
+            }
+            
+            const rawText = rawTextDiv.innerText || rawTextDiv.textContent;
+            if (!rawText || rawText.length < 10) {
+                toast('Pas assez de texte à analyser');
+                return;
+            }
+            
+            // Envoyer le texte à l'IA pour analyse
+            const message = `Voici du texte que j'ai extrait d'une photo. Peux-tu l'analyser et me donner les informations importantes ?\n\n${rawText}`;
+            
+            const input = document.getElementById(panel + 'Input');
+            if (input) {
+                input.value = message;
+                sendMessage(panel);
+            }
+        }
+        
+        // Copier le texte OCR dans le presse-papier
+        function copyOCRText(quoteId) {
+            const quoteMsg = document.getElementById(quoteId);
+            if (!quoteMsg) {
+                toast('Message non trouvé');
+                return;
+            }
+            
+            // Trouver le texte brut
+            const rawTextDiv = quoteMsg.querySelector('.ocr-raw-text');
+            if (!rawTextDiv) {
+                toast('Texte non trouvé');
+                return;
+            }
+            
+            const text = rawTextDiv.innerText || rawTextDiv.textContent;
+            
+            // Copier dans le presse-papier
+            navigator.clipboard.writeText(text).then(() => {
+                toast('Texte copié !');
+            }).catch(err => {
+                console.error('Copy error:', err);
+                toast('Erreur de copie');
+            });
         }
         
         function scrollToMessage(msgId) {
