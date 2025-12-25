@@ -1884,7 +1884,125 @@
             to { transform: rotate(360deg); }
         }
         
-        /* OCR raw text display - NO HEIGHT LIMIT */
+        /* ══════════════════════════════════════════════════════════════
+           OCR EXTRACTION CARD - Compact UI
+           ══════════════════════════════════════════════════════════════ */
+        
+        /* Main OCR card container */
+        .ocr-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        /* Card header with icon */
+        .ocr-card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            background: rgba(34, 197, 94, 0.08);
+            border-bottom: 1px solid var(--border);
+        }
+        .ocr-card-header .icon {
+            width: 20px;
+            height: 20px;
+            color: var(--assistant);
+        }
+        .ocr-card-header-title {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text);
+        }
+        .ocr-card-header-method {
+            margin-left: auto;
+            font-size: 11px;
+            color: var(--text-dim);
+            background: var(--bg);
+            padding: 3px 8px;
+            border-radius: 10px;
+        }
+        
+        /* AI Summary section - prominent */
+        .ocr-ai-summary {
+            padding: 14px;
+            font-size: 13px;
+            line-height: 1.6;
+            border-bottom: 1px solid var(--border);
+        }
+        .ocr-ai-summary p {
+            margin: 0 0 8px 0;
+        }
+        .ocr-ai-summary p:last-child {
+            margin-bottom: 0;
+        }
+        .ocr-ai-summary strong {
+            color: var(--copilot);
+        }
+        .ocr-ai-summary ul, .ocr-ai-summary ol {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+        .ocr-ai-summary li {
+            margin: 4px 0;
+        }
+        
+        /* Extracted text - scrollable */
+        .ocr-raw-section {
+            border-top: 1px solid var(--border);
+        }
+        .ocr-raw-toggle {
+            width: 100%;
+            padding: 10px 14px;
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s;
+        }
+        .ocr-raw-toggle:hover {
+            background: rgba(255,255,255,0.03);
+            color: var(--text);
+        }
+        .ocr-raw-toggle .chevron {
+            transition: transform 0.2s;
+        }
+        .ocr-raw-toggle.open .chevron {
+            transform: rotate(180deg);
+        }
+        .ocr-raw-content {
+            display: none;
+            max-height: 150px;
+            overflow-y: auto;
+            padding: 12px 14px;
+            background: var(--bg);
+            font-family: monospace;
+            font-size: 11px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+            color: var(--text-dim);
+        }
+        .ocr-raw-content.show {
+            display: block;
+        }
+        
+        /* Action buttons in card footer */
+        .ocr-card-actions {
+            display: flex;
+            gap: 8px;
+            padding: 10px 14px;
+            border-top: 1px solid var(--border);
+            background: rgba(0,0,0,0.1);
+        }
+        
+        /* Legacy classes for backward compatibility */
         .ocr-raw-text {
             font-family: monospace;
             font-size: 12px;
@@ -1896,6 +2014,8 @@
             word-break: break-word;
             border: 1px solid var(--border);
             line-height: 1.6;
+            max-height: 150px;
+            overflow-y: auto;
         }
         
         /* OCR section titles */
@@ -7443,55 +7563,57 @@
                 }
                 
                 // ═══════════════════════════════════════════════════════════
-                // CONSTRUIRE L'AFFICHAGE
+                // CONSTRUIRE L'AFFICHAGE (Card UI)
                 // ═══════════════════════════════════════════════════════════
                 console.log('📊 Construction de l\'affichage...');
                 
-                // Parser le texte pour infos structurées
+                // Parser le texte pour infos structurées (si Tesseract)
                 const structuredInfo = parseOCRForStructuredInfo(extractedText);
+                const rawTextId = 'raw-' + quoteId;
                 
-                let finalHtml = '';
+                let finalHtml = `<div class="ocr-card">`;
                 
-                // ══ ENCADRÉ RÉSUMÉ (toujours affiché) ══
-                finalHtml += `<div class="ocr-summary">`;
+                // ══ HEADER ══
+                finalHtml += `
+                    <div class="ocr-card-header">
+                        <span class="icon"><svg><use href="#icon-camera"/></svg></span>
+                        <span class="ocr-card-header-title">Extraction d'image</span>
+                        <span class="ocr-card-header-method">${ocrMethod === 'vision' ? '✨ IA Vision' : '📝 OCR'}</span>
+                    </div>
+                `;
                 
-                if (structuredInfo.hasData) {
-                    finalHtml += `<div class="ocr-summary-title">📋 Informations détectées</div>`;
-                    finalHtml += `<div class="ocr-summary-grid">`;
-                    if (structuredInfo.brand) finalHtml += `<span class="ocr-summary-label">Marque:</span><span class="ocr-summary-value">${structuredInfo.brand}</span>`;
-                    if (structuredInfo.model) finalHtml += `<span class="ocr-summary-label">Modèle:</span><span class="ocr-summary-value">${structuredInfo.model}</span>`;
-                    if (structuredInfo.serial) finalHtml += `<span class="ocr-summary-label">N° série:</span><span class="ocr-summary-value">${structuredInfo.serial}</span>`;
-                    if (structuredInfo.errorCodes.length > 0) finalHtml += `<span class="ocr-summary-label">Code erreur:</span><span class="ocr-summary-value error">${structuredInfo.errorCodes.join(', ')}</span>`;
-                    if (structuredInfo.power) finalHtml += `<span class="ocr-summary-label">Puissance:</span><span class="ocr-summary-value">${structuredInfo.power}</span>`;
-                    if (structuredInfo.voltage) finalHtml += `<span class="ocr-summary-label">Tension:</span><span class="ocr-summary-value">${structuredInfo.voltage}</span>`;
-                    if (structuredInfo.refrigerant) finalHtml += `<span class="ocr-summary-label">Réfrigérant:</span><span class="ocr-summary-value">${structuredInfo.refrigerant}</span>`;
-                    finalHtml += `</div>`;
+                // ══ AI SUMMARY (contenu principal) ══
+                finalHtml += `<div class="ocr-ai-summary">`;
+                if (ocrMethod === 'vision') {
+                    // Claude Vision retourne du texte formaté - afficher directement
+                    finalHtml += parseMarkdown(extractedText);
                 } else {
-                    const wordCount = extractedText.split(/\s+/).filter(w => w.length > 0).length;
-                    finalHtml += `
-                        <div class="ocr-summary-title">📋 Extraction réussie</div>
-                        <div class="ocr-summary-grid">
-                            <span class="ocr-summary-label">Méthode:</span><span class="ocr-summary-value">${ocrMethod === 'vision' ? 'IA Vision' : 'OCR Local'}</span>
-                            <span class="ocr-summary-label">Contenu:</span><span class="ocr-summary-value">${wordCount} mots</span>
-                        </div>
-                    `;
+                    // Tesseract - afficher résumé simple
+                    const wordCount = extractedText.split(/\\s+/).filter(w => w.length > 0).length;
+                    finalHtml += `<p><strong>${wordCount} mots</strong> extraits de l'image.</p>`;
+                    if (structuredInfo.hasData) {
+                        if (structuredInfo.brand) finalHtml += `<p><strong>Marque:</strong> ${structuredInfo.brand}</p>`;
+                        if (structuredInfo.model) finalHtml += `<p><strong>Modèle:</strong> ${structuredInfo.model}</p>`;
+                        if (structuredInfo.errorCodes.length > 0) finalHtml += `<p><strong>Code erreur:</strong> <span style="color:var(--hotline)">${structuredInfo.errorCodes.join(', ')}</span></p>`;
+                    }
                 }
                 finalHtml += `</div>`;
                 
-                // ══ TEXTE EXTRAIT ══
-                if (ocrMethod === 'vision') {
-                    // Claude Vision retourne déjà du texte formaté markdown
-                    finalHtml += `<div class="ocr-structured-content">${parseMarkdown(extractedText)}</div>`;
-                } else {
-                    // Tesseract retourne du texte brut
+                // ══ RAW TEXT (collapsible, scrollable) ══
+                if (ocrMethod !== 'vision') {
                     finalHtml += `
-                        <div class="ocr-section-title">📝 Texte extrait</div>
-                        <div class="ocr-raw-text">${escapeHtml(extractedText).replace(/\n/g, '<br>')}</div>
+                        <div class="ocr-raw-section">
+                            <button class="ocr-raw-toggle" onclick="toggleRawText('${rawTextId}', this)">
+                                <span>📄 Voir le texte brut</span>
+                                <span class="chevron">▼</span>
+                            </button>
+                            <div id="${rawTextId}" class="ocr-raw-content">${escapeHtml(extractedText)}</div>
+                        </div>
                     `;
                 }
                 
-                // ══ BOUTONS D'ACTION ══
-                finalHtml += `<div class="ocr-actions">`;
+                // ══ ACTION BUTTONS ══
+                finalHtml += `<div class="ocr-card-actions">`;
                 
                 if (structuredInfo.errorCodes.length > 0) {
                     finalHtml += `
@@ -7518,11 +7640,13 @@
                     </button>
                 </div>`;
                 
+                finalHtml += `</div>`; // Close ocr-card
+                
                 // Afficher
                 updateOCRQuoteWithResults(quoteId, finalHtml);
                 
                 // ═══════════════════════════════════════════════════════════
-                // SAUVEGARDER
+                // SAUVEGARDER EN BASE DE DONNÉES
                 // ═══════════════════════════════════════════════════════════
                 
                 // Ajouter au contexte IA
@@ -7531,14 +7655,17 @@
                     content: `[EXTRACTION PHOTO]\n${extractedText}`
                 });
                 
-                // Sauvegarder en base
+                // Sauvegarder en base avec HTML pour rechargement
                 if (currentProjectId && currentChatId[panel]) {
                     await saveMessage(currentChatId[panel], 'assistant', JSON.stringify({
                         type: 'ocr_result',
                         method: ocrMethod,
                         text: extractedText,
-                        structuredInfo: structuredInfo
+                        structuredInfo: structuredInfo,
+                        htmlContent: finalHtml,
+                        sourcePhotoId: msgId
                     }), 'ocr');
+                    console.log('💾 OCR sauvegardé en base');
                 }
                 
                 // Succès
@@ -7619,27 +7746,42 @@
             
             // Parse for structured info
             const structuredInfo = parseOCRForStructuredInfo(text);
+            const rawTextId = 'raw-loaded-' + Date.now();
+            const wordCount = text.split(/\s+/).filter(w => w.length > 0).length;
             
-            let html = '';
+            let html = `<div class="ocr-card">`;
             
-            // Add summary box if technical info found
+            // Header
+            html += `
+                <div class="ocr-card-header">
+                    <span class="icon"><svg><use href="#icon-camera"/></svg></span>
+                    <span class="ocr-card-header-title">Extraction d'image</span>
+                    <span class="ocr-card-header-method">📝 OCR</span>
+                </div>
+            `;
+            
+            // Summary
+            html += `<div class="ocr-ai-summary">`;
+            html += `<p><strong>${wordCount} mots</strong> extraits.</p>`;
             if (structuredInfo.hasData) {
-                html += `<div class="ocr-summary">`;
-                html += `<div class="ocr-summary-title">📋 Informations détectées</div>`;
-                html += `<div class="ocr-summary-grid">`;
-                if (structuredInfo.brand) html += `<span class="ocr-summary-label">Marque:</span><span class="ocr-summary-value">${structuredInfo.brand}</span>`;
-                if (structuredInfo.model) html += `<span class="ocr-summary-label">Modèle:</span><span class="ocr-summary-value">${structuredInfo.model}</span>`;
-                if (structuredInfo.serial) html += `<span class="ocr-summary-label">N° série:</span><span class="ocr-summary-value">${structuredInfo.serial}</span>`;
-                if (structuredInfo.errorCodes.length > 0) html += `<span class="ocr-summary-label">Code erreur:</span><span class="ocr-summary-value error">${structuredInfo.errorCodes.join(', ')}</span>`;
-                if (structuredInfo.power) html += `<span class="ocr-summary-label">Puissance:</span><span class="ocr-summary-value">${structuredInfo.power}</span>`;
-                if (structuredInfo.voltage) html += `<span class="ocr-summary-label">Tension:</span><span class="ocr-summary-value">${structuredInfo.voltage}</span>`;
-                if (structuredInfo.refrigerant) html += `<span class="ocr-summary-label">Réfrigérant:</span><span class="ocr-summary-value">${structuredInfo.refrigerant}</span>`;
-                html += `</div></div>`;
+                if (structuredInfo.brand) html += `<p><strong>Marque:</strong> ${structuredInfo.brand}</p>`;
+                if (structuredInfo.model) html += `<p><strong>Modèle:</strong> ${structuredInfo.model}</p>`;
+                if (structuredInfo.errorCodes.length > 0) html += `<p><strong>Code erreur:</strong> <span style="color:var(--hotline)">${structuredInfo.errorCodes.join(', ')}</span></p>`;
             }
+            html += `</div>`;
             
-            // Add the extracted text
-            html += `<div class="ocr-section-title">📝 Texte extrait</div>`;
-            html += `<div class="ocr-raw-text">${escapeHtml(text).replace(/\n/g, '<br>')}</div>`;
+            // Collapsible raw text
+            html += `
+                <div class="ocr-raw-section">
+                    <button class="ocr-raw-toggle" onclick="toggleRawText('${rawTextId}', this)">
+                        <span>📄 Voir le texte brut</span>
+                        <span class="chevron">▼</span>
+                    </button>
+                    <div id="${rawTextId}" class="ocr-raw-content">${escapeHtml(text)}</div>
+                </div>
+            `;
+            
+            html += `</div>`; // Close card
             
             return html;
         }
@@ -7844,18 +7986,17 @@
             const quoteMsg = document.getElementById(quoteId);
             if (!quoteMsg) return;
             
-            // Trouver le texte brut dans la bulle
-            const rawTextDiv = quoteMsg.querySelector('.ocr-raw-text');
-            if (!rawTextDiv) {
-                // Essayer avec le contenu structuré
-                const structuredDiv = quoteMsg.querySelector('.ocr-structured-content');
-                if (!structuredDiv) {
-                    toast('Texte non trouvé');
-                    return;
-                }
+            // Trouver le texte (essayer plusieurs classes)
+            const textDiv = quoteMsg.querySelector('.ocr-raw-content') || 
+                            quoteMsg.querySelector('.ocr-raw-text') ||
+                            quoteMsg.querySelector('.ocr-ai-summary') ||
+                            quoteMsg.querySelector('.ocr-structured-content');
+            
+            if (!textDiv) {
+                toast('Texte non trouvé');
+                return;
             }
             
-            const textDiv = quoteMsg.querySelector('.ocr-raw-text') || quoteMsg.querySelector('.ocr-structured-content');
             const rawText = textDiv.innerText || textDiv.textContent;
             
             if (!rawText || rawText.length < 10) {
@@ -7873,6 +8014,21 @@
             }
         }
         
+        // Toggle raw text visibility in OCR card
+        function toggleRawText(rawTextId, button) {
+            const rawContent = document.getElementById(rawTextId);
+            if (!rawContent) return;
+            
+            rawContent.classList.toggle('show');
+            button.classList.toggle('open');
+            
+            // Update button text
+            const span = button.querySelector('span:first-child');
+            if (span) {
+                span.textContent = rawContent.classList.contains('show') ? '📄 Masquer le texte brut' : '📄 Voir le texte brut';
+            }
+        }
+        
         // Copier le texte OCR dans le presse-papier
         function copyOCRText(quoteId) {
             const quoteMsg = document.getElementById(quoteId);
@@ -7881,8 +8037,10 @@
                 return;
             }
             
-            // Trouver le texte brut
-            const rawTextDiv = quoteMsg.querySelector('.ocr-raw-text');
+            // Trouver le texte (essayer plusieurs classes)
+            const rawTextDiv = quoteMsg.querySelector('.ocr-raw-content') || 
+                               quoteMsg.querySelector('.ocr-raw-text') ||
+                               quoteMsg.querySelector('.ocr-ai-summary');
             if (!rawTextDiv) {
                 toast('Texte non trouvé');
                 return;
