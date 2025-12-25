@@ -1073,6 +1073,7 @@
             min-width: 0; 
             min-height: 0; 
             overflow: hidden;
+            position: relative;
         }
         .panel.copilot { --mode-color: var(--copilot); --mode-glow: var(--copilot-glow); --mode-bg: var(--copilot-bg); --mode-border: var(--copilot-border); }
         .panel.assistant { --mode-color: var(--assistant); --mode-glow: var(--assistant-glow); --mode-bg: var(--assistant-bg); --mode-border: var(--assistant-border); }
@@ -1832,6 +1833,60 @@
             color: var(--assistant);
         }
         .photo-action-btn .icon { width: 14px; height: 14px; }
+        
+        /* File attachment style */
+        .file-attachment {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+        .file-icon {
+            padding: 6px 8px;
+            background: var(--copilot-bg);
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--copilot);
+        }
+        .file-name {
+            font-size: 13px;
+            color: var(--text);
+        }
+        
+        /* Scroll to bottom button */
+        .scroll-bottom-btn {
+            position: absolute;
+            bottom: 80px;
+            right: 16px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .scroll-bottom-btn.visible { display: flex; }
+        .scroll-bottom-btn:hover { 
+            background: var(--card); 
+            color: var(--text);
+            border-color: rgba(255,255,255,0.15);
+        }
+        .scroll-bottom-btn .icon { 
+            width: 18px; 
+            height: 18px; 
+            transform: rotate(-90deg);
+        }
         
         /* Image loading state */
         .msg-image-loading {
@@ -3228,10 +3283,12 @@
                 </div>
             </header>
             <div class="chat-body" id="copilotBody"></div>
+            <button class="scroll-bottom-btn" id="scrollBtnCopilot" onclick="scrollToBottom('copilot')">
+                <span class="icon"><svg><use href="#icon-arrow-left"/></svg></span>
+            </button>
             <div class="chat-input">
                 <div class="attach-menu" id="attachCopilot">
                     <div class="attach-opt" onclick="attachAction('camera','copilot')"><span class="icon"><svg><use href="#icon-camera"/></svg></span>Prendre une photo</div>
-                    <div class="attach-opt" onclick="attachAction('gallery','copilot')"><span class="icon"><svg><use href="#icon-image"/></svg></span>Galerie photos</div>
                     <div class="attach-opt" onclick="attachAction('file','copilot')"><span class="icon"><svg><use href="#icon-paperclip"/></svg></span>Fichier</div>
                 </div>
                 <div class="input-row" id="copilotInputRow">
@@ -3338,10 +3395,12 @@
                 </div>
             </header>
             <div class="chat-body" id="assistantBody"></div>
+            <button class="scroll-bottom-btn" id="scrollBtnAssistant" onclick="scrollToBottom('assistant')">
+                <span class="icon"><svg><use href="#icon-arrow-left"/></svg></span>
+            </button>
             <div class="chat-input">
                 <div class="attach-menu" id="attachAssistant">
                     <div class="attach-opt" onclick="attachAction('camera','assistant')"><span class="icon"><svg><use href="#icon-camera"/></svg></span>Prendre une photo</div>
-                    <div class="attach-opt" onclick="attachAction('gallery','assistant')"><span class="icon"><svg><use href="#icon-image"/></svg></span>Galerie photos</div>
                     <div class="attach-opt" onclick="attachAction('file','assistant')"><span class="icon"><svg><use href="#icon-paperclip"/></svg></span>Fichier</div>
                 </div>
                 <div class="input-row" id="assistantInputRow">
@@ -3397,7 +3456,7 @@
     <!-- PHOTO MODAL -->
     <!-- HIDDEN FILE INPUTS -->
     <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleFileSelect(event, 'camera')">
-    <input type="file" id="galleryInput" accept="image/*" style="display:none;" onchange="handleFileSelect(event, 'gallery')">
+    <input type="file" id="fileInput" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" style="display:none;" onchange="handleFileSelect(event, 'file')">
 
     <!-- IMAGE VIEWER MODAL -->
     <div class="image-viewer" id="imageViewer" onclick="closeImageViewer()">
@@ -4420,6 +4479,12 @@
             // ═══ END FIX ═══
             
             closeAllAttach();
+            
+            // Scroll to bottom of active chat
+            setTimeout(() => {
+                scrollToBottom(m);
+                initScrollDetection(m);
+            }, 100);
         }
 
         function closeChat() {
@@ -6629,49 +6694,118 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
         function attachAction(type, panel) {
             closeAllAttach();
             currentPhotoPanel = panel;
+            console.log('📸 attachAction:', type, 'panel:', panel);
             
             if (type === 'camera') {
                 document.getElementById('cameraInput').click();
-            } else if (type === 'gallery') {
-                document.getElementById('galleryInput').click();
-            } else {
-                toast('Sélection fichier...');
+            } else if (type === 'file') {
+                document.getElementById('fileInput').click();
             }
         }
         
         function handleFileSelect(event, source) {
             const file = event.target.files[0];
-            if (!file) return;
+            console.log('📸 handleFileSelect:', source, 'file:', file?.name, 'panel:', currentPhotoPanel);
             
-            if (!file.type.startsWith('image/')) {
-                toast('Veuillez sélectionner une image');
+            if (!file) {
+                console.log('❌ No file selected');
                 return;
             }
             
-            if (file.size > 10 * 1024 * 1024) {
-                toast('Image trop volumineuse (max 10MB)');
-                return;
+            // Check if it's an image
+            if (file.type.startsWith('image/')) {
+                if (file.size > 10 * 1024 * 1024) {
+                    toast('Image trop volumineuse (max 10MB)');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    console.log('📸 Image loaded, adding to chat...');
+                    addPhotoToChat(currentPhotoPanel, e.target.result);
+                };
+                reader.onerror = function(e) {
+                    console.error('❌ Error reading file:', e);
+                    toast('Erreur lecture fichier');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                // Non-image file (PDF, etc.)
+                toast('Fichier: ' + file.name);
+                addFileToChat(currentPhotoPanel, file);
             }
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                // Directly add to chat - no modal, no extra steps
-                addPhotoToChat(currentPhotoPanel, e.target.result);
-            };
-            reader.readAsDataURL(file);
             
             event.target.value = '';
         }
         
+        // Add non-image file to chat
+        function addFileToChat(panel, file) {
+            const container = document.getElementById(panel + 'Body');
+            if (!container) return;
+            
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'msg user';
+            
+            const ext = file.name.split('.').pop().toUpperCase();
+            msgDiv.innerHTML = `
+                <div class="msg-text">
+                    <div class="file-attachment">
+                        <span class="file-icon">${ext}</span>
+                        <span class="file-name">${file.name}</span>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(msgDiv);
+            scrollToBottom(panel);
+        }
+        
+        // Scroll to bottom of chat
+        function scrollToBottom(panel) {
+            const container = document.getElementById(panel + 'Body');
+            if (container) {
+                setTimeout(() => {
+                    container.scrollTop = container.scrollHeight;
+                    updateScrollButton(panel);
+                }, 50);
+            }
+        }
+        
+        // Initialize scroll detection for a panel
+        function initScrollDetection(panel) {
+            const container = document.getElementById(panel + 'Body');
+            if (container) {
+                container.addEventListener('scroll', () => {
+                    updateScrollButton(panel);
+                });
+            }
+        }
+        
+        // Update scroll button visibility
+        function updateScrollButton(panel) {
+            const container = document.getElementById(panel + 'Body');
+            const btn = document.getElementById('scrollBtn' + panel.charAt(0).toUpperCase() + panel.slice(1));
+            
+            if (!container || !btn) return;
+            
+            // Show button if not at bottom (with 100px threshold)
+            const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+            btn.classList.toggle('visible', !isAtBottom);
+        }
+        
         // Add photo directly to chat with action buttons
         function addPhotoToChat(panel, imageData) {
-            const container = document.getElementById(panel + 'Chat');
+            console.log('📸 addPhotoToChat called, panel:', panel);
+            
+            const container = document.getElementById(panel + 'Body');
             if (!container) {
-                console.error('Chat container not found:', panel + 'Chat');
+                console.error('❌ Chat container not found:', panel + 'Body');
+                toast('Erreur: chat non trouvé');
                 return;
             }
             
             const msgId = 'photo-' + Date.now();
+            console.log('📸 Creating message:', msgId);
             
             const msgDiv = document.createElement('div');
             msgDiv.className = 'msg user';
@@ -6702,10 +6836,11 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
             msgDiv.dataset.imageData = imageData;
             
             container.appendChild(msgDiv);
-            container.scrollTop = container.scrollHeight;
+            scrollToBottom(panel);
             
             projectMessageCount++;
-            console.log('Photo added to chat:', panel);
+            console.log('✅ Photo added to chat:', panel);
+            toast('Photo ajoutée');
         }
         
         // Delete photo message
