@@ -6671,12 +6671,16 @@
                 const currentSessionId = sessionIds[panel] || (panel + '-' + (currentProjectId || Date.now()));
                 const currentBrandName = brandNames[brand] || brand || 'general';
                 
+                // IMPORTANT: Limit history to last 20 messages to prevent payload overflow
+                // n8n Simple Memory handles full context, we just need recent context
+                const recentHistory = chatHistory[panel].slice(-20);
+                
                 const payload = {
                     brand: brand || 'general',
                     brand_name: currentBrandName,
                     panel: panel,
                     message: text,
-                    history: chatHistory[panel],
+                    history: recentHistory, // Limited to last 20 messages
                     session_id: currentSessionId,
                     project_id: currentProjectId || null,
                     chat_id: currentChatId[panel] || null,
@@ -6688,7 +6692,7 @@
                 
                 console.log('📤 Sending to n8n:', N8N_WEBHOOK_URL);
                 console.log('📤 Session ID:', currentSessionId);
-                console.log('📤 Payload keys:', Object.keys(payload));
+                console.log('📤 History length:', recentHistory.length, '/', chatHistory[panel].length);
                 
                 // Call n8n webhook
                 const response = await fetch(N8N_WEBHOOK_URL, {
