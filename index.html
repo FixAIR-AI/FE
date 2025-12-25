@@ -5141,11 +5141,26 @@
         // n8n Webhook URL
         const N8N_WEBHOOK_URL = 'https://cherhabil.app.n8n.cloud/webhook/fixair-assistant';
         
-        // Generate unique session IDs for memory (one per panel, persists during page session)
-        const sessionIds = {
-            copilot: 'copilot-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
-            assistant: 'assistant-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9)
+        // Session IDs will be set based on project when a project is opened
+        // This ensures memory persists across page reloads for the same project
+        let sessionIds = {
+            copilot: null,
+            assistant: null
         };
+        
+        // Function to update session IDs when project changes
+        function updateSessionIds(projectId) {
+            if (projectId) {
+                sessionIds.copilot = 'copilot-' + projectId;
+                sessionIds.assistant = 'assistant-' + projectId;
+            } else {
+                // Fallback for no project (should not happen normally)
+                const tempId = Date.now().toString();
+                sessionIds.copilot = 'copilot-temp-' + tempId;
+                sessionIds.assistant = 'assistant-temp-' + tempId;
+            }
+            console.log('🔑 Session IDs updated:', sessionIds);
+        }
         
         // ═══════════════════════════════════════════════════════════════
         // SUPABASE CONFIGURATION
@@ -5222,6 +5237,7 @@
                 }
                 
                 currentProjectId = project.id;
+                updateSessionIds(project.id); // Update session IDs for n8n memory
                 console.log('✅ Project created:', project.id);
             }
             
@@ -5635,6 +5651,7 @@
             // ═══ INSTANT OPEN: Open chat immediately ═══
             openingFromProject = true;
             currentProjectId = projectId;
+            updateSessionIds(projectId); // Update session IDs for n8n memory
             currentChatId = { assistant: null, copilot: null };
             projectMessageCount = 0;
             
@@ -5893,6 +5910,9 @@
             currentChatId = { assistant: null, copilot: null };
             currentProjectTitle = null;
             projectMessageCount = 0;
+            
+            // Reset session IDs (will be set when project is created)
+            sessionIds = { copilot: null, assistant: null };
             
             // Clear chats
             chatHistory.assistant = [];
@@ -6664,7 +6684,7 @@
                         history: chatHistory[panel], // Contains system message with brand at position 0
                         
                         // ═══ SESSION DATA ═══
-                        session_id: sessionIds[panel],
+                        session_id: sessionIds[panel] || (panel + '-' + (currentProjectId || Date.now())),
                         project_id: currentProjectId,
                         chat_id: currentChatId[panel],
                         timestamp: new Date().toISOString(),
