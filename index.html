@@ -1760,18 +1760,78 @@
         
         /* Chat images */
         .msg-image { 
-            max-width: 240px; 
+            max-width: 100%; 
             border-radius: 12px; 
-            margin-top: 8px;
             cursor: pointer;
             transition: transform 0.2s;
+            display: block;
         }
         .msg-image:hover { transform: scale(1.02); }
-        .msg-text img { 
-            max-width: 100%; 
-            border-radius: 10px; 
-            margin-top: 6px;
+        
+        /* Photo container with delete button */
+        .photo-container {
+            position: relative;
+            display: inline-block;
+            max-width: 240px;
         }
+        .photo-container .msg-image {
+            max-width: 100%;
+        }
+        .photo-delete {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.6);
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .photo-container:hover .photo-delete { opacity: 1; }
+        .photo-delete .icon { width: 14px; height: 14px; }
+        .photo-delete:hover { background: var(--hotline); }
+        
+        /* Inline action buttons below photo */
+        .photo-actions-inline {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .photo-action-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .photo-action-btn:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.15);
+        }
+        .photo-action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .photo-action-btn.success {
+            background: var(--assistant-bg);
+            border-color: var(--assistant-border);
+            color: var(--assistant);
+        }
+        .photo-action-btn .icon { width: 14px; height: 14px; }
         
         /* Image loading state */
         .msg-image-loading {
@@ -3338,51 +3398,6 @@
     <!-- HIDDEN FILE INPUTS -->
     <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleFileSelect(event, 'camera')">
     <input type="file" id="galleryInput" accept="image/*" style="display:none;" onchange="handleFileSelect(event, 'gallery')">
-    
-    <!-- PHOTO MODAL (redesigned with real preview) -->
-    <div class="photo-modal" id="photoModal">
-        <div class="photo-modal-content">
-            <div class="photo-modal-header">
-                <div class="photo-modal-preview" id="photoPreviewThumb">
-                    <span class="icon"><svg><use href="#icon-image"/></svg></span>
-                </div>
-                <div>
-                    <div class="photo-modal-title" id="photoModalTitle">Photo sélectionnée</div>
-                    <div class="photo-modal-sub" id="photoModalSub">Que souhaitez-vous faire ?</div>
-                </div>
-            </div>
-            <!-- Full image preview -->
-            <div class="photo-full-preview" id="photoFullPreview">
-                <img id="photoPreviewImg" src="" alt="Preview">
-            </div>
-            <div class="photo-modal-body">
-                <div class="photo-option" onclick="handlePhotoOption('extract')">
-                    <div class="photo-option-icon extract"><span class="icon"><svg><use href="#icon-search"/></svg></span></div>
-                    <div class="photo-option-text">
-                        <div class="photo-option-title">Extraire les informations</div>
-                        <div class="photo-option-desc">OCR - Plaque, code erreur, modèle</div>
-                    </div>
-                </div>
-                <div class="photo-option" onclick="handlePhotoOption('send')">
-                    <div class="photo-option-icon send"><span class="icon"><svg><use href="#icon-send"/></svg></span></div>
-                    <div class="photo-option-text">
-                        <div class="photo-option-title">Envoyer dans le chat</div>
-                        <div class="photo-option-desc">Demander une analyse à l'IA</div>
-                    </div>
-                </div>
-                <div class="photo-option" onclick="handlePhotoOption('report')">
-                    <div class="photo-option-icon report"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>
-                    <div class="photo-option-text">
-                        <div class="photo-option-title">Ajouter au rapport</div>
-                        <div class="photo-option-desc">Pièce jointe du rapport</div>
-                    </div>
-                </div>
-            </div>
-            <div class="photo-modal-footer">
-                <button class="photo-cancel" onclick="closePhotoModal()">Annuler</button>
-            </div>
-        </div>
-    </div>
 
     <!-- IMAGE VIEWER MODAL -->
     <div class="image-viewer" id="imageViewer" onclick="closeImageViewer()">
@@ -6608,23 +6623,19 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
         }
 
         // ═══════════════════════════════════════════════════════════════
-        // PHOTO CAPTURE - V48
+        // PHOTO CAPTURE - V48 SIMPLIFIED (1-click flow)
         // ═══════════════════════════════════════════════════════════════
-        let currentPhotoData = null; // Base64 image data
-        let currentPhotoFile = null; // File object
         
         function attachAction(type, panel) {
             closeAllAttach();
             currentPhotoPanel = panel;
             
             if (type === 'camera') {
-                // Open camera
                 document.getElementById('cameraInput').click();
             } else if (type === 'gallery') {
-                // Open gallery
                 document.getElementById('galleryInput').click();
             } else {
-                toast('📎 Sélection fichier...');
+                toast('Sélection fichier...');
             }
         }
         
@@ -6632,193 +6643,138 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
             const file = event.target.files[0];
             if (!file) return;
             
-            // Validate it's an image
             if (!file.type.startsWith('image/')) {
-                toast('❌ Veuillez sélectionner une image');
+                toast('Veuillez sélectionner une image');
                 return;
             }
             
-            // Check size (max 10MB)
             if (file.size > 10 * 1024 * 1024) {
-                toast('❌ Image trop volumineuse (max 10MB)');
+                toast('Image trop volumineuse (max 10MB)');
                 return;
             }
             
-            currentPhotoFile = file;
-            
-            // Read file as base64
             const reader = new FileReader();
             reader.onload = function(e) {
-                currentPhotoData = e.target.result;
-                openPhotoModalWithPreview(file.name, source);
+                // Directly add to chat - no modal, no extra steps
+                addPhotoToChat(currentPhotoPanel, e.target.result);
             };
             reader.readAsDataURL(file);
             
-            // Reset input so same file can be selected again
             event.target.value = '';
         }
         
-        function openPhotoModalWithPreview(filename, source) {
-            const modal = document.getElementById('photoModal');
-            const preview = document.getElementById('photoPreviewThumb');
-            const fullPreview = document.getElementById('photoFullPreview');
-            const previewImg = document.getElementById('photoPreviewImg');
-            const title = document.getElementById('photoModalTitle');
-            const sub = document.getElementById('photoModalSub');
-            
-            // Set preview image
-            previewImg.src = currentPhotoData;
-            preview.innerHTML = `<img src="${currentPhotoData}" alt="Preview">`;
-            preview.classList.add('has-image');
-            fullPreview.classList.add('has-image');
-            
-            // Update title
-            const sourceText = source === 'camera' ? 'Photo prise' : 'Image sélectionnée';
-            title.textContent = sourceText;
-            sub.textContent = 'Que souhaitez-vous faire ?';
-            
-            modal.classList.add('active');
-        }
-
-        function openPhotoModal() {
-            document.getElementById('photoModal').classList.add('active');
-        }
-
-        function closePhotoModal() {
-            const modal = document.getElementById('photoModal');
-            const preview = document.getElementById('photoPreviewThumb');
-            const fullPreview = document.getElementById('photoFullPreview');
-            
-            modal.classList.remove('active');
-            
-            // Reset after animation
-            setTimeout(() => {
-                preview.innerHTML = '<span class="icon"><svg><use href="#icon-image"/></svg></span>';
-                preview.classList.remove('has-image');
-                fullPreview.classList.remove('has-image');
-                currentPhotoData = null;
-                currentPhotoFile = null;
-            }, 300);
-        }
-
-        async function handlePhotoOption(option) {
-            if (!currentPhotoData) {
-                toast('❌ Aucune photo sélectionnée');
-                closePhotoModal();
-                return;
-            }
-            
-            const imageData = currentPhotoData;
-            const panel = currentPhotoPanel;
-            
-            closePhotoModal();
-            
-            if (option === 'extract') {
-                // OCR - Extract information
-                toast('Analyse OCR en cours...');
-                
-                // Add image to chat with loading state
-                addMsgWithImage(panel, 'user', 'Analyse de cette image...', imageData);
-                
-                // Simulate OCR (later: real Tesseract.js or Cloud Vision)
-                setTimeout(() => {
-                    // Mock OCR results (will be replaced with real OCR)
-                    const ocrResults = performMockOCR();
-                    addMsg(panel, 'ai', ocrResults);
-                }, 2000);
-                
-            } else if (option === 'send') {
-                // Send to chat for AI analysis
-                addMsgWithImage(panel, 'user', 'Peux-tu analyser cette image ?', imageData);
-                
-                // Trigger AI response
-                setTimeout(() => {
-                    addMsg(panel, 'ai', 'Je vois une photo d\'équipement HVAC. Je peux identifier :<br><br>• <strong>Type:</strong> Unité extérieure<br>• <strong>État visible:</strong> En fonctionnement<br><br>Avez-vous une question spécifique sur cet équipement ?');
-                }, 1500);
-                
-            } else if (option === 'report') {
-                // Add to report
-                addMsgWithImage(panel, 'user', 'Photo ajoutée au rapport', imageData);
-                toast('Photo ajoutée au rapport');
-                
-                // Store for report (future: save to project photos array)
-                if (!window.reportPhotos) window.reportPhotos = [];
-                window.reportPhotos.push({
-                    data: imageData,
-                    timestamp: new Date().toISOString(),
-                    panel: panel
-                });
-            }
-        }
-        
-        // Add message with image
-        function addMsgWithImage(panel, role, text, imageData) {
+        // Add photo directly to chat with action buttons
+        function addPhotoToChat(panel, imageData) {
             const container = document.getElementById(panel + 'Chat');
             if (!container) {
                 console.error('Chat container not found:', panel + 'Chat');
                 return;
             }
             
+            const msgId = 'photo-' + Date.now();
+            
             const msgDiv = document.createElement('div');
-            msgDiv.className = 'msg ' + role;
+            msgDiv.className = 'msg user';
+            msgDiv.id = msgId;
             
-            // Create text element
-            const textDiv = document.createElement('div');
-            textDiv.className = 'msg-text';
-            textDiv.innerHTML = text;
+            msgDiv.innerHTML = `
+                <div class="msg-text">
+                    <div class="photo-container">
+                        <img src="${imageData}" class="msg-image" onclick="openImageViewer(this.src)">
+                        <button class="photo-delete" onclick="deletePhotoMsg('${msgId}')">
+                            <span class="icon"><svg><use href="#icon-x"/></svg></span>
+                        </button>
+                    </div>
+                    <div class="photo-actions-inline">
+                        <button class="photo-action-btn" onclick="extractFromPhoto('${msgId}', '${panel}')">
+                            <span class="icon"><svg><use href="#icon-search"/></svg></span>
+                            Extraire
+                        </button>
+                        <button class="photo-action-btn" onclick="addPhotoToReport('${msgId}', '${panel}')">
+                            <span class="icon"><svg><use href="#icon-clipboard"/></svg></span>
+                            Rapport
+                        </button>
+                    </div>
+                </div>
+            `;
             
-            // Create image element
-            const img = document.createElement('img');
-            img.src = imageData;
-            img.className = 'msg-image';
-            img.onclick = function() {
-                openImageViewer(this.src);
-            };
-            
-            textDiv.appendChild(img);
-            msgDiv.appendChild(textDiv);
-            
-            // Add actions
-            const actionsDiv = document.createElement('div');
-            actionsDiv.className = 'msg-actions';
-            actionsDiv.innerHTML = '<button class="msg-act" onclick="copyMsg(this)"><span class="icon"><svg><use href="#icon-copy"/></svg></span></button>';
-            msgDiv.appendChild(actionsDiv);
+            // Store image data for later use
+            msgDiv.dataset.imageData = imageData;
             
             container.appendChild(msgDiv);
             container.scrollTop = container.scrollHeight;
             
-            // Update message count
             projectMessageCount++;
+            console.log('Photo added to chat:', panel);
+        }
+        
+        // Delete photo message
+        function deletePhotoMsg(msgId) {
+            const msg = document.getElementById(msgId);
+            if (msg) {
+                msg.remove();
+                toast('Photo supprimée');
+            }
+        }
+        
+        // Extract info from photo (OCR)
+        function extractFromPhoto(msgId, panel) {
+            const msg = document.getElementById(msgId);
+            if (!msg) return;
             
-            console.log('✅ Image message added to', panel);
+            // Disable buttons to prevent double-click
+            const buttons = msg.querySelectorAll('.photo-action-btn');
+            buttons.forEach(btn => btn.disabled = true);
+            
+            toast('Analyse OCR en cours...');
+            
+            // Simulate OCR (to be replaced with real Tesseract.js)
+            setTimeout(() => {
+                const ocrResults = performMockOCR();
+                addMsg(panel, 'ai', ocrResults);
+                
+                // Re-enable buttons
+                buttons.forEach(btn => btn.disabled = false);
+            }, 1500);
+        }
+        
+        // Add photo to report
+        function addPhotoToReport(msgId, panel) {
+            const msg = document.getElementById(msgId);
+            if (!msg) return;
+            
+            const imageData = msg.dataset.imageData;
+            
+            // Store for report
+            if (!window.reportPhotos) window.reportPhotos = [];
+            window.reportPhotos.push({
+                data: imageData,
+                timestamp: new Date().toISOString(),
+                panel: panel
+            });
+            
+            // Visual feedback - change button to "Added"
+            const reportBtn = msg.querySelector('.photo-action-btn:last-child');
+            if (reportBtn) {
+                reportBtn.innerHTML = '<span class="icon"><svg><use href="#icon-check"/></svg></span> Ajouté';
+                reportBtn.classList.add('success');
+                reportBtn.disabled = true;
+            }
+            
+            toast('Photo ajoutée au rapport');
         }
         
         // Mock OCR function (will be replaced with real OCR)
         function performMockOCR() {
             const mockResults = [
-                {
-                    model: 'PUHY-P500YNW-A',
-                    serial: 'A1234567890',
-                    errorCode: 'E6',
-                    brand: 'Mitsubishi Electric'
-                },
-                {
-                    model: 'RXS35L3V1B',
-                    serial: 'D987654321',
-                    errorCode: 'F3',
-                    brand: 'Daikin'
-                },
-                {
-                    model: '38QRF036',
-                    serial: 'C456789012',
-                    errorCode: null,
-                    brand: 'Carrier'
-                }
+                { model: 'PUHY-P500YNW-A', serial: 'A1234567890', errorCode: 'E6', brand: 'Mitsubishi Electric' },
+                { model: 'RXS35L3V1B', serial: 'D987654321', errorCode: 'F3', brand: 'Daikin' },
+                { model: '38QRF036', serial: 'C456789012', errorCode: null, brand: 'Carrier' }
             ];
             
             const result = mockResults[Math.floor(Math.random() * mockResults.length)];
             
-            let html = '<strong>Informations extraites (OCR):</strong><br><br>';
+            let html = '<strong>Informations extraites:</strong><br><br>';
             html += `• <strong>Marque:</strong> ${result.brand}<br>`;
             html += `• <strong>Modèle:</strong> <span style="color:var(--copilot);font-family:monospace;">${result.model}</span><br>`;
             html += `• <strong>N° série:</strong> <span style="font-family:monospace;">${result.serial}</span><br>`;
@@ -6842,6 +6798,11 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
         function closeImageViewer() {
             document.getElementById('imageViewer').classList.remove('active');
         }
+        
+        // Legacy functions (keep for compatibility)
+        function openPhotoModal() {}
+        function closePhotoModal() {}
+        function handlePhotoOption() {}
         // ═══════════════════════════════════════════════════════════════
         // END PHOTO CAPTURE
         // ═══════════════════════════════════════════════════════════════
