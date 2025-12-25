@@ -1834,6 +1834,56 @@
         }
         .photo-action-btn .icon { width: 14px; height: 14px; }
         
+        /* OCR Quote (linked photo) */
+        .ocr-quote {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            background: rgba(255,107,53,0.08);
+            border-left: 3px solid var(--copilot);
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .ocr-quote:hover {
+            background: rgba(255,107,53,0.15);
+        }
+        .ocr-quote-thumb {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+        .ocr-quote-label {
+            font-size: 11px;
+            color: var(--copilot);
+            font-weight: 500;
+        }
+        .ocr-result {
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .ocr-loading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-dim);
+            font-size: 12px;
+        }
+        .ocr-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border);
+            border-top-color: var(--copilot);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
         /* File attachment style */
         .file-attachment {
             display: flex;
@@ -2955,6 +3005,7 @@
     
     <!-- Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 <body>
     <!-- App wrapper to contain everything and prevent gaps -->
@@ -3216,12 +3267,12 @@
             </div>
             
             <!-- PROJECT CONTEXT MENU -->
-            <div class="project-context-menu" id="projectContextMenu">
-                <div class="context-menu-item" onclick="renameProject()">
+            <div class="project-context-menu" id="projectContextMenu" onclick="event.stopPropagation()">
+                <div class="context-menu-item" onclick="event.stopPropagation(); renameProject()">
                     <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span>
                     <span>Renommer</span>
                 </div>
-                <div class="context-menu-item delete" onclick="deleteProject()">
+                <div class="context-menu-item delete" onclick="event.stopPropagation(); deleteProject()">
                     <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span>
                     <span>Supprimer</span>
                 </div>
@@ -4707,8 +4758,25 @@
                     for (const msg of messages || []) {
                         const role = msg.role === 'assistant' ? 'ai' : msg.role;
                         if (role === 'user' || role === 'ai') {
-                            const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
-                            addMsg(m, role, content);
+                            // Check if this is an image message
+                            if (msg.content_type === 'image' && msg.content.startsWith('data:image')) {
+                                // Render as photo
+                                const msgId = 'photo-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
+                                const msgDiv = document.createElement('div');
+                                msgDiv.className = 'msg user';
+                                msgDiv.id = msgId;
+                                
+                                // Check if this photo was already added to report
+                                const isInReport = window.reportPhotos?.some(p => p.url === msg.content || p.data === msg.content);
+                                msgDiv.innerHTML = createPhotoMessageHTML(msgId, m, msg.content, isInReport);
+                                msgDiv.dataset.imageData = msg.content;
+                                
+                                body.appendChild(msgDiv);
+                            } else {
+                                // Regular text message
+                                const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
+                                addMsg(m, role, content);
+                            }
                             chatHistory[m].push({ role: msg.role, content: msg.content });
                         }
                     }
@@ -5282,6 +5350,8 @@
             longPressTimer = setTimeout(() => {
                 longPressTriggered = true;
                 event.preventDefault();
+                // Haptic feedback immediately when long press triggers
+                if (navigator.vibrate) navigator.vibrate(30);
                 showProjectContextMenu(event, projectId, projectTitle);
             }, 500); // 500ms for long press
         }
@@ -5302,7 +5372,11 @@
             }
         }, true);
         
-        function closeContextMenu() {
+        function closeContextMenu(event) {
+            // Don't close if clicking inside the menu
+            if (event && event.target.closest('.project-context-menu')) {
+                return;
+            }
             const menu = document.getElementById('projectContextMenu');
             menu.classList.remove('show');
         }
@@ -5416,29 +5490,34 @@
         // Load a specific project (FIXED: uses separate queries for reliability)
         async function loadProject(projectId) {
             console.log('🔄 Loading project:', projectId);
-            toast('Chargement du projet...');
             
+            // ═══ INSTANT OPEN: Open chat immediately ═══
+            openingFromProject = true;
             currentProjectId = projectId;
             currentChatId = { assistant: null, copilot: null };
             projectMessageCount = 0;
             
+            // Open chat view immediately (show loading state)
+            const lastMode = mode || 'assistant';
+            openChat(lastMode);
+            
+            // Show loading indicator in chat
+            const body = document.getElementById(lastMode + 'Body');
+            if (body) {
+                body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);"><div style="margin-bottom:10px;">⏳</div>Chargement...</div>';
+            }
+            
             try {
-                // Step 1: Get project details (without photos first for compatibility)
+                // Step 1: Get project details
                 const { data: project, error: projectError } = await db
                     .from('projects')
                     .select('id, title, brand, original_brand, status, created_at, updated_at')
                     .eq('id', projectId)
                     .single();
                 
-                if (projectError) {
+                if (projectError || !project) {
                     console.error('❌ Error loading project:', projectError);
-                    toast('Erreur chargement projet');
-                    return;
-                }
-                
-                if (!project) {
-                    console.error('❌ Project not found:', projectId);
-                    toast('Projet non trouvé');
+                    if (body) body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--hotline);">Erreur de chargement</div>';
                     return;
                 }
                 
@@ -5459,6 +5538,7 @@
                 }
                 
                 // Store project title for header
+                currentProjectTitle = project.title || 'Sans titre';
                 currentProjectTitle = project.title || 'Sans titre';
                 
                 // ═══ FIX: Detect if user selected different brand on main page ═══
@@ -5556,8 +5636,25 @@
                     for (const msg of messages || []) {
                         const role = msg.role === 'assistant' ? 'ai' : msg.role;
                         if (role === 'user' || role === 'ai') {
-                            const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
-                            addMsg(chat.chat_type, role, content);
+                            // Check if this is an image message
+                            if (msg.content_type === 'image' && msg.content.startsWith('data:image')) {
+                                // Render as photo
+                                const msgId = 'photo-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
+                                const msgDiv = document.createElement('div');
+                                msgDiv.className = 'msg user';
+                                msgDiv.id = msgId;
+                                
+                                // Check if this photo was already added to report
+                                const isInReport = window.reportPhotos?.some(p => p.url === msg.content || p.data === msg.content);
+                                msgDiv.innerHTML = createPhotoMessageHTML(msgId, chat.chat_type, msg.content, isInReport);
+                                msgDiv.dataset.imageData = msg.content;
+                                
+                                body.appendChild(msgDiv);
+                            } else {
+                                // Regular text message
+                                const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
+                                addMsg(chat.chat_type, role, content);
+                            }
                             chatHistory[chat.chat_type].push({ role: msg.role, content: msg.content });
                             projectMessageCount++;
                         }
@@ -6982,7 +7079,7 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
         }
         
         // Add photo directly to chat with action buttons
-        function addPhotoToChat(panel, imageData) {
+        async function addPhotoToChat(panel, imageData) {
             console.log('📸 addPhotoToChat called, panel:', panel);
             
             const container = document.getElementById(panel + 'Body');
@@ -6999,7 +7096,38 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
             msgDiv.className = 'msg user';
             msgDiv.id = msgId;
             
-            msgDiv.innerHTML = `
+            msgDiv.innerHTML = createPhotoMessageHTML(msgId, panel, imageData);
+            
+            // Store image data for later use
+            msgDiv.dataset.imageData = imageData;
+            
+            container.appendChild(msgDiv);
+            scrollToBottom(panel);
+            
+            projectMessageCount++;
+            console.log('✅ Photo added to chat:', panel);
+            toast('Photo ajoutée');
+            
+            // ═══ Save photo to database ═══
+            if (currentProjectId && currentChatId[panel]) {
+                try {
+                    await saveMessage(currentChatId[panel], 'user', imageData, 'image');
+                    console.log('📸 Photo saved to database');
+                } catch (e) {
+                    console.error('❌ Error saving photo:', e);
+                }
+            }
+        }
+        
+        // Create HTML for photo message (reusable)
+        function createPhotoMessageHTML(msgId, panel, imageData, reportState = null) {
+            const reportBtnContent = reportState 
+                ? '<span class="icon"><svg><use href="#icon-check"/></svg></span> Ajouté'
+                : '<span class="icon"><svg><use href="#icon-clipboard"/></svg></span> Rapport';
+            const reportBtnClass = reportState ? 'photo-action-btn success' : 'photo-action-btn';
+            const reportBtnDisabled = reportState ? 'disabled' : '';
+            
+            return `
                 <div class="msg-text">
                     <div class="photo-container">
                         <img src="${imageData}" class="msg-image" onclick="openImageViewer(this.src)">
@@ -7012,23 +7140,12 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
                             <span class="icon"><svg><use href="#icon-search"/></svg></span>
                             Extraire
                         </button>
-                        <button class="photo-action-btn" onclick="addPhotoToReport('${msgId}', '${panel}')">
-                            <span class="icon"><svg><use href="#icon-clipboard"/></svg></span>
-                            Rapport
+                        <button class="${reportBtnClass}" onclick="addPhotoToReport('${msgId}', '${panel}')" ${reportBtnDisabled}>
+                            ${reportBtnContent}
                         </button>
                     </div>
                 </div>
             `;
-            
-            // Store image data for later use
-            msgDiv.dataset.imageData = imageData;
-            
-            container.appendChild(msgDiv);
-            scrollToBottom(panel);
-            
-            projectMessageCount++;
-            console.log('✅ Photo added to chat:', panel);
-            toast('Photo ajoutée');
         }
         
         // Delete photo message
@@ -7040,25 +7157,252 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
             }
         }
         
-        // Extract info from photo (OCR)
-        function extractFromPhoto(msgId, panel) {
+        // Extract info from photo (OCR) with Tesseract.js
+        async function extractFromPhoto(msgId, panel) {
             const msg = document.getElementById(msgId);
             if (!msg) return;
             
+            const imageData = msg.dataset.imageData;
+            if (!imageData) {
+                toast('Erreur: image non trouvée');
+                return;
+            }
+            
             // Disable buttons to prevent double-click
-            const buttons = msg.querySelectorAll('.photo-action-btn');
-            buttons.forEach(btn => btn.disabled = true);
+            const extractBtn = msg.querySelector('.photo-action-btn:first-child');
+            if (extractBtn) {
+                extractBtn.disabled = true;
+                extractBtn.innerHTML = '<span class="icon"><svg><use href="#icon-search"/></svg></span> Analyse...';
+            }
             
             toast('Analyse OCR en cours...');
             
-            // Simulate OCR (to be replaced with real Tesseract.js)
-            setTimeout(() => {
-                const ocrResults = performMockOCR();
-                addMsg(panel, 'ai', ocrResults);
+            // Add linked photo quote in chat (like WhatsApp reply)
+            const quoteId = 'ocr-' + Date.now();
+            addOCRQuoteMessage(panel, msgId, imageData, quoteId);
+            
+            try {
+                // Real OCR with Tesseract.js
+                const result = await Tesseract.recognize(
+                    imageData,
+                    'fra+eng', // French + English
+                    {
+                        logger: m => {
+                            if (m.status === 'recognizing text') {
+                                const progress = Math.round(m.progress * 100);
+                                if (extractBtn) {
+                                    extractBtn.innerHTML = `<span class="icon"><svg><use href="#icon-search"/></svg></span> ${progress}%`;
+                                }
+                            }
+                        }
+                    }
+                );
                 
-                // Re-enable buttons
-                buttons.forEach(btn => btn.disabled = false);
-            }, 1500);
+                const extractedText = result.data.text.trim();
+                console.log('📝 OCR Result:', extractedText);
+                
+                // Analyze extracted text for HVAC-relevant info
+                const analysis = analyzeOCRText(extractedText);
+                
+                // Update the quote message with results
+                updateOCRQuoteWithResults(quoteId, analysis, extractedText);
+                
+                // Re-enable button
+                if (extractBtn) {
+                    extractBtn.disabled = false;
+                    extractBtn.innerHTML = '<span class="icon"><svg><use href="#icon-search"/></svg></span> Extraire';
+                }
+                
+                toast('Extraction terminée');
+                
+            } catch (error) {
+                console.error('OCR Error:', error);
+                
+                // Update quote with error
+                const quoteMsg = document.getElementById(quoteId);
+                if (quoteMsg) {
+                    const resultDiv = quoteMsg.querySelector('.ocr-result');
+                    if (resultDiv) {
+                        resultDiv.innerHTML = '<span style="color:var(--hotline);">Erreur d\'analyse. Réessayez.</span>';
+                    }
+                }
+                
+                if (extractBtn) {
+                    extractBtn.disabled = false;
+                    extractBtn.innerHTML = '<span class="icon"><svg><use href="#icon-search"/></svg></span> Extraire';
+                }
+                
+                toast('Erreur OCR');
+            }
+        }
+        
+        // Add OCR quote message with linked thumbnail
+        function addOCRQuoteMessage(panel, originalMsgId, imageData, quoteId) {
+            const container = document.getElementById(panel + 'Body');
+            if (!container) return;
+            
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'msg ai';
+            msgDiv.id = quoteId;
+            
+            msgDiv.innerHTML = `
+                <div class="msg-text">
+                    <div class="ocr-quote" onclick="scrollToMessage('${originalMsgId}')">
+                        <img src="${imageData}" class="ocr-quote-thumb" alt="Photo analysée">
+                        <div class="ocr-quote-label">Analyse de cette photo</div>
+                    </div>
+                    <div class="ocr-result">
+                        <div class="ocr-loading">
+                            <span class="ocr-spinner"></span>
+                            Extraction en cours...
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(msgDiv);
+            scrollToBottom(panel);
+        }
+        
+        // Update OCR quote with results
+        function updateOCRQuoteWithResults(quoteId, analysis, rawText) {
+            const quoteMsg = document.getElementById(quoteId);
+            if (!quoteMsg) return;
+            
+            const resultDiv = quoteMsg.querySelector('.ocr-result');
+            if (!resultDiv) return;
+            
+            let html = '<strong>Informations extraites:</strong><br><br>';
+            
+            if (analysis.brand) {
+                html += `• <strong>Marque:</strong> ${analysis.brand}<br>`;
+            }
+            if (analysis.model) {
+                html += `• <strong>Modèle:</strong> <span style="color:var(--copilot);font-family:monospace;">${analysis.model}</span><br>`;
+            }
+            if (analysis.serial) {
+                html += `• <strong>N° série:</strong> <span style="font-family:monospace;">${analysis.serial}</span><br>`;
+            }
+            if (analysis.errorCodes.length > 0) {
+                html += `• <strong>Code(s) erreur:</strong> <span style="color:var(--hotline);font-weight:600;">${analysis.errorCodes.join(', ')}</span><br>`;
+                html += `<br><em>Voulez-vous que je vous explique ${analysis.errorCodes.length > 1 ? 'ces codes erreur' : 'ce code erreur'} ?</em>`;
+            }
+            
+            if (!analysis.brand && !analysis.model && !analysis.serial && analysis.errorCodes.length === 0) {
+                if (rawText.length > 10) {
+                    html = '<strong>Texte extrait:</strong><br><br>';
+                    html += `<div style="font-family:monospace;font-size:11px;background:var(--card);padding:10px;border-radius:8px;max-height:150px;overflow-y:auto;">${rawText.replace(/\n/g, '<br>')}</div>`;
+                } else {
+                    html = '<em style="color:var(--text-dim);">Aucune information pertinente détectée. Essayez avec une photo plus nette de la plaque signalétique.</em>';
+                }
+            }
+            
+            resultDiv.innerHTML = html;
+        }
+        
+        // Analyze OCR text for HVAC-relevant patterns
+        function analyzeOCRText(text) {
+            const upperText = text.toUpperCase();
+            
+            // Known brands
+            const brands = {
+                'MITSUBISHI': 'Mitsubishi Electric',
+                'DAIKIN': 'Daikin',
+                'CARRIER': 'Carrier',
+                'TRANE': 'Trane',
+                'LENNOX': 'Lennox',
+                'YORK': 'York',
+                'LG': 'LG',
+                'SAMSUNG': 'Samsung',
+                'PANASONIC': 'Panasonic',
+                'TOSHIBA': 'Toshiba',
+                'FUJITSU': 'Fujitsu',
+                'HITACHI': 'Hitachi',
+                'MIDEA': 'Midea',
+                'GREE': 'Gree'
+            };
+            
+            let detectedBrand = null;
+            for (const [key, value] of Object.entries(brands)) {
+                if (upperText.includes(key)) {
+                    detectedBrand = value;
+                    break;
+                }
+            }
+            
+            // Model patterns (various formats)
+            const modelPatterns = [
+                /MODEL\s*[:#]?\s*([A-Z0-9\-]+)/i,
+                /MOD[EÈ]LE\s*[:#]?\s*([A-Z0-9\-]+)/i,
+                /TYPE\s*[:#]?\s*([A-Z0-9\-]+)/i,
+                /([A-Z]{2,4}[\-]?[0-9]{2,4}[A-Z0-9\-]*)/,
+                /(PUHY|PURY|PEFY|PLFY|PKFY|PEAD|FDUM|RXS|FTX|FAA|FBA)[A-Z0-9\-]+/i
+            ];
+            
+            let detectedModel = null;
+            for (const pattern of modelPatterns) {
+                const match = text.match(pattern);
+                if (match && match[1] && match[1].length > 4) {
+                    detectedModel = match[1].toUpperCase();
+                    break;
+                }
+            }
+            
+            // Serial number patterns
+            const serialPatterns = [
+                /SERIAL\s*[:#]?\s*([A-Z0-9]+)/i,
+                /S\/?N\s*[:#]?\s*([A-Z0-9]+)/i,
+                /N[°º]?\s*S[ÉE]RIE\s*[:#]?\s*([A-Z0-9]+)/i,
+                /([A-Z][0-9]{8,12})/
+            ];
+            
+            let detectedSerial = null;
+            for (const pattern of serialPatterns) {
+                const match = text.match(pattern);
+                if (match && match[1] && match[1].length >= 8) {
+                    detectedSerial = match[1].toUpperCase();
+                    break;
+                }
+            }
+            
+            // Error codes (common patterns)
+            const errorPatterns = [
+                /(?:ERROR|ERREUR|CODE|FAULT|DÉFAUT)\s*[:#]?\s*([A-Z][0-9]{1,3})/gi,
+                /\b([EUFPLAH][0-9]{1,3})\b/g,
+                /\b(E[0-9]{1,2})\b/g,
+                /\b(F[0-9]{1,2})\b/g
+            ];
+            
+            const errorCodes = new Set();
+            for (const pattern of errorPatterns) {
+                let match;
+                while ((match = pattern.exec(upperText)) !== null) {
+                    if (match[1] && match[1].length >= 2 && match[1].length <= 4) {
+                        errorCodes.add(match[1]);
+                    }
+                }
+            }
+            
+            return {
+                brand: detectedBrand,
+                model: detectedModel,
+                serial: detectedSerial,
+                errorCodes: Array.from(errorCodes)
+            };
+        }
+        
+        // Scroll to a specific message
+        function scrollToMessage(msgId) {
+            const msg = document.getElementById(msgId);
+            if (msg) {
+                msg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Highlight briefly
+                msg.style.transition = 'background 0.3s';
+                msg.style.background = 'rgba(255,107,53,0.15)';
+                setTimeout(() => {
+                    msg.style.background = '';
+                }, 1500);
+            }
         }
         
         // Add photo to report - opens naming modal
@@ -7070,20 +7414,38 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
             
             const imageData = msg.dataset.imageData;
             
+            // Check if this photo was already added to report
+            const existingIndex = window.reportPhotos?.findIndex(p => 
+                p.url === imageData || p.data === imageData || p.originalData === imageData
+            );
+            const existingPhoto = existingIndex >= 0 ? window.reportPhotos[existingIndex] : null;
+            
             // Store pending data
             pendingReportPhoto = {
                 msgId: msgId,
                 panel: panel,
-                imageData: imageData
+                imageData: imageData,
+                existingIndex: existingIndex,
+                existingPhoto: existingPhoto
             };
             
             // Show naming modal
             const modal = document.getElementById('photoNameModal');
             const previewImg = document.getElementById('photoNamePreviewImg');
             const input = document.getElementById('photoNameInput');
+            const confirmBtn = modal.querySelector('.photo-name-confirm');
             
             previewImg.src = imageData;
-            input.value = '';
+            
+            // If already added, prefill with existing caption
+            if (existingPhoto) {
+                input.value = existingPhoto.caption || '';
+                confirmBtn.textContent = 'Modifier';
+            } else {
+                input.value = '';
+                confirmBtn.textContent = 'Ajouter au rapport';
+            }
+            
             modal.classList.add('active');
             
             // Focus input after animation
@@ -7099,48 +7461,59 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
             if (!pendingReportPhoto) return;
             
             const caption = document.getElementById('photoNameInput').value.trim() || 'Photo';
-            const { msgId, panel, imageData } = pendingReportPhoto;
+            const { msgId, panel, imageData, existingIndex, existingPhoto } = pendingReportPhoto;
+            const isUpdate = existingIndex >= 0;
             
             closePhotoNameModal();
-            toast('Sauvegarde en cours...');
+            toast(isUpdate ? 'Mise à jour...' : 'Sauvegarde en cours...');
             
             try {
                 let photoUrl = imageData; // Fallback to base64
                 
-                // Upload to Supabase Storage if we have a project
-                if (currentProjectId) {
+                // Upload to Supabase Storage if we have a project and not already uploaded
+                if (currentProjectId && !existingPhoto?.url?.startsWith('http')) {
                     const uploadResult = await uploadPhotoToStorage(imageData, currentProjectId);
                     if (uploadResult) {
                         photoUrl = uploadResult;
                     }
+                } else if (existingPhoto?.url) {
+                    photoUrl = existingPhoto.url;
                 }
                 
-                // Store for report
+                // Update or add to report
                 if (!window.reportPhotos) window.reportPhotos = [];
-                window.reportPhotos.push({
+                
+                const photoEntry = {
                     url: photoUrl,
+                    originalData: imageData, // Keep original for matching
                     caption: caption,
                     timestamp: new Date().toISOString(),
                     panel: panel
-                });
+                };
+                
+                if (isUpdate) {
+                    window.reportPhotos[existingIndex] = photoEntry;
+                } else {
+                    window.reportPhotos.push(photoEntry);
+                }
                 
                 // Also save to project in database
                 if (currentProjectId) {
                     await savePhotoToProject(currentProjectId, photoUrl, caption);
                 }
                 
-                // Visual feedback
+                // Visual feedback - but don't disable button (allow re-editing)
                 const msg = document.getElementById(msgId);
                 if (msg) {
                     const reportBtn = msg.querySelector('.photo-action-btn:last-child');
                     if (reportBtn) {
                         reportBtn.innerHTML = '<span class="icon"><svg><use href="#icon-check"/></svg></span> Ajouté';
                         reportBtn.classList.add('success');
-                        reportBtn.disabled = true;
+                        // Don't disable - allow clicking again to edit caption
                     }
                 }
                 
-                toast('Photo "' + caption + '" ajoutée au rapport');
+                toast(isUpdate ? 'Photo modifiée: "' + caption + '"' : 'Photo "' + caption + '" ajoutée au rapport');
                 
             } catch (error) {
                 console.error('Error saving photo:', error);
@@ -7219,28 +7592,6 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
         }
         
         // Mock OCR function (will be replaced with real OCR)
-        function performMockOCR() {
-            const mockResults = [
-                { model: 'PUHY-P500YNW-A', serial: 'A1234567890', errorCode: 'E6', brand: 'Mitsubishi Electric' },
-                { model: 'RXS35L3V1B', serial: 'D987654321', errorCode: 'F3', brand: 'Daikin' },
-                { model: '38QRF036', serial: 'C456789012', errorCode: null, brand: 'Carrier' }
-            ];
-            
-            const result = mockResults[Math.floor(Math.random() * mockResults.length)];
-            
-            let html = '<strong>Informations extraites:</strong><br><br>';
-            html += `• <strong>Marque:</strong> ${result.brand}<br>`;
-            html += `• <strong>Modèle:</strong> <span style="color:var(--copilot);font-family:monospace;">${result.model}</span><br>`;
-            html += `• <strong>N° série:</strong> <span style="font-family:monospace;">${result.serial}</span><br>`;
-            
-            if (result.errorCode) {
-                html += `• <strong>Code erreur:</strong> <span style="color:var(--hotline);font-weight:600;">${result.errorCode}</span><br>`;
-                html += `<br><em>Voulez-vous que je vous explique ce code erreur ?</em>`;
-            }
-            
-            return html;
-        }
-        
         // Image viewer
         function openImageViewer(imageSrc) {
             const viewer = document.getElementById('imageViewer');
@@ -7252,10 +7603,6 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
         function closeImageViewer() {
             document.getElementById('imageViewer').classList.remove('active');
         }
-        
-        // Legacy functions (keep for compatibility)
-        function openPhotoModal() {}
-        function closePhotoModal() {}
         function handlePhotoOption() {}
         // ═══════════════════════════════════════════════════════════════
         // END PHOTO CAPTURE
