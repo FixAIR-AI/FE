@@ -7250,7 +7250,7 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
             }
         }
         
-        // Extract info from photo using Claude Vision via n8n (HIGH QUALITY OCR)
+        // Extract text from photo using Tesseract.js OCR
         async function extractFromPhoto(msgId, panel) {
             const msg = document.getElementById(msgId);
             if (!msg) return;
@@ -7275,82 +7275,47 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
             addOCRQuoteMessage(panel, msgId, imageData, quoteId);
             
             try {
-                // ═══ Use existing assistant webhook WITH image for OCR ═══
-                const ocrPrompt = `Tu es un expert en extraction de données techniques. Analyse cette image en détail et extrait TOUTES les informations visibles.
-
-EXTRACTION REQUISE:
-1. IDENTIFICATION: Marque, Modèle, Type, N° série, Date fabrication
-2. CARACTÉRISTIQUES: Puissance, Tension, Ampérage, Fréquence, Pression, Réfrigérant
-3. CODES ERREUR: Liste tous les codes affichés (TRÈS IMPORTANT - mets-les en évidence)
-4. VALEURS MESURÉES: Températures, Pressions, Paramètres
-5. TOUT AUTRE TEXTE visible
-
-Formate les résultats de manière claire et structurée. Si tu détectes un code erreur, propose d'expliquer sa signification.`;
-
-                // Generate session ID
+                // Generate session ID for context
                 const sessionId = currentProjectId || 'ocr-' + Date.now();
                 
                 let outputText = '';
-                let useLocalOCR = false;
                 
-                // Try n8n webhook first
-                try {
-                    const ocrResponse = await fetch(N8N_WEBHOOK_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            message: ocrPrompt,
-                            image: imageData,
-                            mode: 'ocr',
-                            brand: brand || 'general',
-                            chat_history: [],
-                            sessionId: sessionId,
-                            session_id: sessionId
-                        })
-                    });
-                    
-                    if (!ocrResponse.ok) {
-                        console.log('⚠️ n8n OCR failed, falling back to Tesseract.js');
-                        useLocalOCR = true;
-                    } else {
-                        const ocrResult = await ocrResponse.json();
-                        console.log('📝 n8n OCR Result:', ocrResult);
-                        
-                        if (typeof ocrResult === 'string') {
-                            outputText = ocrResult;
-                        } else if (ocrResult.output) {
-                            outputText = ocrResult.output;
-                        } else if (ocrResult.response) {
-                            outputText = ocrResult.response;
-                        } else if (ocrResult.text) {
-                            outputText = ocrResult.text;
-                        } else {
-                            outputText = JSON.stringify(ocrResult);
-                        }
+                // ═══ STEP 1: Use Tesseract.js for ACTUAL text extraction ═══
+                console.log('🔍 Starting Tesseract.js OCR...');
+                
+                if (typeof Tesseract !== 'undefined') {
+                    if (extractBtn) {
+                        extractBtn.innerHTML = '<span class="icon"><svg><use href="#icon-search"/></svg></span> Extraction...';
                     }
-                } catch (e) {
-                    console.log('⚠️ n8n OCR error, falling back to Tesseract.js:', e);
-                    useLocalOCR = true;
-                }
-                
-                // Fallback to local Tesseract.js OCR
-                if (useLocalOCR || !outputText || outputText.length < 10) {
-                    console.log('🔍 Using Tesseract.js for local OCR...');
                     
-                    if (typeof Tesseract !== 'undefined') {
-                        if (extractBtn) {
-                            extractBtn.innerHTML = '<span class="icon"><svg><use href="#icon-search"/></svg></span> OCR...';
-                        }
+                    try {
+                        const worker = await Tesseract.createWorker('fra+eng', 1, {
+                            logger: m => {
+                                if (m.status === 'recognizing text' && extractBtn) {
+                                    const progress = Math.round(m.progress * 100);
+                                    extractBtn.innerHTML = `<span class="icon"><svg><use href="#icon-search"/></svg></span> ${progress}%`;
+                                }
+                            }
+                        });
                         
-                        const worker = await Tesseract.createWorker('fra+eng');
                         const { data } = await worker.recognize(imageData);
                         outputText = data.text.trim();
                         await worker.terminate();
                         
                         console.log('📝 Tesseract OCR Result:', outputText);
-                    } else {
-                        throw new Error('OCR non disponible');
+                        console.log('📝 Text length:', outputText.length);
+                        
+                    } catch (tessErr) {
+                        console.error('Tesseract error:', tessErr);
+                        throw new Error('Erreur OCR: ' + tessErr.message);
                     }
+                } else {
+                    throw new Error('Tesseract.js non chargé');
+                }
+                
+                // If no text extracted, show message
+                if (!outputText || outputText.length < 5) {
+                    outputText = '(Aucun texte détecté. Essayez avec une photo plus nette ou mieux éclairée.)';
                 }
                 
                 console.log('📝 Final OCR text length:', outputText.length);
@@ -7492,7 +7457,7 @@ ${outputText}`;
                     <div class="ocr-result">
                         <div class="ocr-loading">
                             <span class="ocr-spinner"></span>
-                            Extraction en cours avec Claude Vision...
+                            Extraction du texte en cours...
                         </div>
                     </div>
                 </div>
