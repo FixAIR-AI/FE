@@ -6667,51 +6667,48 @@
                     'general': 'Multi-marques'
                 };
                 
+                // Build payload with simple structure
+                const currentSessionId = sessionIds[panel] || (panel + '-' + (currentProjectId || Date.now()));
+                const currentBrandName = brandNames[brand] || brand || 'general';
+                
+                const payload = {
+                    brand: brand || 'general',
+                    brand_name: currentBrandName,
+                    panel: panel,
+                    message: text,
+                    history: chatHistory[panel],
+                    session_id: currentSessionId,
+                    project_id: currentProjectId || null,
+                    chat_id: currentChatId[panel] || null,
+                    timestamp: new Date().toISOString(),
+                    is_first_message: chatHistory[panel].filter(m => m.role === 'user').length === 1,
+                    brand_instruction: 'MARQUE: ' + currentBrandName + '. Ne demande jamais la marque.',
+                    system_context: 'MARQUE: ' + currentBrandName + '. ' + (panel === 'assistant' ? 'Rapport.' : 'Diagnostic.')
+                };
+                
+                console.log('📤 Sending to n8n:', N8N_WEBHOOK_URL);
+                console.log('📤 Session ID:', currentSessionId);
+                console.log('📤 Payload keys:', Object.keys(payload));
+                
                 // Call n8n webhook
                 const response = await fetch(N8N_WEBHOOK_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        // ═══ BRAND CONTEXT (PRIORITY - AI MUST USE THIS) ═══
-                        brand: brand,
-                        brand_name: brandNames[brand] || brand,
-                        
-                        // ═══ MESSAGE DATA ═══
-                        panel: panel,
-                        message: text,
-                        history: chatHistory[panel], // Contains system message with brand at position 0
-                        
-                        // ═══ SESSION DATA ═══
-                        session_id: sessionIds[panel] || (panel + '-' + (currentProjectId || Date.now())),
-                        project_id: currentProjectId,
-                        chat_id: currentChatId[panel],
-                        timestamp: new Date().toISOString(),
-                        
-                        // ═══ FLAGS ═══
-                        is_first_message: chatHistory[panel].filter(m => m.role === 'user').length === 1,
-                        
-                        // ═══ CRITICAL: SYSTEM PROMPT INJECTION FOR AI ═══
-                        // This MUST be prepended to the AI's system prompt in n8n
-                        brand_instruction: `🚨 MARQUE DU SYSTÈME: ${brandNames[brand] || brand}
-                        
-TU CONNAIS DÉJÀ LA MARQUE - NE LA DEMANDE JAMAIS.
-Toute ta réponse doit être spécifique à ${brandNames[brand] || brand}.
-Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brandNames[brand] || brand}. C'est quoi aujourd'hui ?"`,
-                        
-                        // Legacy field for compatibility
-                        system_context: panel === 'assistant'
-                            ? `MARQUE: ${brandNames[brand] || brand}. Rapport d'intervention ${brandNames[brand] || brand}. NE DEMANDE PAS la marque.`
-                            : `MARQUE: ${brandNames[brand] || brand}. Diagnostic ${brandNames[brand] || brand}. NE DEMANDE PAS la marque.`
-                    })
+                    body: JSON.stringify(payload)
                 });
                 
+                console.log('📥 Response status:', response.status);
+                
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    const errorText = await response.text();
+                    console.error('❌ n8n Error:', response.status, errorText);
+                    throw new Error('Erreur serveur: ' + response.status);
                 }
                 
                 const data = await response.json();
+                console.log('📥 Response data:', data);
                 
                 // Remove loading
                 removeLoadingMsg(panel);
@@ -6746,9 +6743,9 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
                 }
                 
             } catch (error) {
-                console.error('Error sending message:', error);
+                console.error('❌ Error sending message:', error);
                 removeLoadingMsg(panel);
-                addMsg(panel, 'ai', '<p><strong>Erreur de connexion</strong></p><p>Impossible de contacter le serveur. Vérifiez votre connexion internet.</p>');
+                addMsg(panel, 'ai', '<p><strong>Erreur</strong></p><p>' + error.message + '</p><p style="color:var(--text-dim);font-size:12px;">Vérifiez la console pour plus de détails.</p>');
             }
         }
         
