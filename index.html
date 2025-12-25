@@ -754,6 +754,127 @@
         @keyframes fireWiggle { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
         .status-text { font-size: 12px; font-weight: 600; color: var(--copilot); text-transform: uppercase; letter-spacing: 1px; }
 
+        /* ==================== GAMIFICATION STATS WIDGET (WEEKLY) ==================== */
+        .stats-widget {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+        }
+        
+        .stats-week-label {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .stats-ring-container {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            margin: 0 auto 16px;
+        }
+        
+        .stats-ring {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .stats-ring-bg {
+            fill: none;
+            stroke: rgba(255,255,255,0.06);
+            stroke-width: 10;
+        }
+        
+        .stats-ring-progress {
+            fill: none;
+            stroke: url(#statsGradient);
+            stroke-width: 10;
+            stroke-linecap: round;
+            stroke-dasharray: 339.292;
+            stroke-dashoffset: 339.292;
+            transition: stroke-dashoffset 0.8s ease;
+        }
+        
+        .stats-ring-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        
+        .stats-ring-percent {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #FF6B35, #FFD700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .stats-details {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        
+        .stats-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .stats-icon {
+            font-size: 16px;
+            width: 24px;
+        }
+        
+        .stats-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+            min-width: 80px;
+            text-align: left;
+        }
+        
+        .stats-label {
+            font-size: 13px;
+            color: var(--text-dim);
+            text-align: left;
+        }
+        
+        .stats-message {
+            font-size: 14px;
+            font-weight: 600;
+            color: #FFD700;
+            padding: 10px 16px;
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 12px;
+            display: inline-block;
+        }
+        
+        /* Light theme overrides for stats */
+        [data-theme="light"] .stats-widget {
+            background: rgba(0, 0, 0, 0.02);
+            border-color: rgba(0,0,0,0.06);
+        }
+        
+        [data-theme="light"] .stats-ring-bg {
+            stroke: rgba(0, 0, 0, 0.08);
+        }
+        
+        [data-theme="light"] .stats-message {
+            background: rgba(255, 107, 53, 0.1);
+            color: #FF6B35;
+        }
+
         /* ==================== HOMEPAGE TOGGLE CARDS (V2 STYLE) ==================== */
         .modules-toggle { display: flex; gap: 12px; }
         
@@ -3449,23 +3570,56 @@
 
                 <!-- V13 HOMEPAGE CONTENT (hidden during onboarding) -->
                 <div class="homepage-content" id="homepageContent">
-                <!-- PROGRESS RING (BIGGER) -->
-                <div class="activity-section">
-                    <div class="activity-ring-container">
-                        <svg class="activity-ring-svg" viewBox="0 0 180 180">
-                            <circle class="ring-bg" cx="90" cy="90" r="70"/>
-                            <circle class="ring-progress hot" id="ringProgress" cx="90" cy="90" r="70"/>
+                <!-- GAMIFICATION STATS WIDGET (WEEKLY) -->
+                <div class="stats-widget" id="statsWidget">
+                    <div class="stats-week-label" id="statsWeekLabel">Cette semaine</div>
+                    
+                    <div class="stats-ring-container">
+                        <svg class="stats-ring" viewBox="0 0 120 120">
+                            <!-- Gradient -->
+                            <defs>
+                                <linearGradient id="statsGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#FF6B35"/>
+                                    <stop offset="100%" stop-color="#FFD700"/>
+                                </linearGradient>
+                            </defs>
+                            <!-- Cercle de fond -->
+                            <circle 
+                                class="stats-ring-bg"
+                                cx="60" cy="60" r="54" 
+                            />
+                            <!-- Cercle de progression -->
+                            <circle 
+                                id="statsRingProgress"
+                                class="stats-ring-progress"
+                                cx="60" cy="60" r="54" 
+                                transform="rotate(-90 60 60)"
+                            />
                         </svg>
-                        <div class="activity-ring-inner">
-                            <span class="activity-value" id="activityValue">73%</span>
-                            <span class="activity-label">Activité</span>
+                        <div class="stats-ring-content">
+                            <span class="stats-ring-percent" id="statsRingPercent">0%</span>
                         </div>
                     </div>
-                    <!-- STATUS - NO BACKGROUND -->
-                    <div class="activity-status">
-                        <span class="status-fire">🔥</span>
-                        <span class="status-text">En forme</span>
+                    
+                    <div class="stats-details">
+                        <div class="stats-row">
+                            <span class="stats-icon">⏱️</span>
+                            <span class="stats-value" id="statsTimeSaved">0min</span>
+                            <span class="stats-label">de temps sauvé</span>
+                        </div>
+                        <div class="stats-row">
+                            <span class="stats-icon">💰</span>
+                            <span class="stats-value" id="statsEurosSaved">≈ 0€</span>
+                            <span class="stats-label">économisés</span>
+                        </div>
+                        <div class="stats-row">
+                            <span class="stats-icon">📋</span>
+                            <span class="stats-value" id="statsReports">0</span>
+                            <span class="stats-label">rapports générés</span>
+                        </div>
                     </div>
+                    
+                    <div class="stats-message" id="statsMessage">Lance-toi ! 🚀</div>
                 </div>
 
                 <!-- TOGGLE CARDS -->
@@ -4241,6 +4395,8 @@
                 
                 // ═══ SUPABASE: Load projects list ═══
                 loadProjectsList();
+                // ═══ GAMIFICATION: Initialize stats ═══
+                initGamification();
                 // ═══ END SUPABASE ═══
             }, 500);
         } else {
@@ -4426,6 +4582,10 @@
         function doLogin() {
             document.getElementById('loginScreen').classList.remove('active');
             document.getElementById('mainApp').classList.add('active');
+            
+            // Load projects and initialize gamification
+            loadProjectsList();
+            initGamification();
         }
         
         function logout() {
@@ -4800,19 +4960,7 @@
             console.log('🏷️ Brand changed in chat:', oldBrand, '→', newBrand);
         }
 
-        function updateRing(pct) {
-            const ring = document.getElementById('ringProgress');
-            const circumference = 2 * Math.PI * 70;
-            const offset = circumference - (pct / 100) * circumference;
-            ring.style.strokeDashoffset = offset;
-            ring.classList.remove('cold', 'warm', 'hot');
-            if (pct < 40) ring.classList.add('cold');
-            else if (pct < 70) ring.classList.add('warm');
-            else ring.classList.add('hot');
-            document.getElementById('activityValue').textContent = pct + '%';
-        }
-
-        setTimeout(() => updateRing(73), 500);
+        // Old updateRing removed - now using gamification refreshWeeklyStats()
 
         // Track if we're opening from an existing project
         let openingFromProject = false;
@@ -6853,6 +7001,8 @@
                         // If this is a report, save it to reports table
                         if (aiResponse.includes('RAPPORT D\'INTERVENTION')) {
                             await saveReport(aiResponse);
+                            // ═══ GAMIFICATION: Track report generated ═══
+                            trackAction('report');
                         }
                     }
                 } catch (e) {
@@ -7399,6 +7549,9 @@
             console.log('✅ Photo added to chat:', panel);
             toast('Photo ajoutée');
             
+            // ═══ GAMIFICATION: Track photo upload ═══
+            trackAction('photo');
+            
             // ═══ Save photo to database ═══
             if (currentProjectId && currentChatId[panel]) {
                 try {
@@ -7674,6 +7827,9 @@
                     extractBtn.innerHTML = '<span class="icon"><svg><use href="#icon-check"/></svg></span> Extrait';
                     extractBtn.classList.add('success');
                 }
+                
+                // ═══ GAMIFICATION: Track OCR extraction ═══
+                trackAction('ocr');
                 
                 toast('Extraction terminée');
                 scrollToBottom(panel);
@@ -8501,6 +8657,221 @@
         });
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', setViewportHeight);
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // GAMIFICATION - PHASE 1 (WEEKLY STATS)
+        // ═══════════════════════════════════════════════════════════════
+        
+        const GAMIFICATION_CONFIG = {
+            actions: {
+                report: { minutes: 50, euros: 40.00 },
+                ocr: { minutes: 10, euros: 8.00 },
+                photo: { minutes: 3, euros: 2.50 },
+                message: { minutes: 1, euros: 0.80 }
+            },
+            messages: [
+                { threshold: 0, text: "Lance-toi !", emoji: "🚀" },
+                { threshold: 50, text: "Bien joué", emoji: "💪" },
+                { threshold: 100, text: "Tu es efficace !", emoji: "⚡" },
+                { threshold: 200, text: "Machine de guerre", emoji: "🔥" },
+                { threshold: 500, text: "Expert FixAIR", emoji: "🏆" },
+                { threshold: 1000, text: "Légende", emoji: "👑" }
+            ],
+            weeklyGoal: 200 // € objectif hebdomadaire
+        };
+        
+        // Track action to database
+        async function trackAction(actionType, projectId = null) {
+            if (!currentUserId) return;
+            
+            const config = GAMIFICATION_CONFIG.actions[actionType];
+            if (!config) {
+                console.warn('Action type inconnu:', actionType);
+                return;
+            }
+            
+            try {
+                const { error } = await db.from('user_actions').insert({
+                    user_id: currentUserId,
+                    action_type: actionType,
+                    minutes_saved: config.minutes,
+                    euros_saved: config.euros,
+                    project_id: projectId || currentProjectId
+                });
+                
+                if (error) {
+                    // Si table n'existe pas encore, ignorer silencieusement
+                    if (error.code === '42P01') {
+                        console.log('⚠️ Table user_actions pas encore créée');
+                        return;
+                    }
+                    throw error;
+                }
+                
+                console.log(`✅ Action trackée: ${actionType} (+${config.minutes}min, +${config.euros}€)`);
+                
+                // Rafraîchir les stats
+                await refreshWeeklyStats();
+                
+            } catch (err) {
+                console.error('Erreur tracking action:', err);
+            }
+        }
+        
+        // Get Monday of current week
+        function getWeekStart() {
+            const now = new Date();
+            const dayOfWeek = now.getDay();
+            const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+            const monday = new Date(now);
+            monday.setDate(now.getDate() + mondayOffset);
+            monday.setHours(0, 0, 0, 0);
+            return monday;
+        }
+        
+        // Get weekly stats from database
+        async function getWeeklyStats() {
+            if (!currentUserId) return null;
+            
+            try {
+                const monday = getWeekStart();
+                
+                const { data, error } = await db
+                    .from('user_actions')
+                    .select('action_type, minutes_saved, euros_saved')
+                    .eq('user_id', currentUserId)
+                    .gte('created_at', monday.toISOString());
+                
+                if (error) {
+                    if (error.code === '42P01') {
+                        console.log('⚠️ Table user_actions pas encore créée');
+                        return null;
+                    }
+                    throw error;
+                }
+                
+                const stats = {
+                    reports: 0,
+                    ocr: 0,
+                    photos: 0,
+                    messages: 0,
+                    totalMinutes: 0,
+                    totalEuros: 0
+                };
+                
+                (data || []).forEach(action => {
+                    stats.totalMinutes += action.minutes_saved || 0;
+                    stats.totalEuros += parseFloat(action.euros_saved) || 0;
+                    
+                    switch(action.action_type) {
+                        case 'report': stats.reports++; break;
+                        case 'ocr': stats.ocr++; break;
+                        case 'photo': stats.photos++; break;
+                        case 'message': stats.messages++; break;
+                    }
+                });
+                
+                return stats;
+                
+            } catch (err) {
+                console.error('Erreur récupération stats:', err);
+                return null;
+            }
+        }
+        
+        // Format time saved
+        function formatTimeSaved(minutes) {
+            if (minutes < 60) return `${minutes}min`;
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            return mins === 0 ? `${hours}h` : `${hours}h${mins.toString().padStart(2, '0')}`;
+        }
+        
+        // Get motivational message
+        function getMotivationalMessage(euros) {
+            const messages = GAMIFICATION_CONFIG.messages;
+            let selected = messages[0];
+            
+            for (const msg of messages) {
+                if (euros >= msg.threshold) selected = msg;
+            }
+            
+            return `${selected.text} ${selected.emoji}`;
+        }
+        
+        // Calculate ring percentage
+        function calculateRingPercentage(euros) {
+            const percentage = Math.min((euros / GAMIFICATION_CONFIG.weeklyGoal) * 100, 100);
+            return Math.round(percentage);
+        }
+        
+        // Update ring SVG
+        function updateStatsRing(percentage) {
+            const ring = document.getElementById('statsRingProgress');
+            if (!ring) return;
+            
+            const circumference = 2 * Math.PI * 54; // r = 54
+            const offset = circumference - (percentage / 100) * circumference;
+            
+            ring.style.strokeDasharray = circumference;
+            ring.style.strokeDashoffset = offset;
+            
+            const percentText = document.getElementById('statsRingPercent');
+            if (percentText) percentText.textContent = `${percentage}%`;
+        }
+        
+        // Get week label
+        function getWeekLabel() {
+            const monday = getWeekStart();
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            
+            const options = { day: 'numeric', month: 'short' };
+            const mondayStr = monday.toLocaleDateString('fr-FR', options);
+            const sundayStr = sunday.toLocaleDateString('fr-FR', options);
+            
+            return `Semaine du ${mondayStr} au ${sundayStr}`;
+        }
+        
+        // Refresh weekly stats display
+        async function refreshWeeklyStats() {
+            const stats = await getWeeklyStats();
+            
+            // Si pas de stats (table pas créée ou pas de données), afficher valeurs par défaut
+            const displayStats = stats || { totalMinutes: 0, totalEuros: 0, reports: 0 };
+            
+            const percentage = calculateRingPercentage(displayStats.totalEuros);
+            const message = getMotivationalMessage(displayStats.totalEuros);
+            const timeSaved = formatTimeSaved(displayStats.totalMinutes);
+            
+            // Mettre à jour le Ring
+            updateStatsRing(percentage);
+            
+            // Mettre à jour les textes
+            const timeEl = document.getElementById('statsTimeSaved');
+            const eurosEl = document.getElementById('statsEurosSaved');
+            const reportsEl = document.getElementById('statsReports');
+            const messageEl = document.getElementById('statsMessage');
+            const weekLabelEl = document.getElementById('statsWeekLabel');
+            
+            if (timeEl) timeEl.textContent = timeSaved;
+            if (eurosEl) eurosEl.textContent = `≈ ${Math.round(displayStats.totalEuros)}€`;
+            if (reportsEl) reportsEl.textContent = displayStats.reports;
+            if (messageEl) messageEl.textContent = message;
+            if (weekLabelEl) weekLabelEl.textContent = getWeekLabel();
+            
+            console.log('📊 Stats hebdo:', {
+                temps: timeSaved,
+                euros: displayStats.totalEuros + '€',
+                rapports: displayStats.reports,
+                ring: percentage + '%'
+            });
+        }
+        
+        // Initialize gamification on login
+        async function initGamification() {
+            await refreshWeeklyStats();
         }
     </script>
     
