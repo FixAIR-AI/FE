@@ -860,7 +860,7 @@
 
         /* PROJECTS LIST */
         .projects { display: flex; flex-direction: column; gap: 10px; }
-        .proj { display: flex; align-items: center; gap: 12px; padding: 14px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+        .proj { display: flex; align-items: center; gap: 12px; padding: 14px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
         .proj:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.15); }
         .proj-icons { display: flex; align-items: center; position: relative; width: 36px; height: 36px; flex-shrink: 0; }
         .proj-icons.dual { width: 44px; height: 40px; }
@@ -1860,27 +1860,28 @@
         /* Scroll to bottom button */
         .scroll-bottom-btn {
             position: absolute;
-            bottom: 80px;
-            right: 16px;
-            width: 36px;
-            height: 36px;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            color: var(--text-dim);
+            background: rgba(30, 35, 44, 0.7);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.6);
             cursor: pointer;
             display: none;
             align-items: center;
             justify-content: center;
             z-index: 10;
             transition: all 0.2s;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
         .scroll-bottom-btn.visible { display: flex; }
         .scroll-bottom-btn:hover { 
-            background: var(--card); 
+            background: rgba(30, 35, 44, 0.9);
             color: var(--text);
-            border-color: rgba(255,255,255,0.15);
+            border-color: rgba(255,255,255,0.2);
         }
         .scroll-bottom-btn .icon { 
             width: 18px; 
@@ -5189,7 +5190,7 @@
             
             const modeLabel = hasBoth ? 'Diagnostic + Rapport' : (hasAssistant ? 'Rapport' : 'Diagnostic');
             
-            const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextMenu(event, '${project.id}', '${escapeHtml(project.title || 'Sans titre')}')"` : '';
+            const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextMenu(event, '${project.id}', '${escapeHtml(project.title || 'Sans titre')}')" ontouchstart="startLongPress(event, '${project.id}', '${escapeHtml(project.title || 'Sans titre')}')" ontouchend="cancelLongPress()" ontouchmove="cancelLongPress()"` : '';
             
             return `
                 <div class="proj" onclick="loadProject('${project.id}')" ${contextMenuAttr} data-project-id="${project.id}">
@@ -5247,15 +5248,59 @@
             currentProjectTitle = projectTitle;
             
             const menu = document.getElementById('projectContextMenu');
-            menu.style.left = event.clientX + 'px';
-            menu.style.top = event.clientY + 'px';
+            
+            // Position menu - use touch point if available, otherwise mouse
+            let x = event.clientX || (event.touches && event.touches[0]?.clientX) || 100;
+            let y = event.clientY || (event.touches && event.touches[0]?.clientY) || 100;
+            
+            // Keep menu within viewport
+            const menuWidth = 160;
+            const menuHeight = 90;
+            if (x + menuWidth > window.innerWidth) x = window.innerWidth - menuWidth - 10;
+            if (y + menuHeight > window.innerHeight) y = window.innerHeight - menuHeight - 10;
+            
+            menu.style.left = x + 'px';
+            menu.style.top = y + 'px';
             menu.classList.add('show');
+            
+            // Haptic feedback on mobile
+            if (navigator.vibrate) navigator.vibrate(50);
             
             // Close menu when clicking elsewhere
             setTimeout(() => {
                 document.addEventListener('click', closeContextMenu, { once: true });
+                document.addEventListener('touchstart', closeContextMenu, { once: true });
             }, 10);
         }
+        
+        // Long-press handling for mobile
+        let longPressTimer = null;
+        let longPressTriggered = false;
+        
+        function startLongPress(event, projectId, projectTitle) {
+            longPressTriggered = false;
+            longPressTimer = setTimeout(() => {
+                longPressTriggered = true;
+                event.preventDefault();
+                showProjectContextMenu(event, projectId, projectTitle);
+            }, 500); // 500ms for long press
+        }
+        
+        function cancelLongPress() {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+        }
+        
+        // Prevent click if long-press was triggered
+        document.addEventListener('click', (e) => {
+            if (longPressTriggered && e.target.closest('.proj')) {
+                e.preventDefault();
+                e.stopPropagation();
+                longPressTriggered = false;
+            }
+        }, true);
         
         function closeContextMenu() {
             const menu = document.getElementById('projectContextMenu');
@@ -5371,34 +5416,47 @@
         // Load a specific project (FIXED: uses separate queries for reliability)
         async function loadProject(projectId) {
             console.log('🔄 Loading project:', projectId);
+            toast('Chargement du projet...');
             
             currentProjectId = projectId;
             currentChatId = { assistant: null, copilot: null };
             projectMessageCount = 0;
             
             try {
-                // Step 1: Get project details (separate query - more reliable)
+                // Step 1: Get project details (without photos first for compatibility)
                 const { data: project, error: projectError } = await db
                     .from('projects')
-                    .select('id, title, brand, original_brand, status, created_at, updated_at, photos')
+                    .select('id, title, brand, original_brand, status, created_at, updated_at')
                     .eq('id', projectId)
                     .single();
                 
                 if (projectError) {
                     console.error('❌ Error loading project:', projectError);
+                    toast('Erreur chargement projet');
                     return;
                 }
                 
                 if (!project) {
                     console.error('❌ Project not found:', projectId);
+                    toast('Projet non trouvé');
                     return;
                 }
                 
                 console.log('✅ Project loaded:', project.title, 'brand:', project.brand);
                 
-                // Load photos into reportPhotos for this project
-                window.reportPhotos = project.photos || [];
-                console.log('📷 Loaded', window.reportPhotos.length, 'photos for project');
+                // Try to load photos separately (column might not exist yet)
+                try {
+                    const { data: projectWithPhotos } = await db
+                        .from('projects')
+                        .select('photos')
+                        .eq('id', projectId)
+                        .single();
+                    window.reportPhotos = projectWithPhotos?.photos || [];
+                    console.log('📷 Loaded', window.reportPhotos.length, 'photos for project');
+                } catch (e) {
+                    console.log('📷 Photos column not available yet');
+                    window.reportPhotos = [];
+                }
                 
                 // Store project title for header
                 currentProjectTitle = project.title || 'Sans titre';
