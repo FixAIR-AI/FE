@@ -7592,6 +7592,37 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
             resultDiv.innerHTML = htmlContent;
         }
         
+        // Format OCR response text into HTML (fallback when htmlContent not saved)
+        function formatOCRResponse(text) {
+            if (!text) return '<span style="color:var(--text-dim);">Aucun texte extrait</span>';
+            
+            // Parse for structured info
+            const structuredInfo = parseOCRForStructuredInfo(text);
+            
+            let html = '';
+            
+            // Add summary box if technical info found
+            if (structuredInfo.hasData) {
+                html += `<div class="ocr-summary">`;
+                html += `<div class="ocr-summary-title">📋 Informations détectées</div>`;
+                html += `<div class="ocr-summary-grid">`;
+                if (structuredInfo.brand) html += `<span class="ocr-summary-label">Marque:</span><span class="ocr-summary-value">${structuredInfo.brand}</span>`;
+                if (structuredInfo.model) html += `<span class="ocr-summary-label">Modèle:</span><span class="ocr-summary-value">${structuredInfo.model}</span>`;
+                if (structuredInfo.serial) html += `<span class="ocr-summary-label">N° série:</span><span class="ocr-summary-value">${structuredInfo.serial}</span>`;
+                if (structuredInfo.errorCodes.length > 0) html += `<span class="ocr-summary-label">Code erreur:</span><span class="ocr-summary-value error">${structuredInfo.errorCodes.join(', ')}</span>`;
+                if (structuredInfo.power) html += `<span class="ocr-summary-label">Puissance:</span><span class="ocr-summary-value">${structuredInfo.power}</span>`;
+                if (structuredInfo.voltage) html += `<span class="ocr-summary-label">Tension:</span><span class="ocr-summary-value">${structuredInfo.voltage}</span>`;
+                if (structuredInfo.refrigerant) html += `<span class="ocr-summary-label">Réfrigérant:</span><span class="ocr-summary-value">${structuredInfo.refrigerant}</span>`;
+                html += `</div></div>`;
+            }
+            
+            // Add the extracted text
+            html += `<div class="ocr-section-title">📝 Texte extrait</div>`;
+            html += `<div class="ocr-raw-text">${escapeHtml(text).replace(/\n/g, '<br>')}</div>`;
+            
+            return html;
+        }
+        
         // Render saved OCR message from database
         function renderOCRMessage(panel, ocrData, sourceImageData) {
             const container = document.getElementById(panel + 'Body');
@@ -7783,7 +7814,7 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
             const input = document.getElementById(panel + 'Input');
             if (input) {
                 input.value = message;
-                sendMessage(panel);
+                sendMsg(panel);
             }
         }
         
@@ -7795,11 +7826,17 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
             // Trouver le texte brut dans la bulle
             const rawTextDiv = quoteMsg.querySelector('.ocr-raw-text');
             if (!rawTextDiv) {
-                toast('Texte non trouvé');
-                return;
+                // Essayer avec le contenu structuré
+                const structuredDiv = quoteMsg.querySelector('.ocr-structured-content');
+                if (!structuredDiv) {
+                    toast('Texte non trouvé');
+                    return;
+                }
             }
             
-            const rawText = rawTextDiv.innerText || rawTextDiv.textContent;
+            const textDiv = quoteMsg.querySelector('.ocr-raw-text') || quoteMsg.querySelector('.ocr-structured-content');
+            const rawText = textDiv.innerText || textDiv.textContent;
+            
             if (!rawText || rawText.length < 10) {
                 toast('Pas assez de texte à analyser');
                 return;
@@ -7811,7 +7848,7 @@ Si c'est le premier message, dis: "Salut ! Tu travailles sur un système ${brand
             const input = document.getElementById(panel + 'Input');
             if (input) {
                 input.value = message;
-                sendMessage(panel);
+                sendMsg(panel);
             }
         }
         
