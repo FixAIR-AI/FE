@@ -4539,12 +4539,13 @@
 
         // Check if already logged in
         if (authToken && currentUser && currentUser.id) {
-            console.log('Auto-login with saved session:', currentUser.email);
+            console.log('🔐 Auto-login with saved session:', currentUser);
             // Auto-login
             setTimeout(() => {
-                document.getElementById('userName').textContent = currentUser.first_name;
-                document.getElementById('profileFirstName').value = currentUser.first_name;
+                document.getElementById('userName').textContent = currentUser.first_name || 'Utilisateur';
+                document.getElementById('profileFirstName').value = currentUser.first_name || '';
                 if (currentUser.email) document.getElementById('profileEmail').value = currentUser.email;
+                console.log('👤 Profile loaded from localStorage:', currentUser.first_name, currentUser.email);
                 
                 // Check if onboarding was completed
                 const onboardingDone = localStorage.getItem('fixair_onboarding_done');
@@ -4815,10 +4816,72 @@
             document.getElementById('profileView').classList.remove('active');
         }
 
-        function saveProfile() {
+        async function saveProfile() {
             const firstName = document.getElementById('profileFirstName').value.trim();
+            const email = document.getElementById('profileEmail').value.trim();
+            
             if (!firstName) { toast('Entrez votre prénom'); return; }
+            
+            // Update UI immediately
             document.getElementById('userName').textContent = firstName;
+            
+            // ═══ SAVE TO LOCALSTORAGE (ALWAYS WORKS) ═══
+            const savedUser = JSON.parse(localStorage.getItem('fixair_user') || '{}');
+            savedUser.first_name = firstName;
+            if (email) savedUser.email = email;
+            localStorage.setItem('fixair_user', JSON.stringify(savedUser));
+            currentUser = savedUser;
+            console.log('✅ Profile saved to localStorage:', savedUser);
+            
+            // ═══ SAVE TO SUPABASE (if user exists) ═══
+            if (savedUser.id && typeof db !== 'undefined') {
+                try {
+                    // Try to update in Supabase users table
+                    const { error } = await db
+                        .from('users')
+                        .upsert({ 
+                            id: savedUser.id,
+                            first_name: firstName,
+                            email: email,
+                            updated_at: new Date().toISOString()
+                        }, { onConflict: 'id' });
+                    
+                    if (error) {
+                        console.log('⚠️ Supabase users update skipped:', error.message);
+                    } else {
+                        console.log('✅ Profile saved to Supabase');
+                    }
+                } catch (e) {
+                    console.log('⚠️ Supabase save skipped:', e.message);
+                }
+            }
+            
+            // ═══ ALSO TRY n8n API (if endpoint exists) ═══
+            if (savedUser.id && authToken) {
+                try {
+                    const response = await fetch(`${API_BASE}/auth/update-profile`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${authToken}`
+                        },
+                        body: JSON.stringify({ 
+                            user_id: savedUser.id,
+                            first_name: firstName,
+                            email: email
+                        })
+                    });
+                    if (response.ok) {
+                        console.log('✅ Profile saved to n8n API');
+                    }
+                } catch (error) {
+                    console.log('⚠️ n8n API update skipped (endpoint may not exist)');
+                }
+            }
+            
+            toast('Profil enregistré !');
+            
+            // Handle onboarding step progression
             if (onboardingStep === 1) {
                 completeStep(1);
                 document.getElementById('step2').classList.remove('locked');
