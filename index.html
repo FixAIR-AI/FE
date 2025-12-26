@@ -3382,16 +3382,31 @@
         
         .rpt-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
         .rpt-group { display: flex; flex-direction: column; gap: 5px; }
-        .rpt-row { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.04); gap: 8px; }
+        
+        /* Row layout: Label: Value (inline, value immediately after label) */
+        .rpt-row { display: flex; align-items: baseline; padding-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.04); gap: 0; flex-wrap: wrap; }
         .rpt-row:last-child { border-bottom: none; padding-bottom: 0; }
         .rpt-row-label { font-size: 11px; color: var(--text-dim); flex-shrink: 0; }
-        .rpt-row-value { font-size: 12px; color: var(--text); font-weight: 500; text-align: right; word-break: break-word; }
+        .rpt-row-label::after { content: ' : '; white-space: pre; }
+        .rpt-row-value { font-size: 12px; color: var(--text); font-weight: 500; word-break: break-word; }
         .rpt-row-value.mono { font-family: 'SF Mono', Monaco, monospace; font-size: 11px; }
         .rpt-row-value.error { color: #ef4444; }
         .rpt-row-value.success { color: #22c55e; }
         
+        /* Checklist styles (travaux effectués) - single icon, aligned */
+        .rpt-checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+        .rpt-checklist li { display: flex; align-items: flex-start; gap: 10px; font-size: 12px; color: rgba(255,255,255,0.8); line-height: 1.5; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 6px; }
+        .rpt-checklist li .check-icon { flex-shrink: 0; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; border-radius: 50%; }
+        .rpt-checklist li.done .check-icon { background: rgba(34,197,94,0.15); color: #22c55e; }
+        .rpt-checklist li.error .check-icon { background: rgba(239,68,68,0.15); color: #ef4444; }
+        .rpt-checklist li.pending .check-icon { background: rgba(245,158,11,0.15); color: #f59e0b; }
+        
         .rpt-measures { display: flex; flex-direction: column; gap: 5px; }
         .rpt-measure { background: rgba(255,255,255,0.03); border-radius: 8px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; }
+        .rpt-measure .measure-label { font-size: 11px; color: rgba(255,255,255,0.7); }
+        .rpt-measure .measure-value { font-size: 12px; font-weight: 600; font-family: 'SF Mono', Monaco, monospace; color: var(--text); }
+        .rpt-measure.ok .measure-value { color: #22c55e; }
+        .rpt-measure.error .measure-value { color: #ef4444; }
         .rpt-measure-info { display: flex; flex-direction: column; gap: 1px; }
         .rpt-measure-name { font-size: 11px; color: rgba(255,255,255,0.7); font-weight: 500; }
         .rpt-measure-note { font-size: 10px; color: var(--text-dim); }
@@ -3414,34 +3429,49 @@
         .rpt-icon.num { background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.6); border: 1px solid var(--border); font-size: 9px; }
         .rpt-item-text { font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.5; }
         
-        .rpt-alerts { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
-        .rpt-alert { padding-left: 10px; border-left: 2px solid #ef4444; }
-        .rpt-alert.warning { border-left-color: #f59e0b; }
-        .rpt-alert.info { border-left-color: #3b82f6; }
-        .rpt-alert.success { border-left-color: #22c55e; }
-        .rpt-alert-title { font-size: 11px; font-weight: 600; color: #ef4444; margin-bottom: 2px; }
+        /* Alert/Reserve styles with proper spacing and separation */
+        .rpt-alerts { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
+        .rpt-alert { padding: 12px 14px; border-radius: 8px; background: rgba(239,68,68,0.06); border-left: 3px solid #ef4444; }
+        .rpt-alert.warning { background: rgba(245,158,11,0.06); border-left-color: #f59e0b; }
+        .rpt-alert.info { background: rgba(59,130,246,0.06); border-left-color: #3b82f6; }
+        .rpt-alert.success { background: rgba(34,197,94,0.06); border-left-color: #22c55e; }
+        .rpt-alert strong { display: block; font-size: 12px; font-weight: 600; color: #ef4444; margin-bottom: 8px; }
+        .rpt-alert.warning strong { color: #f59e0b; }
+        .rpt-alert.info strong { color: #3b82f6; }
+        .rpt-alert.success strong { color: #22c55e; }
+        .rpt-alert p { font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.5; margin: 0; }
+        .rpt-alert-title { font-size: 12px; font-weight: 600; color: #ef4444; margin-bottom: 6px; }
         .rpt-alert.warning .rpt-alert-title { color: #f59e0b; }
         .rpt-alert.info .rpt-alert-title { color: #3b82f6; }
         .rpt-alert.success .rpt-alert-title { color: #22c55e; }
-        .rpt-alert-text { font-size: 12px; color: rgba(255,255,255,0.65); line-height: 1.5; }
+        .rpt-alert-text { font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.5; }
+        
+        /* Result box */
+        .rpt-result { display: flex; align-items: flex-start; gap: 12px; padding: 14px; border-radius: 8px; background: rgba(34,197,94,0.08); }
+        .rpt-result.resolved { background: rgba(34,197,94,0.08); }
+        .rpt-result.unresolved { background: rgba(239,68,68,0.08); }
+        .rpt-result .result-icon { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; background: rgba(34,197,94,0.2); color: #22c55e; flex-shrink: 0; }
+        .rpt-result.unresolved .result-icon { background: rgba(239,68,68,0.2); color: #ef4444; }
+        .rpt-result .result-label { font-size: 13px; font-weight: 600; color: #22c55e; }
+        .rpt-result.unresolved .result-label { color: #ef4444; }
+        .rpt-result .result-desc { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 4px; }
         
         .rpt-table { background: rgba(255,255,255,0.03); border-radius: 8px; overflow: hidden; margin-bottom: 10px; }
         .rpt-table:last-child { margin-bottom: 0; }
         .rpt-table-title { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
         .rpt-th { display: grid; padding: 7px 10px; background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.04); }
-        .rpt-th span { font-size: 9px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.3px; }
-        .rpt-th span.r { text-align: right; }
+        .rpt-th span { font-size: 9px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.3px; text-align: left; }
         .rpt-tr { display: grid; padding: 7px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); }
         .rpt-tr:last-child { border-bottom: none; }
-        .rpt-tr span { font-size: 11px; color: rgba(255,255,255,0.7); overflow: hidden; text-overflow: ellipsis; }
-        .rpt-tr span.r { text-align: right; }
+        .rpt-tr span { font-size: 11px; color: rgba(255,255,255,0.7); overflow: hidden; text-overflow: ellipsis; text-align: left; }
         .rpt-tr span.mono { font-family: 'SF Mono', Monaco, monospace; font-size: 10px; color: var(--text); }
         .rpt-tr span.ok { color: #22c55e; font-weight: 500; }
         .rpt-tr span.err { color: #ef4444; font-weight: 500; }
         .rpt-tr span.warn { color: #f59e0b; font-weight: 500; }
-        .rpt-cols-3 { grid-template-columns: 50px 1fr 40px; }
-        .rpt-cols-4 { grid-template-columns: 36px 1fr 70px 44px; }
-        .rpt-cols-5 { grid-template-columns: 36px 1fr 60px 40px 40px; }
+        /* Table columns - all aligned left */
+        .rpt-cols-3 { grid-template-columns: 50px 1fr 50px; gap: 8px; }
+        .rpt-cols-4 { grid-template-columns: 40px minmax(80px, 1fr) 70px 50px; gap: 8px; }
+        .rpt-cols-5 { grid-template-columns: 40px minmax(80px, 1fr) 60px 50px 50px; gap: 8px; }
         
         .rpt-photos { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
         .rpt-photo { position: relative; aspect-ratio: 4/3; border-radius: 8px; overflow: hidden; background: rgba(255,255,255,0.03); }
@@ -6825,7 +6855,7 @@ INSTRUCTIONS:
                     <div class="rpt-label">Adressage - Unités Intérieures</div>
                     <div class="rpt-table">
                         <div class="rpt-th rpt-cols-5">
-                            <span>Adr</span><span>Modèle</span><span>Zone</span><span>kW</span><span class="r">État</span>
+                            <span>Adr</span><span>Modèle</span><span>Zone</span><span>kW</span><span>État</span>
                         </div>`;
                 data.unites_interieures.forEach(ui => {
                     const statusCls = ui.etat === 'OK' ? 'ok' : (ui.etat && ui.etat !== 'N/A' ? 'err' : 'warn');
@@ -6835,7 +6865,7 @@ INSTRUCTIONS:
                             <span>${esc(ui.modele || '')}</span>
                             <span>${esc(ui.zone || '')}</span>
                             <span>${esc(ui.puissance || '')}</span>
-                            <span class="r ${statusCls}">${esc(ui.etat || '')}</span>
+                            <span class="${statusCls}">${esc(ui.etat || '')}</span>
                         </div>`;
                 });
                 html += `</div></div>`;
@@ -6848,14 +6878,14 @@ INSTRUCTIONS:
                     <div class="rpt-label">Codes Défaut</div>
                     <div class="rpt-table">
                         <div class="rpt-th rpt-cols-3">
-                            <span>Code</span><span>Description</span><span class="r">UI</span>
+                            <span>Code</span><span>Description</span><span>UI</span>
                         </div>`;
                 data.codes_defaut.forEach(cd => {
                     html += `
                         <div class="rpt-tr rpt-cols-3">
                             <span class="mono">${esc(cd.code || '')}</span>
                             <span>${esc(cd.description || '')}</span>
-                            <span class="r">${esc(cd.ui || '—')}</span>
+                            <span>${esc(cd.ui || '—')}</span>
                         </div>`;
                 });
                 html += `</div></div>`;
@@ -7642,6 +7672,17 @@ INSTRUCTIONS:
                 const filename = `Rapport_${data.brand || 'FixAIR'}_${data.reference || new Date().toISOString().split('T')[0]}.pdf`;
                 doc.save(filename);
                 
+                // Mark report as completed (for manager visibility)
+                if (lastReportData) {
+                    lastReportData.status = 'complet';
+                    lastReportData.exported_at = new Date().toISOString();
+                    updateDrawerPreview(lastReportData);
+                    console.log('📄 Report exported and marked as complete');
+                }
+                
+                // Track gamification
+                trackAction('report');
+                
                 toast('PDF téléchargé !');
                 
             } catch (error) {
@@ -7662,6 +7703,27 @@ INSTRUCTIONS:
             
             if (!previewContent) return;
             
+            // Check if we have any meaningful data beyond just brand/date
+            const hasData = data && (
+                data.type_intervention ||
+                data.client ||
+                data.site ||
+                data.systeme ||
+                data.codes_defaut ||
+                data.travaux_effectues ||
+                data.mesures ||
+                data.resultat ||
+                data.resume
+            );
+            
+            if (!hasData) {
+                // Show empty state
+                if (emptyState) emptyState.style.display = '';
+                previewContent.style.display = 'none';
+                if (reportBtn) reportBtn.classList.remove('has-data');
+                return;
+            }
+            
             // Hide empty state, show preview
             if (emptyState) emptyState.style.display = 'none';
             previewContent.style.display = 'block';
@@ -7669,11 +7731,41 @@ INSTRUCTIONS:
             // Add has-data class to button to show pulse
             if (reportBtn) reportBtn.classList.add('has-data');
             
-            // Generate preview HTML (reuse renderReport logic but simplified)
-            const previewHtml = renderReportPreview(data);
+            // Calculate completion percentage for manager visibility
+            const completionStatus = calculateReportCompletion(data);
+            
+            // Generate preview HTML (only filled sections)
+            const previewHtml = renderReportPreview(data, completionStatus);
             previewContent.innerHTML = previewHtml;
             
-            console.log('📋 Drawer preview updated');
+            console.log('📋 Drawer preview updated - Completion:', completionStatus.percentage + '%');
+        }
+        
+        // Calculate report completion for manager visibility
+        function calculateReportCompletion(data) {
+            const fields = {
+                type_intervention: !!data.type_intervention,
+                client: !!(data.client && data.client.societe),
+                site: !!(data.site && (data.site.adresse || data.site.ville)),
+                systeme: !!(data.systeme && (data.systeme.type || data.systeme.modele)),
+                codes_defaut: !!(data.codes_defaut && data.codes_defaut.length > 0),
+                travaux_effectues: !!(data.travaux_effectues && data.travaux_effectues.length > 0),
+                mesures: !!(data.mesures && data.mesures.length > 0),
+                resultat: !!data.resultat
+            };
+            
+            const filled = Object.values(fields).filter(v => v).length;
+            const total = Object.keys(fields).length;
+            const percentage = Math.round((filled / total) * 100);
+            
+            return {
+                fields,
+                filled,
+                total,
+                percentage,
+                isComplete: percentage >= 75, // Consider 75%+ as complete
+                status: percentage >= 75 ? 'complet' : (percentage >= 25 ? 'en_cours' : 'debut')
+            };
         }
         
         // Build partial report from conversation
@@ -7684,6 +7776,11 @@ INSTRUCTIONS:
             const userMessages = history.filter(m => m.role === 'user').map(m => m.content);
             const allText = userMessages.join(' ').toLowerCase();
             const allTextOriginal = userMessages.join(' ');
+            
+            // If no messages yet, don't show anything
+            if (userMessages.length === 0) {
+                return;
+            }
             
             // Get brand display name
             const brandNames = {
@@ -7797,19 +7894,13 @@ INSTRUCTIONS:
                 }
             }
             
-            // Always update preview - show at minimum the brand and date
+            // Update the stored data and refresh preview
             lastReportData = partialData;
             updateDrawerPreview(partialData);
-            
-            // Hide empty state
-            const emptyState = document.getElementById('reportPreviewEmpty');
-            if (emptyState) emptyState.style.display = 'none';
-            const previewContent = document.getElementById('reportPreviewContent');
-            if (previewContent) previewContent.style.display = 'block';
         }
         
-        // Render simplified report preview for drawer
-        function renderReportPreview(data) {
+        // Render simplified report preview for drawer (only shows filled sections)
+        function renderReportPreview(data, completionStatus) {
             if (!data) return '';
             
             const brandNames = {
@@ -7842,7 +7933,23 @@ INSTRUCTIONS:
                 }
             }
             
+            // Completion info
+            const completion = completionStatus || { percentage: 0, status: 'debut' };
+            
             let html = `<div class="rpt" style="margin:0;">`;
+            
+            // Completion progress bar (for manager visibility)
+            const progressColor = completion.percentage >= 75 ? '#22c55e' : (completion.percentage >= 25 ? '#f59e0b' : '#ef4444');
+            html += `
+            <div class="rpt-progress" style="padding: 8px 12px; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px;">Construction du rapport</span>
+                    <span style="font-size: 11px; font-weight: 600; color: ${progressColor};">${completion.percentage}%</span>
+                </div>
+                <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;">
+                    <div style="height: 100%; width: ${completion.percentage}%; background: ${progressColor}; border-radius: 2px; transition: width 0.3s;"></div>
+                </div>
+            </div>`;
             
             // Header
             html += `
@@ -7949,14 +8056,14 @@ INSTRUCTIONS:
                 </div>`;
             }
             
-            // Réserves
+            // Réserves - each in its own block with gap
             if (data.reserves && data.reserves.length > 0) {
-                html += `<div class="rpt-section"><div class="rpt-label">Réserves</div>`;
+                html += `<div class="rpt-section"><div class="rpt-label">Réserves</div><div class="rpt-alerts">`;
                 data.reserves.forEach(r => {
                     const cls = r.type === 'danger' ? 'danger' : 'warning';
                     html += `<div class="rpt-alert ${cls}"><strong>${r.titre || 'Attention'}</strong><p>${r.texte}</p></div>`;
                 });
-                html += `</div>`;
+                html += `</div></div>`;
             }
             
             // Technicien
