@@ -4833,32 +4833,62 @@
             currentUser = savedUser;
             console.log('✅ Profile saved to localStorage:', savedUser);
             
-            // ═══ SAVE TO SUPABASE (if user exists) ═══
+            let dbSaveSuccess = false;
+            
+            // ═══ SAVE TO SUPABASE users table ═══
             if (savedUser.id && typeof db !== 'undefined') {
                 try {
-                    // Try to update in Supabase users table
-                    const { error } = await db
+                    console.log('🔄 Updating Supabase users table...', {
+                        id: savedUser.id,
+                        first_name: firstName,
+                        email: email
+                    });
+                    
+                    const { data, error } = await db
                         .from('users')
-                        .upsert({ 
-                            id: savedUser.id,
+                        .update({ 
                             first_name: firstName,
                             email: email,
                             updated_at: new Date().toISOString()
-                        }, { onConflict: 'id' });
+                        })
+                        .eq('id', savedUser.id)
+                        .select();
                     
                     if (error) {
-                        console.log('⚠️ Supabase users update skipped:', error.message);
+                        console.error('❌ Supabase update error:', error);
+                        
+                        // If table doesn't exist or record not found, try insert
+                        if (error.code === '42P01' || error.code === 'PGRST116') {
+                            console.log('⚠️ Table or record not found, trying upsert...');
+                            const { error: upsertError } = await db
+                                .from('users')
+                                .upsert({ 
+                                    id: savedUser.id,
+                                    first_name: firstName,
+                                    email: email,
+                                    updated_at: new Date().toISOString()
+                                });
+                            
+                            if (!upsertError) {
+                                console.log('✅ Profile upserted to Supabase');
+                                dbSaveSuccess = true;
+                            } else {
+                                console.error('❌ Upsert also failed:', upsertError);
+                            }
+                        }
                     } else {
-                        console.log('✅ Profile saved to Supabase');
+                        console.log('✅ Profile updated in Supabase:', data);
+                        dbSaveSuccess = true;
                     }
                 } catch (e) {
-                    console.log('⚠️ Supabase save skipped:', e.message);
+                    console.error('❌ Supabase exception:', e);
                 }
             }
             
             // ═══ ALSO TRY n8n API (if endpoint exists) ═══
-            if (savedUser.id && authToken) {
+            if (savedUser.id && authToken && !dbSaveSuccess) {
                 try {
+                    console.log('🔄 Calling n8n update-profile API...');
                     const response = await fetch(`${API_BASE}/auth/update-profile`, {
                         method: 'POST',
                         headers: { 
@@ -4871,15 +4901,25 @@
                             email: email
                         })
                     });
+                    
                     if (response.ok) {
-                        console.log('✅ Profile saved to n8n API');
+                        const data = await response.json();
+                        console.log('✅ Profile saved via n8n API:', data);
+                        dbSaveSuccess = true;
+                    } else {
+                        console.log('⚠️ n8n API returned:', response.status);
                     }
                 } catch (error) {
-                    console.log('⚠️ n8n API update skipped (endpoint may not exist)');
+                    console.log('⚠️ n8n API not available:', error.message);
                 }
             }
             
-            toast('Profil enregistré !');
+            if (dbSaveSuccess) {
+                toast('Profil enregistré ✓');
+            } else {
+                toast('Profil enregistré localement');
+                console.warn('⚠️ Profile only saved to localStorage - database update failed');
+            }
             
             // Handle onboarding step progression
             if (onboardingStep === 1) {
@@ -5276,8 +5316,24 @@
                 
                 // Create brand context message for the AI
                 const brandContext = m === 'assistant' 
-                    ? `[CONTEXTE MARQUE] Cette intervention concerne un système ${brandName}. Tu connais déjà la marque = ${brandName}. NE DEMANDE JAMAIS la marque. Premier message: "Salut ! Tu travailles sur un système ${brandName}. C'est quoi aujourd'hui ? 1. Dépannage 2. Mise en service 3. Maintenance 4. Installation"`
-                    : `[CONTEXTE MARQUE] Ce diagnostic concerne un système ${brandName}. Tu connais déjà la marque = ${brandName}. NE DEMANDE JAMAIS la marque. Utilise la base de connaissances ${brandName}. Premier message: "Salut ! Tu travailles sur un système ${brandName}. Comment puis-je t'aider ?"`;
+                    ? `[CONTEXTE - NOUVELLE CONVERSATION]
+MARQUE: ${brandName}
+MODE: Assistant Rapport
+INSTRUCTIONS STRICTES:
+- Tu connais DÉJÀ la marque = ${brandName}
+- NE DEMANDE JAMAIS la marque, elle est confirmée
+- Demande le type d'intervention: Dépannage, Mise en service, Maintenance, ou Installation
+- Ensuite pose les questions nécessaires pour générer un rapport professionnel
+Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. C'est quoi aujourd'hui ? 1. Dépannage 2. Mise en service 3. Maintenance 4. Installation"`
+                    : `[CONTEXTE - NOUVELLE CONVERSATION]
+MARQUE: ${brandName}
+MODE: Copilot Diagnostic
+INSTRUCTIONS STRICTES:
+- Tu connais DÉJÀ la marque = ${brandName}
+- NE DEMANDE JAMAIS la marque, elle est confirmée
+- Utilise la base de connaissances ${brandName} pour les codes erreur
+- Aide au diagnostic avec des questions ciblées
+Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. Quel est le problème ou code erreur ?"`;
                 
                 chatHistory.assistant = [];
                 chatHistory.copilot = [];
@@ -6355,25 +6411,58 @@
                 // Update chat header with project name
                 updateChatHeader();
                 
-                // ═══ FIX: Add brand context to history for existing projects ═══
-                // This ensures the AI always knows the brand, even when loading existing conversations
-                // Note: brandNames is already declared above in this function
+                // ═══ FIX: Add comprehensive context for existing projects ═══
+                // This ensures the AI knows the brand AND conversation context
                 const projectBrandName = brandNames[brand] || brand;
                 
-                // Add system context as FIRST message in each chat's history
+                // Build conversation summary from loaded messages
                 ['assistant', 'copilot'].forEach(panel => {
-                    const brandContext = panel === 'assistant' 
-                        ? `[CONTEXTE MARQUE] Cette intervention concerne un système ${projectBrandName}. Toutes les questions et le rapport doivent être spécifiques à ${projectBrandName}. NE DEMANDE PAS la marque, tu la connais déjà.`
-                        : `[CONTEXTE MARQUE] Ce diagnostic concerne un système ${projectBrandName}. Utilise la base de connaissances ${projectBrandName}. NE DEMANDE PAS la marque, tu la connais déjà.`;
+                    const history = chatHistory[panel];
+                    const userMessages = history.filter(m => m.role === 'user');
+                    const aiMessages = history.filter(m => m.role === 'assistant');
                     
-                    // Insert system message at the beginning if not already there
-                    const hasSystemMsg = chatHistory[panel].some(m => m.role === 'system');
-                    if (!hasSystemMsg) {
-                        chatHistory[panel].unshift({ role: 'system', content: brandContext });
+                    // Create comprehensive context summary
+                    let contextSummary = `[CONTEXTE PROJET EXISTANT]
+MARQUE: ${projectBrandName}
+PROJET: ${currentProjectTitle || 'Sans titre'}
+MESSAGES PRÉCÉDENTS: ${history.length} messages (${userMessages.length} utilisateur, ${aiMessages.length} IA)
+`;
+
+                    // Add summary of recent conversation topics
+                    if (userMessages.length > 0) {
+                        contextSummary += `
+HISTORIQUE CONVERSATION:
+`;
+                        // Add last 5 user messages as context
+                        const recentUserMsgs = userMessages.slice(-5);
+                        recentUserMsgs.forEach((msg, i) => {
+                            const truncated = msg.content.length > 100 ? msg.content.substring(0, 100) + '...' : msg.content;
+                            contextSummary += `- Utilisateur: "${truncated}"\n`;
+                        });
+                    }
+                    
+                    contextSummary += `
+INSTRUCTIONS:
+- Tu connais DÉJÀ la marque: ${projectBrandName}
+- Tu connais DÉJÀ l'historique ci-dessus
+- NE REDEMANDE PAS ces informations
+- Continue la conversation naturellement
+- Si c'est un rapport (assistant), tu as déjà les infos pour le générer`;
+
+                    // Insert comprehensive context as FIRST message
+                    const existingSystemIndex = history.findIndex(m => m.role === 'system');
+                    if (existingSystemIndex >= 0) {
+                        history[existingSystemIndex].content = contextSummary;
+                    } else {
+                        history.unshift({ role: 'system', content: contextSummary });
                     }
                 });
                 
-                console.log('🏷️ Brand context added for existing project:', projectBrandName);
+                console.log('🏷️ Comprehensive context added for existing project:', projectBrandName);
+                console.log('📝 Chat history lengths:', {
+                    assistant: chatHistory.assistant.length,
+                    copilot: chatHistory.copilot.length
+                });
                 // ═══ END FIX ═══
                 
                 // Open chat with the appropriate mode
@@ -7194,32 +7283,50 @@
                     'general': 'Multi-marques'
                 };
                 
-                // Build payload with simple structure
+                // Build payload with comprehensive context
                 const currentSessionId = sessionIds[panel] || (panel + '-' + (currentProjectId || Date.now()));
                 const currentBrandName = brandNames[brand] || brand || 'general';
                 
-                // IMPORTANT: Limit history to last 20 messages to prevent payload overflow
-                // n8n Simple Memory handles full context, we just need recent context
-                const recentHistory = chatHistory[panel].slice(-20);
+                // IMPORTANT: Include system message + last 20 messages
+                // Make sure system message is always first
+                const systemMsg = chatHistory[panel].find(m => m.role === 'system');
+                const nonSystemMessages = chatHistory[panel].filter(m => m.role !== 'system').slice(-19);
+                const recentHistory = systemMsg 
+                    ? [systemMsg, ...nonSystemMessages]
+                    : nonSystemMessages.slice(-20);
+                
+                // Count previous interactions
+                const previousUserMessages = chatHistory[panel].filter(m => m.role === 'user').length;
+                const previousAiMessages = chatHistory[panel].filter(m => m.role === 'assistant').length;
+                const isExistingConversation = previousUserMessages > 1;
                 
                 const payload = {
                     brand: brand || 'general',
                     brand_name: currentBrandName,
                     panel: panel,
                     message: text,
-                    history: recentHistory, // Limited to last 20 messages
+                    history: recentHistory,
                     session_id: currentSessionId,
                     project_id: currentProjectId || null,
                     chat_id: currentChatId[panel] || null,
                     timestamp: new Date().toISOString(),
-                    is_first_message: chatHistory[panel].filter(m => m.role === 'user').length === 1,
-                    brand_instruction: 'MARQUE: ' + currentBrandName + '. Ne demande jamais la marque.',
-                    system_context: 'MARQUE: ' + currentBrandName + '. ' + (panel === 'assistant' ? 'Rapport.' : 'Diagnostic.')
+                    is_first_message: previousUserMessages === 1,
+                    is_existing_conversation: isExistingConversation,
+                    message_count: previousUserMessages,
+                    brand_instruction: `MARQUE CONFIRMÉE: ${currentBrandName}. NE DEMANDE JAMAIS LA MARQUE.`,
+                    system_context: isExistingConversation 
+                        ? `CONVERSATION EXISTANTE avec ${previousUserMessages} messages. MARQUE: ${currentBrandName}. Continue naturellement sans redemander les infos déjà données.`
+                        : `NOUVELLE CONVERSATION. MARQUE: ${currentBrandName}. ${panel === 'assistant' ? 'Mode Rapport.' : 'Mode Diagnostic.'}`
                 };
                 
                 console.log('📤 Sending to n8n:', N8N_WEBHOOK_URL);
                 console.log('📤 Session ID:', currentSessionId);
-                console.log('📤 History length:', recentHistory.length, '/', chatHistory[panel].length);
+                console.log('📤 Is existing conversation:', isExistingConversation);
+                console.log('📤 History length:', recentHistory.length, '(system msg:', systemMsg ? 'yes' : 'no', ')');
+                console.log('📤 Brand:', currentBrandName);
+                if (systemMsg) {
+                    console.log('📤 System context preview:', systemMsg.content.substring(0, 200) + '...');
+                }
                 
                 // Call n8n webhook
                 const response = await fetch(N8N_WEBHOOK_URL, {
