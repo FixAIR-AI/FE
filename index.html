@@ -2579,6 +2579,283 @@
         .report-progress-fill { height: 100%; width: 0%; background: #3B82F6; border-radius: 2px; transition: width 0.4s ease; }
         .report-progress-text { font-size: 11px; font-weight: 600; color: #3B82F6; white-space: nowrap; }
         
+        /* Styled Select - looks like text field */
+        .styled-select-wrapper {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            min-width: 80px;
+        }
+        .styled-select-display {
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .styled-select-wrapper:hover .styled-select-display {
+            background: rgba(255,255,255,0.03);
+            border-color: var(--border);
+        }
+        .styled-select-wrapper.empty .styled-select-display {
+            color: var(--text-dim);
+            font-style: italic;
+        }
+        .styled-select-hidden {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .rpt-status-wrapper {
+            display: flex;
+            align-items: center;
+        }
+        .rpt-status-wrapper .styled-select-display {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+        }
+        .rpt-status-wrapper .styled-select-wrapper[data-status="en_cours"] .styled-select-display,
+        .rpt-status-wrapper .styled-select-wrapper.empty .styled-select-display {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3B82F6;
+        }
+        .rpt-status-wrapper .styled-select-wrapper[data-status="non_conforme"] .styled-select-display {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+        
+        /* Section dividers */
+        .rpt-section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
+            margin: 16px 0;
+        }
+        
+        /* Section headers */
+        .section-header {
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            color: var(--text) !important;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 12px !important;
+        }
+        
+        /* Table styles for adressage */
+        .rpt-table-wrapper {
+            overflow-x: auto;
+            margin: 8px 0;
+        }
+        .rpt-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+        .rpt-table th {
+            background: var(--card);
+            padding: 6px 8px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-dim);
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        .rpt-table td {
+            padding: 4px 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        .rpt-table tr:hover {
+            background: rgba(255,255,255,0.02);
+        }
+        .rpt-table .editable-field {
+            min-width: 40px;
+        }
+        
+        /* Code defaut item */
+        .rpt-code-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            background: var(--card);
+            border-radius: 6px;
+            margin-bottom: 6px;
+        }
+        .rpt-code-item .code-badge {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        .rpt-code-item .code-desc {
+            flex: 1;
+            color: var(--text);
+        }
+        
+        /* Measures grid */
+        .rpt-measures-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 8px;
+        }
+        .rpt-measure-card {
+            background: var(--card);
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            position: relative;
+        }
+        .rpt-measure-card .measure-label {
+            font-size: 10px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+        .rpt-measure-card .measure-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .rpt-measure-card .measure-unit {
+            font-size: 10px;
+            color: var(--text-dim);
+        }
+        .rpt-measure-card .remove-item-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+        }
+        
+        /* Pending list */
+        .pending-list li.pending {
+            opacity: 0.8;
+        }
+        .pending-list li.pending .check-icon {
+            color: var(--accent);
+        }
+        
+        /* Piece quantity */
+        .piece-qty {
+            min-width: 40px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        /* Result box */
+        .rpt-result-box {
+            background: var(--card);
+            border-radius: 8px;
+            padding: 12px;
+        }
+        .result-status-row, .result-desc-row {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+        .result-label {
+            font-size: 10px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+        .rpt-result-box .styled-select-display {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        /* Photos grid */
+        .photos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+        }
+        .photo-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .photo-item img {
+            width: 100%;
+            aspect-ratio: 4/3;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+        .photo-caption {
+            font-size: 10px;
+            color: var(--text-dim);
+            text-align: center;
+        }
+        .photos-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 30px;
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            color: var(--text-dim);
+            font-size: 12px;
+        }
+        .photos-placeholder svg {
+            opacity: 0.5;
+        }
+        
+        /* Signatures */
+        .signatures-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .signature-box {
+            background: var(--card);
+            border-radius: 8px;
+            padding: 12px;
+        }
+        .signature-label {
+            font-size: 10px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .signature-area {
+            height: 60px;
+            border: 1px dashed var(--border);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+        .signature-area img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        .signature-placeholder {
+            font-size: 11px;
+            color: var(--text-dim);
+            font-style: italic;
+        }
+        .signature-name {
+            font-size: 11px;
+            text-align: center;
+        }
+        
         /* Editable report styles */
         .editable-report .editable-field {
             display: inline-block;
@@ -7933,31 +8210,45 @@ INSTRUCTIONS:
             
             // All trackable fields with weights (more important = higher weight)
             const fieldChecks = {
-                // Essential fields (weight: 2)
-                type_intervention: { filled: isFilled(data.type_intervention), weight: 2 },
-                client_societe: { filled: isFilled(data.client?.societe), weight: 2 },
+                // Essential fields (weight: 3) - Required for a valid report
+                type_intervention: { filled: isFilled(data.type_intervention), weight: 3 },
+                client_societe: { filled: isFilled(data.client?.societe), weight: 3 },
+                site_adresse: { filled: isFilled(data.site?.adresse), weight: 3 },
+                resultat_status: { filled: isFilled(data.resultat?.status), weight: 3 },
+                
+                // Very important fields (weight: 2)
                 systeme_modele: { filled: isFilled(data.systeme?.modele), weight: 2 },
-                resultat_status: { filled: isFilled(data.resultat?.status), weight: 2 },
+                systeme_type: { filled: isFilled(data.systeme?.type), weight: 2 },
+                site_ville: { filled: isFilled(data.site?.ville), weight: 2 },
+                travaux_effectues: { filled: hasItems(data.travaux_effectues), weight: 2 },
+                dates_debut: { filled: isFilled(data.dates?.debut_date), weight: 2 },
                 
                 // Important fields (weight: 1.5)
-                site_adresse: { filled: isFilled(data.site?.adresse), weight: 1.5 },
-                site_ville: { filled: isFilled(data.site?.ville), weight: 1.5 },
-                systeme_type: { filled: isFilled(data.systeme?.type), weight: 1.5 },
-                travaux_effectues: { filled: hasItems(data.travaux_effectues), weight: 1.5 },
+                reference: { filled: isFilled(data.reference), weight: 1.5 },
+                resume: { filled: isFilled(data.resume), weight: 1.5 },
+                client_contact: { filled: isFilled(data.client?.contact), weight: 1.5 },
+                technicien_nom: { filled: isFilled(data.technicien?.nom), weight: 1.5 },
+                resultat_description: { filled: isFilled(data.resultat?.description), weight: 1.5 },
                 
-                // Optional but valuable (weight: 1)
-                reference: { filled: isFilled(data.reference), weight: 1 },
-                resume: { filled: isFilled(data.resume), weight: 1 },
-                client_contact: { filled: isFilled(data.client?.contact), weight: 1 },
+                // Valuable fields (weight: 1)
                 client_telephone: { filled: isFilled(data.client?.telephone), weight: 1 },
                 systeme_serie: { filled: isFilled(data.systeme?.serie), weight: 1 },
-                systeme_fluide: { filled: isFilled(data.systeme?.fluide), weight: 1 },
+                fluide_type: { filled: isFilled(data.fluide?.type), weight: 1 },
                 codes_defaut: { filled: hasItems(data.codes_defaut), weight: 1 },
                 mesures: { filled: hasItems(data.mesures), weight: 1 },
+                rapport_technicien: { filled: isFilled(data.rapport_technicien), weight: 1 },
+                technicien_arrivee: { filled: isFilled(data.technicien?.heure_arrivee), weight: 1 },
+                technicien_depart: { filled: isFilled(data.technicien?.heure_depart), weight: 1 },
                 
-                // Bonus (weight: 0.5)
-                technicien_nom: { filled: isFilled(data.technicien?.nom), weight: 0.5 },
+                // Bonus fields (weight: 0.5)
+                site_numero_affaire: { filled: isFilled(data.site?.numero_affaire), weight: 0.5 },
+                systeme_puissance: { filled: isFilled(data.systeme?.puissance), weight: 0.5 },
+                fluide_charge: { filled: isFilled(data.fluide?.charge_totale), weight: 0.5 },
+                adressage: { filled: hasItems(data.adressage), weight: 0.5 },
+                pieces: { filled: hasItems(data.pieces), weight: 0.5 },
+                travaux_prevoir: { filled: hasItems(data.travaux_prevoir), weight: 0.5 },
                 reserves: { filled: hasItems(data.reserves), weight: 0.5 },
+                remarques: { filled: isFilled(data.remarques), weight: 0.5 },
                 photos: { filled: !!(window.reportPhotos && window.reportPhotos.length > 0), weight: 0.5 }
             };
             
@@ -8123,7 +8414,7 @@ INSTRUCTIONS:
         }
         
         // Render EDITABLE report template for drawer
-        // Shows ALL fields (filled or placeholder) - user can click to edit any field
+        // Comprehensive structure based on Mitsubishi MES/VC reports
         function renderReportPreview(data, completionStatus) {
             const reportData = data || {};
             
@@ -8143,6 +8434,7 @@ INSTRUCTIONS:
             const brandClass = reportData.brand_key || brand || 'general';
             const brandName = brandNames[brandClass] || reportData.brand || brandNames[brand] || 'FixAIR';
             const today = new Date().toLocaleDateString('fr-FR');
+            const now = new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
             
             // Helper to create editable field
             const editableField = (key, value, placeholder, isTextarea = false) => {
@@ -8162,9 +8454,40 @@ INSTRUCTIONS:
                 return `<span class="editable-field ${emptyClass}" contenteditable="true" data-field="${parent}.${key}" data-placeholder="${placeholder}">${displayValue}</span>`;
             };
             
+            // Helper for styled dropdown that looks like text
+            const styledSelect = (key, value, options, defaultText) => {
+                const hasValue = value && value !== '';
+                const displayValue = hasValue ? value : defaultText;
+                const emptyClass = hasValue ? '' : 'empty';
+                const optionsHtml = options.map(opt => 
+                    `<option value="${opt}" ${value === opt ? 'selected' : ''}>${opt}</option>`
+                ).join('');
+                return `<div class="styled-select-wrapper ${emptyClass}">
+                    <span class="styled-select-display">${displayValue}</span>
+                    <select class="styled-select-hidden" data-field="${key}" onchange="updateReportField('${key}', this.value); this.previousElementSibling.textContent = this.value || '${defaultText}'; this.parentElement.classList.toggle('empty', !this.value);">
+                        <option value="">${defaultText}</option>
+                        ${optionsHtml}
+                    </select>
+                </div>`;
+            };
+            
+            // Status display helper
+            const getStatusDisplay = (status) => {
+                const statusMap = {
+                    'en_cours': { text: 'En cours', class: 'en-cours' },
+                    'conforme': { text: 'Conforme', class: 'conforme' },
+                    'non_conforme': { text: 'Non conforme', class: 'non-conforme' }
+                };
+                return statusMap[status] || statusMap['en_cours'];
+            };
+            
+            const statusInfo = getStatusDisplay(reportData.status);
+            
             let html = `<div class="rpt editable-report" style="margin:0;">`;
             
-            // Header
+            // ═══════════════════════════════════════════════════════════════
+            // SECTION 1: HEADER - Identification & Status
+            // ═══════════════════════════════════════════════════════════════
             html += `
             <div class="rpt-header">
                 <div class="rpt-header-top">
@@ -8172,12 +8495,8 @@ INSTRUCTIONS:
                         <div class="rpt-brand ${brandClass}">${brandName}</div>
                         <h1 class="rpt-title">Rapport d'intervention</h1>
                     </div>
-                    <div class="rpt-status-select">
-                        <select class="status-dropdown" data-field="status" onchange="updateReportField('status', this.value)">
-                            <option value="en_cours" ${(!reportData.status || reportData.status === 'en_cours') ? 'selected' : ''}>En cours</option>
-                            <option value="conforme" ${reportData.status === 'conforme' ? 'selected' : ''}>Conforme</option>
-                            <option value="non_conforme" ${reportData.status === 'non_conforme' ? 'selected' : ''}>Non conforme</option>
-                        </select>
+                    <div class="rpt-status-wrapper">
+                        ${styledSelect('status', reportData.status, ['en_cours', 'conforme', 'non_conforme'], 'En cours')}
                     </div>
                 </div>
                 <div class="rpt-meta-editable">
@@ -8187,13 +8506,7 @@ INSTRUCTIONS:
                     </div>
                     <div class="meta-item">
                         <span class="meta-label">Type</span>
-                        <select class="type-dropdown" data-field="type_intervention" onchange="updateReportField('type_intervention', this.value)">
-                            <option value="" ${!reportData.type_intervention ? 'selected' : ''}>Sélectionner...</option>
-                            <option value="SAV / Dépannage" ${reportData.type_intervention === 'SAV / Dépannage' ? 'selected' : ''}>SAV / Dépannage</option>
-                            <option value="Mise en service" ${reportData.type_intervention === 'Mise en service' ? 'selected' : ''}>Mise en service</option>
-                            <option value="Maintenance" ${reportData.type_intervention === 'Maintenance' ? 'selected' : ''}>Maintenance</option>
-                            <option value="Installation" ${reportData.type_intervention === 'Installation' ? 'selected' : ''}>Installation</option>
-                        </select>
+                        ${styledSelect('type_intervention', reportData.type_intervention, ['SAV / Dépannage', 'Mise en service', 'Maintenance', 'Installation', 'Visite constructeur'], 'Type d\'intervention')}
                     </div>
                     <div class="meta-item">
                         <span class="meta-label">Date</span>
@@ -8204,47 +8517,131 @@ INSTRUCTIONS:
             
             html += `<div class="rpt-card">`;
             
-            // Résumé - always show
+            // ═══════════════════════════════════════════════════════════════
+            // SECTION 2: INFORMATIONS GÉNÉRALES
+            // ═══════════════════════════════════════════════════════════════
+            
+            // Résumé
             html += `
             <div class="rpt-section">
-                <div class="rpt-label">Résumé</div>
-                ${editableField('resume', reportData.resume || '', 'Décrivez brièvement l\'intervention...', true)}
+                <div class="rpt-label">Résumé de l'intervention</div>
+                ${editableField('resume', reportData.resume || '', 'Description synthétique de l\'intervention réalisée...', true)}
             </div>`;
             
-            // Client & Site - always show
+            // Client & Site en grid
             html += `<div class="rpt-section"><div class="rpt-grid">`;
             
-            // Client
-            html += `<div class="rpt-group"><div class="rpt-label">Client</div>`;
+            // Informations Site
+            html += `<div class="rpt-group"><div class="rpt-label">Informations Site</div>`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">N° Affaire</span><span class="rpt-row-value">${editableNested('site', 'numero_affaire', reportData.site?.numero_affaire || '', 'Numéro d\'affaire')}</span></div>`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Lieu</span><span class="rpt-row-value">${editableNested('site', 'adresse', reportData.site?.adresse || '', 'Adresse du site')}</span></div>`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Ville</span><span class="rpt-row-value">${editableNested('site', 'ville', reportData.site?.ville || '', 'Code postal + Ville')}</span></div>`;
+            html += `</div>`;
+            
+            // Informations Client
+            html += `<div class="rpt-group"><div class="rpt-label">Informations Client</div>`;
             html += `<div class="rpt-row"><span class="rpt-row-label">Société</span><span class="rpt-row-value">${editableNested('client', 'societe', reportData.client?.societe || '', 'Nom de l\'entreprise')}</span></div>`;
             html += `<div class="rpt-row"><span class="rpt-row-label">Contact</span><span class="rpt-row-value">${editableNested('client', 'contact', reportData.client?.contact || '', 'Nom du contact')}</span></div>`;
             html += `<div class="rpt-row"><span class="rpt-row-label">Téléphone</span><span class="rpt-row-value">${editableNested('client', 'telephone', reportData.client?.telephone || '', '06 XX XX XX XX')}</span></div>`;
-            html += `</div>`;
-            
-            // Site
-            html += `<div class="rpt-group"><div class="rpt-label">Site</div>`;
-            html += `<div class="rpt-row"><span class="rpt-row-label">Adresse</span><span class="rpt-row-value">${editableNested('site', 'adresse', reportData.site?.adresse || '', 'Adresse du site')}</span></div>`;
-            html += `<div class="rpt-row"><span class="rpt-row-label">Ville</span><span class="rpt-row-value">${editableNested('site', 'ville', reportData.site?.ville || '', 'Code postal + Ville')}</span></div>`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Réf. Client</span><span class="rpt-row-value">${editableNested('client', 'reference', reportData.client?.reference || '', 'Référence client')}</span></div>`;
             html += `</div>`;
             html += `</div></div>`;
             
-            // Système - always show
-            html += `<div class="rpt-section"><div class="rpt-label">Système</div>`;
-            html += `<div class="rpt-row"><span class="rpt-row-label">Type</span><span class="rpt-row-value">${editableNested('systeme', 'type', reportData.systeme?.type || '', 'VRF, Split, Rooftop...')}</span></div>`;
-            html += `<div class="rpt-row"><span class="rpt-row-label">Modèle</span><span class="rpt-row-value mono">${editableNested('systeme', 'modele', reportData.systeme?.modele || '', 'Référence modèle')}</span></div>`;
-            html += `<div class="rpt-row"><span class="rpt-row-label">N° Série</span><span class="rpt-row-value mono">${editableNested('systeme', 'serie', reportData.systeme?.serie || '', 'Numéro de série')}</span></div>`;
-            html += `<div class="rpt-row"><span class="rpt-row-label">Fluide</span><span class="rpt-row-value">${editableNested('systeme', 'fluide', reportData.systeme?.fluide || '', 'R410A, R32...')}</span></div>`;
+            // Dates d'intervention
+            html += `<div class="rpt-section"><div class="rpt-label">Dates d'intervention</div>`;
+            html += `<div class="rpt-grid">`;
+            html += `<div class="rpt-group">`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Date début</span><span class="rpt-row-value">${editableNested('dates', 'debut_date', reportData.dates?.debut_date || today, 'JJ/MM/AAAA')}</span></div>`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Heure début</span><span class="rpt-row-value">${editableNested('dates', 'debut_heure', reportData.dates?.debut_heure || '', 'HH:MM')}</span></div>`;
             html += `</div>`;
+            html += `<div class="rpt-group">`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Date fin</span><span class="rpt-row-value">${editableNested('dates', 'fin_date', reportData.dates?.fin_date || '', 'JJ/MM/AAAA')}</span></div>`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Heure fin</span><span class="rpt-row-value">${editableNested('dates', 'fin_heure', reportData.dates?.fin_heure || '', 'HH:MM')}</span></div>`;
+            html += `</div>`;
+            html += `</div></div>`;
             
-            // Codes défaut - with add button
+            // ═══════════════════════════════════════════════════════════════
+            // SECTION 3: SYSTÈME & ÉQUIPEMENT
+            // ═══════════════════════════════════════════════════════════════
+            
+            html += `<div class="rpt-section-divider"></div>`;
+            html += `<div class="rpt-section"><div class="rpt-label section-header">Système & Équipement</div>`;
+            html += `<div class="rpt-grid">`;
+            html += `<div class="rpt-group">`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Type système</span><span class="rpt-row-value">${editableNested('systeme', 'type', reportData.systeme?.type || '', 'VRF, Split, Rooftop, PAC...')}</span></div>`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Modèle</span><span class="rpt-row-value mono">${editableNested('systeme', 'modele', reportData.systeme?.modele || '', 'Référence du modèle')}</span></div>`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">N° Série</span><span class="rpt-row-value mono">${editableNested('systeme', 'serie', reportData.systeme?.serie || '', 'Numéro de série')}</span></div>`;
+            html += `</div>`;
+            html += `<div class="rpt-group">`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Puissance</span><span class="rpt-row-value">${editableNested('systeme', 'puissance', reportData.systeme?.puissance || '', 'kW')}</span></div>`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Année install.</span><span class="rpt-row-value">${editableNested('systeme', 'annee_installation', reportData.systeme?.annee_installation || '', 'AAAA')}</span></div>`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Garantie</span><span class="rpt-row-value">${styledSelect('systeme.garantie', reportData.systeme?.garantie, ['Sous garantie', 'Hors garantie'], 'Statut garantie')}</span></div>`;
+            html += `</div>`;
+            html += `</div></div>`;
+            
+            // Fluide frigorigène
+            html += `<div class="rpt-section"><div class="rpt-label">Fluide frigorigène</div>`;
+            html += `<div class="rpt-grid">`;
+            html += `<div class="rpt-group">`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Type fluide</span><span class="rpt-row-value">${styledSelect('fluide.type', reportData.fluide?.type, ['R410A', 'R32', 'R134a', 'R407C', 'R290', 'R744'], 'Type de fluide')}</span></div>`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Charge initiale</span><span class="rpt-row-value">${editableNested('fluide', 'charge_initiale', reportData.fluide?.charge_initiale || '', 'kg')}</span></div>`;
+            html += `</div>`;
+            html += `<div class="rpt-group">`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Type huile</span><span class="rpt-row-value">${editableNested('fluide', 'type_huile', reportData.fluide?.type_huile || '', 'POE, PVE...')}</span></div>`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Charge totale</span><span class="rpt-row-value">${editableNested('fluide', 'charge_totale', reportData.fluide?.charge_totale || '', 'kg')}</span></div>`;
+            html += `</div>`;
+            html += `</div></div>`;
+            
+            // Adressage système (table)
             html += `<div class="rpt-section">
-                <div class="rpt-label">Codes défaut <button class="add-item-btn" onclick="addReportListItem('codes_defaut')">+</button></div>
+                <div class="rpt-label">Adressage du système <button class="add-item-btn" onclick="addReportListItem('adressage')">+</button></div>
+                <div class="rpt-table-wrapper">
+                    <table class="rpt-table">
+                        <thead>
+                            <tr>
+                                <th>Réf. Usine</th>
+                                <th>N° Série</th>
+                                <th>Adresse</th>
+                                <th>Désignation</th>
+                                <th>Commentaire</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="adressage-tbody">`;
+            if (reportData.adressage && reportData.adressage.length > 0) {
+                reportData.adressage.forEach((a, i) => {
+                    html += `<tr class="list-item" data-index="${i}">
+                        <td><span class="editable-field" contenteditable="true" data-field="adressage.${i}.ref_usine" data-placeholder="Réf">${a.ref_usine || ''}</span></td>
+                        <td><span class="editable-field mono" contenteditable="true" data-field="adressage.${i}.serie" data-placeholder="Série">${a.serie || ''}</span></td>
+                        <td><span class="editable-field" contenteditable="true" data-field="adressage.${i}.adresse" data-placeholder="Adr">${a.adresse || ''}</span></td>
+                        <td><span class="editable-field" contenteditable="true" data-field="adressage.${i}.designation" data-placeholder="Désignation">${a.designation || ''}</span></td>
+                        <td><span class="editable-field" contenteditable="true" data-field="adressage.${i}.commentaire" data-placeholder="—">${a.commentaire || ''}</span></td>
+                        <td><button class="remove-item-btn" onclick="removeReportListItem('adressage', ${i})">×</button></td>
+                    </tr>`;
+                });
+            }
+            html += `</tbody></table>
+                </div>
+                <div class="add-item-placeholder" onclick="addReportListItem('adressage')">
+                    <span class="placeholder-text">+ Ajouter une unité</span>
+                </div>
+            </div>`;
+            
+            // ═══════════════════════════════════════════════════════════════
+            // SECTION 4: DIAGNOSTIC & CODES DÉFAUT
+            // ═══════════════════════════════════════════════════════════════
+            
+            html += `<div class="rpt-section-divider"></div>`;
+            
+            // Codes défaut
+            html += `<div class="rpt-section">
+                <div class="rpt-label section-header">Codes défaut <button class="add-item-btn" onclick="addReportListItem('codes_defaut')">+</button></div>
                 <div class="rpt-list" id="codes-defaut-list">`;
             if (reportData.codes_defaut && reportData.codes_defaut.length > 0) {
                 reportData.codes_defaut.forEach((c, i) => {
-                    html += `<div class="rpt-row list-item" data-index="${i}">
-                        <span class="rpt-row-label editable-field" contenteditable="true" data-field="codes_defaut.${i}.code" data-placeholder="Code">${c.code || ''}</span>
-                        <span class="rpt-row-value editable-field" contenteditable="true" data-field="codes_defaut.${i}.description" data-placeholder="Description">${c.description || ''}</span>
+                    html += `<div class="rpt-code-item list-item" data-index="${i}">
+                        <span class="code-badge editable-field" contenteditable="true" data-field="codes_defaut.${i}.code" data-placeholder="Code">${c.code || ''}</span>
+                        <span class="code-desc editable-field" contenteditable="true" data-field="codes_defaut.${i}.description" data-placeholder="Description du code erreur">${c.description || ''}</span>
                         <button class="remove-item-btn" onclick="removeReportListItem('codes_defaut', ${i})">×</button>
                     </div>`;
                 });
@@ -8254,33 +8651,26 @@ INSTRUCTIONS:
             </div>`;
             html += `</div></div>`;
             
-            // Travaux effectués - with add button
-            html += `<div class="rpt-section">
-                <div class="rpt-label">Travaux effectués <button class="add-item-btn" onclick="addReportListItem('travaux_effectues')">+</button></div>
-                <ul class="rpt-checklist editable-list" id="travaux-list">`;
-            if (reportData.travaux_effectues && reportData.travaux_effectues.length > 0) {
-                reportData.travaux_effectues.forEach((t, i) => {
-                    html += `<li class="done list-item" data-index="${i}">
-                        <span class="check-icon">✓</span>
-                        <span class="editable-field" contenteditable="true" data-field="travaux_effectues.${i}.texte" data-placeholder="Description du travail">${t.texte || ''}</span>
-                        <button class="remove-item-btn" onclick="removeReportListItem('travaux_effectues', ${i})">×</button>
-                    </li>`;
-                });
-            }
-            html += `</ul>
-            <div class="add-item-placeholder" onclick="addReportListItem('travaux_effectues')">
-                <span class="placeholder-text">+ Ajouter un travail effectué</span>
-            </div></div>`;
+            // Sécurité système
+            html += `<div class="rpt-section"><div class="rpt-label">Sécurité du système</div>`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">État sécurité</span><span class="rpt-row-value">${styledSelect('securite.etat', reportData.securite?.etat, ['OK', 'À surveiller', 'Critique'], 'État')}</span></div>`;
+            html += `<div class="rpt-row" style="flex-direction:column;align-items:stretch;"><span class="rpt-row-label" style="margin-bottom:4px;">Risques identifiés</span>${editableField('securite.risques', reportData.securite?.risques || '', 'Description des risques identifiés...', true)}</div>`;
+            html += `</div>`;
             
-            // Mesures - with add button
+            // ═══════════════════════════════════════════════════════════════
+            // SECTION 5: MESURES & RELEVÉS
+            // ═══════════════════════════════════════════════════════════════
+            
+            html += `<div class="rpt-section-divider"></div>`;
             html += `<div class="rpt-section">
-                <div class="rpt-label">Mesures <button class="add-item-btn" onclick="addReportListItem('mesures')">+</button></div>
-                <div class="rpt-measures editable-list" id="mesures-list">`;
+                <div class="rpt-label section-header">Relevés & Mesures <button class="add-item-btn" onclick="addReportListItem('mesures')">+</button></div>
+                <div class="rpt-measures-grid" id="mesures-list">`;
             if (reportData.mesures && reportData.mesures.length > 0) {
                 reportData.mesures.forEach((m, i) => {
-                    html += `<div class="rpt-measure list-item" data-index="${i}">
+                    html += `<div class="rpt-measure-card list-item" data-index="${i}">
                         <span class="measure-label editable-field" contenteditable="true" data-field="mesures.${i}.label" data-placeholder="Paramètre">${m.label || ''}</span>
                         <span class="measure-value editable-field" contenteditable="true" data-field="mesures.${i}.valeur" data-placeholder="Valeur">${m.valeur || ''}</span>
+                        <span class="measure-unit editable-field" contenteditable="true" data-field="mesures.${i}.unite" data-placeholder="Unité">${m.unite || ''}</span>
                         <button class="remove-item-btn" onclick="removeReportListItem('mesures', ${i})">×</button>
                     </div>`;
                 });
@@ -8290,32 +8680,96 @@ INSTRUCTIONS:
                 <span class="placeholder-text">+ Ajouter une mesure</span>
             </div></div>`;
             
-            // Diagnostic / Résultat - always show
-            const hasResult = reportData.resultat && (reportData.resultat.status || reportData.resultat.label);
-            html += `
-            <div class="rpt-section">
-                <div class="rpt-label">Diagnostic</div>
-                <div class="rpt-result-editable">
-                    <select class="result-status-dropdown" data-field="resultat.status" onchange="updateReportField('resultat.status', this.value)">
-                        <option value="" ${!reportData.resultat?.status ? 'selected' : ''}>Sélectionner le statut...</option>
-                        <option value="resolu" ${reportData.resultat?.status === 'resolu' ? 'selected' : ''}>✓ Résolu</option>
-                        <option value="en_attente" ${reportData.resultat?.status === 'en_attente' ? 'selected' : ''}>⏳ En attente</option>
-                        <option value="non_resolu" ${reportData.resultat?.status === 'non_resolu' ? 'selected' : ''}>✗ Non résolu</option>
-                    </select>
-                    <div class="result-description">
-                        ${editableField('resultat.description', reportData.resultat?.description || '', 'Description du diagnostic...', true)}
-                    </div>
-                </div>
-            </div>`;
+            // Heures de fonctionnement
+            html += `<div class="rpt-section"><div class="rpt-label">Heures de fonctionnement</div>`;
+            html += `<div class="rpt-grid">`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Heures compresseur</span><span class="rpt-row-value">${editableNested('fonctionnement', 'heures_compresseur', reportData.fonctionnement?.heures_compresseur || '', 'heures')}</span></div>`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Nb démarrages</span><span class="rpt-row-value">${editableNested('fonctionnement', 'nb_demarrages', reportData.fonctionnement?.nb_demarrages || '', 'cycles')}</span></div>`;
+            html += `</div></div>`;
             
-            // Réserves - with add button
+            // ═══════════════════════════════════════════════════════════════
+            // SECTION 6: TRAVAUX EFFECTUÉS & À PRÉVOIR
+            // ═══════════════════════════════════════════════════════════════
+            
+            html += `<div class="rpt-section-divider"></div>`;
+            
+            // Travaux effectués
             html += `<div class="rpt-section">
-                <div class="rpt-label">Réserves / Remarques <button class="add-item-btn" onclick="addReportListItem('reserves')">+</button></div>
+                <div class="rpt-label section-header">Travaux effectués <button class="add-item-btn" onclick="addReportListItem('travaux_effectues')">+</button></div>
+                <ul class="rpt-checklist editable-list" id="travaux-list">`;
+            if (reportData.travaux_effectues && reportData.travaux_effectues.length > 0) {
+                reportData.travaux_effectues.forEach((t, i) => {
+                    html += `<li class="done list-item" data-index="${i}">
+                        <span class="check-icon">✓</span>
+                        <span class="editable-field" contenteditable="true" data-field="travaux_effectues.${i}.texte" data-placeholder="Description du travail effectué">${t.texte || ''}</span>
+                        <button class="remove-item-btn" onclick="removeReportListItem('travaux_effectues', ${i})">×</button>
+                    </li>`;
+                });
+            }
+            html += `</ul>
+            <div class="add-item-placeholder" onclick="addReportListItem('travaux_effectues')">
+                <span class="placeholder-text">+ Ajouter un travail effectué</span>
+            </div></div>`;
+            
+            // Travaux à prévoir
+            html += `<div class="rpt-section">
+                <div class="rpt-label">Travaux à prévoir <button class="add-item-btn" onclick="addReportListItem('travaux_prevoir')">+</button></div>
+                <ul class="rpt-checklist editable-list pending-list" id="travaux-prevoir-list">`;
+            if (reportData.travaux_prevoir && reportData.travaux_prevoir.length > 0) {
+                reportData.travaux_prevoir.forEach((t, i) => {
+                    html += `<li class="pending list-item" data-index="${i}">
+                        <span class="check-icon">→</span>
+                        <span class="editable-field" contenteditable="true" data-field="travaux_prevoir.${i}.texte" data-placeholder="Description du travail à prévoir">${t.texte || ''}</span>
+                        <button class="remove-item-btn" onclick="removeReportListItem('travaux_prevoir', ${i})">×</button>
+                    </li>`;
+                });
+            }
+            html += `</ul>
+            <div class="add-item-placeholder" onclick="addReportListItem('travaux_prevoir')">
+                <span class="placeholder-text">+ Ajouter un travail à prévoir</span>
+            </div></div>`;
+            
+            // Pièces utilisées
+            html += `<div class="rpt-section">
+                <div class="rpt-label">Pièces & Consommables <button class="add-item-btn" onclick="addReportListItem('pieces')">+</button></div>
+                <div class="rpt-list" id="pieces-list">`;
+            if (reportData.pieces && reportData.pieces.length > 0) {
+                reportData.pieces.forEach((p, i) => {
+                    html += `<div class="rpt-row list-item" data-index="${i}">
+                        <span class="rpt-row-label editable-field" contenteditable="true" data-field="pieces.${i}.reference" data-placeholder="Référence">${p.reference || ''}</span>
+                        <span class="rpt-row-value editable-field" contenteditable="true" data-field="pieces.${i}.designation" data-placeholder="Désignation">${p.designation || ''}</span>
+                        <span class="piece-qty editable-field" contenteditable="true" data-field="pieces.${i}.quantite" data-placeholder="Qté">${p.quantite || ''}</span>
+                        <button class="remove-item-btn" onclick="removeReportListItem('pieces', ${i})">×</button>
+                    </div>`;
+                });
+            }
+            html += `<div class="add-item-placeholder" onclick="addReportListItem('pieces')">
+                <span class="placeholder-text">+ Ajouter une pièce</span>
+            </div>`;
+            html += `</div></div>`;
+            
+            // ═══════════════════════════════════════════════════════════════
+            // SECTION 7: RAPPORT TECHNICIEN
+            // ═══════════════════════════════════════════════════════════════
+            
+            html += `<div class="rpt-section-divider"></div>`;
+            html += `<div class="rpt-section"><div class="rpt-label section-header">Rapport du technicien</div>`;
+            html += editableField('rapport_technicien', reportData.rapport_technicien || '', 'Observations détaillées, analyses, conclusions du technicien...', true);
+            html += `</div>`;
+            
+            // Remarques
+            html += `<div class="rpt-section"><div class="rpt-label">Remarques</div>`;
+            html += editableField('remarques', reportData.remarques || '', 'Remarques complémentaires...', true);
+            html += `</div>`;
+            
+            // Réserves
+            html += `<div class="rpt-section">
+                <div class="rpt-label">Réserves <button class="add-item-btn" onclick="addReportListItem('reserves')">+</button></div>
                 <div class="rpt-alerts editable-list" id="reserves-list">`;
             if (reportData.reserves && reportData.reserves.length > 0) {
                 reportData.reserves.forEach((r, i) => {
                     html += `<div class="rpt-alert warning list-item" data-index="${i}">
-                        <strong class="editable-field" contenteditable="true" data-field="reserves.${i}.titre" data-placeholder="Titre">${r.titre || 'Attention'}</strong>
+                        <strong class="editable-field" contenteditable="true" data-field="reserves.${i}.titre" data-placeholder="Titre de la réserve">${r.titre || ''}</strong>
                         <p class="editable-field" contenteditable="true" data-field="reserves.${i}.texte" data-placeholder="Description de la réserve">${r.texte || ''}</p>
                         <button class="remove-item-btn" onclick="removeReportListItem('reserves', ${i})">×</button>
                     </div>`;
@@ -8326,34 +8780,98 @@ INSTRUCTIONS:
                 <span class="placeholder-text">+ Ajouter une réserve</span>
             </div></div>`;
             
-            // Technicien - always show
-            html += `
-            <div class="rpt-section">
-                <div class="rpt-label">Technicien</div>
-                <div class="rpt-grid tech-grid">
-                    <div class="rpt-row"><span class="rpt-row-label">Nom</span><span class="rpt-row-value">${editableNested('technicien', 'nom', reportData.technicien?.nom || '', 'Nom du technicien')}</span></div>
-                    <div class="rpt-row"><span class="rpt-row-label">Arrivée</span><span class="rpt-row-value">${editableNested('technicien', 'heure_arrivee', reportData.technicien?.heure_arrivee || '', 'HH:MM')}</span></div>
-                    <div class="rpt-row"><span class="rpt-row-label">Départ</span><span class="rpt-row-value">${editableNested('technicien', 'heure_depart', reportData.technicien?.heure_depart || '', 'HH:MM')}</span></div>
-                </div>
-            </div>`;
+            // ═══════════════════════════════════════════════════════════════
+            // SECTION 8: RÉSULTAT & CONCLUSION
+            // ═══════════════════════════════════════════════════════════════
             
-            // Photos
+            html += `<div class="rpt-section-divider"></div>`;
+            html += `<div class="rpt-section"><div class="rpt-label section-header">Résultat de l'intervention</div>`;
+            html += `<div class="rpt-result-box">`;
+            html += `<div class="result-status-row">
+                <span class="result-label">Statut</span>
+                ${styledSelect('resultat.status', reportData.resultat?.status, ['resolu', 'en_attente', 'non_resolu'], 'Sélectionner...')}
+            </div>`;
+            html += `<div class="result-desc-row">
+                <span class="result-label">Conclusion</span>
+                ${editableField('resultat.description', reportData.resultat?.description || '', 'Description du résultat et conclusion...', true)}
+            </div>`;
+            html += `</div></div>`;
+            
+            // ═══════════════════════════════════════════════════════════════
+            // SECTION 9: PHOTOS
+            // ═══════════════════════════════════════════════════════════════
+            
+            html += `<div class="rpt-section-divider"></div>`;
             const photos = window.reportPhotos || [];
             html += `<div class="rpt-section">
-                <div class="rpt-label">Photos (${photos.length})</div>`;
+                <div class="rpt-label section-header">Photos (${photos.length})</div>`;
             if (photos.length > 0) {
-                html += `<div style="display:flex;gap:8px;flex-wrap:wrap;">`;
-                photos.slice(0, 4).forEach(p => {
-                    html += `<img src="${p.data || p.url}" style="width:60px;height:45px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">`;
+                html += `<div class="photos-grid">`;
+                photos.forEach((p, i) => {
+                    html += `<div class="photo-item">
+                        <img src="${p.data || p.url}" alt="Photo ${i+1}">
+                        <span class="photo-caption editable-field" contenteditable="true" data-field="photos.${i}.caption" data-placeholder="Titre photo">${p.caption || ''}</span>
+                    </div>`;
                 });
-                if (photos.length > 4) {
-                    html += `<div style="width:60px;height:45px;border-radius:6px;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text-dim);">+${photos.length - 4}</div>`;
-                }
                 html += `</div>`;
             } else {
-                html += `<div class="photos-placeholder">Ajoutez des photos depuis le chat</div>`;
+                html += `<div class="photos-placeholder">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    <span>Ajoutez des photos depuis le chat</span>
+                </div>`;
             }
             html += `</div>`;
+            
+            // ═══════════════════════════════════════════════════════════════
+            // SECTION 10: TECHNICIEN & SIGNATURES
+            // ═══════════════════════════════════════════════════════════════
+            
+            html += `<div class="rpt-section-divider"></div>`;
+            html += `<div class="rpt-section"><div class="rpt-label section-header">Technicien(s)</div>`;
+            html += `<div class="rpt-grid">`;
+            html += `<div class="rpt-group">`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Nom</span><span class="rpt-row-value">${editableNested('technicien', 'nom', reportData.technicien?.nom || '', 'Nom du technicien')}</span></div>`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Entreprise</span><span class="rpt-row-value">${editableNested('technicien', 'entreprise', reportData.technicien?.entreprise || '', 'Nom STA')}</span></div>`;
+            html += `</div>`;
+            html += `<div class="rpt-group">`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Arrivée</span><span class="rpt-row-value">${editableNested('technicien', 'heure_arrivee', reportData.technicien?.heure_arrivee || '', 'HH:MM')}</span></div>`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Départ</span><span class="rpt-row-value">${editableNested('technicien', 'heure_depart', reportData.technicien?.heure_depart || '', 'HH:MM')}</span></div>`;
+            html += `</div>`;
+            html += `</div>`;
+            
+            // Autres techniciens
+            html += `<div class="rpt-row" style="margin-top:8px;"><span class="rpt-row-label">Autre(s) technicien(s)</span><span class="rpt-row-value">${editableNested('technicien', 'autres', reportData.technicien?.autres || '', 'Noms des autres techniciens présents')}</span></div>`;
+            html += `</div>`;
+            
+            // Observation client
+            html += `<div class="rpt-section"><div class="rpt-label">Observation(s) Client</div>`;
+            html += editableField('observation_client', reportData.observation_client || '', 'Observations du client...', true);
+            html += `</div>`;
+            
+            // Signatures (placeholder - en mode preview)
+            html += `<div class="rpt-section signatures-section">
+                <div class="rpt-label">Signatures</div>
+                <div class="rpt-grid signatures-grid">
+                    <div class="signature-box">
+                        <div class="signature-label">Signature Client</div>
+                        <div class="signature-area">
+                            ${reportData.signature_client ? `<img src="${reportData.signature_client}" alt="Signature client">` : '<span class="signature-placeholder">À signer</span>'}
+                        </div>
+                        <div class="signature-name">${editableNested('signatures', 'nom_client', reportData.signatures?.nom_client || '', 'Nom du signataire')}</div>
+                    </div>
+                    <div class="signature-box">
+                        <div class="signature-label">Signature Technicien</div>
+                        <div class="signature-area">
+                            ${reportData.signature_technicien ? `<img src="${reportData.signature_technicien}" alt="Signature technicien">` : '<span class="signature-placeholder">À signer</span>'}
+                        </div>
+                        <div class="signature-name">${editableNested('signatures', 'nom_technicien', reportData.signatures?.nom_technicien || '', 'Nom du signataire')}</div>
+                    </div>
+                </div>
+            </div>`;
             
             html += `</div></div>`;
             
@@ -8409,11 +8927,20 @@ INSTRUCTIONS:
                 case 'travaux_effectues':
                     newItem = { texte: '', status: 'done' };
                     break;
+                case 'travaux_prevoir':
+                    newItem = { texte: '', status: 'pending' };
+                    break;
                 case 'mesures':
-                    newItem = { label: '', valeur: '' };
+                    newItem = { label: '', valeur: '', unite: '' };
                     break;
                 case 'reserves':
                     newItem = { titre: '', texte: '' };
+                    break;
+                case 'adressage':
+                    newItem = { ref_usine: '', serie: '', adresse: '', designation: '', commentaire: '' };
+                    break;
+                case 'pieces':
+                    newItem = { reference: '', designation: '', quantite: '' };
                     break;
                 default:
                     newItem = {};
