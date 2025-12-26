@@ -754,14 +754,10 @@
         @keyframes fireWiggle { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
         .status-text { font-size: 12px; font-weight: 600; color: var(--copilot); text-transform: uppercase; letter-spacing: 1px; }
 
-        /* ==================== GAMIFICATION STATS WIDGET (WEEKLY) ==================== */
-        .stats-widget {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 20px;
-            padding: 20px;
+        /* ==================== GAMIFICATION STATS - FIRE GROWTH ==================== */
+        .stats-section {
             text-align: center;
-            margin-bottom: 16px;
-            border: 1px solid var(--border);
+            margin-bottom: 20px;
         }
         
         .stats-week-label {
@@ -769,14 +765,14 @@
             color: var(--text-dim);
             margin-bottom: 16px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
         }
         
         .stats-ring-container {
             position: relative;
-            width: 140px;
-            height: 140px;
-            margin: 0 auto 16px;
+            width: 160px;
+            height: 160px;
+            margin: 0 auto 20px;
         }
         
         .stats-ring {
@@ -792,12 +788,13 @@
         
         .stats-ring-progress {
             fill: none;
-            stroke: url(#statsGradient);
+            stroke: url(#fireGrowthGradient);
             stroke-width: 10;
             stroke-linecap: round;
             stroke-dasharray: 339.292;
             stroke-dashoffset: 339.292;
-            transition: stroke-dashoffset 0.8s ease;
+            transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: drop-shadow(0 0 12px rgba(234, 88, 12, 0.5));
         }
         
         .stats-ring-content {
@@ -809,70 +806,73 @@
         }
         
         .stats-ring-percent {
-            font-size: 28px;
-            font-weight: 700;
-            background: linear-gradient(135deg, #FF6B35, #FFD700);
+            font-size: 36px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #EA580C, #FCD34D);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
         
-        .stats-details {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-        
-        .stats-row {
+        /* Stats Inline Row */
+        .stats-inline {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 16px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
         }
         
-        .stats-icon {
-            font-size: 16px;
-            width: 24px;
+        .stats-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
         
-        .stats-value {
+        .stats-item-icon {
             font-size: 16px;
-            font-weight: 600;
+        }
+        
+        .stats-item-value {
+            font-size: 15px;
+            font-weight: 700;
             color: var(--text);
-            min-width: 80px;
-            text-align: left;
         }
         
-        .stats-label {
-            font-size: 13px;
+        .stats-item-label {
+            font-size: 12px;
             color: var(--text-dim);
-            text-align: left;
+        }
+        
+        .stats-separator {
+            width: 1px;
+            height: 16px;
+            background: rgba(255, 255, 255, 0.1);
         }
         
         .stats-message {
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 600;
-            color: #FFD700;
-            padding: 10px 16px;
-            background: rgba(255, 215, 0, 0.1);
+            color: #FCD34D;
+            padding: 10px 20px;
+            background: rgba(252, 211, 77, 0.1);
             border-radius: 12px;
             display: inline-block;
         }
         
-        /* Light theme overrides for stats */
-        [data-theme="light"] .stats-widget {
-            background: rgba(0, 0, 0, 0.02);
-            border-color: rgba(0,0,0,0.06);
-        }
-        
+        /* Light theme overrides */
         [data-theme="light"] .stats-ring-bg {
             stroke: rgba(0, 0, 0, 0.08);
         }
         
+        [data-theme="light"] .stats-separator {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        
         [data-theme="light"] .stats-message {
-            background: rgba(255, 107, 53, 0.1);
-            color: #FF6B35;
+            background: rgba(234, 88, 12, 0.1);
+            color: #EA580C;
         }
 
         /* ==================== HOMEPAGE TOGGLE CARDS (V2 STYLE) ==================== */
@@ -3570,55 +3570,54 @@
 
                 <!-- V13 HOMEPAGE CONTENT (hidden during onboarding) -->
                 <div class="homepage-content" id="homepageContent">
-                <!-- GAMIFICATION STATS WIDGET (WEEKLY) -->
-                <div class="stats-widget" id="statsWidget">
+                <!-- GAMIFICATION STATS (FIRE GROWTH) -->
+                <div class="stats-section" id="statsSection">
+                    <!-- Week Label -->
                     <div class="stats-week-label" id="statsWeekLabel">Cette semaine</div>
                     
+                    <!-- Ring -->
                     <div class="stats-ring-container">
                         <svg class="stats-ring" viewBox="0 0 120 120">
-                            <!-- Gradient -->
                             <defs>
-                                <linearGradient id="statsGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                    <stop offset="0%" stop-color="#FF6B35"/>
-                                    <stop offset="100%" stop-color="#FFD700"/>
+                                <!-- Fire Growth Gradient: Braise → Flamme → Or -->
+                                <linearGradient id="fireGrowthGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#92400E"/>
+                                    <stop offset="40%" stop-color="#EA580C"/>
+                                    <stop offset="70%" stop-color="#F97316"/>
+                                    <stop offset="100%" stop-color="#FCD34D"/>
                                 </linearGradient>
                             </defs>
-                            <!-- Cercle de fond -->
-                            <circle 
-                                class="stats-ring-bg"
-                                cx="60" cy="60" r="54" 
-                            />
-                            <!-- Cercle de progression -->
-                            <circle 
-                                id="statsRingProgress"
-                                class="stats-ring-progress"
-                                cx="60" cy="60" r="54" 
-                                transform="rotate(-90 60 60)"
-                            />
+                            <!-- Background circle -->
+                            <circle class="stats-ring-bg" cx="60" cy="60" r="54"/>
+                            <!-- Progress circle -->
+                            <circle id="statsRingProgress" class="stats-ring-progress" cx="60" cy="60" r="54" transform="rotate(-90 60 60)"/>
                         </svg>
                         <div class="stats-ring-content">
                             <span class="stats-ring-percent" id="statsRingPercent">0%</span>
                         </div>
                     </div>
                     
-                    <div class="stats-details">
-                        <div class="stats-row">
-                            <span class="stats-icon">⏱️</span>
-                            <span class="stats-value" id="statsTimeSaved">0min</span>
-                            <span class="stats-label">de temps sauvé</span>
+                    <!-- Stats Row (inline) -->
+                    <div class="stats-inline">
+                        <div class="stats-item">
+                            <span class="stats-item-icon">⏱️</span>
+                            <span class="stats-item-value" id="statsTimeSaved">0min</span>
+                            <span class="stats-item-label">sauvé</span>
                         </div>
-                        <div class="stats-row">
-                            <span class="stats-icon">💰</span>
-                            <span class="stats-value" id="statsEurosSaved">≈ 0€</span>
-                            <span class="stats-label">économisés</span>
+                        <div class="stats-separator"></div>
+                        <div class="stats-item">
+                            <span class="stats-item-icon">💰</span>
+                            <span class="stats-item-value" id="statsEurosSaved">≈0€</span>
                         </div>
-                        <div class="stats-row">
-                            <span class="stats-icon">📋</span>
-                            <span class="stats-value" id="statsReports">0</span>
-                            <span class="stats-label">rapports générés</span>
+                        <div class="stats-separator"></div>
+                        <div class="stats-item">
+                            <span class="stats-item-icon">📋</span>
+                            <span class="stats-item-value" id="statsReports">0</span>
+                            <span class="stats-item-label">rapports</span>
                         </div>
                     </div>
                     
+                    <!-- Motivation Message -->
                     <div class="stats-message" id="statsMessage">Lance-toi ! 🚀</div>
                 </div>
 
