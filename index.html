@@ -3544,6 +3544,8 @@
     <!-- Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <!-- jsPDF for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
     <!-- App wrapper to contain everything and prevent gaps -->
@@ -6625,6 +6627,10 @@ INSTRUCTIONS:
         // RENDER STRUCTURED REPORT - Beautiful Template
         // ═══════════════════════════════════════════════════════════════
         function renderReport(data) {
+            // ═══ STORE FOR PDF EXPORT ═══
+            lastReportData = data;
+            console.log('📊 Report data stored for PDF export:', data);
+            
             // Helper: only show section if it has content
             const has = (val) => val && (Array.isArray(val) ? val.length > 0 : true);
             const esc = (str) => str ? String(str).replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
@@ -6952,13 +6958,628 @@ INSTRUCTIONS:
             return html;
         }
         
-        // Export/Share report functions (placeholders)
+        // ═══════════════════════════════════════════════════════════════
+        // PDF EXPORT - Professional Report Generation
+        // ═══════════════════════════════════════════════════════════════
+        
+        // Store last report data for PDF export
+        let lastReportData = null;
+        
+        // Brand colors for PDF
+        const brandColorsPDF = {
+            mitsubishi: { primary: '#E60012', secondary: '#1a1a2e' },
+            daikin: { primary: '#10B981', secondary: '#1a1a2e' },
+            carrier: { primary: '#3B82F6', secondary: '#1a1a2e' },
+            lg: { primary: '#A50034', secondary: '#1a1a2e' },
+            samsung: { primary: '#1428A0', secondary: '#1a1a2e' },
+            panasonic: { primary: '#0F4C81', secondary: '#1a1a2e' },
+            toshiba: { primary: '#FF0000', secondary: '#1a1a2e' },
+            fujitsu: { primary: '#E4002B', secondary: '#1a1a2e' },
+            hitachi: { primary: '#E60012', secondary: '#1a1a2e' },
+            general: { primary: '#EA580C', secondary: '#1a1a2e' }
+        };
+        
+        // Share report function
         function shareReport() {
-            alert('Fonction de partage à implémenter');
+            if (!lastReportData) {
+                toast('Aucun rapport à partager');
+                return;
+            }
+            
+            // Try native share API
+            if (navigator.share) {
+                const text = generateReportText(lastReportData);
+                navigator.share({
+                    title: 'Rapport d\'intervention FixAIR',
+                    text: text
+                }).catch(err => console.log('Share cancelled'));
+            } else {
+                // Fallback: copy to clipboard
+                const text = generateReportText(lastReportData);
+                navigator.clipboard.writeText(text).then(() => {
+                    toast('Rapport copié dans le presse-papier !');
+                });
+            }
         }
         
+        // Generate plain text version of report
+        function generateReportText(data) {
+            let text = `RAPPORT D'INTERVENTION ${data.brand || 'FixAIR'}\n`;
+            text += `═══════════════════════════════════════\n\n`;
+            
+            if (data.reference) text += `Réf: ${data.reference}\n`;
+            if (data.date) text += `Date: ${data.date}\n`;
+            if (data.type_intervention) text += `Type: ${data.type_intervention}\n`;
+            text += `\n`;
+            
+            if (data.resume) text += `RÉSUMÉ:\n${data.resume}\n\n`;
+            
+            if (data.client) {
+                text += `CLIENT:\n`;
+                if (data.client.societe) text += `  Société: ${data.client.societe}\n`;
+                if (data.client.contact) text += `  Contact: ${data.client.contact}\n`;
+                if (data.client.telephone) text += `  Tél: ${data.client.telephone}\n`;
+                text += `\n`;
+            }
+            
+            if (data.site) {
+                text += `SITE:\n`;
+                if (data.site.adresse) text += `  ${data.site.adresse}\n`;
+                if (data.site.ville) text += `  ${data.site.ville}\n`;
+                text += `\n`;
+            }
+            
+            if (data.systeme) {
+                text += `SYSTÈME:\n`;
+                if (data.systeme.type) text += `  Type: ${data.systeme.type}\n`;
+                if (data.systeme.modele) text += `  Modèle: ${data.systeme.modele}\n`;
+                if (data.systeme.serie) text += `  N° Série: ${data.systeme.serie}\n`;
+                if (data.systeme.fluide) text += `  Fluide: ${data.systeme.fluide}\n`;
+                text += `\n`;
+            }
+            
+            if (data.travaux_effectues && data.travaux_effectues.length > 0) {
+                text += `TRAVAUX EFFECTUÉS:\n`;
+                data.travaux_effectues.forEach(t => {
+                    const icon = t.status === 'done' ? '✓' : (t.status === 'error' ? '✗' : '→');
+                    text += `  ${icon} ${t.texte}\n`;
+                });
+                text += `\n`;
+            }
+            
+            if (data.resultat) {
+                text += `RÉSULTAT: ${data.resultat.label || (data.resultat.status === 'resolu' ? 'Résolu' : 'Non résolu')}\n`;
+            }
+            
+            text += `\n═══════════════════════════════════════\n`;
+            text += `Généré par FixAIR - ${new Date().toLocaleDateString('fr-FR')}\n`;
+            
+            return text;
+        }
+        
+        // Main PDF export function
         function exportReportPDF() {
-            alert('Export PDF à implémenter');
+            if (!lastReportData) {
+                // Try to extract from last AI message
+                const assistantBody = document.getElementById('assistantBody');
+                if (assistantBody) {
+                    const reportDiv = assistantBody.querySelector('.rpt');
+                    if (!reportDiv) {
+                        toast('Aucun rapport à exporter');
+                        return;
+                    }
+                }
+                toast('Aucun rapport à exporter');
+                return;
+            }
+            
+            generatePDF(lastReportData);
+        }
+        
+        // Generate professional PDF
+        async function generatePDF(data) {
+            try {
+                toast('Génération du PDF...');
+                
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4');
+                const pageWidth = 210;
+                const pageHeight = 297;
+                const margin = 15;
+                const contentWidth = pageWidth - (margin * 2);
+                
+                // Get brand colors
+                const brandKey = data.brand_key || 'general';
+                const colors = brandColorsPDF[brandKey] || brandColorsPDF.general;
+                
+                // Helper to convert hex to RGB
+                const hexToRgb = (hex) => {
+                    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                    return result ? {
+                        r: parseInt(result[1], 16),
+                        g: parseInt(result[2], 16),
+                        b: parseInt(result[3], 16)
+                    } : { r: 0, g: 0, b: 0 };
+                };
+                
+                const primaryRgb = hexToRgb(colors.primary);
+                let y = margin;
+                
+                // ═══ HEADER ═══
+                // Brand color bar
+                doc.setFillColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+                doc.rect(0, 0, pageWidth, 25, 'F');
+                
+                // FixAIR Logo text (white)
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(18);
+                doc.setFont('helvetica', 'bold');
+                doc.text('FixAIR', margin, 12);
+                
+                // Brand name
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'normal');
+                doc.text(data.brand || 'Multi-marques', margin, 20);
+                
+                // Report title (right side)
+                doc.setFontSize(10);
+                doc.text("RAPPORT D'INTERVENTION", pageWidth - margin, 12, { align: 'right' });
+                
+                // Reference
+                if (data.reference) {
+                    doc.setFontSize(9);
+                    doc.text(data.reference, pageWidth - margin, 18, { align: 'right' });
+                }
+                
+                // Date
+                if (data.date) {
+                    doc.text(data.date, pageWidth - margin, 23, { align: 'right' });
+                }
+                
+                y = 35;
+                
+                // ═══ STATUS BADGE ═══
+                if (data.status) {
+                    const statusColors = {
+                        'conforme': { r: 34, g: 197, b: 94 },
+                        'non_conforme': { r: 239, g: 68, b: 68 },
+                        'en_cours': { r: 234, g: 179, b: 8 }
+                    };
+                    const statusLabels = {
+                        'conforme': 'CONFORME',
+                        'non_conforme': 'NON CONFORME',
+                        'en_cours': 'EN COURS'
+                    };
+                    const sc = statusColors[data.status] || statusColors.en_cours;
+                    const sl = statusLabels[data.status] || data.status.toUpperCase();
+                    
+                    doc.setFillColor(sc.r, sc.g, sc.b);
+                    doc.roundedRect(margin, y, 35, 7, 2, 2, 'F');
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFontSize(8);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(sl, margin + 17.5, y + 5, { align: 'center' });
+                    
+                    y += 12;
+                }
+                
+                // ═══ RÉSUMÉ ═══
+                if (data.resume) {
+                    doc.setTextColor(30, 30, 30);
+                    doc.setFontSize(11);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('Résumé', margin, y);
+                    y += 6;
+                    
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(10);
+                    doc.setTextColor(60, 60, 60);
+                    const resumeLines = doc.splitTextToSize(data.resume, contentWidth);
+                    doc.text(resumeLines, margin, y);
+                    y += resumeLines.length * 5 + 8;
+                }
+                
+                // ═══ SECTION HELPER ═══
+                const addSection = (title, items, startY) => {
+                    if (!items || items.length === 0) return startY;
+                    
+                    doc.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+                    doc.setFontSize(10);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(title, margin, startY);
+                    startY += 5;
+                    
+                    // Section line
+                    doc.setDrawColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+                    doc.setLineWidth(0.5);
+                    doc.line(margin, startY, margin + 40, startY);
+                    startY += 4;
+                    
+                    doc.setTextColor(30, 30, 30);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(9);
+                    
+                    items.forEach(item => {
+                        if (item.label && item.value) {
+                            doc.setFont('helvetica', 'bold');
+                            doc.text(item.label + ':', margin, startY);
+                            doc.setFont('helvetica', 'normal');
+                            const valueLines = doc.splitTextToSize(String(item.value), contentWidth - 35);
+                            doc.text(valueLines, margin + 35, startY);
+                            startY += valueLines.length * 4 + 2;
+                        }
+                    });
+                    
+                    return startY + 5;
+                };
+                
+                // ═══ CLIENT & SITE (2 columns) ═══
+                const col1X = margin;
+                const col2X = margin + contentWidth / 2 + 5;
+                const colWidth = contentWidth / 2 - 5;
+                let col1Y = y;
+                let col2Y = y;
+                
+                // Client info
+                if (data.client) {
+                    const clientItems = [];
+                    if (data.client.societe) clientItems.push({ label: 'Société', value: data.client.societe });
+                    if (data.client.contact) clientItems.push({ label: 'Contact', value: data.client.contact });
+                    if (data.client.telephone) clientItems.push({ label: 'Téléphone', value: data.client.telephone });
+                    if (data.client.dossier) clientItems.push({ label: 'N° Dossier', value: data.client.dossier });
+                    
+                    if (clientItems.length > 0) {
+                        doc.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+                        doc.setFontSize(10);
+                        doc.setFont('helvetica', 'bold');
+                        doc.text('Client', col1X, col1Y);
+                        col1Y += 5;
+                        doc.setDrawColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+                        doc.line(col1X, col1Y, col1X + 30, col1Y);
+                        col1Y += 4;
+                        
+                        doc.setTextColor(30, 30, 30);
+                        doc.setFontSize(9);
+                        clientItems.forEach(item => {
+                            doc.setFont('helvetica', 'bold');
+                            doc.text(item.label + ':', col1X, col1Y);
+                            doc.setFont('helvetica', 'normal');
+                            doc.text(String(item.value), col1X + 25, col1Y);
+                            col1Y += 5;
+                        });
+                        col1Y += 3;
+                    }
+                }
+                
+                // Site info
+                if (data.site) {
+                    const siteItems = [];
+                    if (data.site.adresse) siteItems.push({ label: 'Adresse', value: data.site.adresse });
+                    if (data.site.ville) siteItems.push({ label: 'Ville', value: data.site.ville });
+                    if (data.site.batiment) siteItems.push({ label: 'Bâtiment', value: data.site.batiment });
+                    if (data.site.acces) siteItems.push({ label: 'Accès', value: data.site.acces });
+                    
+                    if (siteItems.length > 0) {
+                        doc.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+                        doc.setFontSize(10);
+                        doc.setFont('helvetica', 'bold');
+                        doc.text('Site', col2X, col2Y);
+                        col2Y += 5;
+                        doc.line(col2X, col2Y, col2X + 30, col2Y);
+                        col2Y += 4;
+                        
+                        doc.setTextColor(30, 30, 30);
+                        doc.setFontSize(9);
+                        siteItems.forEach(item => {
+                            doc.setFont('helvetica', 'bold');
+                            doc.text(item.label + ':', col2X, col2Y);
+                            doc.setFont('helvetica', 'normal');
+                            const lines = doc.splitTextToSize(String(item.value), colWidth - 25);
+                            doc.text(lines, col2X + 25, col2Y);
+                            col2Y += lines.length * 4 + 1;
+                        });
+                        col2Y += 3;
+                    }
+                }
+                
+                y = Math.max(col1Y, col2Y) + 5;
+                
+                // ═══ SYSTÈME & INTERVENTION (2 columns) ═══
+                col1Y = y;
+                col2Y = y;
+                
+                // Système
+                if (data.systeme) {
+                    const sysItems = [];
+                    if (data.systeme.type) sysItems.push({ label: 'Type', value: data.systeme.type });
+                    if (data.systeme.modele) sysItems.push({ label: 'Modèle', value: data.systeme.modele });
+                    if (data.systeme.serie) sysItems.push({ label: 'N° Série', value: data.systeme.serie });
+                    if (data.systeme.fluide) sysItems.push({ label: 'Fluide', value: data.systeme.fluide });
+                    
+                    if (sysItems.length > 0) {
+                        doc.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+                        doc.setFontSize(10);
+                        doc.setFont('helvetica', 'bold');
+                        doc.text('Système', col1X, col1Y);
+                        col1Y += 5;
+                        doc.line(col1X, col1Y, col1X + 30, col1Y);
+                        col1Y += 4;
+                        
+                        doc.setTextColor(30, 30, 30);
+                        doc.setFontSize(9);
+                        sysItems.forEach(item => {
+                            doc.setFont('helvetica', 'bold');
+                            doc.text(item.label + ':', col1X, col1Y);
+                            doc.setFont('helvetica', 'normal');
+                            doc.text(String(item.value), col1X + 25, col1Y);
+                            col1Y += 5;
+                        });
+                        col1Y += 3;
+                    }
+                }
+                
+                // Intervention
+                if (data.intervention) {
+                    const intItems = [];
+                    if (data.intervention.type) intItems.push({ label: 'Type', value: data.intervention.type });
+                    if (data.intervention.statut) intItems.push({ label: 'Statut', value: data.intervention.statut });
+                    if (data.intervention.probleme) intItems.push({ label: 'Problème', value: data.intervention.probleme });
+                    if (data.intervention.diagnostic) intItems.push({ label: 'Diagnostic', value: data.intervention.diagnostic });
+                    
+                    if (intItems.length > 0) {
+                        doc.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+                        doc.setFontSize(10);
+                        doc.setFont('helvetica', 'bold');
+                        doc.text('Intervention', col2X, col2Y);
+                        col2Y += 5;
+                        doc.line(col2X, col2Y, col2X + 30, col2Y);
+                        col2Y += 4;
+                        
+                        doc.setTextColor(30, 30, 30);
+                        doc.setFontSize(9);
+                        intItems.forEach(item => {
+                            doc.setFont('helvetica', 'bold');
+                            doc.text(item.label + ':', col2X, col2Y);
+                            doc.setFont('helvetica', 'normal');
+                            const lines = doc.splitTextToSize(String(item.value), colWidth - 25);
+                            doc.text(lines, col2X + 25, col2Y);
+                            col2Y += lines.length * 4 + 1;
+                        });
+                        col2Y += 3;
+                    }
+                }
+                
+                y = Math.max(col1Y, col2Y) + 5;
+                
+                // Check for page break
+                if (y > pageHeight - 60) {
+                    doc.addPage();
+                    y = margin;
+                }
+                
+                // ═══ TRAVAUX EFFECTUÉS ═══
+                if (data.travaux_effectues && data.travaux_effectues.length > 0) {
+                    doc.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+                    doc.setFontSize(10);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('Travaux effectués', margin, y);
+                    y += 5;
+                    doc.line(margin, y, margin + 40, y);
+                    y += 5;
+                    
+                    doc.setFontSize(9);
+                    data.travaux_effectues.forEach(t => {
+                        // Status icon
+                        if (t.status === 'done') {
+                            doc.setTextColor(34, 197, 94);
+                            doc.text('✓', margin, y);
+                        } else if (t.status === 'error') {
+                            doc.setTextColor(239, 68, 68);
+                            doc.text('✗', margin, y);
+                        } else {
+                            doc.setTextColor(234, 179, 8);
+                            doc.text('→', margin, y);
+                        }
+                        
+                        doc.setTextColor(30, 30, 30);
+                        doc.setFont('helvetica', 'normal');
+                        const lines = doc.splitTextToSize(t.texte, contentWidth - 10);
+                        doc.text(lines, margin + 6, y);
+                        y += lines.length * 4 + 2;
+                    });
+                    y += 5;
+                }
+                
+                // ═══ MESURES ═══
+                if (data.mesures && data.mesures.length > 0) {
+                    if (y > pageHeight - 40) {
+                        doc.addPage();
+                        y = margin;
+                    }
+                    
+                    doc.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+                    doc.setFontSize(10);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('Mesures', margin, y);
+                    y += 5;
+                    doc.line(margin, y, margin + 30, y);
+                    y += 5;
+                    
+                    doc.setFontSize(9);
+                    data.mesures.forEach(m => {
+                        doc.setFont('helvetica', 'bold');
+                        doc.setTextColor(30, 30, 30);
+                        doc.text(m.label + ':', margin, y);
+                        
+                        // Value with status color
+                        if (m.status === 'ok') {
+                            doc.setTextColor(34, 197, 94);
+                        } else if (m.status === 'error') {
+                            doc.setTextColor(239, 68, 68);
+                        } else {
+                            doc.setTextColor(60, 60, 60);
+                        }
+                        doc.setFont('helvetica', 'normal');
+                        doc.text(String(m.valeur), margin + 40, y);
+                        
+                        if (m.note) {
+                            doc.setTextColor(120, 120, 120);
+                            doc.text(`(${m.note})`, margin + 70, y);
+                        }
+                        y += 5;
+                    });
+                    y += 5;
+                }
+                
+                // ═══ RÉSULTAT ═══
+                if (data.resultat) {
+                    if (y > pageHeight - 30) {
+                        doc.addPage();
+                        y = margin;
+                    }
+                    
+                    const resColor = data.resultat.status === 'resolu' 
+                        ? { r: 34, g: 197, b: 94 } 
+                        : { r: 239, g: 68, b: 68 };
+                    
+                    doc.setFillColor(resColor.r, resColor.g, resColor.b, 0.1);
+                    doc.roundedRect(margin, y, contentWidth, 15, 3, 3, 'F');
+                    
+                    doc.setTextColor(resColor.r, resColor.g, resColor.b);
+                    doc.setFontSize(11);
+                    doc.setFont('helvetica', 'bold');
+                    const resLabel = data.resultat.label || (data.resultat.status === 'resolu' ? 'Problème résolu' : 'Non résolu');
+                    doc.text(resLabel, margin + 5, y + 6);
+                    
+                    if (data.resultat.description) {
+                        doc.setFontSize(9);
+                        doc.setFont('helvetica', 'normal');
+                        doc.text(data.resultat.description, margin + 5, y + 11);
+                    }
+                    y += 20;
+                }
+                
+                // ═══ RÉSERVES ═══
+                if (data.reserves && data.reserves.length > 0) {
+                    if (y > pageHeight - 30) {
+                        doc.addPage();
+                        y = margin;
+                    }
+                    
+                    doc.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+                    doc.setFontSize(10);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('Réserves / Alertes', margin, y);
+                    y += 6;
+                    
+                    data.reserves.forEach(r => {
+                        const rColor = r.type === 'danger' 
+                            ? { r: 239, g: 68, b: 68 }
+                            : { r: 234, g: 179, b: 8 };
+                        
+                        doc.setFillColor(rColor.r, rColor.g, rColor.b, 0.1);
+                        doc.roundedRect(margin, y, contentWidth, 12, 2, 2, 'F');
+                        
+                        doc.setTextColor(rColor.r, rColor.g, rColor.b);
+                        doc.setFontSize(9);
+                        doc.setFont('helvetica', 'bold');
+                        doc.text(r.type === 'danger' ? '⚠' : '!', margin + 3, y + 5);
+                        doc.text(r.titre || 'Attention', margin + 8, y + 5);
+                        
+                        doc.setFont('helvetica', 'normal');
+                        doc.setTextColor(60, 60, 60);
+                        const rLines = doc.splitTextToSize(r.texte, contentWidth - 15);
+                        doc.text(rLines[0], margin + 8, y + 9);
+                        y += 14;
+                    });
+                    y += 3;
+                }
+                
+                // ═══ PHOTOS ═══
+                const photos = window.reportPhotos || [];
+                if (photos.length > 0) {
+                    doc.addPage();
+                    y = margin;
+                    
+                    doc.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+                    doc.setFontSize(12);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('Photos de l\'intervention', margin, y);
+                    y += 10;
+                    
+                    const photoWidth = 85;
+                    const photoHeight = 60;
+                    let photoX = margin;
+                    
+                    for (let i = 0; i < photos.length; i++) {
+                        const photo = photos[i];
+                        
+                        try {
+                            const imgData = photo.data || photo.url;
+                            if (imgData && imgData.startsWith('data:image')) {
+                                doc.addImage(imgData, 'JPEG', photoX, y, photoWidth, photoHeight);
+                                
+                                // Caption
+                                if (photo.caption) {
+                                    doc.setTextColor(60, 60, 60);
+                                    doc.setFontSize(8);
+                                    doc.setFont('helvetica', 'italic');
+                                    doc.text(photo.caption, photoX, y + photoHeight + 4);
+                                }
+                                
+                                // Move to next position
+                                if (i % 2 === 0) {
+                                    photoX = margin + photoWidth + 10;
+                                } else {
+                                    photoX = margin;
+                                    y += photoHeight + 15;
+                                    
+                                    // Check page break
+                                    if (y > pageHeight - photoHeight - 20) {
+                                        doc.addPage();
+                                        y = margin;
+                                    }
+                                }
+                            }
+                        } catch (e) {
+                            console.error('Error adding photo to PDF:', e);
+                        }
+                    }
+                }
+                
+                // ═══ FOOTER ═══
+                const totalPages = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= totalPages; i++) {
+                    doc.setPage(i);
+                    
+                    // Footer line
+                    doc.setDrawColor(200, 200, 200);
+                    doc.setLineWidth(0.3);
+                    doc.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
+                    
+                    // Footer text
+                    doc.setTextColor(120, 120, 120);
+                    doc.setFontSize(8);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(`Généré par FixAIR - ${new Date().toLocaleDateString('fr-FR')}`, margin, pageHeight - 10);
+                    doc.text(`Page ${i}/${totalPages}`, pageWidth - margin, pageHeight - 10, { align: 'right' });
+                    
+                    // Technicien
+                    if (data.technicien && data.technicien.nom) {
+                        doc.text(`Technicien: ${data.technicien.nom}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+                    }
+                }
+                
+                // ═══ SAVE PDF ═══
+                const filename = `Rapport_${data.brand || 'FixAIR'}_${data.reference || new Date().toISOString().split('T')[0]}.pdf`;
+                doc.save(filename);
+                
+                toast('PDF téléchargé !');
+                
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                toast('Erreur génération PDF');
+            }
         }
         
         // Simple markdown parser
@@ -7191,11 +7812,11 @@ INSTRUCTIONS:
                             <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span>
                             <span>Copier</span>
                         </div>
-                        <div class="report-menu-item" onclick="shareReport(event, this)">
+                        <div class="report-menu-item" onclick="shareReportMenu(event, this)">
                             <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></span>
                             <span>Partager</span>
                         </div>
-                        <div class="report-menu-item" onclick="exportReportPDF(event, this)">
+                        <div class="report-menu-item" onclick="exportReportPDFMenu(event, this)">
                             <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></span>
                             <span>Export PDF</span>
                         </div>
@@ -7806,7 +8427,8 @@ Tu reprends une conversation avec ${previousUserMessages} messages du technicien
             el.closest('.report-menu-dropdown').classList.remove('show');
         }
         
-        function shareReport(event, el) {
+        // Share from report card menu (different from main shareReport)
+        function shareReportCard(event, el) {
             event.stopPropagation();
             const card = el.closest('.report-card');
             const content = card.innerText;
@@ -7823,10 +8445,36 @@ Tu reprends une conversation avec ${previousUserMessages} messages du technicien
             el.closest('.report-menu-dropdown').classList.remove('show');
         }
         
-        function exportReportPDF(event, el) {
+        // Menu version of export PDF (called from dropdown)
+        function exportReportPDFMenu(event, el) {
             event.stopPropagation();
-            toast('Export PDF bientôt disponible');
             el.closest('.report-menu-dropdown').classList.remove('show');
+            exportReportPDF();
+        }
+        
+        // Menu version of share (called from dropdown in chat)
+        function shareReportMenu(event, el) {
+            event.stopPropagation();
+            el.closest('.report-menu-dropdown').classList.remove('show');
+            // Use lastReportData if available, otherwise use shareReport
+            if (lastReportData) {
+                shareReport();
+            } else {
+                // Fallback: try to get content from card
+                const card = el.closest('.report-card');
+                if (card) {
+                    const content = card.innerText;
+                    if (navigator.share) {
+                        navigator.share({
+                            title: 'Rapport d\'intervention FixAIR',
+                            text: content
+                        }).catch(() => {});
+                    } else {
+                        navigator.clipboard.writeText(content);
+                        toast('Rapport copié pour partage !');
+                    }
+                }
+            }
         }
         
         // Close report menu when clicking outside
