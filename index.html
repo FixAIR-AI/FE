@@ -1414,6 +1414,19 @@
         .h-btn:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.8); }
         .h-btn.active { background: var(--mode-bg); border-color: var(--mode-border); color: var(--mode-color); }
         .h-btn .icon { width: 14px; height: 14px; }
+        
+        /* Report button - shows when report data exists */
+        .h-btn.report-btn { display: none; } /* Hidden by default (Copilot) */
+        .panel.assistant .h-btn.report-btn { display: flex; } /* Visible in Assistant */
+        .h-btn.report-btn.has-data { 
+            border-color: var(--assistant); 
+            color: var(--assistant);
+            animation: reportPulse 2s ease-in-out infinite;
+        }
+        @keyframes reportPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+            50% { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2); }
+        }
 
         .chat-body { 
             flex: 1; 
@@ -2558,17 +2571,34 @@
         .photo-cancel { width: 100%; padding: 10px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: rgba(255,255,255,0.6); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
         .photo-cancel:hover { background: rgba(255,255,255,0.05); }
 
-        /* REPORT SHEET */
+        /* REPORT SHEET - Live Preview Drawer */
         .report-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 299; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
         .report-backdrop.show { opacity: 1; pointer-events: auto; }
-        .report-sheet { position: fixed; top: 0; right: 0; width: 100%; max-width: 340px; height: 100%; background: var(--bg-secondary); border-left: 1px solid var(--assistant-border); z-index: 300; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .report-sheet { position: fixed; top: 0; right: 0; width: 100%; max-width: 55%; height: 100%; background: var(--bg-secondary); border-left: 1px solid var(--assistant-border); z-index: 300; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .report-sheet.open { transform: translateX(0); }
-        @media (max-width: 500px) { .report-sheet { max-width: 100%; border-left: none; } }
+        @media (max-width: 900px) { .report-sheet { max-width: 70%; } }
+        @media (max-width: 600px) { .report-sheet { max-width: 100%; border-left: none; } }
         .report-header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; padding-top: max(12px, env(safe-area-inset-top)); border-bottom: 1px solid var(--border); flex-shrink: 0; }
         .report-close { width: 28px; height: 28px; border-radius: 50%; background: transparent; border: 1px solid var(--border); color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .report-close .icon { width: 12px; height: 12px; }
         .report-title { flex: 1; font-size: 14px; font-weight: 600; color: var(--assistant); }
         .report-body { flex: 1; overflow-y: auto; padding: 14px; }
+        
+        /* Live preview container */
+        .report-preview-container { min-height: 100%; }
+        .report-preview-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 300px; text-align: center; color: var(--text-dim); }
+        .report-preview-empty .icon { width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.3; }
+        .report-preview-empty p { font-size: 13px; max-width: 250px; line-height: 1.5; }
+        
+        /* Report preview styles - same as chat report but adapted for drawer */
+        .report-body .rpt { font-size: 12px; }
+        .report-body .rpt-header { padding: 12px; }
+        .report-body .rpt-title { font-size: 14px; }
+        .report-body .rpt-section { padding: 12px; }
+        .report-body .rpt-label { font-size: 10px; }
+        .report-body .rpt-text { font-size: 12px; }
+        .report-body .rpt-row { font-size: 11px; }
+        
         .r-field { margin-bottom: 12px; }
         .r-label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; color: var(--text-dim); margin-bottom: 4px; }
         .r-value { font-size: 13px; padding: 9px 11px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; min-height: 40px; }
@@ -4118,7 +4148,7 @@
                 </div>
                 <div class="header-actions">
                     <button class="h-btn new-chat-btn" onclick="startNewProject()" title="Nouveau chat"><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button>
-                    <button class="h-btn" onclick="openReport()" title="Voir rapport"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></button>
+                    <button class="h-btn report-btn" onclick="openReport()" title="Voir rapport"><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span></button>
                     <button class="h-btn" onclick="toggleSplit()" title="Mode split"><span class="icon"><svg><use href="#icon-columns"/></svg></span></button>
                 </div>
             </header>
@@ -4160,7 +4190,7 @@
         </div>
     </div>
 
-    <!-- REPORT SHEET -->
+    <!-- REPORT SHEET - Live Preview Drawer -->
     <div class="report-backdrop" id="reportBackdrop" onclick="closeReport()"></div>
     <div class="report-sheet" id="reportSheet">
         <header class="report-header">
@@ -4168,16 +4198,26 @@
             <div class="report-title">Rapport d'intervention</div>
         </header>
         <div class="report-body">
-            <div class="r-field"><div class="r-label">Client</div><div class="r-value" id="rClient">—</div></div>
-            <div class="r-field"><div class="r-label">Adresse</div><div class="r-value" id="rAddress">—</div></div>
-            <div class="r-field"><div class="r-label">Équipement</div><div class="r-value" id="rEquip">—</div></div>
-            <div class="r-field"><div class="r-label">Problème identifié</div><div class="r-value" id="rProblem">—</div></div>
-            <div class="r-field"><div class="r-label">Actions réalisées</div><div class="r-value" id="rActions">—</div></div>
-            <div class="r-field"><div class="r-label">Statut</div><div class="r-value" id="rStatus">En cours</div></div>
+            <div class="report-preview-container" id="reportPreviewContainer">
+                <!-- Empty state - shown when no report data -->
+                <div class="report-preview-empty" id="reportPreviewEmpty">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                        <polyline points="10 9 9 9 8 9"/>
+                    </svg>
+                    <p>Le rapport se construit automatiquement pendant votre conversation avec l'Assistant.</p>
+                    <p style="margin-top:8px;font-size:11px;opacity:0.6">Donnez les informations (client, équipement, problème...) et le rapport se mettra à jour ici.</p>
+                </div>
+                <!-- Live report preview - populated dynamically -->
+                <div id="reportPreviewContent" style="display:none;"></div>
+            </div>
         </div>
         <div class="report-footer">
-            <button class="r-btn secondary"><span class="icon"><svg><use href="#icon-share"/></svg></span>Partager</button>
-            <button class="r-btn primary"><span class="icon"><svg><use href="#icon-download"/></svg></span>Exporter PDF</button>
+            <button class="r-btn secondary" onclick="shareReport()"><span class="icon"><svg><use href="#icon-share"/></svg></span>Partager</button>
+            <button class="r-btn primary" onclick="exportReportPDF()"><span class="icon"><svg><use href="#icon-download"/></svg></span>Exporter PDF</button>
         </div>
     </div>
 
@@ -5587,6 +5627,14 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
         function openReport() {
             document.getElementById('reportSheet').classList.add('open');
             document.getElementById('reportBackdrop').classList.add('show');
+            
+            // Build partial report from conversation if no full report yet
+            if (!lastReportData && mode === 'assistant') {
+                buildPartialReport();
+            } else if (lastReportData) {
+                // Update preview with latest data
+                updateDrawerPreview(lastReportData);
+            }
         }
         
         function closeReport() {
@@ -6533,6 +6581,23 @@ INSTRUCTIONS:
             chatHistory.assistant = [];
             chatHistory.copilot = [];
             
+            // ═══ RESET REPORT DATA ═══
+            lastReportData = null;
+            window.reportPhotos = [];
+            
+            // Reset report button and drawer
+            const reportBtn = document.querySelector('.h-btn.report-btn');
+            if (reportBtn) reportBtn.classList.remove('has-data');
+            
+            const emptyState = document.getElementById('reportPreviewEmpty');
+            const previewContent = document.getElementById('reportPreviewContent');
+            if (emptyState) emptyState.style.display = '';
+            if (previewContent) {
+                previewContent.style.display = 'none';
+                previewContent.innerHTML = '';
+            }
+            // ═══ END RESET ═══
+            
             const assistantBody = document.getElementById('assistantBody');
             const copilotBody = document.getElementById('copilotBody');
             
@@ -6630,6 +6695,9 @@ INSTRUCTIONS:
             // ═══ STORE FOR PDF EXPORT ═══
             lastReportData = data;
             console.log('📊 Report data stored for PDF export:', data);
+            
+            // ═══ UPDATE DRAWER PREVIEW ═══
+            updateDrawerPreview(data);
             
             // Helper: only show section if it has content
             const has = (val) => val && (Array.isArray(val) ? val.length > 0 : true);
@@ -7582,6 +7650,344 @@ INSTRUCTIONS:
             }
         }
         
+        // ═══════════════════════════════════════════════════════════════
+        // DRAWER PREVIEW - Live Report Updates
+        // ═══════════════════════════════════════════════════════════════
+        
+        // Update the drawer preview with report data
+        function updateDrawerPreview(data) {
+            const emptyState = document.getElementById('reportPreviewEmpty');
+            const previewContent = document.getElementById('reportPreviewContent');
+            const reportBtn = document.querySelector('.h-btn.report-btn');
+            
+            if (!previewContent) return;
+            
+            // Hide empty state, show preview
+            if (emptyState) emptyState.style.display = 'none';
+            previewContent.style.display = 'block';
+            
+            // Add has-data class to button to show pulse
+            if (reportBtn) reportBtn.classList.add('has-data');
+            
+            // Generate preview HTML (reuse renderReport logic but simplified)
+            const previewHtml = renderReportPreview(data);
+            previewContent.innerHTML = previewHtml;
+            
+            console.log('📋 Drawer preview updated');
+        }
+        
+        // Build partial report from conversation
+        // Called when we detect report-relevant info in the chat
+        function buildPartialReport() {
+            // Get info from chatHistory
+            const history = chatHistory.assistant || [];
+            const userMessages = history.filter(m => m.role === 'user').map(m => m.content);
+            const allText = userMessages.join(' ').toLowerCase();
+            const allTextOriginal = userMessages.join(' ');
+            
+            // Get brand display name
+            const brandNames = {
+                'mitsubishi': 'Mitsubishi Electric',
+                'daikin': 'Daikin',
+                'carrier': 'Carrier',
+                'lg': 'LG',
+                'samsung': 'Samsung',
+                'panasonic': 'Panasonic',
+                'toshiba': 'Toshiba',
+                'fujitsu': 'Fujitsu',
+                'hitachi': 'Hitachi',
+                'general': 'Multi-marques'
+            };
+            
+            // Start with base data (keep existing if any)
+            const partialData = lastReportData ? { ...lastReportData } : {
+                brand: brandNames[brand] || brand,
+                brand_key: brand,
+                status: 'en_cours',
+                date: new Date().toLocaleDateString('fr-FR')
+            };
+            
+            // Detect type
+            if (allText.includes('dépannage') || allText.includes('sav') || allText.includes('panne') || allText.includes('problème') || allText.includes('marche pas') || allText.includes('fonctionne pas')) {
+                partialData.type_intervention = 'SAV / Dépannage';
+            } else if (allText.includes('mise en service') || allText.match(/\bmes\b/) || allText.includes('nouvelle installation')) {
+                partialData.type_intervention = 'Mise en service';
+            } else if (allText.includes('maintenance') || allText.includes('entretien') || allText.includes('contrôle')) {
+                partialData.type_intervention = 'Maintenance';
+            } else if (allText.includes('installation') || allText.includes('installer')) {
+                partialData.type_intervention = 'Installation';
+            }
+            
+            // Detect client (multiple patterns)
+            const clientPatterns = [
+                /(?:chez|client|société|societe|pour)\s+([A-ZÀ-Ÿ][a-zà-ÿ\s]{1,30})/,
+                /(?:chez|client)\s+([a-zà-ÿ\s]{2,30})/i
+            ];
+            for (const pattern of clientPatterns) {
+                const match = allTextOriginal.match(pattern);
+                if (match) {
+                    partialData.client = { societe: match[1].trim() };
+                    break;
+                }
+            }
+            
+            // Detect address patterns
+            const addressMatch = allTextOriginal.match(/(\d{1,4}[\s,]+(?:rue|avenue|boulevard|bd|av|allée|place|chemin)[\s\w\-']+)/i);
+            if (addressMatch) {
+                partialData.site = partialData.site || {};
+                partialData.site.adresse = addressMatch[1].trim();
+            }
+            
+            // Detect city (postal code pattern)
+            const cityMatch = allTextOriginal.match(/(\d{5})\s*([A-ZÀ-Ÿa-zà-ÿ\s\-]+)/);
+            if (cityMatch) {
+                partialData.site = partialData.site || {};
+                partialData.site.ville = cityMatch[1] + ' ' + cityMatch[2].trim();
+            }
+            
+            // Detect code erreur (multiple patterns)
+            const codePatterns = [
+                /(?:code|erreur|défaut|fault)\s*:?\s*([A-Z]?\d{1,4})/i,
+                /\b([EAUFPH]\d{1,3})\b/i,
+                /\b(7[HSL]|U\d{1,2})\b/i
+            ];
+            for (const pattern of codePatterns) {
+                const match = allText.match(pattern);
+                if (match) {
+                    partialData.codes_defaut = [{ code: match[1].toUpperCase(), description: 'Code détecté dans la conversation' }];
+                    break;
+                }
+            }
+            
+            // Detect model
+            const modelPatterns = [
+                /(PUHY|PURY|PUMY|PEFY|PLFY|PKFY|MSZ|MUZ|FDC|FDCA)[\s\-]?([A-Z0-9\-]{3,20})/i,
+                /(VRV|VRF|DVM|MULTI[\s\-]?V)[\s\-]?([A-Z0-9\-]{0,15})/i,
+                /(FXMQ|FXAQ|FXZQ|FDXM|RXM)[\s\-]?([A-Z0-9]{2,10})/i
+            ];
+            for (const pattern of modelPatterns) {
+                const match = allTextOriginal.match(pattern);
+                if (match) {
+                    partialData.systeme = partialData.systeme || {};
+                    partialData.systeme.modele = match[0].toUpperCase();
+                    partialData.systeme.type = match[1].toUpperCase().includes('VR') ? 'VRF' : 
+                                               match[1].toUpperCase().includes('PU') ? 'VRF Mitsubishi' : 'Split';
+                    break;
+                }
+            }
+            
+            // Detect fluide
+            const fluideMatch = allText.match(/(r410a|r32|r134a|r407c|r290)/i);
+            if (fluideMatch) {
+                partialData.systeme = partialData.systeme || {};
+                partialData.systeme.fluide = fluideMatch[1].toUpperCase();
+            }
+            
+            // Detect problem description
+            const problemPatterns = [
+                /(?:problème|souci|défaut|panne)\s*:?\s*(.{10,100})/i,
+                /(?:ne\s+(?:chauffe|refroidit|démarre|marche)\s+(?:pas|plus))/i
+            ];
+            for (const pattern of problemPatterns) {
+                const match = allTextOriginal.match(pattern);
+                if (match) {
+                    partialData.intervention = partialData.intervention || {};
+                    partialData.intervention.probleme = match[1] ? match[1].trim() : match[0];
+                    break;
+                }
+            }
+            
+            // Always update preview - show at minimum the brand and date
+            lastReportData = partialData;
+            updateDrawerPreview(partialData);
+            
+            // Hide empty state
+            const emptyState = document.getElementById('reportPreviewEmpty');
+            if (emptyState) emptyState.style.display = 'none';
+            const previewContent = document.getElementById('reportPreviewContent');
+            if (previewContent) previewContent.style.display = 'block';
+        }
+        
+        // Render simplified report preview for drawer
+        function renderReportPreview(data) {
+            if (!data) return '';
+            
+            const brandNames = {
+                'mitsubishi': 'Mitsubishi Electric',
+                'daikin': 'Daikin',
+                'carrier': 'Carrier',
+                'lg': 'LG',
+                'samsung': 'Samsung',
+                'panasonic': 'Panasonic',
+                'toshiba': 'Toshiba',
+                'fujitsu': 'Fujitsu',
+                'hitachi': 'Hitachi',
+                'general': 'Multi-marques'
+            };
+            
+            const brandClass = data.brand_key || 'general';
+            const brandName = brandNames[brandClass] || data.brand || 'FixAIR';
+            
+            // Status
+            let statusClass = 'en-cours';
+            let statusText = 'En cours';
+            if (data.status) {
+                const s = data.status.toLowerCase();
+                if (s.includes('conforme') && !s.includes('non')) {
+                    statusClass = 'conforme';
+                    statusText = 'Conforme';
+                } else if (s.includes('non') || s.includes('refus')) {
+                    statusClass = 'non-conforme';
+                    statusText = 'Non conforme';
+                }
+            }
+            
+            let html = `<div class="rpt" style="margin:0;">`;
+            
+            // Header
+            html += `
+            <div class="rpt-header">
+                <div class="rpt-header-top">
+                    <div>
+                        <div class="rpt-brand ${brandClass}">${brandName}</div>
+                        <h1 class="rpt-title">Rapport d'intervention</h1>
+                    </div>
+                    <div class="rpt-status ${statusClass}">
+                        <span class="rpt-status-dot"></span>
+                        <span class="rpt-status-text">${statusText}</span>
+                    </div>
+                </div>
+                <div class="rpt-meta">
+                    ${data.reference ? `<span>Réf <span class="val">${data.reference}</span></span>` : ''}
+                    ${data.type_intervention ? `<span>Type <span class="val">${data.type_intervention}</span></span>` : ''}
+                    ${data.date ? `<span>Date <span class="val">${data.date}</span></span>` : ''}
+                </div>
+            </div>`;
+            
+            html += `<div class="rpt-card">`;
+            
+            // Résumé
+            if (data.resume) {
+                html += `
+                <div class="rpt-section">
+                    <div class="rpt-label">Résumé</div>
+                    <p class="rpt-text">${data.resume}</p>
+                </div>`;
+            }
+            
+            // Client & Site
+            if (data.client || data.site) {
+                html += `<div class="rpt-section"><div class="rpt-grid">`;
+                if (data.client) {
+                    html += `<div class="rpt-group"><div class="rpt-label">Client</div>`;
+                    if (data.client.societe) html += `<div class="rpt-row"><span class="rpt-row-label">Société</span><span class="rpt-row-value">${data.client.societe}</span></div>`;
+                    if (data.client.contact) html += `<div class="rpt-row"><span class="rpt-row-label">Contact</span><span class="rpt-row-value">${data.client.contact}</span></div>`;
+                    if (data.client.telephone) html += `<div class="rpt-row"><span class="rpt-row-label">Téléphone</span><span class="rpt-row-value">${data.client.telephone}</span></div>`;
+                    html += `</div>`;
+                }
+                if (data.site) {
+                    html += `<div class="rpt-group"><div class="rpt-label">Site</div>`;
+                    if (data.site.adresse) html += `<div class="rpt-row"><span class="rpt-row-label">Adresse</span><span class="rpt-row-value">${data.site.adresse}</span></div>`;
+                    if (data.site.ville) html += `<div class="rpt-row"><span class="rpt-row-label">Ville</span><span class="rpt-row-value">${data.site.ville}</span></div>`;
+                    html += `</div>`;
+                }
+                html += `</div></div>`;
+            }
+            
+            // Système
+            if (data.systeme) {
+                html += `<div class="rpt-section"><div class="rpt-label">Système</div>`;
+                if (data.systeme.type) html += `<div class="rpt-row"><span class="rpt-row-label">Type</span><span class="rpt-row-value">${data.systeme.type}</span></div>`;
+                if (data.systeme.modele) html += `<div class="rpt-row"><span class="rpt-row-label">Modèle</span><span class="rpt-row-value mono">${data.systeme.modele}</span></div>`;
+                if (data.systeme.serie) html += `<div class="rpt-row"><span class="rpt-row-label">N° Série</span><span class="rpt-row-value mono">${data.systeme.serie}</span></div>`;
+                if (data.systeme.fluide) html += `<div class="rpt-row"><span class="rpt-row-label">Fluide</span><span class="rpt-row-value">${data.systeme.fluide}</span></div>`;
+                html += `</div>`;
+            }
+            
+            // Codes défaut
+            if (data.codes_defaut && data.codes_defaut.length > 0) {
+                html += `<div class="rpt-section"><div class="rpt-label">Codes défaut</div>`;
+                data.codes_defaut.forEach(c => {
+                    html += `<div class="rpt-row"><span class="rpt-row-label code-badge">${c.code}</span><span class="rpt-row-value">${c.description || ''}</span></div>`;
+                });
+                html += `</div>`;
+            }
+            
+            // Travaux effectués
+            if (data.travaux_effectues && data.travaux_effectues.length > 0) {
+                html += `<div class="rpt-section"><div class="rpt-label">Travaux effectués</div><ul class="rpt-checklist">`;
+                data.travaux_effectues.forEach(t => {
+                    const icon = t.status === 'done' ? '✓' : (t.status === 'error' ? '✗' : '→');
+                    const cls = t.status || 'pending';
+                    html += `<li class="${cls}"><span class="check-icon">${icon}</span>${t.texte}</li>`;
+                });
+                html += `</ul></div>`;
+            }
+            
+            // Mesures
+            if (data.mesures && data.mesures.length > 0) {
+                html += `<div class="rpt-section"><div class="rpt-label">Mesures</div><div class="rpt-measures">`;
+                data.mesures.forEach(m => {
+                    const cls = m.status || '';
+                    html += `<div class="rpt-measure ${cls}"><span class="measure-label">${m.label}</span><span class="measure-value">${m.valeur}</span></div>`;
+                });
+                html += `</div></div>`;
+            }
+            
+            // Résultat
+            if (data.resultat) {
+                const resClass = data.resultat.status === 'resolu' ? 'resolved' : 'unresolved';
+                html += `
+                <div class="rpt-section">
+                    <div class="rpt-result ${resClass}">
+                        <div class="result-icon">${data.resultat.status === 'resolu' ? '✓' : '!'}</div>
+                        <div>
+                            <div class="result-label">${data.resultat.label || (data.resultat.status === 'resolu' ? 'Résolu' : 'Non résolu')}</div>
+                            ${data.resultat.description ? `<div class="result-desc">${data.resultat.description}</div>` : ''}
+                        </div>
+                    </div>
+                </div>`;
+            }
+            
+            // Réserves
+            if (data.reserves && data.reserves.length > 0) {
+                html += `<div class="rpt-section"><div class="rpt-label">Réserves</div>`;
+                data.reserves.forEach(r => {
+                    const cls = r.type === 'danger' ? 'danger' : 'warning';
+                    html += `<div class="rpt-alert ${cls}"><strong>${r.titre || 'Attention'}</strong><p>${r.texte}</p></div>`;
+                });
+                html += `</div>`;
+            }
+            
+            // Technicien
+            if (data.technicien && data.technicien.nom) {
+                html += `
+                <div class="rpt-footer-info">
+                    <span>Technicien: ${data.technicien.nom}</span>
+                    ${data.technicien.heure_arrivee ? `<span>Arrivée: ${data.technicien.heure_arrivee}</span>` : ''}
+                    ${data.technicien.heure_depart ? `<span>Départ: ${data.technicien.heure_depart}</span>` : ''}
+                </div>`;
+            }
+            
+            // Photos count
+            const photos = window.reportPhotos || [];
+            if (photos.length > 0) {
+                html += `<div class="rpt-section"><div class="rpt-label">Photos (${photos.length})</div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">`;
+                photos.slice(0, 4).forEach(p => {
+                    html += `<img src="${p.data || p.url}" style="width:60px;height:45px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">`;
+                });
+                if (photos.length > 4) {
+                    html += `<div style="width:60px;height:45px;border-radius:6px;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text-dim);">+${photos.length - 4}</div>`;
+                }
+                html += `</div></div>`;
+            }
+            
+            html += `</div></div>`;
+            
+            return html;
+        }
+        
         // Simple markdown parser
         function parseMarkdown(text) {
             if (!text) return '';
@@ -7871,6 +8277,11 @@ INSTRUCTIONS:
             
             // Add to history
             chatHistory[panel].push({ role: 'user', content: text });
+            
+            // ═══ UPDATE DRAWER PREVIEW (Assistant mode) ═══
+            if (panel === 'assistant') {
+                buildPartialReport();
+            }
             
             // NOTE: Messages are NOT tracked for gamification
             // Only real-value actions count: reports, OCR, photos, voice notes
