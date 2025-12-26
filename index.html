@@ -3754,7 +3754,7 @@
         </div>
         <nav class="nav">
             <div class="nav-inner">
-                <div class="nav-item active" id="navHome" onclick="showPage('home')"><span class="icon nav-icon"><svg><use href="#icon-home"/></svg></span><span class="nav-label">Accueil</span></div>
+                <div class="nav-item active" id="navHome" onclick="goToHome()"><span class="icon nav-icon"><svg><use href="#icon-home"/></svg></span><span class="nav-label">Accueil</span></div>
                 <div class="nav-item" id="navProjects" onclick="showPage('projects')"><span class="icon nav-icon"><svg><use href="#icon-folder"/></svg></span><span class="nav-label">Projets</span></div>
                 <div class="nav-item nav-hotline" onclick="openHotline()">
                     <div class="nav-hotline-waves">
@@ -6979,6 +6979,9 @@
             // Add to history
             chatHistory[panel].push({ role: 'user', content: text });
             
+            // ═══ TRACK MESSAGE ACTION FOR GAMIFICATION ═══
+            trackAction('message');
+            
             // ═══ SUPABASE: Ensure project exists and save user message ═══
             try {
                 const projectData = await ensureProject(panel);
@@ -8756,7 +8759,10 @@
         
         // Track action to database
         async function trackAction(actionType, projectId = null) {
-            if (!currentUserId) return;
+            if (!currentUserId) {
+                console.log('⚠️ No user ID, skipping track');
+                return;
+            }
             
             const config = GAMIFICATION_CONFIG.actions[actionType];
             if (!config) {
@@ -8764,9 +8770,7 @@
                 return;
             }
             
-            // Save current stats before tracking
-            const statsBefore = await getWeeklyStats();
-            lastKnownStats = statsBefore || { totalMinutes: 0, totalEuros: 0, reports: 0 };
+            // NOTE: Don't update lastKnownStats here - let the homepage comparison work
             
             try {
                 const { error } = await db.from('user_actions').insert({
@@ -8788,8 +8792,7 @@
                 
                 console.log(`✅ Action trackée: ${actionType} (+${config.minutes}min, +${config.euros}€)`);
                 
-                // Rafraîchir les stats
-                await refreshWeeklyStats();
+                // Don't refresh stats here - let homepage celebration handle it
                 
             } catch (err) {
                 console.error('Erreur tracking action:', err);
@@ -8966,8 +8969,15 @@
         // CELEBRATION ANIMATION - CONFETTI + COUNT-UP
         // ═══════════════════════════════════════════════════════════════
         
-        let lastKnownStats = { totalMinutes: 0, totalEuros: 0, reports: 0 };
+        // Load last known stats from localStorage (persists across page reloads)
+        let lastKnownStats = JSON.parse(localStorage.getItem('fixair_lastStats') || '{"totalMinutes":0,"totalEuros":0,"reports":0}');
         let celebrationInProgress = false;
+        
+        // Save stats to localStorage
+        function saveLastKnownStats(stats) {
+            lastKnownStats = { ...stats };
+            localStorage.setItem('fixair_lastStats', JSON.stringify(stats));
+        }
         
         // Create confetti particles
         function createConfetti() {
@@ -9117,41 +9127,100 @@
         }
         
         // Initialize gamification on login with celebration check
-        async function initGamification() {
+        async function initGamification(forceCheck = false) {
+            console.log('🎮 initGamification called, forceCheck:', forceCheck);
+            
             const stats = await getWeeklyStats();
             const newStats = stats || { totalMinutes: 0, totalEuros: 0, reports: 0 };
             
-            // First time initialization - just set stats without celebration
-            if (lastKnownStats.totalEuros === 0 && lastKnownStats.totalMinutes === 0) {
+            console.log('📊 Current DB stats:', newStats);
+            console.log('📊 Last known stats:', lastKnownStats);
+            
+            // First login ever (no previous stats saved) - just display without animation
+            if (!forceCheck && lastKnownStats.totalEuros === 0 && lastKnownStats.totalMinutes === 0 && lastKnownStats.reports === 0) {
+                // But if DB has stats, it means user was already active - show celebration!
+                if (newStats.totalEuros > 0 || newStats.totalMinutes > 0 || newStats.reports > 0) {
+                    console.log('🎊 First load but has stats - celebrating!');
+                    triggerCelebration(newStats, { totalMinutes: 0, totalEuros: 0, reports: 0 });
+                    saveLastKnownStats(newStats);
+                    return;
+                }
                 await refreshWeeklyStats();
-                lastKnownStats = { ...newStats };
-                console.log('📊 Stats initialisées:', lastKnownStats);
+                saveLastKnownStats(newStats);
+                console.log('📊 First init - no celebration');
                 return;
             }
             
-            // Check if we should celebrate (when returning to homepage with new data)
-            if (shouldCelebrate(newStats, lastKnownStats)) {
-                console.log('🎊 Changement détecté! Célébration...');
-                triggerCelebration(newStats, lastKnownStats);
+            // Check if we should celebrate (any increase in stats)
+            const hasIncrease = 
+                newStats.totalEuros > lastKnownStats.totalEuros || 
+                newStats.totalMinutes > lastKnownStats.totalMinutes ||
+                newStats.reports > lastKnownStats.reports;
+            
+            console.log('🎊 Should celebrate?', hasIncrease);
+            
+            if (hasIncrease || forceCheck) {
+                console.log('🎊 Triggering celebration!');
+                triggerCelebration(newStats, forceCheck ? { totalMinutes: 0, totalEuros: 0, reports: 0 } : lastKnownStats);
             } else {
                 await refreshWeeklyStats();
             }
             
-            lastKnownStats = { ...newStats };
+            saveLastKnownStats(newStats);
         }
         
         // Call celebration when returning to homepage
         function onReturnToHomepage() {
-            if (currentUserId && document.getElementById('homepageContent')?.classList.contains('active')) {
-                initGamification();
+            console.log('🏠 onReturnToHomepage called');
+            console.log('🏠 currentUserId:', currentUserId);
+            console.log('🏠 homepage active:', document.getElementById('homepageContent')?.classList.contains('active'));
+            
+            if (currentUserId) {
+                initGamification(false);
             }
         }
         
         // TEST FUNCTION - Call from console: testCelebration()
         window.testCelebration = function() {
-            const fakeOld = { totalMinutes: 10, totalEuros: 8, reports: 0 };
-            const fakeNew = { totalMinutes: 15, totalEuros: 12, reports: 1 };
+            console.log('🧪 Test celebration triggered');
+            const fakeOld = { totalMinutes: 0, totalEuros: 0, reports: 0 };
+            const fakeNew = { totalMinutes: 5, totalEuros: 4, reports: 0 };
             triggerCelebration(fakeNew, fakeOld);
+        };
+        
+        // TEST: Force celebration with real stats
+        window.forceCelebration = async function() {
+            console.log('🧪 Force celebration with real stats');
+            initGamification(true);
+        };
+        
+        // DEBUG: Check current gamification state
+        window.debugGamification = async function() {
+            console.log('═══════════════════════════════════════');
+            console.log('🔍 GAMIFICATION DEBUG');
+            console.log('═══════════════════════════════════════');
+            console.log('Current User ID:', currentUserId);
+            console.log('Last Known Stats (localStorage):', lastKnownStats);
+            
+            const dbStats = await getWeeklyStats();
+            console.log('Current DB Stats:', dbStats);
+            
+            if (dbStats) {
+                const hasIncrease = 
+                    dbStats.totalEuros > lastKnownStats.totalEuros || 
+                    dbStats.totalMinutes > lastKnownStats.totalMinutes ||
+                    dbStats.reports > lastKnownStats.reports;
+                console.log('Has increase (should celebrate):', hasIncrease);
+            }
+            console.log('═══════════════════════════════════════');
+            return { lastKnownStats, dbStats };
+        };
+        
+        // RESET: Clear saved stats to test first-time animation
+        window.resetGamificationStats = function() {
+            localStorage.removeItem('fixair_lastStats');
+            lastKnownStats = { totalMinutes: 0, totalEuros: 0, reports: 0 };
+            console.log('✅ Stats reset! Reload page to test celebration');
         };
     </script>
     
