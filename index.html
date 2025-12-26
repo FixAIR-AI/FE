@@ -7300,12 +7300,71 @@ INSTRUCTIONS:
                 const previousAiMessages = chatHistory[panel].filter(m => m.role === 'assistant').length;
                 const isExistingConversation = previousUserMessages > 1;
                 
+                // ═══ BUILD DETAILED CONVERSATION SUMMARY for n8n ═══
+                let conversationSummary = '';
+                if (isExistingConversation) {
+                    // Build COMPLETE summary including AI responses
+                    const userMsgs = chatHistory[panel].filter(m => m.role === 'user');
+                    const aiMsgs = chatHistory[panel].filter(m => m.role === 'assistant');
+                    
+                    conversationSummary = `
+🚨🚨🚨 CONVERSATION EXISTANTE - TU DOIS UTILISER CE CONTEXTE 🚨🚨🚨
+
+Tu reprends une conversation avec ${previousUserMessages} messages du technicien et ${previousAiMessages} de tes réponses.
+
+═══ HISTORIQUE COMPLET (lis attentivement) ═══
+`;
+                    
+                    // Add ALL exchanges (interleaved user/AI) - up to last 20 messages
+                    const allMsgs = chatHistory[panel].filter(m => m.role === 'user' || m.role === 'assistant');
+                    const recentMsgs = allMsgs.slice(-20);
+                    
+                    recentMsgs.forEach((msg, i) => {
+                        const role = msg.role === 'user' ? '👤 TECHNICIEN' : '🤖 TOI';
+                        let content = msg.content;
+                        // Clean up JSON reports
+                        if (content.includes('"type":"report"') || content.includes('"type": "report"')) {
+                            content = '[RAPPORT JSON GÉNÉRÉ]';
+                        } else if (content.length > 250) {
+                            content = content.substring(0, 250) + '...';
+                        }
+                        conversationSummary += `${role}: ${content}\n\n`;
+                    });
+                    
+                    // Analyze what info was collected
+                    const allUserText = userMsgs.map(m => m.content).join(' ').toLowerCase();
+                    const collectedInfo = [];
+                    
+                    if (allUserText.includes('dépannage') || allUserText.includes('sav')) collectedInfo.push('✓ Type: Dépannage/SAV');
+                    if (allUserText.includes('mise en service') || allUserText.includes('mes ')) collectedInfo.push('✓ Type: Mise en service');
+                    if (allUserText.includes('maintenance')) collectedInfo.push('✓ Type: Maintenance');
+                    if (allUserText.match(/chez\s+\w+/i)) collectedInfo.push('✓ Client mentionné');
+                    if (allUserText.match(/code\s*[a-z]?\d+/i) || allUserText.match(/erreur\s*[a-z]?\d+/i)) collectedInfo.push('✓ Code erreur donné');
+                    if (allUserText.match(/puhy|pury|pumy|vrv|vrf|split/i)) collectedInfo.push('✓ Type système mentionné');
+                    
+                    const hasReport = aiMsgs.some(m => m.content && (m.content.includes('RAPPORT') || m.content.includes('"type":"report"')));
+                    if (hasReport) collectedInfo.push('⚠️ RAPPORT DÉJÀ GÉNÉRÉ');
+                    
+                    if (collectedInfo.length > 0) {
+                        conversationSummary += `═══ CE QUI A ÉTÉ COLLECTÉ ═══\n${collectedInfo.join('\n')}\n\n`;
+                    }
+                    
+                    conversationSummary += `═══ COMPORTEMENT OBLIGATOIRE ═══
+- MARQUE: ${currentBrandName} (JAMAIS redemander)
+- Tu as lu l'historique ci-dessus = tu CONNAIS la conversation
+- Si "hey/salut" → résume ce qui a été fait et demande comment continuer
+- NE REDEMANDE JAMAIS une info déjà donnée dans l'historique
+- Continue NATURELLEMENT comme si tu te souvenais de tout
+`;
+                }
+                
                 const payload = {
                     brand: brand || 'general',
                     brand_name: currentBrandName,
                     panel: panel,
                     message: text,
                     history: recentHistory,
+                    chat_history: recentHistory, // Duplicate for compatibility
                     session_id: currentSessionId,
                     project_id: currentProjectId || null,
                     chat_id: currentChatId[panel] || null,
@@ -7313,19 +7372,24 @@ INSTRUCTIONS:
                     is_first_message: previousUserMessages === 1,
                     is_existing_conversation: isExistingConversation,
                     message_count: previousUserMessages,
-                    brand_instruction: `MARQUE CONFIRMÉE: ${currentBrandName}. NE DEMANDE JAMAIS LA MARQUE.`,
+                    conversation_summary: conversationSummary,
+                    // ═══ CRITICAL: brand_instruction is used in n8n systemMessage ═══
+                    brand_instruction: isExistingConversation 
+                        ? `${conversationSummary}`
+                        : `MARQUE CONFIRMÉE: ${currentBrandName}. NE DEMANDE JAMAIS LA MARQUE. NOUVELLE CONVERSATION.`,
                     system_context: isExistingConversation 
-                        ? `CONVERSATION EXISTANTE avec ${previousUserMessages} messages. MARQUE: ${currentBrandName}. Continue naturellement sans redemander les infos déjà données.`
-                        : `NOUVELLE CONVERSATION. MARQUE: ${currentBrandName}. ${panel === 'assistant' ? 'Mode Rapport.' : 'Mode Diagnostic.'}`
+                        ? `${conversationSummary}`
+                        : `NOUVELLE CONVERSATION. MARQUE: ${currentBrandName}. ${panel === 'assistant' ? 'Mode Rapport - pose les questions pour générer un rapport d\'intervention.' : 'Mode Diagnostic - aide au dépannage.'}`
                 };
                 
                 console.log('📤 Sending to n8n:', N8N_WEBHOOK_URL);
                 console.log('📤 Session ID:', currentSessionId);
-                console.log('📤 Is existing conversation:', isExistingConversation);
+                console.log('📤 Is existing conversation:', isExistingConversation, '(', previousUserMessages, 'user msgs,', previousAiMessages, 'AI msgs)');
                 console.log('📤 History length:', recentHistory.length, '(system msg:', systemMsg ? 'yes' : 'no', ')');
                 console.log('📤 Brand:', currentBrandName);
-                if (systemMsg) {
-                    console.log('📤 System context preview:', systemMsg.content.substring(0, 200) + '...');
+                if (isExistingConversation) {
+                    console.log('📤 Full conversation summary being sent in brand_instruction');
+                    console.log('📤 Summary preview:', conversationSummary.substring(0, 500) + '...');
                 }
                 
                 // Call n8n webhook
