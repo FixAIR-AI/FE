@@ -1415,15 +1415,17 @@
         .h-btn.active { background: var(--mode-bg); border-color: var(--mode-border); color: var(--mode-color); }
         .h-btn .icon { width: 14px; height: 14px; }
         
-        /* Report button - shows when report data exists */
+        /* Report button - always visible in Assistant mode */
         .h-btn.report-btn { display: none; } /* Hidden by default (Copilot) */
         .panel.assistant .h-btn.report-btn { display: flex; } /* Visible in Assistant */
-        .h-btn.report-btn .icon { width: 16px; height: 16px; }
+        .h-btn.report-btn .icon { width: 16px; height: 16px; opacity: 0.7; }
+        .h-btn.report-btn:hover .icon { opacity: 1; }
         .h-btn.report-btn.has-data { 
             border-color: var(--assistant); 
             color: var(--assistant);
             animation: reportPulse 2s ease-in-out infinite;
         }
+        .h-btn.report-btn.has-data .icon { opacity: 1; }
         @keyframes reportPulse {
             0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
             50% { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2); }
@@ -4179,7 +4181,7 @@
                 </div>
                 <div class="header-actions">
                     <button class="h-btn new-chat-btn" onclick="startNewProject()" title="Nouveau chat"><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button>
-                    <button class="h-btn report-btn" onclick="openReport()" title="Voir rapport"><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="12" y2="15"/></svg></span></button>
+                    <button class="h-btn report-btn" onclick="openReport()" title="Voir rapport"><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6"/><path d="M9 16h4"/></svg></span></button>
                     <button class="h-btn" onclick="toggleSplit()" title="Mode split"><span class="icon"><svg><use href="#icon-columns"/></svg></span></button>
                 </div>
             </header>
@@ -7744,28 +7746,66 @@ INSTRUCTIONS:
         
         // Calculate report completion for manager visibility
         function calculateReportCompletion(data) {
-            const fields = {
-                type_intervention: !!data.type_intervention,
-                client: !!(data.client && data.client.societe),
-                site: !!(data.site && (data.site.adresse || data.site.ville)),
-                systeme: !!(data.systeme && (data.systeme.type || data.systeme.modele)),
-                codes_defaut: !!(data.codes_defaut && data.codes_defaut.length > 0),
-                travaux_effectues: !!(data.travaux_effectues && data.travaux_effectues.length > 0),
-                mesures: !!(data.mesures && data.mesures.length > 0),
-                resultat: !!data.resultat
+            // All trackable fields with weights (more important = higher weight)
+            const fieldChecks = {
+                // Essential fields (weight: 2)
+                type_intervention: { filled: !!data.type_intervention, weight: 2 },
+                client_societe: { filled: !!(data.client && data.client.societe), weight: 2 },
+                systeme_modele: { filled: !!(data.systeme && data.systeme.modele), weight: 2 },
+                resultat: { filled: !!data.resultat, weight: 2 },
+                
+                // Important fields (weight: 1.5)
+                site_adresse: { filled: !!(data.site && data.site.adresse), weight: 1.5 },
+                site_ville: { filled: !!(data.site && data.site.ville), weight: 1.5 },
+                systeme_type: { filled: !!(data.systeme && data.systeme.type), weight: 1.5 },
+                travaux_effectues: { filled: !!(data.travaux_effectues && data.travaux_effectues.length > 0), weight: 1.5 },
+                
+                // Optional but valuable (weight: 1)
+                reference: { filled: !!data.reference, weight: 1 },
+                resume: { filled: !!data.resume, weight: 1 },
+                client_contact: { filled: !!(data.client && data.client.contact), weight: 1 },
+                client_telephone: { filled: !!(data.client && data.client.telephone), weight: 1 },
+                systeme_serie: { filled: !!(data.systeme && data.systeme.serie), weight: 1 },
+                systeme_fluide: { filled: !!(data.systeme && data.systeme.fluide), weight: 1 },
+                codes_defaut: { filled: !!(data.codes_defaut && data.codes_defaut.length > 0), weight: 1 },
+                mesures: { filled: !!(data.mesures && data.mesures.length > 0), weight: 1 },
+                
+                // Bonus (weight: 0.5)
+                technicien: { filled: !!(data.technicien && data.technicien.nom), weight: 0.5 },
+                reserves: { filled: !!(data.reserves && data.reserves.length > 0), weight: 0.5 },
+                photos: { filled: !!(window.reportPhotos && window.reportPhotos.length > 0), weight: 0.5 }
             };
             
-            const filled = Object.values(fields).filter(v => v).length;
-            const total = Object.keys(fields).length;
-            const percentage = Math.round((filled / total) * 100);
+            // Calculate weighted percentage
+            let totalWeight = 0;
+            let filledWeight = 0;
+            const filledFields = [];
+            const missingFields = [];
+            
+            for (const [key, check] of Object.entries(fieldChecks)) {
+                totalWeight += check.weight;
+                if (check.filled) {
+                    filledWeight += check.weight;
+                    filledFields.push(key);
+                } else {
+                    missingFields.push(key);
+                }
+            }
+            
+            const percentage = Math.round((filledWeight / totalWeight) * 100);
+            
+            // If exported, ensure at least 70%
+            const finalPercentage = data.exported_at ? Math.max(percentage, 70) : percentage;
             
             return {
-                fields,
-                filled,
-                total,
-                percentage,
-                isComplete: percentage >= 75, // Consider 75%+ as complete
-                status: percentage >= 75 ? 'complet' : (percentage >= 25 ? 'en_cours' : 'debut')
+                fields: fieldChecks,
+                filledFields,
+                missingFields,
+                filled: filledFields.length,
+                total: Object.keys(fieldChecks).length,
+                percentage: finalPercentage,
+                isComplete: finalPercentage >= 85,
+                status: finalPercentage >= 85 ? 'complet' : (finalPercentage >= 50 ? 'en_cours' : 'debut')
             };
         }
         
@@ -7940,12 +7980,13 @@ INSTRUCTIONS:
             let html = `<div class="rpt" style="margin:0;">`;
             
             // Completion progress bar (for manager visibility)
-            const progressColor = completion.percentage >= 75 ? '#22c55e' : (completion.percentage >= 25 ? '#f59e0b' : '#ef4444');
+            const progressColor = completion.percentage >= 85 ? '#22c55e' : (completion.percentage >= 50 ? '#f59e0b' : '#ef4444');
+            const statusLabel = completion.percentage >= 85 ? 'Complet' : (completion.percentage >= 50 ? 'En cours' : 'Début');
             html += `
             <div class="rpt-progress" style="padding: 8px 12px 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                     <span style="font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px;">Construction du rapport</span>
-                    <span style="font-size: 11px; font-weight: 600; color: ${progressColor};">${completion.percentage}%</span>
+                    <span style="font-size: 11px; font-weight: 600; color: ${progressColor};">${completion.percentage}% · ${statusLabel}</span>
                 </div>
                 <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;">
                     <div style="height: 100%; width: ${completion.percentage}%; background: ${progressColor}; border-radius: 2px; transition: width 0.3s;"></div>
