@@ -2578,6 +2578,182 @@
         .report-progress-bar { flex: 1; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
         .report-progress-fill { height: 100%; width: 0%; background: #3B82F6; border-radius: 2px; transition: width 0.4s ease; }
         .report-progress-text { font-size: 11px; font-weight: 600; color: #3B82F6; white-space: nowrap; }
+        
+        /* Editable report styles */
+        .editable-report .editable-field {
+            display: inline-block;
+            min-width: 80px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+            cursor: text;
+        }
+        .editable-report .editable-field:hover {
+            background: rgba(255,255,255,0.03);
+            border-color: var(--border);
+        }
+        .editable-report .editable-field:focus {
+            outline: none;
+            background: rgba(59, 130, 246, 0.1);
+            border-color: #3B82F6;
+        }
+        .editable-report .editable-field.empty {
+            color: var(--text-dim);
+            font-style: italic;
+        }
+        .editable-report .editable-field.empty::before {
+            content: attr(data-placeholder);
+        }
+        .editable-report .editable-field:focus.empty::before {
+            content: '';
+        }
+        .editable-report .editable-field:not(:empty).empty::before {
+            content: '';
+        }
+        
+        /* Meta editable */
+        .rpt-meta-editable {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        .rpt-meta-editable .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .rpt-meta-editable .meta-label {
+            font-size: 10px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+        
+        /* Dropdowns */
+        .status-dropdown, .type-dropdown, .result-status-dropdown {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            padding: 4px 8px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        .status-dropdown:focus, .type-dropdown:focus, .result-status-dropdown:focus {
+            outline: none;
+            border-color: #3B82F6;
+        }
+        .rpt-status-select { display: flex; align-items: center; }
+        
+        /* Result editable */
+        .rpt-result-editable {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+        }
+        .rpt-result-editable .result-status-dropdown {
+            width: 100%;
+            padding: 8px 12px;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+        .rpt-result-editable .result-description .editable-field {
+            display: block;
+            width: 100%;
+            min-height: 40px;
+        }
+        
+        /* Add item button */
+        .add-item-btn {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #3B82F6;
+            font-size: 14px;
+            line-height: 1;
+            cursor: pointer;
+            margin-left: 8px;
+            transition: all 0.2s;
+        }
+        .add-item-btn:hover {
+            background: rgba(59, 130, 246, 0.3);
+        }
+        
+        /* Add item placeholder */
+        .add-item-placeholder {
+            padding: 8px 12px;
+            border: 1px dashed var(--border);
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+        .add-item-placeholder:hover {
+            border-color: #3B82F6;
+            background: rgba(59, 130, 246, 0.05);
+        }
+        .add-item-placeholder .placeholder-text {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+        
+        /* Remove item button */
+        .remove-item-btn {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: transparent;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            font-size: 12px;
+            line-height: 1;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .list-item:hover .remove-item-btn {
+            opacity: 1;
+        }
+        .remove-item-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+        
+        /* List items */
+        .editable-report .list-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .editable-report .rpt-checklist .list-item .editable-field {
+            flex: 1;
+        }
+        
+        /* Photos placeholder */
+        .photos-placeholder {
+            padding: 20px;
+            text-align: center;
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            color: var(--text-dim);
+            font-size: 12px;
+        }
+        
+        /* Tech grid */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        @media (max-width: 500px) {
+            .tech-grid { grid-template-columns: 1fr; }
+        }
+        
         .report-body { flex: 1; overflow-y: auto; padding: 14px; }
         
         /* Live preview container */
@@ -5661,13 +5837,8 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             document.getElementById('reportSheet').classList.add('open');
             document.getElementById('reportBackdrop').classList.add('show');
             
-            // Build partial report from conversation if no full report yet
-            if (!lastReportData && mode === 'assistant') {
-                buildPartialReport();
-            } else if (lastReportData) {
-                // Update preview with latest data
-                updateDrawerPreview(lastReportData);
-            }
+            // Always show editable template with current data (or empty)
+            updateDrawerPreview(lastReportData || {});
         }
         
         function closeReport() {
@@ -7707,78 +7878,86 @@ INSTRUCTIONS:
             
             if (!previewContent) return;
             
-            // Check if we have any meaningful data beyond just brand/date
-            const hasData = data && (
-                data.type_intervention ||
-                data.client ||
-                data.site ||
-                data.systeme ||
-                data.codes_defaut ||
-                data.travaux_effectues ||
-                data.mesures ||
-                data.resultat ||
-                data.resume
-            );
-            
-            if (!hasData) {
-                // Show empty state
-                if (emptyState) emptyState.style.display = '';
-                previewContent.style.display = 'none';
-                // Hide progress bar
-                if (headerProgress) headerProgress.style.display = 'none';
-                return;
-            }
-            
-            // Hide empty state, show preview
+            // Always hide empty state - we show editable template instead
             if (emptyState) emptyState.style.display = 'none';
             previewContent.style.display = 'block';
             
-            // Calculate completion percentage for manager visibility
-            const completionStatus = calculateReportCompletion(data);
+            // Use provided data or empty object
+            const reportData = data || {};
+            
+            // Calculate completion percentage
+            const completionStatus = calculateReportCompletion(reportData);
             
             // Update header progress bar
             if (headerProgress && progressFill && progressText) {
-                headerProgress.style.display = 'flex';
-                progressFill.style.width = completionStatus.percentage + '%';
-                progressText.textContent = completionStatus.percentage + '%';
+                if (completionStatus.percentage > 0) {
+                    headerProgress.style.display = 'flex';
+                    progressFill.style.width = completionStatus.percentage + '%';
+                    progressText.textContent = completionStatus.percentage + '%';
+                } else {
+                    headerProgress.style.display = 'flex';
+                    progressFill.style.width = '0%';
+                    progressText.textContent = '0%';
+                }
             }
             
-            // Generate preview HTML (only filled sections)
-            const previewHtml = renderReportPreview(data, completionStatus);
+            // Generate editable template HTML
+            const previewHtml = renderReportPreview(reportData, completionStatus);
             previewContent.innerHTML = previewHtml;
+            
+            // Attach event listeners for editable fields
+            initEditableReport();
             
             console.log('📋 Drawer preview updated - Completion:', completionStatus.percentage + '%');
         }
         
         // Calculate report completion for manager visibility
         function calculateReportCompletion(data) {
+            if (!data) data = {};
+            
+            // Helper to check if a string field is filled
+            const isFilled = (val) => val && typeof val === 'string' && val.trim() !== '';
+            
+            // Helper to check if an array has real content
+            const hasItems = (arr) => {
+                if (!Array.isArray(arr) || arr.length === 0) return false;
+                // Check if at least one item has actual content
+                return arr.some(item => {
+                    if (typeof item === 'string') return item.trim() !== '';
+                    if (typeof item === 'object') {
+                        return Object.values(item).some(v => v && typeof v === 'string' && v.trim() !== '');
+                    }
+                    return false;
+                });
+            };
+            
             // All trackable fields with weights (more important = higher weight)
             const fieldChecks = {
                 // Essential fields (weight: 2)
-                type_intervention: { filled: !!data.type_intervention, weight: 2 },
-                client_societe: { filled: !!(data.client && data.client.societe), weight: 2 },
-                systeme_modele: { filled: !!(data.systeme && data.systeme.modele), weight: 2 },
-                resultat: { filled: !!data.resultat, weight: 2 },
+                type_intervention: { filled: isFilled(data.type_intervention), weight: 2 },
+                client_societe: { filled: isFilled(data.client?.societe), weight: 2 },
+                systeme_modele: { filled: isFilled(data.systeme?.modele), weight: 2 },
+                resultat_status: { filled: isFilled(data.resultat?.status), weight: 2 },
                 
                 // Important fields (weight: 1.5)
-                site_adresse: { filled: !!(data.site && data.site.adresse), weight: 1.5 },
-                site_ville: { filled: !!(data.site && data.site.ville), weight: 1.5 },
-                systeme_type: { filled: !!(data.systeme && data.systeme.type), weight: 1.5 },
-                travaux_effectues: { filled: !!(data.travaux_effectues && data.travaux_effectues.length > 0), weight: 1.5 },
+                site_adresse: { filled: isFilled(data.site?.adresse), weight: 1.5 },
+                site_ville: { filled: isFilled(data.site?.ville), weight: 1.5 },
+                systeme_type: { filled: isFilled(data.systeme?.type), weight: 1.5 },
+                travaux_effectues: { filled: hasItems(data.travaux_effectues), weight: 1.5 },
                 
                 // Optional but valuable (weight: 1)
-                reference: { filled: !!data.reference, weight: 1 },
-                resume: { filled: !!data.resume, weight: 1 },
-                client_contact: { filled: !!(data.client && data.client.contact), weight: 1 },
-                client_telephone: { filled: !!(data.client && data.client.telephone), weight: 1 },
-                systeme_serie: { filled: !!(data.systeme && data.systeme.serie), weight: 1 },
-                systeme_fluide: { filled: !!(data.systeme && data.systeme.fluide), weight: 1 },
-                codes_defaut: { filled: !!(data.codes_defaut && data.codes_defaut.length > 0), weight: 1 },
-                mesures: { filled: !!(data.mesures && data.mesures.length > 0), weight: 1 },
+                reference: { filled: isFilled(data.reference), weight: 1 },
+                resume: { filled: isFilled(data.resume), weight: 1 },
+                client_contact: { filled: isFilled(data.client?.contact), weight: 1 },
+                client_telephone: { filled: isFilled(data.client?.telephone), weight: 1 },
+                systeme_serie: { filled: isFilled(data.systeme?.serie), weight: 1 },
+                systeme_fluide: { filled: isFilled(data.systeme?.fluide), weight: 1 },
+                codes_defaut: { filled: hasItems(data.codes_defaut), weight: 1 },
+                mesures: { filled: hasItems(data.mesures), weight: 1 },
                 
                 // Bonus (weight: 0.5)
-                technicien: { filled: !!(data.technicien && data.technicien.nom), weight: 0.5 },
-                reserves: { filled: !!(data.reserves && data.reserves.length > 0), weight: 0.5 },
+                technicien_nom: { filled: isFilled(data.technicien?.nom), weight: 0.5 },
+                reserves: { filled: hasItems(data.reserves), weight: 0.5 },
                 photos: { filled: !!(window.reportPhotos && window.reportPhotos.length > 0), weight: 0.5 }
             };
             
@@ -7800,18 +7979,15 @@ INSTRUCTIONS:
             
             const percentage = Math.round((filledWeight / totalWeight) * 100);
             
-            // If exported, ensure at least 70%
-            const finalPercentage = data.exported_at ? Math.max(percentage, 70) : percentage;
-            
             return {
                 fields: fieldChecks,
                 filledFields,
                 missingFields,
                 filled: filledFields.length,
                 total: Object.keys(fieldChecks).length,
-                percentage: finalPercentage,
-                isComplete: finalPercentage >= 85,
-                status: finalPercentage >= 85 ? 'complet' : (finalPercentage >= 50 ? 'en_cours' : 'debut')
+                percentage: percentage,
+                isComplete: percentage >= 85,
+                status: percentage >= 85 ? 'complet' : (percentage >= 50 ? 'en_cours' : 'debut')
             };
         }
         
@@ -7946,9 +8122,10 @@ INSTRUCTIONS:
             updateDrawerPreview(partialData);
         }
         
-        // Render simplified report preview for drawer (only shows filled sections)
+        // Render EDITABLE report template for drawer
+        // Shows ALL fields (filled or placeholder) - user can click to edit any field
         function renderReportPreview(data, completionStatus) {
-            if (!data) return '';
+            const reportData = data || {};
             
             const brandNames = {
                 'mitsubishi': 'Mitsubishi Electric',
@@ -7963,29 +8140,31 @@ INSTRUCTIONS:
                 'general': 'Multi-marques'
             };
             
-            const brandClass = data.brand_key || 'general';
-            const brandName = brandNames[brandClass] || data.brand || 'FixAIR';
+            const brandClass = reportData.brand_key || brand || 'general';
+            const brandName = brandNames[brandClass] || reportData.brand || brandNames[brand] || 'FixAIR';
+            const today = new Date().toLocaleDateString('fr-FR');
             
-            // Status
-            let statusClass = 'en-cours';
-            let statusText = 'En cours';
-            if (data.status) {
-                const s = data.status.toLowerCase();
-                if (s.includes('conforme') && !s.includes('non')) {
-                    statusClass = 'conforme';
-                    statusText = 'Conforme';
-                } else if (s.includes('non') || s.includes('refus')) {
-                    statusClass = 'non-conforme';
-                    statusText = 'Non conforme';
-                }
-            }
+            // Helper to create editable field
+            const editableField = (key, value, placeholder, isTextarea = false) => {
+                const hasValue = value && value.trim && value.trim() !== '';
+                const displayValue = hasValue ? value : '';
+                const placeholderAttr = placeholder ? `data-placeholder="${placeholder}"` : '';
+                const emptyClass = hasValue ? '' : 'empty';
+                const tag = isTextarea ? 'div' : 'span';
+                return `<${tag} class="editable-field ${emptyClass}" contenteditable="true" data-field="${key}" ${placeholderAttr}>${displayValue}</${tag}>`;
+            };
             
-            // Completion info
-            const completion = completionStatus || { percentage: 0, status: 'debut' };
+            // Helper for nested fields
+            const editableNested = (parent, key, value, placeholder) => {
+                const hasValue = value && value.trim && value.trim() !== '';
+                const displayValue = hasValue ? value : '';
+                const emptyClass = hasValue ? '' : 'empty';
+                return `<span class="editable-field ${emptyClass}" contenteditable="true" data-field="${parent}.${key}" data-placeholder="${placeholder}">${displayValue}</span>`;
+            };
             
-            let html = `<div class="rpt" style="margin:0;">`;
+            let html = `<div class="rpt editable-report" style="margin:0;">`;
             
-            // Header (progress bar now in fixed drawer header)
+            // Header
             html += `
             <div class="rpt-header">
                 <div class="rpt-header-top">
@@ -7993,140 +8172,357 @@ INSTRUCTIONS:
                         <div class="rpt-brand ${brandClass}">${brandName}</div>
                         <h1 class="rpt-title">Rapport d'intervention</h1>
                     </div>
-                    <div class="rpt-status ${statusClass}">
-                        <span class="rpt-status-dot"></span>
-                        <span class="rpt-status-text">${statusText}</span>
+                    <div class="rpt-status-select">
+                        <select class="status-dropdown" data-field="status" onchange="updateReportField('status', this.value)">
+                            <option value="en_cours" ${(!reportData.status || reportData.status === 'en_cours') ? 'selected' : ''}>En cours</option>
+                            <option value="conforme" ${reportData.status === 'conforme' ? 'selected' : ''}>Conforme</option>
+                            <option value="non_conforme" ${reportData.status === 'non_conforme' ? 'selected' : ''}>Non conforme</option>
+                        </select>
                     </div>
                 </div>
-                <div class="rpt-meta">
-                    ${data.reference ? `<span>Réf <span class="val">${data.reference}</span></span>` : ''}
-                    ${data.type_intervention ? `<span>Type <span class="val">${data.type_intervention}</span></span>` : ''}
-                    ${data.date ? `<span>Date <span class="val">${data.date}</span></span>` : ''}
+                <div class="rpt-meta-editable">
+                    <div class="meta-item">
+                        <span class="meta-label">Réf</span>
+                        ${editableField('reference', reportData.reference || '', 'FX-2025-XXXX')}
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Type</span>
+                        <select class="type-dropdown" data-field="type_intervention" onchange="updateReportField('type_intervention', this.value)">
+                            <option value="" ${!reportData.type_intervention ? 'selected' : ''}>Sélectionner...</option>
+                            <option value="SAV / Dépannage" ${reportData.type_intervention === 'SAV / Dépannage' ? 'selected' : ''}>SAV / Dépannage</option>
+                            <option value="Mise en service" ${reportData.type_intervention === 'Mise en service' ? 'selected' : ''}>Mise en service</option>
+                            <option value="Maintenance" ${reportData.type_intervention === 'Maintenance' ? 'selected' : ''}>Maintenance</option>
+                            <option value="Installation" ${reportData.type_intervention === 'Installation' ? 'selected' : ''}>Installation</option>
+                        </select>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Date</span>
+                        ${editableField('date', reportData.date || today, 'JJ/MM/AAAA')}
+                    </div>
                 </div>
             </div>`;
             
             html += `<div class="rpt-card">`;
             
-            // Résumé
-            if (data.resume) {
-                html += `
-                <div class="rpt-section">
-                    <div class="rpt-label">Résumé</div>
-                    <p class="rpt-text">${data.resume}</p>
-                </div>`;
-            }
+            // Résumé - always show
+            html += `
+            <div class="rpt-section">
+                <div class="rpt-label">Résumé</div>
+                ${editableField('resume', reportData.resume || '', 'Décrivez brièvement l\'intervention...', true)}
+            </div>`;
             
-            // Client & Site
-            if (data.client || data.site) {
-                html += `<div class="rpt-section"><div class="rpt-grid">`;
-                if (data.client) {
-                    html += `<div class="rpt-group"><div class="rpt-label">Client</div>`;
-                    if (data.client.societe) html += `<div class="rpt-row"><span class="rpt-row-label">Société</span><span class="rpt-row-value">${data.client.societe}</span></div>`;
-                    if (data.client.contact) html += `<div class="rpt-row"><span class="rpt-row-label">Contact</span><span class="rpt-row-value">${data.client.contact}</span></div>`;
-                    if (data.client.telephone) html += `<div class="rpt-row"><span class="rpt-row-label">Téléphone</span><span class="rpt-row-value">${data.client.telephone}</span></div>`;
-                    html += `</div>`;
-                }
-                if (data.site) {
-                    html += `<div class="rpt-group"><div class="rpt-label">Site</div>`;
-                    if (data.site.adresse) html += `<div class="rpt-row"><span class="rpt-row-label">Adresse</span><span class="rpt-row-value">${data.site.adresse}</span></div>`;
-                    if (data.site.ville) html += `<div class="rpt-row"><span class="rpt-row-label">Ville</span><span class="rpt-row-value">${data.site.ville}</span></div>`;
-                    html += `</div>`;
-                }
-                html += `</div></div>`;
-            }
+            // Client & Site - always show
+            html += `<div class="rpt-section"><div class="rpt-grid">`;
             
-            // Système
-            if (data.systeme) {
-                html += `<div class="rpt-section"><div class="rpt-label">Système</div>`;
-                if (data.systeme.type) html += `<div class="rpt-row"><span class="rpt-row-label">Type</span><span class="rpt-row-value">${data.systeme.type}</span></div>`;
-                if (data.systeme.modele) html += `<div class="rpt-row"><span class="rpt-row-label">Modèle</span><span class="rpt-row-value mono">${data.systeme.modele}</span></div>`;
-                if (data.systeme.serie) html += `<div class="rpt-row"><span class="rpt-row-label">N° Série</span><span class="rpt-row-value mono">${data.systeme.serie}</span></div>`;
-                if (data.systeme.fluide) html += `<div class="rpt-row"><span class="rpt-row-label">Fluide</span><span class="rpt-row-value">${data.systeme.fluide}</span></div>`;
-                html += `</div>`;
-            }
+            // Client
+            html += `<div class="rpt-group"><div class="rpt-label">Client</div>`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Société</span><span class="rpt-row-value">${editableNested('client', 'societe', reportData.client?.societe || '', 'Nom de l\'entreprise')}</span></div>`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Contact</span><span class="rpt-row-value">${editableNested('client', 'contact', reportData.client?.contact || '', 'Nom du contact')}</span></div>`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Téléphone</span><span class="rpt-row-value">${editableNested('client', 'telephone', reportData.client?.telephone || '', '06 XX XX XX XX')}</span></div>`;
+            html += `</div>`;
             
-            // Codes défaut
-            if (data.codes_defaut && data.codes_defaut.length > 0) {
-                html += `<div class="rpt-section"><div class="rpt-label">Codes défaut</div>`;
-                data.codes_defaut.forEach(c => {
-                    html += `<div class="rpt-row"><span class="rpt-row-label code-badge">${c.code}</span><span class="rpt-row-value">${c.description || ''}</span></div>`;
+            // Site
+            html += `<div class="rpt-group"><div class="rpt-label">Site</div>`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Adresse</span><span class="rpt-row-value">${editableNested('site', 'adresse', reportData.site?.adresse || '', 'Adresse du site')}</span></div>`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Ville</span><span class="rpt-row-value">${editableNested('site', 'ville', reportData.site?.ville || '', 'Code postal + Ville')}</span></div>`;
+            html += `</div>`;
+            html += `</div></div>`;
+            
+            // Système - always show
+            html += `<div class="rpt-section"><div class="rpt-label">Système</div>`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Type</span><span class="rpt-row-value">${editableNested('systeme', 'type', reportData.systeme?.type || '', 'VRF, Split, Rooftop...')}</span></div>`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Modèle</span><span class="rpt-row-value mono">${editableNested('systeme', 'modele', reportData.systeme?.modele || '', 'Référence modèle')}</span></div>`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">N° Série</span><span class="rpt-row-value mono">${editableNested('systeme', 'serie', reportData.systeme?.serie || '', 'Numéro de série')}</span></div>`;
+            html += `<div class="rpt-row"><span class="rpt-row-label">Fluide</span><span class="rpt-row-value">${editableNested('systeme', 'fluide', reportData.systeme?.fluide || '', 'R410A, R32...')}</span></div>`;
+            html += `</div>`;
+            
+            // Codes défaut - with add button
+            html += `<div class="rpt-section">
+                <div class="rpt-label">Codes défaut <button class="add-item-btn" onclick="addReportListItem('codes_defaut')">+</button></div>
+                <div class="rpt-list" id="codes-defaut-list">`;
+            if (reportData.codes_defaut && reportData.codes_defaut.length > 0) {
+                reportData.codes_defaut.forEach((c, i) => {
+                    html += `<div class="rpt-row list-item" data-index="${i}">
+                        <span class="rpt-row-label editable-field" contenteditable="true" data-field="codes_defaut.${i}.code" data-placeholder="Code">${c.code || ''}</span>
+                        <span class="rpt-row-value editable-field" contenteditable="true" data-field="codes_defaut.${i}.description" data-placeholder="Description">${c.description || ''}</span>
+                        <button class="remove-item-btn" onclick="removeReportListItem('codes_defaut', ${i})">×</button>
+                    </div>`;
                 });
-                html += `</div>`;
             }
+            html += `<div class="add-item-placeholder" onclick="addReportListItem('codes_defaut')">
+                <span class="placeholder-text">+ Ajouter un code défaut</span>
+            </div>`;
+            html += `</div></div>`;
             
-            // Travaux effectués
-            if (data.travaux_effectues && data.travaux_effectues.length > 0) {
-                html += `<div class="rpt-section"><div class="rpt-label">Travaux effectués</div><ul class="rpt-checklist">`;
-                data.travaux_effectues.forEach(t => {
-                    const icon = t.status === 'done' ? '✓' : (t.status === 'error' ? '✗' : '→');
-                    const cls = t.status || 'pending';
-                    html += `<li class="${cls}"><span class="check-icon">${icon}</span>${t.texte}</li>`;
+            // Travaux effectués - with add button
+            html += `<div class="rpt-section">
+                <div class="rpt-label">Travaux effectués <button class="add-item-btn" onclick="addReportListItem('travaux_effectues')">+</button></div>
+                <ul class="rpt-checklist editable-list" id="travaux-list">`;
+            if (reportData.travaux_effectues && reportData.travaux_effectues.length > 0) {
+                reportData.travaux_effectues.forEach((t, i) => {
+                    html += `<li class="done list-item" data-index="${i}">
+                        <span class="check-icon">✓</span>
+                        <span class="editable-field" contenteditable="true" data-field="travaux_effectues.${i}.texte" data-placeholder="Description du travail">${t.texte || ''}</span>
+                        <button class="remove-item-btn" onclick="removeReportListItem('travaux_effectues', ${i})">×</button>
+                    </li>`;
                 });
-                html += `</ul></div>`;
             }
+            html += `</ul>
+            <div class="add-item-placeholder" onclick="addReportListItem('travaux_effectues')">
+                <span class="placeholder-text">+ Ajouter un travail effectué</span>
+            </div></div>`;
             
-            // Mesures
-            if (data.mesures && data.mesures.length > 0) {
-                html += `<div class="rpt-section"><div class="rpt-label">Mesures</div><div class="rpt-measures">`;
-                data.mesures.forEach(m => {
-                    const cls = m.status || '';
-                    html += `<div class="rpt-measure ${cls}"><span class="measure-label">${m.label}</span><span class="measure-value">${m.valeur}</span></div>`;
+            // Mesures - with add button
+            html += `<div class="rpt-section">
+                <div class="rpt-label">Mesures <button class="add-item-btn" onclick="addReportListItem('mesures')">+</button></div>
+                <div class="rpt-measures editable-list" id="mesures-list">`;
+            if (reportData.mesures && reportData.mesures.length > 0) {
+                reportData.mesures.forEach((m, i) => {
+                    html += `<div class="rpt-measure list-item" data-index="${i}">
+                        <span class="measure-label editable-field" contenteditable="true" data-field="mesures.${i}.label" data-placeholder="Paramètre">${m.label || ''}</span>
+                        <span class="measure-value editable-field" contenteditable="true" data-field="mesures.${i}.valeur" data-placeholder="Valeur">${m.valeur || ''}</span>
+                        <button class="remove-item-btn" onclick="removeReportListItem('mesures', ${i})">×</button>
+                    </div>`;
                 });
-                html += `</div></div>`;
             }
+            html += `</div>
+            <div class="add-item-placeholder" onclick="addReportListItem('mesures')">
+                <span class="placeholder-text">+ Ajouter une mesure</span>
+            </div></div>`;
             
-            // Résultat
-            if (data.resultat) {
-                const resClass = data.resultat.status === 'resolu' ? 'resolved' : 'unresolved';
-                html += `
-                <div class="rpt-section">
-                    <div class="rpt-result ${resClass}">
-                        <div class="result-icon">${data.resultat.status === 'resolu' ? '✓' : '!'}</div>
-                        <div>
-                            <div class="result-label">${data.resultat.label || (data.resultat.status === 'resolu' ? 'Résolu' : 'Non résolu')}</div>
-                            ${data.resultat.description ? `<div class="result-desc">${data.resultat.description}</div>` : ''}
-                        </div>
+            // Diagnostic / Résultat - always show
+            const hasResult = reportData.resultat && (reportData.resultat.status || reportData.resultat.label);
+            html += `
+            <div class="rpt-section">
+                <div class="rpt-label">Diagnostic</div>
+                <div class="rpt-result-editable">
+                    <select class="result-status-dropdown" data-field="resultat.status" onchange="updateReportField('resultat.status', this.value)">
+                        <option value="" ${!reportData.resultat?.status ? 'selected' : ''}>Sélectionner le statut...</option>
+                        <option value="resolu" ${reportData.resultat?.status === 'resolu' ? 'selected' : ''}>✓ Résolu</option>
+                        <option value="en_attente" ${reportData.resultat?.status === 'en_attente' ? 'selected' : ''}>⏳ En attente</option>
+                        <option value="non_resolu" ${reportData.resultat?.status === 'non_resolu' ? 'selected' : ''}>✗ Non résolu</option>
+                    </select>
+                    <div class="result-description">
+                        ${editableField('resultat.description', reportData.resultat?.description || '', 'Description du diagnostic...', true)}
                     </div>
-                </div>`;
-            }
+                </div>
+            </div>`;
             
-            // Réserves - each in its own block with gap
-            if (data.reserves && data.reserves.length > 0) {
-                html += `<div class="rpt-section"><div class="rpt-label">Réserves</div><div class="rpt-alerts">`;
-                data.reserves.forEach(r => {
-                    const cls = r.type === 'danger' ? 'danger' : 'warning';
-                    html += `<div class="rpt-alert ${cls}"><strong>${r.titre || 'Attention'}</strong><p>${r.texte}</p></div>`;
+            // Réserves - with add button
+            html += `<div class="rpt-section">
+                <div class="rpt-label">Réserves / Remarques <button class="add-item-btn" onclick="addReportListItem('reserves')">+</button></div>
+                <div class="rpt-alerts editable-list" id="reserves-list">`;
+            if (reportData.reserves && reportData.reserves.length > 0) {
+                reportData.reserves.forEach((r, i) => {
+                    html += `<div class="rpt-alert warning list-item" data-index="${i}">
+                        <strong class="editable-field" contenteditable="true" data-field="reserves.${i}.titre" data-placeholder="Titre">${r.titre || 'Attention'}</strong>
+                        <p class="editable-field" contenteditable="true" data-field="reserves.${i}.texte" data-placeholder="Description de la réserve">${r.texte || ''}</p>
+                        <button class="remove-item-btn" onclick="removeReportListItem('reserves', ${i})">×</button>
+                    </div>`;
                 });
-                html += `</div></div>`;
             }
+            html += `</div>
+            <div class="add-item-placeholder" onclick="addReportListItem('reserves')">
+                <span class="placeholder-text">+ Ajouter une réserve</span>
+            </div></div>`;
             
-            // Technicien
-            if (data.technicien && data.technicien.nom) {
-                html += `
-                <div class="rpt-footer-info">
-                    <span>Technicien: ${data.technicien.nom}</span>
-                    ${data.technicien.heure_arrivee ? `<span>Arrivée: ${data.technicien.heure_arrivee}</span>` : ''}
-                    ${data.technicien.heure_depart ? `<span>Départ: ${data.technicien.heure_depart}</span>` : ''}
-                </div>`;
-            }
+            // Technicien - always show
+            html += `
+            <div class="rpt-section">
+                <div class="rpt-label">Technicien</div>
+                <div class="rpt-grid tech-grid">
+                    <div class="rpt-row"><span class="rpt-row-label">Nom</span><span class="rpt-row-value">${editableNested('technicien', 'nom', reportData.technicien?.nom || '', 'Nom du technicien')}</span></div>
+                    <div class="rpt-row"><span class="rpt-row-label">Arrivée</span><span class="rpt-row-value">${editableNested('technicien', 'heure_arrivee', reportData.technicien?.heure_arrivee || '', 'HH:MM')}</span></div>
+                    <div class="rpt-row"><span class="rpt-row-label">Départ</span><span class="rpt-row-value">${editableNested('technicien', 'heure_depart', reportData.technicien?.heure_depart || '', 'HH:MM')}</span></div>
+                </div>
+            </div>`;
             
-            // Photos count
+            // Photos
             const photos = window.reportPhotos || [];
+            html += `<div class="rpt-section">
+                <div class="rpt-label">Photos (${photos.length})</div>`;
             if (photos.length > 0) {
-                html += `<div class="rpt-section"><div class="rpt-label">Photos (${photos.length})</div>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;">`;
+                html += `<div style="display:flex;gap:8px;flex-wrap:wrap;">`;
                 photos.slice(0, 4).forEach(p => {
                     html += `<img src="${p.data || p.url}" style="width:60px;height:45px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">`;
                 });
                 if (photos.length > 4) {
                     html += `<div style="width:60px;height:45px;border-radius:6px;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text-dim);">+${photos.length - 4}</div>`;
                 }
-                html += `</div></div>`;
+                html += `</div>`;
+            } else {
+                html += `<div class="photos-placeholder">Ajoutez des photos depuis le chat</div>`;
             }
+            html += `</div>`;
             
             html += `</div></div>`;
             
             return html;
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // EDITABLE REPORT FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════
+        
+        // Update a single field in the report data
+        function updateReportField(fieldPath, value) {
+            if (!lastReportData) lastReportData = {};
+            
+            const parts = fieldPath.split('.');
+            let obj = lastReportData;
+            
+            for (let i = 0; i < parts.length - 1; i++) {
+                const part = parts[i];
+                const nextPart = parts[i + 1];
+                
+                // Check if next part is an array index
+                if (!isNaN(parseInt(nextPart))) {
+                    if (!Array.isArray(obj[part])) obj[part] = [];
+                } else {
+                    if (!obj[part] || typeof obj[part] !== 'object') obj[part] = {};
+                }
+                obj = obj[part];
+            }
+            
+            const lastPart = parts[parts.length - 1];
+            obj[lastPart] = value;
+            
+            // Update progress bar
+            updateReportProgress();
+            
+            // Auto-save indicator
+            showAutoSaveIndicator();
+            
+            console.log('📝 Report field updated:', fieldPath, '=', value);
+        }
+        
+        // Add a new item to a list field
+        function addReportListItem(listName) {
+            if (!lastReportData) lastReportData = {};
+            if (!lastReportData[listName]) lastReportData[listName] = [];
+            
+            let newItem = {};
+            switch(listName) {
+                case 'codes_defaut':
+                    newItem = { code: '', description: '' };
+                    break;
+                case 'travaux_effectues':
+                    newItem = { texte: '', status: 'done' };
+                    break;
+                case 'mesures':
+                    newItem = { label: '', valeur: '' };
+                    break;
+                case 'reserves':
+                    newItem = { titre: '', texte: '' };
+                    break;
+                default:
+                    newItem = {};
+            }
+            
+            lastReportData[listName].push(newItem);
+            
+            // Re-render and update progress
+            refreshReportPreview();
+            updateReportProgress();
+            showAutoSaveIndicator();
+            
+            console.log('➕ Added item to', listName);
+        }
+        
+        // Remove an item from a list field
+        function removeReportListItem(listName, index) {
+            if (!lastReportData || !lastReportData[listName]) return;
+            
+            lastReportData[listName].splice(index, 1);
+            
+            // Re-render and update progress
+            refreshReportPreview();
+            updateReportProgress();
+            showAutoSaveIndicator();
+            
+            console.log('➖ Removed item from', listName, 'at index', index);
+        }
+        
+        // Refresh the report preview with current data
+        function refreshReportPreview() {
+            const previewContent = document.getElementById('reportPreviewContent');
+            if (!previewContent) return;
+            
+            const completionStatus = calculateReportCompletion(lastReportData || {});
+            const html = renderReportPreview(lastReportData, completionStatus);
+            previewContent.innerHTML = html;
+            
+            // Re-attach event listeners
+            attachEditableListeners();
+        }
+        
+        // Attach event listeners to editable fields
+        function attachEditableListeners() {
+            const editableFields = document.querySelectorAll('.editable-report .editable-field');
+            
+            editableFields.forEach(field => {
+                // Handle blur (when user clicks away)
+                field.addEventListener('blur', function() {
+                    const fieldPath = this.dataset.field;
+                    const value = this.textContent.trim();
+                    
+                    // Update empty class
+                    if (value === '') {
+                        this.classList.add('empty');
+                    } else {
+                        this.classList.remove('empty');
+                    }
+                    
+                    updateReportField(fieldPath, value);
+                });
+                
+                // Handle focus (remove placeholder look)
+                field.addEventListener('focus', function() {
+                    if (this.classList.contains('empty')) {
+                        this.textContent = '';
+                    }
+                });
+                
+                // Handle Enter key in single-line fields
+                field.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && this.tagName === 'SPAN') {
+                        e.preventDefault();
+                        this.blur();
+                    }
+                });
+            });
+        }
+        
+        // Update progress bar in drawer header
+        function updateReportProgress() {
+            const progressFill = document.getElementById('reportProgressFill');
+            const progressText = document.getElementById('reportProgressText');
+            const headerProgress = document.getElementById('reportHeaderProgress');
+            
+            if (!progressFill || !progressText) return;
+            
+            const completion = calculateReportCompletion(lastReportData || {});
+            
+            // Show/hide progress bar
+            if (headerProgress) {
+                headerProgress.style.display = completion.percentage > 0 ? 'flex' : 'none';
+            }
+            
+            progressFill.style.width = completion.percentage + '%';
+            progressText.textContent = completion.percentage + '%';
+        }
+        
+        // Show auto-save indicator
+        function showAutoSaveIndicator() {
+            // Could show a small toast or indicator
+            // For now, just log
+        }
+        
+        // Initialize editable report when drawer opens
+        function initEditableReport() {
+            setTimeout(() => {
+                attachEditableListeners();
+            }, 100);
         }
         
         // Simple markdown parser
