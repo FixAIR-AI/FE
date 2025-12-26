@@ -1418,6 +1418,7 @@
         /* Report button - shows when report data exists */
         .h-btn.report-btn { display: none; } /* Hidden by default (Copilot) */
         .panel.assistant .h-btn.report-btn { display: flex; } /* Visible in Assistant */
+        .h-btn.report-btn .icon { width: 16px; height: 16px; }
         .h-btn.report-btn.has-data { 
             border-color: var(--assistant); 
             color: var(--assistant);
@@ -3429,18 +3430,18 @@
         .rpt-icon.num { background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.6); border: 1px solid var(--border); font-size: 9px; }
         .rpt-item-text { font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.5; }
         
-        /* Alert/Reserve styles with proper spacing and separation */
-        .rpt-alerts { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
-        .rpt-alert { padding: 12px 14px; border-radius: 8px; background: rgba(239,68,68,0.06); border-left: 3px solid #ef4444; }
-        .rpt-alert.warning { background: rgba(245,158,11,0.06); border-left-color: #f59e0b; }
-        .rpt-alert.info { background: rgba(59,130,246,0.06); border-left-color: #3b82f6; }
-        .rpt-alert.success { background: rgba(34,197,94,0.06); border-left-color: #22c55e; }
-        .rpt-alert strong { display: block; font-size: 12px; font-weight: 600; color: #ef4444; margin-bottom: 8px; }
+        /* Alert/Reserve styles - left bar only, no background */
+        .rpt-alerts { display: flex; flex-direction: column; gap: 14px; margin-top: 8px; }
+        .rpt-alert { padding: 0 0 0 12px; border-left: 3px solid #ef4444; }
+        .rpt-alert.warning { border-left-color: #f59e0b; }
+        .rpt-alert.info { border-left-color: #3b82f6; }
+        .rpt-alert.success { border-left-color: #22c55e; }
+        .rpt-alert strong { display: block; font-size: 12px; font-weight: 600; color: #ef4444; margin-bottom: 4px; }
         .rpt-alert.warning strong { color: #f59e0b; }
         .rpt-alert.info strong { color: #3b82f6; }
         .rpt-alert.success strong { color: #22c55e; }
         .rpt-alert p { font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.5; margin: 0; }
-        .rpt-alert-title { font-size: 12px; font-weight: 600; color: #ef4444; margin-bottom: 6px; }
+        .rpt-alert-title { font-size: 12px; font-weight: 600; color: #ef4444; margin-bottom: 4px; }
         .rpt-alert.warning .rpt-alert-title { color: #f59e0b; }
         .rpt-alert.info .rpt-alert-title { color: #3b82f6; }
         .rpt-alert.success .rpt-alert-title { color: #22c55e; }
@@ -3459,19 +3460,19 @@
         .rpt-table { background: rgba(255,255,255,0.03); border-radius: 8px; overflow: hidden; margin-bottom: 10px; }
         .rpt-table:last-child { margin-bottom: 0; }
         .rpt-table-title { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-        .rpt-th { display: grid; padding: 7px 10px; background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .rpt-th { display: grid; padding: 7px 10px; background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.04); justify-content: start; }
         .rpt-th span { font-size: 9px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.3px; text-align: left; }
-        .rpt-tr { display: grid; padding: 7px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .rpt-tr { display: grid; padding: 7px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); justify-content: start; }
         .rpt-tr:last-child { border-bottom: none; }
         .rpt-tr span { font-size: 11px; color: rgba(255,255,255,0.7); overflow: hidden; text-overflow: ellipsis; text-align: left; }
         .rpt-tr span.mono { font-family: 'SF Mono', Monaco, monospace; font-size: 10px; color: var(--text); }
         .rpt-tr span.ok { color: #22c55e; font-weight: 500; }
         .rpt-tr span.err { color: #ef4444; font-weight: 500; }
         .rpt-tr span.warn { color: #f59e0b; font-weight: 500; }
-        /* Table columns - all aligned left */
-        .rpt-cols-3 { grid-template-columns: 50px 1fr 50px; gap: 8px; }
-        .rpt-cols-4 { grid-template-columns: 40px minmax(80px, 1fr) 70px 50px; gap: 8px; }
-        .rpt-cols-5 { grid-template-columns: 40px minmax(80px, 1fr) 60px 50px 50px; gap: 8px; }
+        /* Table columns - all aligned left together */
+        .rpt-cols-3 { grid-template-columns: 50px minmax(150px, auto) 50px; gap: 12px; }
+        .rpt-cols-4 { grid-template-columns: 40px minmax(120px, auto) 70px 50px; gap: 12px; }
+        .rpt-cols-5 { grid-template-columns: 40px minmax(120px, auto) 80px 50px 50px; gap: 12px; }
         
         .rpt-photos { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
         .rpt-photo { position: relative; aspect-ratio: 4/3; border-radius: 8px; overflow: hidden; background: rgba(255,255,255,0.03); }
@@ -4178,7 +4179,7 @@
                 </div>
                 <div class="header-actions">
                     <button class="h-btn new-chat-btn" onclick="startNewProject()" title="Nouveau chat"><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button>
-                    <button class="h-btn report-btn" onclick="openReport()" title="Voir rapport"><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span></button>
+                    <button class="h-btn report-btn" onclick="openReport()" title="Voir rapport"><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="12" y2="15"/></svg></span></button>
                     <button class="h-btn" onclick="toggleSplit()" title="Mode split"><span class="icon"><svg><use href="#icon-columns"/></svg></span></button>
                 </div>
             </header>
@@ -7941,7 +7942,7 @@ INSTRUCTIONS:
             // Completion progress bar (for manager visibility)
             const progressColor = completion.percentage >= 75 ? '#22c55e' : (completion.percentage >= 25 ? '#f59e0b' : '#ef4444');
             html += `
-            <div class="rpt-progress" style="padding: 8px 12px; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border);">
+            <div class="rpt-progress" style="padding: 8px 12px 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                     <span style="font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px;">Construction du rapport</span>
                     <span style="font-size: 11px; font-weight: 600; color: ${progressColor};">${completion.percentage}%</span>
