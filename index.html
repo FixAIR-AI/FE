@@ -1414,16 +1414,20 @@
         .h-btn:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.8); }
         .h-btn.active { background: var(--mode-bg); border-color: var(--mode-border); color: var(--mode-color); }
         .h-btn .icon { width: 14px; height: 14px; }
+        .h-btn .icon svg { width: 100%; height: 100%; }
         
         /* Report button - always visible in Assistant mode */
         .h-btn.report-btn { display: none; } /* Hidden by default (Copilot) */
         .panel.assistant .h-btn.report-btn { display: flex; } /* Visible in Assistant */
-        .h-btn.report-btn .icon { width: 18px; height: 18px; opacity: 1; }
+        .h-btn.report-btn .icon { width: 18px; height: 18px; }
+        .h-btn.report-btn .icon svg { stroke: rgba(255,255,255,0.6); }
+        .h-btn.report-btn:hover .icon svg { stroke: rgba(255,255,255,0.9); }
         .h-btn.report-btn.has-data { 
             border-color: var(--assistant); 
             color: var(--assistant);
             animation: reportPulse 2s ease-in-out infinite;
         }
+        .h-btn.report-btn.has-data .icon svg { stroke: var(--assistant); }
         @keyframes reportPulse {
             0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
             50% { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2); }
@@ -4179,7 +4183,7 @@
                 </div>
                 <div class="header-actions">
                     <button class="h-btn new-chat-btn" onclick="startNewProject()" title="Nouveau chat"><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button>
-                    <button class="h-btn report-btn" onclick="openReport()" title="Voir rapport"><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="2"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></svg></span></button>
+                    <button class="h-btn report-btn" onclick="openReport()" title="Voir rapport"><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 10l2 2 4-4"/><line x1="9" y1="16" x2="15" y2="16"/></svg></span></button>
                     <button class="h-btn" onclick="toggleSplit()" title="Mode split"><span class="icon"><svg><use href="#icon-columns"/></svg></span></button>
                 </div>
             </header>
@@ -7977,27 +7981,21 @@ INSTRUCTIONS:
             
             let html = `<div class="rpt" style="margin:0;">`;
             
-            // Completion progress bar (for manager visibility)
-            const progressColor = completion.percentage >= 85 ? '#22c55e' : (completion.percentage >= 50 ? '#f59e0b' : '#ef4444');
-            const statusLabel = completion.percentage >= 85 ? 'Complet' : (completion.percentage >= 50 ? 'En cours' : 'Début');
-            html += `
-            <div class="rpt-progress" style="padding: 8px 12px 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                    <span style="font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px;">Construction du rapport</span>
-                    <span style="font-size: 11px; font-weight: 600; color: ${progressColor};">${completion.percentage}% · ${statusLabel}</span>
-                </div>
-                <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;">
-                    <div style="height: 100%; width: ${completion.percentage}%; background: ${progressColor}; border-radius: 2px; transition: width 0.3s;"></div>
-                </div>
-            </div>`;
-            
-            // Header
+            // Header with inline progress bar (Option 3)
             html += `
             <div class="rpt-header">
                 <div class="rpt-header-top">
                     <div>
                         <div class="rpt-brand ${brandClass}">${brandName}</div>
-                        <h1 class="rpt-title">Rapport d'intervention</h1>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <h1 class="rpt-title" style="margin: 0;">Rapport d'intervention</h1>
+                            <div style="flex: 1; display: flex; align-items: center; gap: 8px; min-width: 80px;">
+                                <div style="flex: 1; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;">
+                                    <div style="height: 100%; width: ${completion.percentage}%; background: #3B82F6; border-radius: 2px; transition: width 0.3s;"></div>
+                                </div>
+                                <span style="font-size: 10px; font-weight: 600; color: #3B82F6; white-space: nowrap;">${completion.percentage}%</span>
+                            </div>
+                        </div>
                     </div>
                     <div class="rpt-status ${statusClass}">
                         <span class="rpt-status-dot"></span>
