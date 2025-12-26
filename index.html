@@ -2816,6 +2816,85 @@
             opacity: 0.5;
         }
         
+        /* Photo drag-drop styles */
+        .photo-item {
+            position: relative;
+        }
+        .photo-drag-handle {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 20px;
+            height: 20px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 10px;
+            cursor: grab;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .photo-item:hover .photo-drag-handle {
+            opacity: 1;
+        }
+        .photo-remove-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 20px;
+            height: 20px;
+            background: rgba(239, 68, 68, 0.9);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .photo-item:hover .photo-remove-btn {
+            opacity: 1;
+        }
+        .photo-item.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+        .photo-item.drag-over {
+            border: 2px dashed var(--accent);
+        }
+        .photo-drop-zone {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 20px;
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            color: var(--text-dim);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+        .photo-drop-zone:hover {
+            border-color: var(--accent);
+            background: rgba(255,255,255,0.02);
+        }
+        .photo-drop-zone.drag-active {
+            border-color: var(--accent);
+            background: rgba(var(--accent-rgb), 0.1);
+        }
+        .photo-drop-zone svg {
+            opacity: 0.5;
+        }
+        
         /* Signatures */
         .signatures-grid {
             display: grid;
@@ -2841,10 +2920,21 @@
             align-items: center;
             justify-content: center;
             margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .signature-area:hover {
+            border-color: var(--accent);
+            background: rgba(255,255,255,0.02);
         }
         .signature-area img {
             max-width: 100%;
             max-height: 100%;
+        }
+        .signature-area.signed {
+            border-style: solid;
+            background: rgba(34, 197, 94, 0.05);
+            border-color: #22c55e;
         }
         .signature-placeholder {
             font-size: 11px;
@@ -2854,6 +2944,86 @@
         .signature-name {
             font-size: 11px;
             text-align: center;
+        }
+        
+        /* Signature Modal */
+        .signature-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .signature-modal.active {
+            display: flex;
+        }
+        .signature-modal-content {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 20px;
+            width: 100%;
+            max-width: 340px;
+        }
+        .signature-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .signature-modal-title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .signature-modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .signature-canvas-wrap {
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+        #signatureCanvas {
+            display: block;
+            width: 100%;
+            touch-action: none;
+        }
+        .signature-modal-actions {
+            display: flex;
+            gap: 12px;
+        }
+        .signature-clear-btn, .signature-save-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .signature-clear-btn {
+            background: var(--bg);
+            color: var(--text);
+        }
+        .signature-save-btn {
+            background: var(--accent);
+            color: white;
         }
         
         /* Editable report styles */
@@ -4728,6 +4898,23 @@
             <div class="photo-name-actions">
                 <button class="photo-name-cancel" onclick="closePhotoNameModal()">Annuler</button>
                 <button class="photo-name-confirm" onclick="confirmAddToReport()">Ajouter au rapport</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SIGNATURE MODAL -->
+    <div class="signature-modal" id="signatureModal">
+        <div class="signature-modal-content">
+            <div class="signature-modal-header">
+                <div class="signature-modal-title" id="signatureModalTitle">Signature</div>
+                <button class="signature-modal-close" onclick="closeSignatureModal()">×</button>
+            </div>
+            <div class="signature-canvas-wrap">
+                <canvas id="signatureCanvas" width="300" height="150"></canvas>
+            </div>
+            <div class="signature-modal-actions">
+                <button class="signature-clear-btn" onclick="clearSignature()">Effacer</button>
+                <button class="signature-save-btn" onclick="saveSignature()">Valider</button>
             </div>
         </div>
     </div>
@@ -8288,6 +8475,7 @@ INSTRUCTIONS:
             // Get info from chatHistory
             const history = chatHistory.assistant || [];
             const userMessages = history.filter(m => m.role === 'user').map(m => m.content);
+            const aiMessages = history.filter(m => m.role === 'assistant').map(m => m.content);
             const allText = userMessages.join(' ').toLowerCase();
             const allTextOriginal = userMessages.join(' ');
             
@@ -8318,99 +8506,252 @@ INSTRUCTIONS:
                 date: new Date().toLocaleDateString('fr-FR')
             };
             
-            // Detect type
-            if (allText.includes('dépannage') || allText.includes('sav') || allText.includes('panne') || allText.includes('problème') || allText.includes('marche pas') || allText.includes('fonctionne pas')) {
-                partialData.type_intervention = 'SAV / Dépannage';
-            } else if (allText.includes('mise en service') || allText.match(/\bmes\b/) || allText.includes('nouvelle installation')) {
-                partialData.type_intervention = 'Mise en service';
-            } else if (allText.includes('maintenance') || allText.includes('entretien') || allText.includes('contrôle')) {
-                partialData.type_intervention = 'Maintenance';
-            } else if (allText.includes('installation') || allText.includes('installer')) {
-                partialData.type_intervention = 'Installation';
-            }
+            // ═══════════════════════════════════════════════════════════════
+            // PARSE AI RESPONSES FOR STRUCTURED DATA
+            // The AI should return JSON blocks with report data
+            // ═══════════════════════════════════════════════════════════════
             
-            // Detect client (multiple patterns)
-            const clientPatterns = [
-                /(?:chez|client|société|societe|pour)\s+([A-ZÀ-Ÿ][a-zà-ÿ\s]{1,30})/,
-                /(?:chez|client)\s+([a-zà-ÿ\s]{2,30})/i
-            ];
-            for (const pattern of clientPatterns) {
-                const match = allTextOriginal.match(pattern);
-                if (match) {
-                    partialData.client = { societe: match[1].trim() };
-                    break;
+            for (const aiMsg of aiMessages) {
+                // Look for JSON in AI responses (between ```json and ``` or raw JSON)
+                const jsonMatches = aiMsg.match(/```json\s*([\s\S]*?)\s*```/g) || [];
+                for (const jsonBlock of jsonMatches) {
+                    try {
+                        const jsonContent = jsonBlock.replace(/```json\s*/, '').replace(/\s*```/, '');
+                        const parsed = JSON.parse(jsonContent);
+                        if (parsed.report_data || parsed.extraction) {
+                            const data = parsed.report_data || parsed.extraction;
+                            mergeReportData(partialData, data);
+                        }
+                    } catch (e) {
+                        // Not valid JSON, continue
+                    }
+                }
+                
+                // Also check for inline JSON objects
+                const inlineJsonMatch = aiMsg.match(/\[REPORT_DATA\]([\s\S]*?)\[\/REPORT_DATA\]/);
+                if (inlineJsonMatch) {
+                    try {
+                        const data = JSON.parse(inlineJsonMatch[1]);
+                        mergeReportData(partialData, data);
+                    } catch (e) {
+                        // Not valid JSON
+                    }
                 }
             }
             
-            // Detect address patterns
-            const addressMatch = allTextOriginal.match(/(\d{1,4}[\s,]+(?:rue|avenue|boulevard|bd|av|allée|place|chemin)[\s\w\-']+)/i);
-            if (addressMatch) {
-                partialData.site = partialData.site || {};
-                partialData.site.adresse = addressMatch[1].trim();
-            }
+            // ═══════════════════════════════════════════════════════════════
+            // INTELLIGENT TEXT EXTRACTION (Fallback)
+            // ═══════════════════════════════════════════════════════════════
             
-            // Detect city (postal code pattern)
-            const cityMatch = allTextOriginal.match(/(\d{5})\s*([A-ZÀ-Ÿa-zà-ÿ\s\-]+)/);
-            if (cityMatch) {
-                partialData.site = partialData.site || {};
-                partialData.site.ville = cityMatch[1] + ' ' + cityMatch[2].trim();
-            }
-            
-            // Detect code erreur (multiple patterns)
-            const codePatterns = [
-                /(?:code|erreur|défaut|fault)\s*:?\s*([A-Z]?\d{1,4})/i,
-                /\b([EAUFPH]\d{1,3})\b/i,
-                /\b(7[HSL]|U\d{1,2})\b/i
-            ];
-            for (const pattern of codePatterns) {
-                const match = allText.match(pattern);
-                if (match) {
-                    partialData.codes_defaut = [{ code: match[1].toUpperCase(), description: 'Code détecté dans la conversation' }];
-                    break;
+            // Detect type intervention
+            if (!partialData.type_intervention) {
+                if (allText.includes('dépannage') || allText.includes('sav') || allText.includes('panne')) {
+                    partialData.type_intervention = 'SAV / Dépannage';
+                } else if (allText.includes('mise en service') || allText.match(/\bmes\b/)) {
+                    partialData.type_intervention = 'Mise en service';
+                } else if (allText.includes('maintenance') || allText.includes('entretien')) {
+                    partialData.type_intervention = 'Maintenance';
+                } else if (allText.includes('installation')) {
+                    partialData.type_intervention = 'Installation';
                 }
             }
             
-            // Detect model
-            const modelPatterns = [
-                /(PUHY|PURY|PUMY|PEFY|PLFY|PKFY|MSZ|MUZ|FDC|FDCA)[\s\-]?([A-Z0-9\-]{3,20})/i,
-                /(VRV|VRF|DVM|MULTI[\s\-]?V)[\s\-]?([A-Z0-9\-]{0,15})/i,
-                /(FXMQ|FXAQ|FXZQ|FDXM|RXM)[\s\-]?([A-Z0-9]{2,10})/i
-            ];
-            for (const pattern of modelPatterns) {
-                const match = allTextOriginal.match(pattern);
-                if (match) {
-                    partialData.systeme = partialData.systeme || {};
-                    partialData.systeme.modele = match[0].toUpperCase();
-                    partialData.systeme.type = match[1].toUpperCase().includes('VR') ? 'VRF' : 
-                                               match[1].toUpperCase().includes('PU') ? 'VRF Mitsubishi' : 'Split';
-                    break;
+            // Detect client
+            if (!partialData.client?.societe) {
+                const clientPatterns = [
+                    /(?:chez|client|société|pour)\s+([A-ZÀ-Ÿ][a-zà-ÿA-ZÀ-Ÿ\s]{2,40})/i,
+                    /(?:client|société)\s*:\s*([^\n,]+)/i
+                ];
+                for (const pattern of clientPatterns) {
+                    const match = allTextOriginal.match(pattern);
+                    if (match) {
+                        partialData.client = partialData.client || {};
+                        partialData.client.societe = match[1].trim();
+                        break;
+                    }
+                }
+            }
+            
+            // Detect address
+            if (!partialData.site?.adresse) {
+                const addressMatch = allTextOriginal.match(/(\d{1,4}[\s,]+(?:rue|avenue|boulevard|bd|av|allée|place|chemin)[\s\w\-'']+)/i);
+                if (addressMatch) {
+                    partialData.site = partialData.site || {};
+                    partialData.site.adresse = addressMatch[1].trim();
+                }
+            }
+            
+            // Detect city
+            if (!partialData.site?.ville) {
+                const cityMatch = allTextOriginal.match(/(\d{5})\s*([A-ZÀ-Ÿa-zà-ÿ\s\-]+)/);
+                if (cityMatch) {
+                    partialData.site = partialData.site || {};
+                    partialData.site.ville = cityMatch[1] + ' ' + cityMatch[2].trim();
+                }
+            }
+            
+            // ═══ IMPROVED ERROR CODE DETECTION ═══
+            // More patterns and better extraction
+            if (!partialData.codes_defaut || partialData.codes_defaut.length === 0) {
+                const codePatterns = [
+                    // Explicit mentions
+                    /(?:code|erreur|défaut|fault|error)\s*(?:code)?\s*:?\s*([A-Z]?\d{2,5}[A-Z]?)/gi,
+                    // Mitsubishi patterns
+                    /\b([7][0-9]{3})\b/g, // 7xxx codes
+                    /\b([EAUFPH]\d{1,3})\b/gi,
+                    /\b(U\d{1,2})\b/gi,
+                    // Carrier/Daikin patterns
+                    /\b([AUELJ][0-9]{1,3})\b/gi,
+                    // Generic patterns
+                    /(?:affiche|indique|montre)\s+(?:le\s+)?(?:code\s+)?([A-Z0-9]{2,6})/gi
+                ];
+                
+                const foundCodes = new Set();
+                for (const pattern of codePatterns) {
+                    let match;
+                    while ((match = pattern.exec(allTextOriginal)) !== null) {
+                        const code = match[1].toUpperCase();
+                        // Avoid false positives (dates, common numbers)
+                        if (!/^(2024|2025|0[1-9]|1[0-2])$/.test(code)) {
+                            foundCodes.add(code);
+                        }
+                    }
+                }
+                
+                if (foundCodes.size > 0) {
+                    partialData.codes_defaut = Array.from(foundCodes).map(code => ({
+                        code: code,
+                        description: '' // Will be filled by AI
+                    }));
+                }
+            }
+            
+            // ═══ IMPROVED MODEL DETECTION ═══
+            if (!partialData.systeme?.modele) {
+                const modelPatterns = [
+                    // Mitsubishi
+                    /(PUHY|PURY|PUMY|PEFY|PLFY|PKFY|MSZ|MUZ|FDC|FDCA)[\s\-]?([A-Z0-9\-]{3,20})/gi,
+                    // Daikin
+                    /(FXMQ|FXAQ|FXZQ|FDXM|RXM|RXYQ|RXYSQ)[\s\-]?([A-Z0-9]{2,15})/gi,
+                    // Carrier
+                    /(38VT|30RB|30XA|42N)[\s\-]?([A-Z0-9]{3,15})/gi,
+                    // VRF/VRV generic
+                    /(VRV|VRF|DVM|MULTI[\s\-]?V)[\s\-]?([A-Z0-9\-]{0,15})/gi
+                ];
+                
+                for (const pattern of modelPatterns) {
+                    const match = pattern.exec(allTextOriginal);
+                    if (match) {
+                        partialData.systeme = partialData.systeme || {};
+                        partialData.systeme.modele = match[0].toUpperCase().trim();
+                        // Determine type based on prefix
+                        const prefix = match[1].toUpperCase();
+                        if (['PUHY', 'PURY', 'PUMY', 'RXYQ', 'VRV', 'VRF', 'DVM', '38VT'].includes(prefix)) {
+                            partialData.systeme.type = 'VRF';
+                        } else if (['PEFY', 'PLFY', 'FXMQ', 'FXAQ'].includes(prefix)) {
+                            partialData.systeme.type = 'Unité intérieure';
+                        } else {
+                            partialData.systeme.type = 'Split';
+                        }
+                        break;
+                    }
+                }
+            }
+            
+            // ═══ ADRESSAGE TABLE DETECTION ═══
+            // Look for structured data like "UI01: PEFY-P25VMS1-E / Série: xxx / Adr: 01"
+            if (!partialData.adressage || partialData.adressage.length === 0) {
+                // Pattern for structured unit listings
+                const adressagePatterns = [
+                    // "UI01: PEFY-P25 - Série 12345 - Adresse 01 - Salle réunion"
+                    /(?:UI|UE|BC|SC)\s*(\d{1,2})\s*:?\s*([A-Z0-9\-]+)\s*[-–]\s*(?:série|serial|s\/n)\s*:?\s*([A-Z0-9]+)\s*[-–]\s*(?:adr(?:esse)?|@)\s*:?\s*(\d{1,3})\s*(?:[-–]\s*(.+?))?(?:\n|$)/gi,
+                    // Simpler: "PEFY-P25 / 12345 / 01 / Salle"
+                    /([A-Z]{2,5}[\-]?[A-Z]?\d{1,3}[A-Z0-9\-]*)\s*[\/|]\s*([A-Z0-9]{5,15})\s*[\/|]\s*(\d{1,3})\s*(?:[\/|]\s*(.+?))?(?:\n|$)/gi
+                ];
+                
+                const units = [];
+                for (const pattern of adressagePatterns) {
+                    let match;
+                    while ((match = pattern.exec(allTextOriginal)) !== null) {
+                        units.push({
+                            ref_usine: match[1] || match[2] || '',
+                            serie: match[2] || match[3] || '',
+                            adresse: match[3] || match[4] || '',
+                            designation: match[4] || match[5] || '',
+                            commentaire: match[5] || ''
+                        });
+                    }
+                }
+                
+                // Also look for table-like data (lines with consistent separators)
+                const lines = allTextOriginal.split('\n');
+                for (const line of lines) {
+                    // Check if line has multiple parts separated by / or |
+                    const parts = line.split(/[\/\|]/).map(p => p.trim()).filter(p => p.length > 0);
+                    if (parts.length >= 3 && parts.some(p => /[A-Z]{2,}[\-]?\d/.test(p))) {
+                        units.push({
+                            ref_usine: parts[0] || '',
+                            serie: parts[1] || '',
+                            adresse: parts[2] || '',
+                            designation: parts[3] || '',
+                            commentaire: parts[4] || ''
+                        });
+                    }
+                }
+                
+                if (units.length > 0) {
+                    partialData.adressage = units;
                 }
             }
             
             // Detect fluide
-            const fluideMatch = allText.match(/(r410a|r32|r134a|r407c|r290)/i);
-            if (fluideMatch) {
-                partialData.systeme = partialData.systeme || {};
-                partialData.systeme.fluide = fluideMatch[1].toUpperCase();
-            }
-            
-            // Detect problem description
-            const problemPatterns = [
-                /(?:problème|souci|défaut|panne)\s*:?\s*(.{10,100})/i,
-                /(?:ne\s+(?:chauffe|refroidit|démarre|marche)\s+(?:pas|plus))/i
-            ];
-            for (const pattern of problemPatterns) {
-                const match = allTextOriginal.match(pattern);
-                if (match) {
-                    partialData.intervention = partialData.intervention || {};
-                    partialData.intervention.probleme = match[1] ? match[1].trim() : match[0];
-                    break;
+            if (!partialData.fluide?.type) {
+                const fluideMatch = allText.match(/(r410a|r32|r134a|r407c|r290|r744)/i);
+                if (fluideMatch) {
+                    partialData.fluide = partialData.fluide || {};
+                    partialData.fluide.type = fluideMatch[1].toUpperCase();
                 }
             }
             
             // Update the stored data and refresh preview
             lastReportData = partialData;
             updateDrawerPreview(partialData);
+        }
+        
+        // Merge incoming data into existing report data
+        function mergeReportData(target, source) {
+            if (!source) return;
+            
+            for (const [key, value] of Object.entries(source)) {
+                if (value === null || value === undefined || value === '') continue;
+                
+                if (Array.isArray(value)) {
+                    // For arrays, append new items
+                    if (!target[key]) target[key] = [];
+                    if (Array.isArray(target[key])) {
+                        // Avoid duplicates for codes_defaut
+                        if (key === 'codes_defaut') {
+                            const existingCodes = new Set(target[key].map(c => c.code));
+                            for (const item of value) {
+                                if (!existingCodes.has(item.code)) {
+                                    target[key].push(item);
+                                }
+                            }
+                        } else {
+                            target[key].push(...value);
+                        }
+                    }
+                } else if (typeof value === 'object') {
+                    // For nested objects, merge recursively
+                    if (!target[key]) target[key] = {};
+                    mergeReportData(target[key], value);
+                } else {
+                    // For primitives, only overwrite if target is empty
+                    if (!target[key]) {
+                        target[key] = value;
+                    }
+                }
+            }
         }
         
         // Render EDITABLE report template for drawer
@@ -8457,14 +8798,42 @@ INSTRUCTIONS:
             // Helper for styled dropdown that looks like text
             const styledSelect = (key, value, options, defaultText) => {
                 const hasValue = value && value !== '';
-                const displayValue = hasValue ? value : defaultText;
+                
+                // Display label mapping (internal value -> display text)
+                const displayLabels = {
+                    'en_cours': 'En cours',
+                    'conforme': 'Conforme', 
+                    'non_conforme': 'Non conforme',
+                    'resolu': '✓ Résolu',
+                    'en_attente': '⏳ En attente',
+                    'non_resolu': '✗ Non résolu',
+                    'SAV / Dépannage': 'SAV / Dépannage',
+                    'Mise en service': 'Mise en service',
+                    'Maintenance': 'Maintenance',
+                    'Installation': 'Installation',
+                    'Visite constructeur': 'Visite constructeur',
+                    'Sous garantie': 'Sous garantie',
+                    'Hors garantie': 'Hors garantie',
+                    'R410A': 'R410A',
+                    'R32': 'R32',
+                    'R134a': 'R134a',
+                    'R407C': 'R407C',
+                    'R290': 'R290',
+                    'R744': 'R744',
+                    'OK': 'OK',
+                    'À surveiller': 'À surveiller',
+                    'Critique': 'Critique'
+                };
+                
+                const displayValue = hasValue ? (displayLabels[value] || value) : defaultText;
                 const emptyClass = hasValue ? '' : 'empty';
-                const optionsHtml = options.map(opt => 
-                    `<option value="${opt}" ${value === opt ? 'selected' : ''}>${opt}</option>`
-                ).join('');
-                return `<div class="styled-select-wrapper ${emptyClass}">
+                const optionsHtml = options.map(opt => {
+                    const optLabel = displayLabels[opt] || opt;
+                    return `<option value="${opt}" ${value === opt ? 'selected' : ''}>${optLabel}</option>`;
+                }).join('');
+                return `<div class="styled-select-wrapper ${emptyClass}" data-value="${value || ''}">
                     <span class="styled-select-display">${displayValue}</span>
-                    <select class="styled-select-hidden" data-field="${key}" onchange="updateReportField('${key}', this.value); this.previousElementSibling.textContent = this.value || '${defaultText}'; this.parentElement.classList.toggle('empty', !this.value);">
+                    <select class="styled-select-hidden" data-field="${key}" onchange="updateReportField('${key}', this.value); this.previousElementSibling.textContent = this.options[this.selectedIndex].text || '${defaultText}'; this.parentElement.classList.toggle('empty', !this.value); this.parentElement.setAttribute('data-value', this.value);">
                         <option value="">${defaultText}</option>
                         ${optionsHtml}
                     </select>
@@ -8496,7 +8865,7 @@ INSTRUCTIONS:
                         <h1 class="rpt-title">Rapport d'intervention</h1>
                     </div>
                     <div class="rpt-status-wrapper">
-                        ${styledSelect('status', reportData.status, ['en_cours', 'conforme', 'non_conforme'], 'En cours')}
+                        ${styledSelect('status', reportData.status, ['en_cours', 'conforme', 'non_conforme'], 'Statut')}
                     </div>
                 </div>
                 <div class="rpt-meta-editable">
@@ -8804,26 +9173,36 @@ INSTRUCTIONS:
             html += `<div class="rpt-section-divider"></div>`;
             const photos = window.reportPhotos || [];
             html += `<div class="rpt-section">
-                <div class="rpt-label section-header">Photos (${photos.length})</div>`;
+                <div class="rpt-label section-header">Photos (${photos.length}) <button class="add-item-btn" onclick="triggerPhotoUpload()">+</button></div>`;
+            
+            // Upload area
+            html += `<input type="file" id="photoUploadInput" accept="image/*" multiple style="display:none" onchange="handlePhotoUpload(event)">`;
+            
             if (photos.length > 0) {
-                html += `<div class="photos-grid">`;
+                html += `<div class="photos-grid sortable-photos" id="sortablePhotos">`;
                 photos.forEach((p, i) => {
-                    html += `<div class="photo-item">
-                        <img src="${p.data || p.url}" alt="Photo ${i+1}">
-                        <span class="photo-caption editable-field" contenteditable="true" data-field="photos.${i}.caption" data-placeholder="Titre photo">${p.caption || ''}</span>
+                    const imgSrc = p.url || p.data || p.originalData || '';
+                    const caption = p.caption || p.name || '';
+                    html += `<div class="photo-item draggable-photo" draggable="true" data-index="${i}">
+                        <div class="photo-drag-handle">⋮⋮</div>
+                        <img src="${imgSrc}" alt="Photo ${i+1}" onerror="this.style.display='none'" onclick="viewPhotoFull('${imgSrc}')">
+                        <span class="photo-caption editable-field" contenteditable="true" data-field="photos.${i}.caption" data-placeholder="Titre photo">${caption}</span>
+                        <button class="photo-remove-btn" onclick="removePhoto(${i})">×</button>
                     </div>`;
                 });
                 html += `</div>`;
-            } else {
-                html += `<div class="photos-placeholder">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                        <polyline points="21 15 16 10 5 21"></polyline>
-                    </svg>
-                    <span>Ajoutez des photos depuis le chat</span>
-                </div>`;
             }
+            
+            // Drop zone for adding photos
+            html += `<div class="photo-drop-zone" onclick="triggerPhotoUpload()" ondragover="handlePhotoDragOver(event)" ondrop="handlePhotoDrop(event)">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                <span>Glisser des photos ou cliquer pour ajouter</span>
+            </div>`;
+            
             html += `</div>`;
             
             // ═══════════════════════════════════════════════════════════════
@@ -8852,21 +9231,23 @@ INSTRUCTIONS:
             html += editableField('observation_client', reportData.observation_client || '', 'Observations du client...', true);
             html += `</div>`;
             
-            // Signatures (placeholder - en mode preview)
+            // Signatures (interactive - click to add)
+            const hasClientSig = reportData.signature_client;
+            const hasTechSig = reportData.signature_technicien;
             html += `<div class="rpt-section signatures-section">
                 <div class="rpt-label">Signatures</div>
                 <div class="rpt-grid signatures-grid">
                     <div class="signature-box">
                         <div class="signature-label">Signature Client</div>
-                        <div class="signature-area">
-                            ${reportData.signature_client ? `<img src="${reportData.signature_client}" alt="Signature client">` : '<span class="signature-placeholder">À signer</span>'}
+                        <div class="signature-area ${hasClientSig ? 'signed' : ''}" onclick="openSignatureModal('client')" title="Cliquez pour signer">
+                            ${hasClientSig ? `<img src="${reportData.signature_client}" alt="Signature client">` : '<span class="signature-placeholder">Touchez pour signer</span>'}
                         </div>
                         <div class="signature-name">${editableNested('signatures', 'nom_client', reportData.signatures?.nom_client || '', 'Nom du signataire')}</div>
                     </div>
                     <div class="signature-box">
                         <div class="signature-label">Signature Technicien</div>
-                        <div class="signature-area">
-                            ${reportData.signature_technicien ? `<img src="${reportData.signature_technicien}" alt="Signature technicien">` : '<span class="signature-placeholder">À signer</span>'}
+                        <div class="signature-area ${hasTechSig ? 'signed' : ''}" onclick="openSignatureModal('technicien')" title="Cliquez pour signer">
+                            ${hasTechSig ? `<img src="${reportData.signature_technicien}" alt="Signature technicien">` : '<span class="signature-placeholder">Touchez pour signer</span>'}
                         </div>
                         <div class="signature-name">${editableNested('signatures', 'nom_technicien', reportData.signatures?.nom_technicien || '', 'Nom du signataire')}</div>
                     </div>
@@ -8981,6 +9362,9 @@ INSTRUCTIONS:
             
             // Re-attach event listeners
             attachEditableListeners();
+            
+            // Initialize photo drag-drop
+            initPhotoDragDrop();
         }
         
         // Attach event listeners to editable fields
@@ -9475,7 +9859,38 @@ Tu reprends une conversation avec ${previousUserMessages} messages du technicien
                         : `MARQUE CONFIRMÉE: ${currentBrandName}. NE DEMANDE JAMAIS LA MARQUE. NOUVELLE CONVERSATION.`,
                     system_context: isExistingConversation 
                         ? `${conversationSummary}`
-                        : `NOUVELLE CONVERSATION. MARQUE: ${currentBrandName}. ${panel === 'assistant' ? 'Mode Rapport - pose les questions pour générer un rapport d\'intervention.' : 'Mode Diagnostic - aide au dépannage.'}`
+                        : `NOUVELLE CONVERSATION. MARQUE: ${currentBrandName}. ${panel === 'assistant' ? 'Mode Rapport - pose les questions pour générer un rapport d\'intervention.' : 'Mode Diagnostic - aide au dépannage.'}`,
+                    
+                    // ═══ REPORT EXTRACTION INSTRUCTIONS ═══
+                    // These instructions tell the AI to extract and return structured data
+                    report_extraction_mode: panel === 'assistant',
+                    extraction_instructions: panel === 'assistant' ? `
+EXTRACTION DE DONNÉES POUR RAPPORT:
+Après chaque message utilisateur, tu DOIS extraire les informations et les retourner dans un bloc JSON.
+
+FORMAT OBLIGATOIRE - Ajoute à la fin de ta réponse:
+[REPORT_DATA]
+{
+  "client": { "societe": "...", "contact": "...", "telephone": "..." },
+  "site": { "adresse": "...", "ville": "...", "numero_affaire": "..." },
+  "systeme": { "type": "VRF/Split/PAC...", "modele": "...", "serie": "...", "puissance": "..." },
+  "fluide": { "type": "R410A/R32/...", "charge_totale": "..." },
+  "codes_defaut": [{ "code": "7100", "description": "Description exacte du code" }],
+  "adressage": [{ "ref_usine": "...", "serie": "...", "adresse": "01", "designation": "...", "commentaire": "..." }],
+  "travaux_effectues": [{ "texte": "..." }],
+  "mesures": [{ "label": "...", "valeur": "...", "unite": "..." }],
+  "technicien": { "nom": "...", "heure_arrivee": "...", "heure_depart": "..." },
+  "resultat": { "status": "resolu/en_attente/non_resolu", "description": "..." }
+}
+[/REPORT_DATA]
+
+RÈGLES:
+1. N'inclure QUE les champs qui ont des informations dans le message
+2. Pour les codes erreur, TOUJOURS donner la description exacte du code (ex: "7100 = Défaut communication bus")
+3. Pour l'adressage système, extraire CHAQUE unité mentionnée (UI, UE, BC, SC...)
+4. Les valeurs doivent être EXACTES, pas de texte générique
+5. Ce bloc JSON sera parsé pour remplir le rapport en temps réel
+` : ''
                 };
                 
                 console.log('📤 Sending to n8n:', N8N_WEBHOOK_URL);
@@ -9513,10 +9928,45 @@ Tu reprends une conversation avec ${previousUserMessages} messages du technicien
                 
                 // Parse markdown and add AI response
                 const aiResponse = data.response || data.message || data.output || 'Désolé, une erreur est survenue.';
-                const parsedResponse = parseMarkdown(aiResponse);
+                
+                // ═══ EXTRACT REPORT_DATA FROM AI RESPONSE ═══
+                if (panel === 'assistant') {
+                    const reportDataMatch = aiResponse.match(/\[REPORT_DATA\]([\s\S]*?)\[\/REPORT_DATA\]/);
+                    if (reportDataMatch) {
+                        try {
+                            const extractedData = JSON.parse(reportDataMatch[1].trim());
+                            console.log('📊 Extracted report data:', extractedData);
+                            
+                            // Merge with existing data
+                            if (!lastReportData) {
+                                lastReportData = {
+                                    brand: currentBrandName,
+                                    brand_key: brand,
+                                    status: 'en_cours',
+                                    date: new Date().toLocaleDateString('fr-FR')
+                                };
+                            }
+                            mergeReportData(lastReportData, extractedData);
+                            
+                            // Immediately update preview
+                            updateDrawerPreview(lastReportData);
+                            
+                            console.log('✅ Report preview updated with extracted data');
+                        } catch (e) {
+                            console.warn('Failed to parse REPORT_DATA:', e);
+                        }
+                    }
+                    
+                    // Also try to build partial report from text (fallback)
+                    buildPartialReport();
+                }
+                
+                // Remove the REPORT_DATA block from displayed message (keep it clean for user)
+                const cleanResponse = aiResponse.replace(/\[REPORT_DATA\][\s\S]*?\[\/REPORT_DATA\]/g, '').trim();
+                const parsedResponse = parseMarkdown(cleanResponse);
                 addMsg(panel, 'ai', parsedResponse);
                 
-                // Add to history
+                // Add to history (keep original with data for future reference)
                 chatHistory[panel].push({ role: 'assistant', content: aiResponse });
                 
                 // ═══ SUPABASE: Save AI response ═══
@@ -10834,6 +11284,257 @@ Tu reprends une conversation avec ${previousUserMessages} messages du technicien
             pendingReportPhoto = null;
         }
         
+        // ═══════════════════════════════════════════════════════════════
+        // SIGNATURE PAD FUNCTIONALITY
+        // ═══════════════════════════════════════════════════════════════
+        
+        let signatureContext = null;
+        let isDrawing = false;
+        let currentSignatureType = null;
+        
+        function openSignatureModal(type) {
+            currentSignatureType = type;
+            const modal = document.getElementById('signatureModal');
+            const title = document.getElementById('signatureModalTitle');
+            const canvas = document.getElementById('signatureCanvas');
+            
+            title.textContent = type === 'client' ? 'Signature Client' : 'Signature Technicien';
+            
+            // Initialize canvas
+            signatureContext = canvas.getContext('2d');
+            signatureContext.strokeStyle = '#000';
+            signatureContext.lineWidth = 2;
+            signatureContext.lineCap = 'round';
+            signatureContext.lineJoin = 'round';
+            
+            // Clear any previous signature
+            signatureContext.fillStyle = '#fff';
+            signatureContext.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Add event listeners
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            
+            // Touch events
+            canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+            canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+            canvas.addEventListener('touchend', stopDrawing);
+            
+            modal.classList.add('active');
+        }
+        
+        function closeSignatureModal() {
+            const modal = document.getElementById('signatureModal');
+            const canvas = document.getElementById('signatureCanvas');
+            
+            // Remove event listeners
+            canvas.removeEventListener('mousedown', startDrawing);
+            canvas.removeEventListener('mousemove', draw);
+            canvas.removeEventListener('mouseup', stopDrawing);
+            canvas.removeEventListener('mouseout', stopDrawing);
+            canvas.removeEventListener('touchstart', handleTouchStart);
+            canvas.removeEventListener('touchmove', handleTouchMove);
+            canvas.removeEventListener('touchend', stopDrawing);
+            
+            modal.classList.remove('active');
+            currentSignatureType = null;
+        }
+        
+        function startDrawing(e) {
+            isDrawing = true;
+            signatureContext.beginPath();
+            signatureContext.moveTo(e.offsetX, e.offsetY);
+        }
+        
+        function draw(e) {
+            if (!isDrawing) return;
+            signatureContext.lineTo(e.offsetX, e.offsetY);
+            signatureContext.stroke();
+        }
+        
+        function stopDrawing() {
+            isDrawing = false;
+        }
+        
+        function handleTouchStart(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = e.target.getBoundingClientRect();
+            isDrawing = true;
+            signatureContext.beginPath();
+            signatureContext.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
+        }
+        
+        function handleTouchMove(e) {
+            e.preventDefault();
+            if (!isDrawing) return;
+            const touch = e.touches[0];
+            const rect = e.target.getBoundingClientRect();
+            signatureContext.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
+            signatureContext.stroke();
+        }
+        
+        function clearSignature() {
+            const canvas = document.getElementById('signatureCanvas');
+            signatureContext.fillStyle = '#fff';
+            signatureContext.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        
+        function saveSignature() {
+            const canvas = document.getElementById('signatureCanvas');
+            const signatureData = canvas.toDataURL('image/png');
+            
+            // Update lastReportData
+            if (!lastReportData) lastReportData = {};
+            
+            if (currentSignatureType === 'client') {
+                lastReportData.signature_client = signatureData;
+            } else {
+                lastReportData.signature_technicien = signatureData;
+            }
+            
+            // Refresh preview
+            refreshReportPreview();
+            
+            // Close modal
+            closeSignatureModal();
+            
+            toast('Signature enregistrée');
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // PHOTO UPLOAD & DRAG-DROP REORDERING
+        // ═══════════════════════════════════════════════════════════════
+        
+        function triggerPhotoUpload() {
+            document.getElementById('photoUploadInput').click();
+        }
+        
+        function handlePhotoUpload(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+            
+            for (const file of files) {
+                if (!file.type.startsWith('image/')) continue;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const photoData = e.target.result;
+                    addPhotoToReport(photoData, file.name.replace(/\.[^/.]+$/, ''));
+                };
+                reader.readAsDataURL(file);
+            }
+            
+            // Reset input
+            event.target.value = '';
+        }
+        
+        function handlePhotoDragOver(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.currentTarget.classList.add('drag-active');
+        }
+        
+        function handlePhotoDrop(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.currentTarget.classList.remove('drag-active');
+            
+            const files = event.dataTransfer.files;
+            if (!files || files.length === 0) return;
+            
+            for (const file of files) {
+                if (!file.type.startsWith('image/')) continue;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const photoData = e.target.result;
+                    addPhotoToReport(photoData, file.name.replace(/\.[^/.]+$/, ''));
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        function addPhotoToReport(photoData, caption = 'Photo') {
+            if (!window.reportPhotos) window.reportPhotos = [];
+            
+            window.reportPhotos.push({
+                data: photoData,
+                caption: caption,
+                timestamp: new Date().toISOString()
+            });
+            
+            refreshReportPreview();
+            initPhotoDragDrop();
+            toast('Photo ajoutée');
+        }
+        
+        function removePhoto(index) {
+            if (!window.reportPhotos) return;
+            window.reportPhotos.splice(index, 1);
+            refreshReportPreview();
+            toast('Photo supprimée');
+        }
+        
+        function viewPhotoFull(src) {
+            const viewer = document.getElementById('imageViewer');
+            const img = document.getElementById('imageViewerImg');
+            img.src = src;
+            viewer.classList.add('active');
+        }
+        
+        // Initialize drag-drop for photo reordering
+        function initPhotoDragDrop() {
+            setTimeout(() => {
+                const container = document.getElementById('sortablePhotos');
+                if (!container) return;
+                
+                const items = container.querySelectorAll('.draggable-photo');
+                let draggedItem = null;
+                
+                items.forEach(item => {
+                    item.addEventListener('dragstart', function(e) {
+                        draggedItem = this;
+                        this.classList.add('dragging');
+                        e.dataTransfer.effectAllowed = 'move';
+                    });
+                    
+                    item.addEventListener('dragend', function() {
+                        this.classList.remove('dragging');
+                        draggedItem = null;
+                        
+                        // Update array order based on DOM order
+                        const newOrder = [];
+                        container.querySelectorAll('.draggable-photo').forEach(el => {
+                            const idx = parseInt(el.dataset.index);
+                            if (window.reportPhotos[idx]) {
+                                newOrder.push(window.reportPhotos[idx]);
+                            }
+                        });
+                        window.reportPhotos = newOrder;
+                    });
+                    
+                    item.addEventListener('dragover', function(e) {
+                        e.preventDefault();
+                        if (draggedItem === this) return;
+                        
+                        const rect = this.getBoundingClientRect();
+                        const midX = rect.left + rect.width / 2;
+                        
+                        if (e.clientX < midX) {
+                            container.insertBefore(draggedItem, this);
+                        } else {
+                            container.insertBefore(draggedItem, this.nextSibling);
+                        }
+                    });
+                });
+            }, 100);
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        
         async function confirmAddToReport() {
             if (!pendingReportPhoto) return;
             
@@ -10891,6 +11592,9 @@ Tu reprends une conversation avec ${previousUserMessages} messages du technicien
                 }
                 
                 toast(isUpdate ? 'Photo modifiée: "' + caption + '"' : 'Photo "' + caption + '" ajoutée au rapport');
+                
+                // Refresh report preview to show updated photos
+                refreshReportPreview();
                 
             } catch (error) {
                 console.error('Error saving photo:', error);
