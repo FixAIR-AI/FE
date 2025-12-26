@@ -9024,10 +9024,11 @@
         // Get user's first name for personalization
         function getUserFirstName() {
             const user = JSON.parse(localStorage.getItem('fixair_user') || 'null');
-            return user?.first_name || 'Pro';
+            // Return actual name or null (not a fallback)
+            return user?.first_name || null;
         }
         
-        // Get motivational message with user's name
+        // Get motivational message with user's name (if available)
         function getMotivationalMessage(euros) {
             const messages = GAMIFICATION_CONFIG.messages;
             const name = getUserFirstName();
@@ -9037,16 +9038,19 @@
                 if (euros >= msg.threshold) selected = msg;
             }
             
+            // Build text: "Lance-toi Sam !" or "Lance-toi !" if no name
+            const textWithName = name ? `${selected.text} ${name} !` : `${selected.text} !`;
+            
             // Return object with text and emoji info for special styling
             if (selected.greenEmoji) {
                 return { 
-                    text: `${selected.text} ${name} !`, 
+                    text: textWithName, 
                     emoji: selected.emoji,
                     isGreen: true 
                 };
             }
             return { 
-                text: `${selected.text} ${name} !`, 
+                text: textWithName, 
                 emoji: selected.emoji,
                 isGreen: false 
             };
