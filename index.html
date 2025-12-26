@@ -826,12 +826,13 @@
         
         .stats-item {
             display: flex;
-            align-items: center;
-            gap: 6px;
+            align-items: baseline;
+            gap: 3px;
         }
         
         .stats-item-icon {
             font-size: 16px;
+            align-self: center;
         }
         
         .stats-item-value {
@@ -840,21 +841,30 @@
             color: var(--text);
         }
         
-        .stats-item-label {
-            font-size: 12px;
+        .stats-item-unit {
+            font-size: 11px;
+            font-weight: 400;
             color: var(--text-dim);
+        }
+        
+        .stats-item-label {
+            font-size: 11px;
+            font-weight: 400;
+            color: var(--text-dim);
+            margin-left: 2px;
         }
         
         .stats-separator {
             width: 1px;
             height: 16px;
             background: rgba(255, 255, 255, 0.1);
+            align-self: center;
         }
         
         .stats-message {
             font-size: 12px;
             font-weight: 600;
-            color: var(--copilot);
+            color: #22C55E;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
@@ -3366,6 +3376,73 @@
         [data-theme="light"] .rpt-sig { background: rgba(0,0,0,0.02); }
         [data-theme="light"] .rpt-footer { background: rgba(0,0,0,0.02); }
         [data-theme="light"] .rpt-tech-name { color: #1f2937; }
+        
+        /* ═══════════════════════════════════════════════════════ */
+        /* CELEBRATION ANIMATIONS - CONFETTI & COUNT-UP */
+        /* ═══════════════════════════════════════════════════════ */
+        
+        .celebration-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 9999;
+            overflow: hidden;
+        }
+        
+        .confetti-particle {
+            position: absolute;
+            top: -20px;
+            border-radius: 2px;
+            opacity: 0;
+            animation: confetti-fall var(--duration, 3s) ease-in var(--delay, 0s) forwards;
+        }
+        
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(0) translateX(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) translateX(var(--wobble, 0px)) rotate(720deg);
+                opacity: 0.7;
+            }
+        }
+        
+        .plus-one-floating {
+            position: fixed;
+            top: 35%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 64px;
+            font-weight: 800;
+            color: #22C55E;
+            text-shadow: 0 0 40px rgba(34, 197, 94, 0.8), 0 0 80px rgba(34, 197, 94, 0.4);
+            z-index: 10000;
+            pointer-events: none;
+            animation: float-up-fade 1.8s ease-out forwards;
+        }
+        
+        @keyframes float-up-fade {
+            0% {
+                transform: translateX(-50%) translateY(0) scale(0.3);
+                opacity: 0;
+            }
+            15% {
+                transform: translateX(-50%) translateY(-20px) scale(1.2);
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(-50%) translateY(-100px) scale(0.9);
+                opacity: 0;
+            }
+        }
+        
+        .stats-ring-progress.animating {
+            filter: drop-shadow(0 0 25px rgba(234, 88, 12, 0.9)) !important;
+        }
     </style>
     
     <!-- Supabase Client -->
@@ -3594,13 +3671,13 @@
                     <div class="stats-inline">
                         <div class="stats-item">
                             <span class="stats-item-icon">⏱️</span>
-                            <span class="stats-item-value" id="statsTimeSaved">0min</span>
+                            <span class="stats-item-value" id="statsTimeValue">0</span><span class="stats-item-unit" id="statsTimeUnit">min</span>
                             <span class="stats-item-label">sauvé</span>
                         </div>
                         <div class="stats-separator"></div>
                         <div class="stats-item">
                             <span class="stats-item-icon">💰</span>
-                            <span class="stats-item-value" id="statsEurosSaved">≈0€</span>
+                            <span class="stats-item-value" id="statsEurosSaved">0€</span>
                         </div>
                         <div class="stats-separator"></div>
                         <div class="stats-item">
@@ -4737,6 +4814,8 @@
         function closeCongrats() {
             document.getElementById('onboardingSection').classList.add('hidden');
             document.getElementById('homepageContent').classList.add('active');
+            // Trigger celebration when onboarding complete
+            setTimeout(() => onReturnToHomepage(), 500);
         }
 
         function goToHome() {
@@ -4746,6 +4825,8 @@
             document.getElementById('hotlineView').classList.remove('active');
             // Go to home page
             showPage('home');
+            // Trigger celebration check when returning to homepage
+            setTimeout(() => onReturnToHomepage(), 300);
         }
 
         function showPage(page) {
@@ -8670,7 +8751,7 @@
                 { threshold: 500, text: "Expert FixAIR", emoji: "🏆" },
                 { threshold: 1000, text: "Légende", emoji: "👑" }
             ],
-            weeklyGoal: 200 // € objectif hebdomadaire
+            weeklyGoal: 50 // € objectif hebdomadaire (50€ = ~60 messages pour 100%)
         };
         
         // Track action to database
@@ -8682,6 +8763,10 @@
                 console.warn('Action type inconnu:', actionType);
                 return;
             }
+            
+            // Save current stats before tracking
+            const statsBefore = await getWeeklyStats();
+            lastKnownStats = statsBefore || { totalMinutes: 0, totalEuros: 0, reports: 0 };
             
             try {
                 const { error } = await db.from('user_actions').insert({
@@ -8772,12 +8857,17 @@
             }
         }
         
-        // Format time saved
+        // Format time saved - returns {value, unit, extra} for proper display
         function formatTimeSaved(minutes) {
-            if (minutes < 60) return `${minutes}min`;
+            if (minutes < 60) {
+                return { value: minutes, unit: 'min', extra: null };
+            }
             const hours = Math.floor(minutes / 60);
             const mins = minutes % 60;
-            return mins === 0 ? `${hours}h` : `${hours}h${mins.toString().padStart(2, '0')}`;
+            if (mins === 0) {
+                return { value: hours, unit: 'h', extra: null };
+            }
+            return { value: hours, unit: 'h', extra: mins };
         }
         
         // Get motivational message
@@ -8835,36 +8925,234 @@
             
             const percentage = calculateRingPercentage(displayStats.totalEuros);
             const message = getMotivationalMessage(displayStats.totalEuros);
-            const timeSaved = formatTimeSaved(displayStats.totalMinutes);
+            const timeData = formatTimeSaved(displayStats.totalMinutes);
             
             // Mettre à jour le Ring
             updateStatsRing(percentage);
             
             // Mettre à jour les textes
-            const timeEl = document.getElementById('statsTimeSaved');
+            const timeValueEl = document.getElementById('statsTimeValue');
+            const timeUnitEl = document.getElementById('statsTimeUnit');
             const eurosEl = document.getElementById('statsEurosSaved');
             const reportsEl = document.getElementById('statsReports');
             const messageEl = document.getElementById('statsMessage');
             const weekLabelEl = document.getElementById('statsWeekLabel');
             
-            if (timeEl) timeEl.textContent = timeSaved;
-            if (eurosEl) eurosEl.textContent = `≈ ${Math.round(displayStats.totalEuros)}€`;
+            // Format time with separate value and unit
+            if (timeValueEl) {
+                if (timeData.extra) {
+                    timeValueEl.textContent = timeData.value;
+                    timeUnitEl.innerHTML = `${timeData.unit}<span class="stats-item-value" style="margin-left:1px">${timeData.extra}</span><span class="stats-item-unit">min</span>`;
+                } else {
+                    timeValueEl.textContent = timeData.value;
+                    timeUnitEl.textContent = timeData.unit;
+                }
+            }
+            
+            if (eurosEl) eurosEl.textContent = `${Math.round(displayStats.totalEuros)}€`;
             if (reportsEl) reportsEl.textContent = displayStats.reports;
             if (messageEl) messageEl.textContent = message;
             if (weekLabelEl) weekLabelEl.textContent = getWeekLabel();
             
             console.log('📊 Stats hebdo:', {
-                temps: timeSaved,
+                temps: `${timeData.value}${timeData.unit}${timeData.extra ? timeData.extra + 'min' : ''}`,
                 euros: displayStats.totalEuros + '€',
                 rapports: displayStats.reports,
                 ring: percentage + '%'
             });
         }
         
-        // Initialize gamification on login
-        async function initGamification() {
-            await refreshWeeklyStats();
+        // ═══════════════════════════════════════════════════════════════
+        // CELEBRATION ANIMATION - CONFETTI + COUNT-UP
+        // ═══════════════════════════════════════════════════════════════
+        
+        let lastKnownStats = { totalMinutes: 0, totalEuros: 0, reports: 0 };
+        let celebrationInProgress = false;
+        
+        // Create confetti particles
+        function createConfetti() {
+            const overlay = document.createElement('div');
+            overlay.className = 'celebration-overlay';
+            overlay.id = 'celebrationOverlay';
+            document.body.appendChild(overlay);
+            
+            const colors = ['#FFD700', '#FF6B35', '#22C55E', '#3B82F6', '#A78BFA', '#F472B6', '#FCD34D', '#EF4444'];
+            
+            for (let i = 0; i < 80; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'confetti-particle';
+                
+                const size = 8 + Math.random() * 8;
+                const x = Math.random() * 100;
+                const wobble = (Math.random() - 0.5) * 120;
+                const delay = Math.random() * 0.8;
+                const duration = 2.5 + Math.random() * 1.5;
+                const color = colors[i % colors.length];
+                
+                particle.style.cssText = `
+                    left: ${x}%;
+                    width: ${size}px;
+                    height: ${size * 0.6}px;
+                    background: ${color};
+                    --wobble: ${wobble}px;
+                    --delay: ${delay}s;
+                    --duration: ${duration}s;
+                `;
+                
+                overlay.appendChild(particle);
+            }
+            
+            // Remove after animation
+            setTimeout(() => {
+                overlay.remove();
+            }, 4500);
         }
+        
+        // Show floating +1 (or +X%)
+        function showPlusOne(text = '+1') {
+            const plusOne = document.createElement('div');
+            plusOne.className = 'plus-one-floating';
+            plusOne.textContent = text;
+            document.body.appendChild(plusOne);
+            
+            setTimeout(() => {
+                plusOne.remove();
+            }, 2000);
+        }
+        
+        // Animate stats count-up
+        function animateStatsCountUp(fromStats, toStats, duration = 1500) {
+            const startTime = Date.now();
+            
+            const ring = document.getElementById('statsRingProgress');
+            if (ring) ring.classList.add('animating');
+            
+            const animate = () => {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+                
+                // Interpolate values
+                const currentMinutes = Math.round(fromStats.totalMinutes + (toStats.totalMinutes - fromStats.totalMinutes) * eased);
+                const currentEuros = Math.round(fromStats.totalEuros + (toStats.totalEuros - fromStats.totalEuros) * eased);
+                const currentReports = Math.round(fromStats.reports + (toStats.reports - fromStats.reports) * eased);
+                
+                // Update display
+                const percentage = calculateRingPercentage(currentEuros);
+                updateStatsRing(percentage);
+                
+                const percentEl = document.getElementById('statsRingPercent');
+                if (percentEl) percentEl.textContent = percentage + '%';
+                
+                const timeData = formatTimeSaved(currentMinutes);
+                const timeValueEl = document.getElementById('statsTimeValue');
+                const timeUnitEl = document.getElementById('statsTimeUnit');
+                if (timeValueEl) {
+                    timeValueEl.textContent = timeData.value;
+                    if (timeData.extra) {
+                        timeUnitEl.innerHTML = `${timeData.unit}<span class="stats-item-value" style="margin-left:1px">${timeData.extra}</span><span class="stats-item-unit">min</span>`;
+                    } else {
+                        timeUnitEl.textContent = timeData.unit;
+                    }
+                }
+                
+                const eurosEl = document.getElementById('statsEurosSaved');
+                if (eurosEl) eurosEl.textContent = `${currentEuros}€`;
+                
+                const reportsEl = document.getElementById('statsReports');
+                if (reportsEl) reportsEl.textContent = currentReports;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    if (ring) ring.classList.remove('animating');
+                    
+                    // Update message
+                    const message = getMotivationalMessage(toStats.totalEuros);
+                    const messageEl = document.getElementById('statsMessage');
+                    if (messageEl) messageEl.textContent = message;
+                }
+            };
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // Full celebration sequence
+        function triggerCelebration(newStats, oldStats) {
+            if (celebrationInProgress) return;
+            celebrationInProgress = true;
+            
+            console.log('🎊 Célébration déclenchée!');
+            
+            // Calculate difference for +X display
+            const eurosDiff = Math.round(newStats.totalEuros - oldStats.totalEuros);
+            const percentDiff = calculateRingPercentage(newStats.totalEuros) - calculateRingPercentage(oldStats.totalEuros);
+            
+            // Start confetti
+            createConfetti();
+            
+            // Show +X after a small delay
+            setTimeout(() => {
+                if (percentDiff > 0) {
+                    showPlusOne(`+${percentDiff}%`);
+                } else if (eurosDiff > 0) {
+                    showPlusOne(`+${eurosDiff}€`);
+                }
+            }, 300);
+            
+            // Animate count-up
+            animateStatsCountUp(oldStats, newStats, 1800);
+            
+            setTimeout(() => {
+                celebrationInProgress = false;
+            }, 3000);
+        }
+        
+        // Check if celebration should trigger
+        function shouldCelebrate(newStats, oldStats) {
+            // Celebrate if there's any increase
+            return newStats.totalEuros > oldStats.totalEuros || 
+                   newStats.reports > oldStats.reports ||
+                   newStats.totalMinutes > oldStats.totalMinutes;
+        }
+        
+        // Initialize gamification on login with celebration check
+        async function initGamification() {
+            const stats = await getWeeklyStats();
+            const newStats = stats || { totalMinutes: 0, totalEuros: 0, reports: 0 };
+            
+            // First time initialization - just set stats without celebration
+            if (lastKnownStats.totalEuros === 0 && lastKnownStats.totalMinutes === 0) {
+                await refreshWeeklyStats();
+                lastKnownStats = { ...newStats };
+                console.log('📊 Stats initialisées:', lastKnownStats);
+                return;
+            }
+            
+            // Check if we should celebrate (when returning to homepage with new data)
+            if (shouldCelebrate(newStats, lastKnownStats)) {
+                console.log('🎊 Changement détecté! Célébration...');
+                triggerCelebration(newStats, lastKnownStats);
+            } else {
+                await refreshWeeklyStats();
+            }
+            
+            lastKnownStats = { ...newStats };
+        }
+        
+        // Call celebration when returning to homepage
+        function onReturnToHomepage() {
+            if (currentUserId && document.getElementById('homepageContent')?.classList.contains('active')) {
+                initGamification();
+            }
+        }
+        
+        // TEST FUNCTION - Call from console: testCelebration()
+        window.testCelebration = function() {
+            const fakeOld = { totalMinutes: 10, totalEuros: 8, reports: 0 };
+            const fakeNew = { totalMinutes: 15, totalEuros: 12, reports: 1 };
+            triggerCelebration(fakeNew, fakeOld);
+        };
     </script>
     
     </div><!-- End app-wrapper -->
