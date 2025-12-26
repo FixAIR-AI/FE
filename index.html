@@ -3405,9 +3405,12 @@
                 transform: translateY(0) translateX(0) rotate(0deg);
                 opacity: 1;
             }
+            70% {
+                opacity: 1;
+            }
             100% {
-                transform: translateY(100vh) translateX(var(--wobble, 0px)) rotate(720deg);
-                opacity: 0.7;
+                transform: translateY(120vh) translateX(var(--wobble, 0px)) rotate(720deg);
+                opacity: 0;
             }
         }
         
@@ -4636,6 +4639,10 @@
                     // New user - show onboarding
                     document.getElementById('loginScreen').classList.remove('active');
                     document.getElementById('mainApp').classList.add('active');
+                    
+                    // ═══ LOAD DATA after login ═══
+                    loadProjectsList();
+                    initGamification();
                 } else {
                     toast(data.error || 'Erreur lors de la création du compte');
                 }
@@ -4825,8 +4832,14 @@
             document.getElementById('hotlineView').classList.remove('active');
             // Go to home page
             showPage('home');
-            // Trigger celebration check when returning to homepage
-            setTimeout(() => onReturnToHomepage(), 300);
+            
+            // ═══ REFRESH DATA when returning to homepage ═══
+            if (currentUserId) {
+                // Reload projects list
+                loadProjectsList();
+                // Refresh gamification stats with celebration check
+                setTimeout(() => onReturnToHomepage(), 300);
+            }
         }
 
         function showPage(page) {
@@ -8759,8 +8772,10 @@
         
         // Track action to database
         async function trackAction(actionType, projectId = null) {
-            if (!currentUserId) {
-                console.log('⚠️ No user ID, skipping track');
+            // Ensure we have user ID
+            const userId = await getCurrentUserId();
+            if (!userId || userId.startsWith('demo-')) {
+                console.log('⚠️ No valid user ID, skipping track');
                 return;
             }
             
@@ -8774,7 +8789,7 @@
             
             try {
                 const { error } = await db.from('user_actions').insert({
-                    user_id: currentUserId,
+                    user_id: userId,
                     action_type: actionType,
                     minutes_saved: config.minutes,
                     euros_saved: config.euros,
@@ -8812,7 +8827,12 @@
         
         // Get weekly stats from database
         async function getWeeklyStats() {
-            if (!currentUserId) return null;
+            // Ensure we have user ID
+            const userId = await getCurrentUserId();
+            if (!userId || userId.startsWith('demo-')) {
+                console.log('⚠️ No valid user ID for stats');
+                return null;
+            }
             
             try {
                 const monday = getWeekStart();
@@ -8820,7 +8840,7 @@
                 const { data, error } = await db
                     .from('user_actions')
                     .select('action_type, minutes_saved, euros_saved')
-                    .eq('user_id', currentUserId)
+                    .eq('user_id', userId)
                     .gte('created_at', monday.toISOString());
                 
                 if (error) {
@@ -9012,10 +9032,10 @@
                 overlay.appendChild(particle);
             }
             
-            // Remove after animation
+            // Remove after animation completes (max duration 4s + max delay 0.8s + buffer)
             setTimeout(() => {
                 overlay.remove();
-            }, 4500);
+            }, 5500);
         }
         
         // Show floating +1 (or +X%)
@@ -9129,6 +9149,13 @@
         // Initialize gamification on login with celebration check
         async function initGamification(forceCheck = false) {
             console.log('🎮 initGamification called, forceCheck:', forceCheck);
+            
+            // Ensure we have the user ID
+            const userId = await getCurrentUserId();
+            if (!userId || userId.startsWith('demo-')) {
+                console.log('⚠️ No valid user ID for gamification');
+                return;
+            }
             
             const stats = await getWeeklyStats();
             const newStats = stats || { totalMinutes: 0, totalEuros: 0, reports: 0 };
