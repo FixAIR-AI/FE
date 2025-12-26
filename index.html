@@ -1419,9 +1419,9 @@
         /* Report button - always visible in Assistant mode */
         .h-btn.report-btn { display: none; } /* Hidden by default (Copilot) */
         .panel.assistant .h-btn.report-btn { display: flex; } /* Visible in Assistant */
-        .h-btn.report-btn .icon { width: 18px; height: 18px; }
-        .h-btn.report-btn .icon svg { stroke: rgba(255,255,255,0.6); }
-        .h-btn.report-btn:hover .icon svg { stroke: rgba(255,255,255,0.9); }
+        .h-btn.report-btn .icon { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; }
+        .h-btn.report-btn .icon svg { width: 18px; height: 18px; stroke: rgba(255,255,255,0.7); }
+        .h-btn.report-btn:hover .icon svg { stroke: rgba(255,255,255,1); }
         .h-btn.report-btn.has-data { 
             border-color: var(--assistant); 
             color: var(--assistant);
@@ -2584,9 +2584,13 @@
         @media (max-width: 900px) { .report-sheet { max-width: 70%; } }
         @media (max-width: 600px) { .report-sheet { max-width: 100%; border-left: none; } }
         .report-header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; padding-top: max(12px, env(safe-area-inset-top)); border-bottom: 1px solid var(--border); flex-shrink: 0; }
-        .report-close { width: 28px; height: 28px; border-radius: 50%; background: transparent; border: 1px solid var(--border); color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .report-close { width: 28px; height: 28px; border-radius: 50%; background: transparent; border: 1px solid var(--border); color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .report-close .icon { width: 12px; height: 12px; }
-        .report-title { flex: 1; font-size: 14px; font-weight: 600; color: var(--assistant); }
+        .report-title { font-size: 14px; font-weight: 600; color: var(--assistant); white-space: nowrap; }
+        .report-progress { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 60px; }
+        .report-progress-bar { flex: 1; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+        .report-progress-fill { height: 100%; width: 0%; background: #3B82F6; border-radius: 2px; transition: width 0.4s ease; }
+        .report-progress-text { font-size: 11px; font-weight: 600; color: #3B82F6; white-space: nowrap; }
         .report-body { flex: 1; overflow-y: auto; padding: 14px; }
         
         /* Live preview container */
@@ -4183,7 +4187,7 @@
                 </div>
                 <div class="header-actions">
                     <button class="h-btn new-chat-btn" onclick="startNewProject()" title="Nouveau chat"><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button>
-                    <button class="h-btn report-btn" onclick="openReport()" title="Voir rapport"><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 10l2 2 4-4"/><line x1="9" y1="16" x2="15" y2="16"/></svg></span></button>
+                    <button class="h-btn report-btn" onclick="openReport()" title="Voir rapport"><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 10l2 2 4-4"/><line x1="9" y1="16" x2="15" y2="16"/></svg></span></button>
                     <button class="h-btn" onclick="toggleSplit()" title="Mode split"><span class="icon"><svg><use href="#icon-columns"/></svg></span></button>
                 </div>
             </header>
@@ -4231,6 +4235,12 @@
         <header class="report-header">
             <button class="report-close" onclick="closeReport()"><span class="icon"><svg><use href="#icon-x"/></svg></span></button>
             <div class="report-title">Rapport d'intervention</div>
+            <div class="report-progress" id="reportHeaderProgress" style="display: none;">
+                <div class="report-progress-bar">
+                    <div class="report-progress-fill" id="reportProgressFill"></div>
+                </div>
+                <span class="report-progress-text" id="reportProgressText">0%</span>
+            </div>
         </header>
         <div class="report-body">
             <div class="report-preview-container" id="reportPreviewContainer">
@@ -7705,6 +7715,9 @@ INSTRUCTIONS:
             const emptyState = document.getElementById('reportPreviewEmpty');
             const previewContent = document.getElementById('reportPreviewContent');
             const reportBtn = document.querySelector('.h-btn.report-btn');
+            const headerProgress = document.getElementById('reportHeaderProgress');
+            const progressFill = document.getElementById('reportProgressFill');
+            const progressText = document.getElementById('reportProgressText');
             
             if (!previewContent) return;
             
@@ -7726,6 +7739,8 @@ INSTRUCTIONS:
                 if (emptyState) emptyState.style.display = '';
                 previewContent.style.display = 'none';
                 if (reportBtn) reportBtn.classList.remove('has-data');
+                // Hide progress bar
+                if (headerProgress) headerProgress.style.display = 'none';
                 return;
             }
             
@@ -7738,6 +7753,13 @@ INSTRUCTIONS:
             
             // Calculate completion percentage for manager visibility
             const completionStatus = calculateReportCompletion(data);
+            
+            // Update header progress bar
+            if (headerProgress && progressFill && progressText) {
+                headerProgress.style.display = 'flex';
+                progressFill.style.width = completionStatus.percentage + '%';
+                progressText.textContent = completionStatus.percentage + '%';
+            }
             
             // Generate preview HTML (only filled sections)
             const previewHtml = renderReportPreview(data, completionStatus);
@@ -7981,21 +8003,13 @@ INSTRUCTIONS:
             
             let html = `<div class="rpt" style="margin:0;">`;
             
-            // Header with inline progress bar (Option 3)
+            // Header (progress bar now in fixed drawer header)
             html += `
             <div class="rpt-header">
                 <div class="rpt-header-top">
                     <div>
                         <div class="rpt-brand ${brandClass}">${brandName}</div>
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <h1 class="rpt-title" style="margin: 0;">Rapport d'intervention</h1>
-                            <div style="flex: 1; display: flex; align-items: center; gap: 8px; min-width: 80px;">
-                                <div style="flex: 1; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;">
-                                    <div style="height: 100%; width: ${completion.percentage}%; background: #3B82F6; border-radius: 2px; transition: width 0.3s;"></div>
-                                </div>
-                                <span style="font-size: 10px; font-weight: 600; color: #3B82F6; white-space: nowrap;">${completion.percentage}%</span>
-                            </div>
-                        </div>
+                        <h1 class="rpt-title">Rapport d'intervention</h1>
                     </div>
                     <div class="rpt-status ${statusClass}">
                         <span class="rpt-status-dot"></span>
