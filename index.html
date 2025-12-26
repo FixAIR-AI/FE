@@ -814,6 +814,44 @@
             background-clip: text;
         }
         
+        /* Ring Tooltip */
+        .stats-ring-tooltip {
+            position: absolute;
+            top: calc(100% + 15px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.95);
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 11px;
+            line-height: 1.5;
+            width: 240px;
+            text-align: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s, visibility 0.2s;
+            z-index: 1000;
+            pointer-events: none;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .stats-ring-tooltip::before {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-bottom-color: rgba(0, 0, 0, 0.95);
+        }
+        
+        .stats-ring-container:hover .stats-ring-tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+        
         /* Stats Inline Row */
         .stats-inline {
             display: flex;
@@ -829,7 +867,7 @@
             align-items: baseline;
             gap: 3px;
             position: relative;
-            cursor: help;
+            cursor: default;
         }
         
         .stats-item-icon {
@@ -869,6 +907,13 @@
             color: #22C55E;
             text-transform: uppercase;
             letter-spacing: 1px;
+        }
+        
+        /* Green/neon emoji for "Efficace" level */
+        .green-emoji {
+            display: inline-block;
+            filter: hue-rotate(80deg) saturate(2) brightness(1.3);
+            text-shadow: 0 0 10px rgba(34, 197, 94, 0.8), 0 0 20px rgba(34, 197, 94, 0.5);
         }
         
         /* Tooltip for stats explanation */
@@ -3556,7 +3601,7 @@
             <div class="login-bar">
                 <div class="login-icon-slot">
                     <div class="login-mini" id="loginSphere"><div class="glass-sphere"><div class="sphere-fog-container"><div class="sphere-fog"></div><div class="sphere-fog-2"></div></div></div></div>
-                    <button class="login-back" id="loginBack" onclick="prevLoginStep()"><svg viewBox="0 0 24 24"><use href="#icon-arrow-left"/></svg></button>
+                    <button type="button" class="login-back" id="loginBack" onclick="prevLoginStep()"><svg viewBox="0 0 24 24"><use href="#icon-arrow-left"/></svg></button>
                 </div>
                 <div class="login-input-container">
                     <div class="login-input-slider" id="loginSlider">
@@ -3571,7 +3616,7 @@
                         </div>
                     </div>
                 </div>
-                <button class="login-btn" id="loginBtn" onclick="nextLoginStep()"><span class="icon"><svg><use href="#icon-arrow-right"/></svg></span></button>
+                <button type="button" class="login-btn" id="loginBtn" onclick="nextLoginStep()"><span class="icon"><svg><use href="#icon-arrow-right"/></svg></span></button>
             </div>
         </div>
     </div>
@@ -3696,8 +3741,8 @@
                     <!-- Week Label -->
                     <div class="stats-week-label" id="statsWeekLabel">Cette semaine</div>
                     
-                    <!-- Ring -->
-                    <div class="stats-ring-container">
+                    <!-- Ring with tooltip -->
+                    <div class="stats-ring-container" id="statsRingContainer">
                         <svg class="stats-ring" viewBox="0 0 120 120">
                             <defs>
                                 <!-- Fire Growth Gradient: Braise → Flamme → Or -->
@@ -3716,6 +3761,7 @@
                         <div class="stats-ring-content">
                             <span class="stats-ring-percent" id="statsRingPercent">0%</span>
                         </div>
+                        <div class="stats-ring-tooltip" id="statsRingTooltip">Votre progression vers l'objectif hebdomadaire. 100% = vous utilisez pleinement FixAIR pour gagner du temps et de l'argent !</div>
                     </div>
                     
                     <!-- Stats Row (inline) with tooltips -->
@@ -3724,13 +3770,13 @@
                             <span class="stats-item-icon">⏱️</span>
                             <span class="stats-item-value" id="statsTimeValue">0</span><span class="stats-item-unit" id="statsTimeUnit">min</span>
                             <span class="stats-item-label">sauvé</span>
-                            <div class="stats-tooltip">Temps économisé cette semaine vs travail manuel (rédaction, recherche, corrections...)</div>
+                            <div class="stats-tooltip">Temps économisé cette semaine grâce à FixAIR, comparé au travail manuel : rédaction, recherche, corrections...</div>
                         </div>
                         <div class="stats-separator"></div>
                         <div class="stats-item" id="statsEurosItem">
                             <span class="stats-item-icon">💰</span>
                             <span class="stats-item-value" id="statsEurosSaved">0€</span>
-                            <div class="stats-tooltip">Valeur économisée basée sur votre tarif horaire (~100€/h). Inclut : temps de rédaction, corrections, stress évité.</div>
+                            <div class="stats-tooltip">Valeur économique estimée, basée sur le tarif horaire moyen d'un technicien. Inclut : temps de rédaction, allers-retours avec l'entreprise, stress évité.</div>
                         </div>
                         <div class="stats-separator"></div>
                         <div class="stats-item" id="statsReportsItem">
@@ -4533,26 +4579,30 @@
         // LOGIN STEPS
         async function nextLoginStep() {
             const btn = document.getElementById('loginBtn');
+            console.log('📱 nextLoginStep called, current step:', loginStep);
             
             if (loginStep === 0) {
                 // Step 0: Check email
                 const email = document.getElementById('loginEmail').value.trim();
+                console.log('📧 Email entered:', email);
                 if (!email.includes('@')) { toast('Email invalide'); return; }
                 
                 btn.disabled = true;
                 btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
                 
                 try {
+                    console.log('🔄 Calling check-email API...');
                     const response = await fetch(`${API_BASE}/auth/check-email`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ email })
                     });
+                    console.log('📨 Response status:', response.status);
                     const data = await response.json();
-                    console.log('Check email response:', data);
+                    console.log('📨 Check email response:', data);
                     
                     isNewUser = (data.exists === false);
-                    console.log('Is new user:', isNewUser);
+                    console.log('👤 Is new user:', isNewUser);
                     
                     // Update password placeholder based on user type
                     const pwdInput = document.getElementById('loginPassword');
@@ -4566,8 +4616,14 @@
                     updateLoginUI();
                     
                 } catch (error) {
+                    console.error('❌ Check email error:', error);
                     toast('Erreur de connexion');
-                    console.error('Check email error:', error);
+                    
+                    // Safari fallback: proceed anyway assuming new user
+                    console.log('⚠️ Fallback: proceeding as new user');
+                    isNewUser = true;
+                    loginStep = 1;
+                    updateLoginUI();
                 } finally {
                     btn.disabled = false;
                     btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
@@ -8827,8 +8883,8 @@
             messages: [
                 { threshold: 0, text: "Lance-toi", emoji: "🚀" },
                 { threshold: 30, text: "Bien joué, continue", emoji: "💪" },
-                { threshold: 80, text: "Tu progresses bien", emoji: "📈" },
-                { threshold: 150, text: "Efficace", emoji: "⚡" },
+                { threshold: 80, text: "Tu progresses bien", emoji: "✨" },
+                { threshold: 150, text: "Efficace", emoji: "⚡", greenEmoji: true },
                 { threshold: 250, text: "Impressionnant", emoji: "🔥" },
                 { threshold: 400, text: "Machine de guerre", emoji: "💥" },
                 { threshold: 600, text: "Expert FixAIR", emoji: "🏆" }
@@ -8981,7 +9037,27 @@
                 if (euros >= msg.threshold) selected = msg;
             }
             
-            return `${selected.text} ${name} ! ${selected.emoji}`;
+            // Return object with text and emoji info for special styling
+            if (selected.greenEmoji) {
+                return { 
+                    text: `${selected.text} ${name} !`, 
+                    emoji: selected.emoji,
+                    isGreen: true 
+                };
+            }
+            return { 
+                text: `${selected.text} ${name} !`, 
+                emoji: selected.emoji,
+                isGreen: false 
+            };
+        }
+        
+        // Format message for display (handles green emoji)
+        function formatMotivationalMessage(msgObj) {
+            if (msgObj.isGreen) {
+                return `${msgObj.text} <span class="green-emoji">${msgObj.emoji}</span>`;
+            }
+            return `${msgObj.text} ${msgObj.emoji}`;
         }
         
         // Calculate ring percentage
@@ -9053,7 +9129,7 @@
             
             if (eurosEl) eurosEl.textContent = `${Math.round(displayStats.totalEuros)}€`;
             if (reportsEl) reportsEl.textContent = displayStats.reports;
-            if (messageEl) messageEl.textContent = message;
+            if (messageEl) messageEl.innerHTML = formatMotivationalMessage(message);
             if (weekLabelEl) weekLabelEl.textContent = getWeekLabel();
             
             console.log('📊 Stats hebdo:', {
@@ -9179,7 +9255,7 @@
                     // Update message
                     const message = getMotivationalMessage(toStats.totalEuros);
                     const messageEl = document.getElementById('statsMessage');
-                    if (messageEl) messageEl.textContent = message;
+                    if (messageEl) messageEl.innerHTML = formatMotivationalMessage(message);
                 }
             };
             
