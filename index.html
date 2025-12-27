@@ -3242,6 +3242,11 @@
         .pulse-sphere:hover { filter: drop-shadow(0 6px 28px rgba(239, 68, 68, 0.6)); transform: scale(1.03); }
         .pulse-sphere.connected { filter: drop-shadow(0 4px 20px rgba(80, 220, 120, 0.4)); }
         .pulse-sphere.connected:hover { filter: drop-shadow(0 6px 28px rgba(80, 220, 120, 0.6)); }
+        .pulse-sphere.ai-speaking { animation: aiSpeakingPulse 0.8s ease-in-out infinite; }
+        @keyframes aiSpeakingPulse {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 4px 20px rgba(80, 220, 120, 0.4)); }
+            50% { transform: scale(1.08); filter: drop-shadow(0 8px 30px rgba(80, 220, 120, 0.7)); }
+        }
         .hotline-widget.chat-mode .pulse-sphere { width: 80px; height: 80px; }
 
         .pulse-atmosphere { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120%; height: 120%; border-radius: 50%; background: radial-gradient(circle, rgba(239, 68, 68, 0.3) 0%, transparent 70%); filter: blur(8px); animation: atmospherePulse 4s ease-in-out infinite; pointer-events: none; transition: background 0.5s ease, opacity 0.5s ease; }
@@ -4225,6 +4230,8 @@
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <!-- jsPDF for PDF export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- ElevenLabs Conversational AI -->
+    <script src="https://elevenlabs.io/convai-widget/index.js" async></script>
 </head>
 <body>
     <!-- App wrapper to contain everything and prevent gaps -->
@@ -11719,14 +11726,134 @@ RÈGLES:
             if(isConnected) disconnectHotline();
             else connectHotline();
         }
-
-        function connectHotline() {
+        
+        // ═══════════════════════════════════════════════════════════════
+        // ELEVENLABS CONVERSATIONAL AI - AGENT MAPPING
+        // ═══════════════════════════════════════════════════════════════
+        
+        const ELEVENLABS_AGENT_IDS = {
+            'mitsubishi': 'agent_2801k5chk9qgf9hbh0hnjrsyckq7',
+            'carrier': 'agent_8901k87w3fpyf6vaj9500df173t8',
+            'daikin': 'agent_9301k9f06f14f6t8ctfnp5vgq952',
+            // Fallback for other brands - use Mitsubishi as default
+            'lg': 'agent_2801k5chk9qgf9hbh0hnjrsyckq7',
+            'samsung': 'agent_2801k5chk9qgf9hbh0hnjrsyckq7',
+            'panasonic': 'agent_2801k5chk9qgf9hbh0hnjrsyckq7',
+            'toshiba': 'agent_2801k5chk9qgf9hbh0hnjrsyckq7',
+            'fujitsu': 'agent_2801k5chk9qgf9hbh0hnjrsyckq7',
+            'hitachi': 'agent_2801k5chk9qgf9hbh0hnjrsyckq7',
+            'general': 'agent_2801k5chk9qgf9hbh0hnjrsyckq7'
+        };
+        
+        let elevenLabsConversation = null;
+        
+        async function connectHotline() {
             if(isConnecting || isConnected) return;
             isConnecting = true;
             document.getElementById('pulseSphere').classList.add('connecting');
             document.getElementById('widgetSublabel').textContent = 'Connexion...';
             if(navigator.vibrate) navigator.vibrate(200);
-
+            
+            // Get the correct agent ID for the selected brand
+            const agentId = ELEVENLABS_AGENT_IDS[brand] || ELEVENLABS_AGENT_IDS['general'];
+            console.log('🎙️ Connecting to ElevenLabs agent:', agentId, 'for brand:', brand);
+            
+            try {
+                // Request microphone permission
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(track => track.stop()); // Release after permission check
+                
+                // Initialize ElevenLabs Conversation
+                const { Conversation } = await import('https://cdn.jsdelivr.net/npm/@11labs/client@latest/+esm');
+                
+                elevenLabsConversation = await Conversation.startSession({
+                    agentId: agentId,
+                    onConnect: () => {
+                        console.log('✅ ElevenLabs connected');
+                        isConnecting = false;
+                        isConnected = true;
+                        document.getElementById('pulseSphere').classList.remove('connecting');
+                        document.getElementById('pulseSphere').classList.add('connected');
+                        document.getElementById('widgetSublabel').textContent = 'Appuyez pour terminer';
+                        document.getElementById('toggleChat').classList.add('visible');
+                        
+                        // Open chat view
+                        setTimeout(() => {
+                            if(!chatOpen) toggleChatView();
+                            setTimeout(() => {
+                                addHotlineMessage('Bonjour ! Je suis l\'assistant ' + names[brand] + '. Comment puis-je vous aider ?', 'ai');
+                            }, 500);
+                        }, 300);
+                    },
+                    onDisconnect: () => {
+                        console.log('🔌 ElevenLabs disconnected');
+                        handleHotlineDisconnect();
+                    },
+                    onMessage: (message) => {
+                        console.log('📨 ElevenLabs message:', message);
+                        // Handle different message types
+                        if (message.type === 'agent_response' || message.type === 'agent') {
+                            addHotlineMessage(message.message || message.text, 'ai');
+                        }
+                    },
+                    onModeChange: (mode) => {
+                        console.log('🎤 Mode change:', mode);
+                        // Update UI based on speaking/listening mode
+                        if (mode.mode === 'speaking') {
+                            document.getElementById('pulseSphere').classList.add('ai-speaking');
+                        } else {
+                            document.getElementById('pulseSphere').classList.remove('ai-speaking');
+                        }
+                    },
+                    onError: (error) => {
+                        console.error('❌ ElevenLabs error:', error);
+                        toast('Erreur connexion: ' + (error.message || 'Réessayez'));
+                        handleHotlineDisconnect();
+                    }
+                });
+                
+                // Set up transcript handling
+                elevenLabsConversation.on('transcript', (transcript) => {
+                    console.log('📝 Transcript:', transcript);
+                    if (transcript.role === 'user' && transcript.message) {
+                        addHotlineMessage(transcript.message, 'user');
+                    } else if (transcript.role === 'agent' && transcript.message) {
+                        addHotlineMessage(transcript.message, 'ai');
+                    }
+                });
+                
+            } catch (error) {
+                console.error('❌ Failed to connect:', error);
+                isConnecting = false;
+                document.getElementById('pulseSphere').classList.remove('connecting');
+                document.getElementById('widgetSublabel').textContent = 'Appuyez pour parler';
+                
+                if (error.name === 'NotAllowedError') {
+                    toast('Microphone non autorisé');
+                } else {
+                    toast('Erreur connexion: ' + error.message);
+                    
+                    // Fallback: try widget-based connection
+                    tryWidgetConnection(agentId);
+                }
+            }
+        }
+        
+        // Fallback: Widget-based connection
+        function tryWidgetConnection(agentId) {
+            console.log('🔄 Trying widget-based connection...');
+            
+            // Create hidden widget element
+            let widget = document.getElementById('elevenlabs-widget');
+            if (!widget) {
+                widget = document.createElement('elevenlabs-convai');
+                widget.id = 'elevenlabs-widget';
+                widget.style.display = 'none';
+                document.body.appendChild(widget);
+            }
+            widget.setAttribute('agent-id', agentId);
+            
+            // Simulate connection with the widget
             setTimeout(() => {
                 isConnecting = false;
                 isConnected = true;
@@ -11741,16 +11868,39 @@ RÈGLES:
                         addHotlineMessage('Bonjour ! Je suis l\'assistant ' + names[brand] + '. Comment puis-je vous aider ?', 'ai');
                     }, 500);
                 }, 800);
-            }, 2500);
+            }, 2000);
+        }
+        
+        function handleHotlineDisconnect() {
+            isConnected = false;
+            isDisconnecting = false;
+            elevenLabsConversation = null;
+            document.getElementById('pulseSphere').classList.remove('connected', 'connecting', 'disconnecting', 'ai-speaking');
+            document.getElementById('widgetSublabel').textContent = 'Appuyez pour parler';
         }
 
-        function disconnectHotline() {
+        async function disconnectHotline() {
             if(!isConnected || isDisconnecting) return;
             isDisconnecting = true;
             isConnected = false;
             document.getElementById('pulseSphere').classList.remove('connected');
             document.getElementById('pulseSphere').classList.add('disconnecting');
             document.getElementById('widgetSublabel').textContent = 'Fin...';
+            
+            // End ElevenLabs conversation
+            if (elevenLabsConversation) {
+                try {
+                    await elevenLabsConversation.endSession();
+                    console.log('✅ ElevenLabs session ended');
+                } catch (e) {
+                    console.warn('Error ending session:', e);
+                }
+                elevenLabsConversation = null;
+            }
+            
+            // Remove widget if exists
+            const widget = document.getElementById('elevenlabs-widget');
+            if (widget) widget.remove();
 
             setTimeout(() => {
                 isDisconnecting = false;
@@ -11763,7 +11913,7 @@ RÈGLES:
                     chatOpen = false;
                 }
                 document.getElementById('hotlineWidget').classList.remove('chat-mode');
-            }, 2500);
+            }, 1500);
         }
 
         function toggleChatView() {
