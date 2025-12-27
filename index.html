@@ -3247,6 +3247,13 @@
             0%, 100% { transform: scale(1); filter: drop-shadow(0 4px 20px rgba(80, 220, 120, 0.4)); }
             50% { transform: scale(1.08); filter: drop-shadow(0 8px 30px rgba(80, 220, 120, 0.7)); }
         }
+        
+        /* Speaking bars animation */
+        @keyframes speakPulse {
+            0%, 100% { transform: scaleY(0.5); opacity: 0.6; }
+            50% { transform: scaleY(1); opacity: 1; }
+        }
+        
         .hotline-widget.chat-mode .pulse-sphere { width: 80px; height: 80px; }
 
         .pulse-atmosphere { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120%; height: 120%; border-radius: 50%; background: radial-gradient(circle, rgba(239, 68, 68, 0.3) 0%, transparent 70%); filter: blur(8px); animation: atmospherePulse 4s ease-in-out infinite; pointer-events: none; transition: background 0.5s ease, opacity 0.5s ease; }
@@ -4230,8 +4237,13 @@
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <!-- jsPDF for PDF export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- ElevenLabs Conversational AI -->
-    <script src="https://elevenlabs.io/convai-widget/index.js" async></script>
+    
+    <!-- ElevenLabs Conversational AI - ES Module (same as working Mitsubishi page) -->
+    <script type="module">
+        import { Conversation } from 'https://esm.run/@elevenlabs/client';
+        window.ElevenLabsConversation = Conversation;
+        window.dispatchEvent(new Event('elevenlabs-ready'));
+    </script>
 </head>
 <body>
     <!-- App wrapper to contain everything and prevent gaps -->
@@ -11746,9 +11758,32 @@ RÈGLES:
         };
         
         let elevenLabsConversation = null;
+        let elevenLabsSDKReady = false;
+        
+        // Listen for SDK ready event
+        window.addEventListener('elevenlabs-ready', () => {
+            elevenLabsSDKReady = true;
+            console.log('✅ ElevenLabs SDK loaded and ready');
+        });
         
         async function connectHotline() {
             if(isConnecting || isConnected) return;
+            
+            // Check if SDK is ready
+            if (!elevenLabsSDKReady || !window.ElevenLabsConversation) {
+                console.log('⏳ SDK not ready yet, waiting...');
+                toast('Chargement en cours...');
+                // Wait a bit and try again
+                setTimeout(() => {
+                    if (elevenLabsSDKReady) {
+                        connectHotline();
+                    } else {
+                        toast('Erreur: SDK non chargé');
+                    }
+                }, 1000);
+                return;
+            }
+            
             isConnecting = true;
             document.getElementById('pulseSphere').classList.add('connecting');
             document.getElementById('widgetSublabel').textContent = 'Connexion...';
@@ -11759,17 +11794,32 @@ RÈGLES:
             console.log('🎙️ Connecting to ElevenLabs agent:', agentId, 'for brand:', brand);
             
             try {
-                // Request microphone permission
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                stream.getTracks().forEach(track => track.stop()); // Release after permission check
-                
-                // Initialize ElevenLabs Conversation
-                const { Conversation } = await import('https://cdn.jsdelivr.net/npm/@11labs/client@latest/+esm');
-                
-                elevenLabsConversation = await Conversation.startSession({
+                elevenLabsConversation = await window.ElevenLabsConversation.startSession({
                     agentId: agentId,
-                    onConnect: () => {
-                        console.log('✅ ElevenLabs connected');
+                    
+                    onMessage: ({ message, source }) => {
+                        console.log('📨 Message from', source, ':', message);
+                        if (source === 'user') {
+                            addHotlineMessage(message, 'user');
+                        } else {
+                            addHotlineMessage(message, 'ai');
+                        }
+                    },
+                    
+                    onModeChange: ({ mode }) => {
+                        console.log('🎤 Mode change:', mode);
+                        if (mode === 'speaking') {
+                            document.getElementById('pulseSphere').classList.add('ai-speaking');
+                            showAISpeakingIndicator();
+                        } else {
+                            document.getElementById('pulseSphere').classList.remove('ai-speaking');
+                            hideAISpeakingIndicator();
+                        }
+                    },
+                    
+                    onConnect: ({ conversationId }) => {
+                        console.log('✅ Connected! Conversation ID:', conversationId);
+                        
                         isConnecting = false;
                         isConnected = true;
                         document.getElementById('pulseSphere').classList.remove('connecting');
@@ -11780,103 +11830,73 @@ RÈGLES:
                         // Open chat view
                         setTimeout(() => {
                             if(!chatOpen) toggleChatView();
-                            setTimeout(() => {
-                                addHotlineMessage('Bonjour ! Je suis l\'assistant ' + names[brand] + '. Comment puis-je vous aider ?', 'ai');
-                            }, 500);
-                        }, 300);
+                        }, 800);
                     },
+                    
                     onDisconnect: () => {
-                        console.log('🔌 ElevenLabs disconnected');
+                        console.log('🔌 Disconnected');
                         handleHotlineDisconnect();
                     },
-                    onMessage: (message) => {
-                        console.log('📨 ElevenLabs message:', message);
-                        // Handle different message types
-                        if (message.type === 'agent_response' || message.type === 'agent') {
-                            addHotlineMessage(message.message || message.text, 'ai');
-                        }
-                    },
-                    onModeChange: (mode) => {
-                        console.log('🎤 Mode change:', mode);
-                        // Update UI based on speaking/listening mode
-                        if (mode.mode === 'speaking') {
-                            document.getElementById('pulseSphere').classList.add('ai-speaking');
-                        } else {
-                            document.getElementById('pulseSphere').classList.remove('ai-speaking');
-                        }
-                    },
+                    
                     onError: (error) => {
                         console.error('❌ ElevenLabs error:', error);
-                        toast('Erreur connexion: ' + (error.message || 'Réessayez'));
+                        toast('Erreur connexion');
                         handleHotlineDisconnect();
                     }
                 });
-                
-                // Set up transcript handling
-                elevenLabsConversation.on('transcript', (transcript) => {
-                    console.log('📝 Transcript:', transcript);
-                    if (transcript.role === 'user' && transcript.message) {
-                        addHotlineMessage(transcript.message, 'user');
-                    } else if (transcript.role === 'agent' && transcript.message) {
-                        addHotlineMessage(transcript.message, 'ai');
-                    }
-                });
-                
+
             } catch (error) {
-                console.error('❌ Failed to connect:', error);
+                console.error('❌ Connection failed:', error);
                 isConnecting = false;
                 document.getElementById('pulseSphere').classList.remove('connecting');
                 document.getElementById('widgetSublabel').textContent = 'Appuyez pour parler';
                 
                 if (error.name === 'NotAllowedError') {
                     toast('Microphone non autorisé');
+                    alert('Veuillez autoriser l\'accès au microphone pour utiliser l\'assistant vocal.');
                 } else {
-                    toast('Erreur connexion: ' + error.message);
-                    
-                    // Fallback: try widget-based connection
-                    tryWidgetConnection(agentId);
+                    toast('Erreur: ' + (error.message || 'Connexion échouée'));
                 }
             }
         }
         
-        // Fallback: Widget-based connection
-        function tryWidgetConnection(agentId) {
-            console.log('🔄 Trying widget-based connection...');
+        // Show AI speaking waveform indicator
+        function showAISpeakingIndicator() {
+            const existing = document.getElementById('messagesWrapper').querySelector('.ai-speaking-indicator');
+            if (existing) return;
             
-            // Create hidden widget element
-            let widget = document.getElementById('elevenlabs-widget');
-            if (!widget) {
-                widget = document.createElement('elevenlabs-convai');
-                widget.id = 'elevenlabs-widget';
-                widget.style.display = 'none';
-                document.body.appendChild(widget);
-            }
-            widget.setAttribute('agent-id', agentId);
-            
-            // Simulate connection with the widget
-            setTimeout(() => {
-                isConnecting = false;
-                isConnected = true;
-                document.getElementById('pulseSphere').classList.remove('connecting');
-                document.getElementById('pulseSphere').classList.add('connected');
-                document.getElementById('widgetSublabel').textContent = 'Appuyez pour terminer';
-                document.getElementById('toggleChat').classList.add('visible');
-
-                setTimeout(() => {
-                    if(!chatOpen) toggleChatView();
-                    setTimeout(() => {
-                        addHotlineMessage('Bonjour ! Je suis l\'assistant ' + names[brand] + '. Comment puis-je vous aider ?', 'ai');
-                    }, 500);
-                }, 800);
-            }, 2000);
+            const indicator = document.createElement('div');
+            indicator.className = 'hotline-msg ai ai-speaking-indicator';
+            indicator.innerHTML = `
+                <span class="msg-label">${names[brand]}</span>
+                <div class="msg-bubble" style="display:flex;align-items:center;gap:10px;">
+                    <div style="display:flex;align-items:center;gap:3px;height:20px;">
+                        <div class="speaking-bar" style="width:3px;height:8px;background:#34a853;border-radius:2px;animation:speakPulse 0.8s ease-in-out infinite;animation-delay:0s;"></div>
+                        <div class="speaking-bar" style="width:3px;height:14px;background:#34a853;border-radius:2px;animation:speakPulse 0.8s ease-in-out infinite;animation-delay:0.1s;"></div>
+                        <div class="speaking-bar" style="width:3px;height:10px;background:#34a853;border-radius:2px;animation:speakPulse 0.8s ease-in-out infinite;animation-delay:0.2s;"></div>
+                        <div class="speaking-bar" style="width:3px;height:16px;background:#34a853;border-radius:2px;animation:speakPulse 0.8s ease-in-out infinite;animation-delay:0.3s;"></div>
+                        <div class="speaking-bar" style="width:3px;height:12px;background:#34a853;border-radius:2px;animation:speakPulse 0.8s ease-in-out infinite;animation-delay:0.4s;"></div>
+                    </div>
+                    <span style="color:#34a853;font-size:12px;">Parle...</span>
+                </div>
+            `;
+            document.getElementById('messagesWrapper').appendChild(indicator);
+            document.getElementById('hotlineChatMessages').scrollTop = document.getElementById('hotlineChatMessages').scrollHeight;
+        }
+        
+        function hideAISpeakingIndicator() {
+            const indicator = document.getElementById('messagesWrapper').querySelector('.ai-speaking-indicator');
+            if (indicator) indicator.remove();
         }
         
         function handleHotlineDisconnect() {
+            isConnecting = false;
             isConnected = false;
             isDisconnecting = false;
             elevenLabsConversation = null;
             document.getElementById('pulseSphere').classList.remove('connected', 'connecting', 'disconnecting', 'ai-speaking');
             document.getElementById('widgetSublabel').textContent = 'Appuyez pour parler';
+            hideAISpeakingIndicator();
         }
 
         async function disconnectHotline() {
@@ -11891,16 +11911,12 @@ RÈGLES:
             if (elevenLabsConversation) {
                 try {
                     await elevenLabsConversation.endSession();
-                    console.log('✅ ElevenLabs session ended');
+                    console.log('✅ Session ended');
                 } catch (e) {
-                    console.warn('Error ending session:', e);
+                    console.log('End session error:', e);
                 }
                 elevenLabsConversation = null;
             }
-            
-            // Remove widget if exists
-            const widget = document.getElementById('elevenlabs-widget');
-            if (widget) widget.remove();
 
             setTimeout(() => {
                 isDisconnecting = false;
@@ -11913,7 +11929,8 @@ RÈGLES:
                     chatOpen = false;
                 }
                 document.getElementById('hotlineWidget').classList.remove('chat-mode');
-            }, 1500);
+                hideAISpeakingIndicator();
+            }, 2500);
         }
 
         function toggleChatView() {
@@ -11934,6 +11951,11 @@ RÈGLES:
         function addHotlineMessage(text, sender) {
             const empty = document.getElementById('chatEmpty');
             if(empty) empty.style.display = 'none';
+            
+            // Hide speaking indicator when we get the actual message
+            if (sender === 'ai') {
+                hideAISpeakingIndicator();
+            }
             
             const wrapper = document.getElementById('messagesWrapper');
             const msg = document.createElement('div');
