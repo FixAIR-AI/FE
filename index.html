@@ -13261,7 +13261,7 @@ RÈGLES:
                 }
             } catch (err) {
                 console.error('📅 Error saving event to Supabase:', err);
-                showToast('Erreur sauvegarde calendrier', 'error');
+                toast('Erreur sauvegarde calendrier');
                 return null;
             }
         }
@@ -13676,7 +13676,7 @@ RÈGLES:
             
             const name = document.getElementById('eventName').value.trim();
             if (!name) {
-                showToast('Veuillez entrer un nom', 'error');
+                toast('Veuillez entrer un nom');
                 return;
             }
             
@@ -13737,7 +13737,7 @@ RÈGLES:
             saveCalendarEventsToStorage();
             closeEventDrawer();
             renderTechCalendar();
-            showToast(editingEventId ? 'Événement modifié ✓' : 'Événement créé ✓', 'success');
+            toast(editingEventId ? 'Événement modifié ✓' : 'Événement créé ✓');
             
             // Refresh projects list if we created a new project
             if (eventData.projectId && !editingEventId) {
@@ -13831,7 +13831,7 @@ RÈGLES:
                     calendarEvents = calendarEvents.filter(e => e.id !== contextEventId);
                     saveCalendarEventsToStorage();
                     renderTechCalendar();
-                    showToast('Événement supprimé', 'success');
+                    toast('Événement supprimé');
                 }
             }
             hideEventContextMenu();
@@ -13870,7 +13870,7 @@ RÈGLES:
             document.getElementById('connectEarnings').textContent = '€0';
             document.getElementById('connectMissions').textContent = '0';
             document.getElementById('connectRating').textContent = '-';
-            showToast('Connect activé ! Recevez des missions.', 'success');
+            toast('Connect activé !');
         }
 
         function openConnectDrawer(type, jobId) {
@@ -13919,7 +13919,7 @@ RÈGLES:
             if (type === 'myjob') {
                 footer.innerHTML = `
                     <button class="connect-drawer-btn danger" onclick="closeConnectDrawer()">Annuler mission</button>
-                    <button class="connect-drawer-btn primary" onclick="closeConnectDrawer();showToast('Mission terminée!','success')">Terminer</button>
+                    <button class="connect-drawer-btn primary" onclick="closeConnectDrawer();toast('Mission terminée!')">Terminer</button>
                 `;
             } else {
                 footer.innerHTML = `
@@ -13935,7 +13935,7 @@ RÈGLES:
 
         function acceptConnectJob(jobId) {
             closeConnectDrawer();
-            showToast('Mission acceptée ! 🎉', 'success');
+            toast('Mission acceptée !');
             
             // Update stats
             const missions = parseInt(document.getElementById('connectMissions').textContent) + 1;
