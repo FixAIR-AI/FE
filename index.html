@@ -17,6 +17,10 @@
             --assistant-border: rgba(34, 197, 94, 0.2);
             --hotline: #ef4444;
             --hotline-glow: rgba(239, 68, 68, 0.4);
+            --connect: #3b82f6;
+            --connect-glow: rgba(59, 130, 246, 0.4);
+            --connect-bg: rgba(59, 130, 246, 0.08);
+            --connect-border: rgba(59, 130, 246, 0.2);
             --bg: #0D1117;
             --bg-secondary: #161b22;
             --card: rgba(255, 255, 255, 0.03);
@@ -1176,6 +1180,422 @@
         }
         .rename-modal-btn.cancel { background: var(--bg); color: var(--text-dim); }
         .rename-modal-btn.save { background: var(--assistant); color: white; }
+
+        /* ═══════════════════════════════════════════════════════════════════════════
+           CONNECT VIEW STYLES
+           ═══════════════════════════════════════════════════════════════════════════ */
+        .connect-view {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg);
+            z-index: 200;
+            display: none;
+            flex-direction: row;
+        }
+        .connect-view.active { display: flex; }
+        .connect-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        .connect-view.drawer-open .connect-content { flex: 0 0 50%; max-width: 50%; }
+        @media (max-width: 700px) { .connect-view.drawer-open .connect-content { flex: 0 0 100%; max-width: 100%; opacity: 0.3; pointer-events: none; } }
+        .connect-content-inner { max-width: 520px; margin: 0 auto; padding: 0 16px; }
+        .connect-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; padding-top: max(14px, calc(env(safe-area-inset-top) + 6px)); flex-shrink: 0; border-bottom: 1px solid var(--border); background: var(--bg-secondary); }
+        .connect-header-back { width: 32px; height: 32px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-dim); }
+        .connect-header-back svg { width: 16px; height: 16px; }
+        .connect-header-info { flex: 1; }
+        .connect-header-title { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .connect-header-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+        .connect-online-dot { width: 8px; height: 8px; background: var(--assistant); border-radius: 50%; animation: pulse 2s infinite; }
+        .connect-body { flex: 1; overflow-y: auto; padding: 16px 0; }
+
+        /* Connect Drawer */
+        .connect-drawer { position: fixed; top: 0; right: 0; width: 50%; height: 100%; background: var(--bg-secondary); border-left: 1px solid var(--border); display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 210; }
+        .connect-view.drawer-open .connect-drawer { transform: translateX(0); }
+        @media (max-width: 700px) { .connect-drawer { width: 100%; } }
+        .connect-drawer-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; padding-top: max(14px, calc(env(safe-area-inset-top) + 6px)); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .connect-drawer-close { width: 32px; height: 32px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-dim); transition: all 0.2s; }
+        .connect-drawer-close:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+        .connect-drawer-close svg { width: 16px; height: 16px; }
+        .connect-drawer-info { flex: 1; }
+        .connect-drawer-title { font-size: 14px; font-weight: 600; }
+        .connect-drawer-subtitle { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+        .connect-drawer-body { flex: 1; overflow-y: auto; padding: 16px; }
+        .connect-drawer-footer { display: flex; gap: 10px; padding: 16px; border-top: 1px solid var(--border); }
+        .connect-drawer-btn { flex: 1; padding: 12px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; }
+        .connect-drawer-btn.secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+        .connect-drawer-btn.primary { background: var(--connect); color: white; }
+        .connect-drawer-btn.danger { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
+
+        /* Connect Promo */
+        .connect-promo { max-width: 380px; margin: 40px auto 0; text-align: center; }
+        .connect-promo-icon { width: 64px; height: 64px; margin: 0 auto 16px; background: var(--connect-bg); border: 1px solid var(--connect-border); border-radius: 16px; display: flex; align-items: center; justify-content: center; }
+        .connect-promo-icon svg { width: 32px; height: 32px; color: var(--connect); }
+        .connect-promo-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+        .connect-promo-desc { font-size: 12px; color: var(--text-dim); line-height: 1.5; margin-bottom: 20px; }
+        .connect-promo-features { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; text-align: left; margin-bottom: 20px; }
+        .connect-promo-feat { display: flex; align-items: center; gap: 8px; padding: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; font-size: 11px; }
+        .connect-promo-feat svg { width: 14px; height: 14px; color: var(--connect); flex-shrink: 0; }
+        .connect-btn-activate { width: 100%; padding: 12px 20px; background: var(--connect); color: white; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .connect-btn-activate:hover { filter: brightness(1.1); }
+        .connect-btn-badge { font-size: 9px; padding: 2px 6px; background: rgba(255,255,255,0.2); border-radius: 3px; }
+        .connect-promo-note { font-size: 10px; color: var(--text-dim); margin-top: 10px; }
+
+        /* Connect Stats Bar */
+        .connect-stats-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+        .connect-stat-pill { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 14px 8px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
+        .connect-stat-pill.highlight { background: var(--connect-bg); border-color: var(--connect-border); }
+        .connect-stat-val { font-size: 15px; font-weight: 700; }
+        .connect-stat-pill.highlight .connect-stat-val { color: var(--connect); }
+        .connect-stat-lbl { font-size: 9px; color: var(--text-dim); }
+
+        /* Connect Section Headers */
+        .connect-sec { margin-bottom: 16px; }
+        .connect-sec-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .connect-sec-title { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+        .connect-sec-line { flex: 1; height: 1px; background: var(--border); }
+        .connect-sec-badge { font-size: 9px; padding: 3px 8px; background: var(--connect-bg); color: var(--connect); border-radius: 8px; font-weight: 500; }
+
+        /* Job Cards */
+        .connect-jobs-list { display: flex; flex-direction: column; gap: 10px; }
+        .connect-job-card { display: flex; align-items: center; gap: 12px; padding: 14px 14px 14px 18px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+        .connect-job-card::before { content: ''; position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px; border-radius: 0 2px 2px 0; }
+        .connect-job-card.urgent::before { background: #ef4444; }
+        .connect-job-card.new::before { background: var(--connect); }
+        .connect-job-card.scheduled::before { background: var(--assistant); }
+        .connect-job-card.progress::before { background: var(--copilot); }
+        .connect-job-card:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.15); }
+        .connect-job-tag { font-size: 9px; font-weight: 600; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.3px; flex-shrink: 0; }
+        .connect-job-tag.urgent { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+        .connect-job-tag.new { background: var(--connect-bg); color: var(--connect); }
+        .connect-job-tag.scheduled { background: var(--assistant-bg); color: var(--assistant); }
+        .connect-job-tag.progress { background: var(--copilot-bg); color: var(--copilot); }
+        .connect-job-body { flex: 1; min-width: 0; }
+        .connect-job-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
+        .connect-job-detail { font-size: 11px; color: var(--text-dim); display: flex; align-items: center; gap: 8px; }
+        .connect-job-price { font-size: 13px; font-weight: 600; color: var(--assistant); flex-shrink: 0; }
+        .connect-job-arrow { color: var(--text-dim); flex-shrink: 0; }
+        .connect-job-arrow svg { width: 14px; height: 14px; }
+
+        /* Connect Drawer Detail Sections */
+        .connect-detail-section { margin-bottom: 20px; }
+        .connect-detail-label { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .connect-detail-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+        .connect-detail-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+        .connect-detail-row:not(:last-child) { border-bottom: 1px solid var(--border); }
+        .connect-detail-row svg { width: 16px; height: 16px; color: var(--text-dim); flex-shrink: 0; }
+        .connect-detail-text { flex: 1; font-size: 13px; }
+        .connect-detail-text small { display: block; font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+        .connect-detail-desc { font-size: 13px; line-height: 1.5; color: var(--text-dim); }
+        .connect-price-big { font-size: 24px; font-weight: 700; color: var(--assistant); }
+        .connect-price-note { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+
+        /* ═══════════════════════════════════════════════════════════════════════════
+           CALENDAR STYLES
+           ═══════════════════════════════════════════════════════════════════════════ */
+        .calendar-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; }
+        .calendar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .calendar-title-row { display: flex; align-items: center; gap: 8px; }
+        .calendar-title { font-size: 14px; font-weight: 600; }
+        .calendar-tabs { display: flex; gap: 4px; }
+        .calendar-tab { padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: 500; cursor: pointer; color: var(--text-dim); background: transparent; border: none; transition: all 0.2s; }
+        .calendar-tab:hover { color: var(--text); }
+        .calendar-tab.active { background: var(--copilot-bg); color: var(--copilot); }
+        .calendar-nav { display: flex; gap: 4px; }
+        .calendar-nav-btn { width: 28px; height: 28px; border-radius: 6px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-dim); }
+        .calendar-nav-btn:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+        .calendar-nav-btn svg { width: 14px; height: 14px; }
+
+        /* Calendar Grid (Month View) */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+        .calendar-day-header { font-size: 9px; font-weight: 600; color: var(--text-dim); text-align: center; padding: 6px 0; }
+        .calendar-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 11px; border-radius: 6px; cursor: pointer; position: relative; color: var(--text-dim); }
+        .calendar-day:hover { background: rgba(255,255,255,0.06); }
+        .calendar-day.today { background: var(--copilot-bg); color: var(--copilot); font-weight: 600; }
+        .calendar-day.other-month { opacity: 0.3; }
+        .calendar-day.has-events::after { content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: var(--copilot); border-radius: 50%; }
+        .calendar-day.connect-avail { border: 1px dashed var(--connect); }
+
+        /* Calendar Daily View */
+        .calendar-daily { display: flex; flex-direction: column; gap: 2px; max-height: 280px; overflow-y: auto; }
+        .daily-slot { display: flex; gap: 8px; min-height: 36px; }
+        .daily-time { width: 40px; font-size: 10px; color: var(--text-dim); padding-top: 4px; flex-shrink: 0; }
+        .daily-content { flex: 1; border-radius: 6px; padding: 4px 8px; cursor: pointer; min-height: 28px; border: 1px solid transparent; }
+        .daily-content:hover { background: rgba(255,255,255,0.04); }
+        .daily-content.has-event { border-left: 3px solid var(--copilot); background: var(--copilot-bg); }
+        .daily-content.has-event.assistant { border-left-color: var(--assistant); background: var(--assistant-bg); }
+        .daily-content.has-event.connect { border-left-color: var(--connect); background: var(--connect-bg); }
+        .daily-content.has-event.pending { border-left-color: var(--text-dim); background: rgba(255,255,255,0.04); }
+        .daily-event-title { font-size: 11px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .daily-event-meta { font-size: 9px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* Calendar Week View */
+        .calendar-week-wrapper { overflow-x: auto; }
+        .calendar-week { display: grid; grid-template-columns: 35px repeat(7, 1fr); gap: 2px; min-width: 320px; }
+        .week-header-cell { text-align: center; padding: 6px 2px; cursor: pointer; border-radius: 6px; }
+        .week-header-cell:hover { background: rgba(255,255,255,0.04); }
+        .week-header-cell.today { background: var(--copilot-bg); }
+        .week-header-cell .day-num { font-size: 14px; font-weight: 600; }
+        .week-header-cell.today .day-num { color: var(--copilot); }
+        .week-header-cell > div:last-child { font-size: 9px; color: var(--text-dim); }
+        .week-time-label { font-size: 9px; color: var(--text-dim); display: flex; align-items: center; justify-content: center; }
+        .week-slot { min-height: 50px; background: rgba(255,255,255,0.02); border-radius: 4px; padding: 3px; display: flex; flex-direction: column; gap: 2px; cursor: pointer; }
+        .week-slot:hover { background: rgba(255,255,255,0.04); }
+        .week-slot-event { font-size: 9px; padding: 3px 5px; border-radius: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+        .week-slot-event.copilot { background: var(--copilot-bg); color: var(--copilot); border-left: 2px solid var(--copilot); }
+        .week-slot-event.assistant { background: var(--assistant-bg); color: var(--assistant); border-left: 2px solid var(--assistant); }
+        .week-slot-event.connect { background: var(--connect-bg); color: var(--connect); border-left: 2px solid var(--connect); }
+        .week-slot-event.pending { background: rgba(255,255,255,0.04); color: var(--text-dim); border-left: 2px solid var(--text-dim); }
+        .week-slot-event.personal { background: rgba(139,92,246,0.1); color: #8b5cf6; border-left: 2px solid #8b5cf6; }
+
+        /* ═══════════════════════════════════════════════════════════════════════════
+           EVENT DRAWER STYLES
+           ═══════════════════════════════════════════════════════════════════════════ */
+        .event-drawer-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 10001;
+            display: none;
+        }
+        .event-drawer-overlay.show { display: block; }
+        
+        .event-drawer {
+            position: fixed;
+            top: 0; right: 0;
+            width: 50%;
+            height: 100%;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 10002;
+        }
+        .event-drawer.show { transform: translateX(0); }
+        @media (max-width: 700px) { .event-drawer { width: 100%; } }
+        
+        .event-drawer-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            padding-top: max(14px, calc(env(safe-area-inset-top) + 6px));
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .event-drawer-close {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            background: var(--card);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-dim);
+            transition: all 0.2s;
+        }
+        .event-drawer-close:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+        .event-drawer-close svg { width: 16px; height: 16px; }
+        .event-drawer-info { flex: 1; }
+        .event-drawer-title { font-size: 14px; font-weight: 600; }
+        .event-drawer-subtitle { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+        
+        .event-drawer-body { flex: 1; overflow-y: auto; padding: 16px; }
+        
+        .event-drawer-footer {
+            display: flex;
+            gap: 10px;
+            padding: 16px;
+            border-top: 1px solid var(--border);
+        }
+        .event-drawer-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+        .event-drawer-btn.secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+        .event-drawer-btn.primary { background: var(--copilot); color: white; }
+        
+        /* Event Form Fields */
+        .event-section { margin-bottom: 20px; }
+        .event-section-title { 
+            font-size: 10px; 
+            font-weight: 600; 
+            color: var(--text-dim); 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .event-section-line { flex: 1; height: 1px; background: var(--border); }
+        
+        .event-field { margin-bottom: 12px; }
+        .event-field-label { font-size: 11px; font-weight: 500; color: var(--text-dim); margin-bottom: 6px; }
+        .event-field-input {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 13px;
+        }
+        .event-field-input:focus { outline: none; border-color: var(--copilot); }
+        .event-field-input::placeholder { color: var(--text-dim); }
+        
+        .event-field-textarea {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 13px;
+            min-height: 60px;
+            resize: vertical;
+            font-family: inherit;
+        }
+        .event-field-textarea:focus { outline: none; border-color: var(--copilot); }
+        
+        .event-field-row { display: flex; gap: 10px; }
+        .event-field-row .event-field { flex: 1; margin-bottom: 0; }
+        
+        .event-field-select {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 13px;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+        }
+        .event-field-select:focus { outline: none; border-color: var(--copilot); }
+        
+        /* All Day Toggle Row */
+        .event-toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        .event-toggle-label { font-size: 13px; }
+        .event-toggle {
+            width: 40px; height: 22px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .event-toggle.active { background: var(--copilot); border-color: var(--copilot); }
+        .event-toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px; left: 2px;
+            width: 16px; height: 16px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+        .event-toggle.active::after { transform: translateX(18px); }
+        
+        /* Type Pills - Same style as Connect job tags */
+        .event-type-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+        .event-type-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .event-type-pill .pill-icon { width: 14px; height: 14px; display: flex; align-items: center; justify-content: center; }
+        .event-type-pill .pill-icon svg { width: 12px; height: 12px; }
+        .event-type-pill:hover { border-color: rgba(255,255,255,0.2); }
+        .event-type-pill.active.copilot { background: var(--copilot-bg); border-color: var(--copilot); color: var(--copilot); }
+        .event-type-pill.active.assistant { background: var(--assistant-bg); border-color: var(--assistant); color: var(--assistant); }
+        .event-type-pill.active.connect { background: var(--connect-bg); border-color: var(--connect); color: var(--connect); }
+        .event-type-pill.active.personal { background: rgba(139,92,246,0.1); border-color: #8b5cf6; color: #8b5cf6; }
+        
+        /* More Options */
+        .event-more-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px;
+            color: var(--text-dim);
+            font-size: 11px;
+            cursor: pointer;
+            transition: color 0.2s;
+            margin-top: 8px;
+        }
+        .event-more-toggle:hover { color: var(--text); }
+        .event-more-toggle svg { width: 12px; height: 12px; transition: transform 0.2s; }
+        .event-more-toggle.expanded svg { transform: rotate(180deg); }
+        .event-more-options { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+        .event-more-options.show { display: block; }
+
+        /* ═══ EVENT CONTEXT MENU (Right-click) ═══ */
+        .event-context-menu {
+            position: fixed;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 6px;
+            min-width: 140px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            z-index: 10003;
+            display: none;
+        }
+        .event-context-menu.show { display: block; }
+        .event-context-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            color: var(--text);
+            transition: background 0.15s;
+        }
+        .event-context-item:hover { background: rgba(255,255,255,0.06); }
+        .event-context-item svg { width: 16px; height: 16px; color: var(--text-dim); }
+        .event-context-item.delete { color: #ef4444; }
+        .event-context-item.delete svg { color: #ef4444; }
+        .event-context-item.delete:hover { background: rgba(239,68,68,0.1); }
 
         /* NAV WITH CENTERED HOTLINE SPHERE */
         .nav { 
@@ -4271,6 +4691,14 @@
             <symbol id="icon-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></symbol>
             <symbol id="icon-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></symbol>
             <symbol id="icon-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+            <symbol id="icon-connect" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></symbol>
+            <symbol id="icon-briefcase" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></symbol>
+            <symbol id="icon-dollar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></symbol>
+            <symbol id="icon-map-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></symbol>
+            <symbol id="icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></symbol>
+            <symbol id="icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+            <symbol id="icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></symbol>
+            <symbol id="icon-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
             <symbol id="icon-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></symbol>
             <symbol id="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
             <symbol id="icon-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></symbol>
@@ -4521,6 +4949,26 @@
                 </div>
 
                 <!-- RECENT PROJECTS -->
+                <!-- CALENDAR CARD -->
+                <div class="calendar-card" id="techCalendar">
+                    <div class="calendar-header">
+                        <div class="calendar-title-row">
+                            <span class="calendar-title" id="techCalTitle">Décembre 2024</span>
+                            <div class="calendar-tabs">
+                                <button class="calendar-tab active" onclick="setTechCalView('day', this)">Jour</button>
+                                <button class="calendar-tab" onclick="setTechCalView('week', this)">Semaine</button>
+                                <button class="calendar-tab" onclick="setTechCalView('month', this)">Mois</button>
+                            </div>
+                        </div>
+                        <div class="calendar-nav">
+                            <button class="calendar-nav-btn" onclick="navTechCal(-1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+                            <button class="calendar-nav-btn" onclick="navTechCal(1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
+                            <button class="calendar-nav-btn" onclick="openEventDrawer(formatDateKey(new Date()), '09:00')" style="margin-left: 4px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                        </div>
+                    </div>
+                    <div id="techCalContent"></div>
+                </div>
+
                 <div>
                     <div class="sec-head"><span class="sec-title">Projets récents</span><div class="sec-line"></div></div>
                     <div class="projects" id="recentProjectsHome">
@@ -4557,6 +5005,7 @@
             <div class="nav-inner">
                 <div class="nav-item active" id="navHome" onclick="goToHome()"><span class="icon nav-icon"><svg><use href="#icon-home"/></svg></span><span class="nav-label">Accueil</span></div>
                 <div class="nav-item" id="navProjects" onclick="showPage('projects')"><span class="icon nav-icon"><svg><use href="#icon-folder"/></svg></span><span class="nav-label">Projets</span></div>
+                <div class="nav-item" id="navConnect" onclick="openConnect()"><span class="icon nav-icon"><svg><use href="#icon-connect"/></svg></span><span class="nav-label">Connect</span></div>
                 <div class="nav-item nav-hotline" onclick="openHotline()">
                     <div class="nav-hotline-waves">
                         <div class="wave-bar"></div>
@@ -5792,6 +6241,8 @@
             document.getElementById('projectsPage').classList.toggle('active', page === 'projects');
             document.getElementById('navHome').classList.toggle('active', page === 'home');
             document.getElementById('navProjects').classList.toggle('active', page === 'projects');
+            document.getElementById('navConnect').classList.toggle('active', page === 'connect');
+            document.getElementById('connectView').classList.toggle('active', page === 'connect');
         }
 
         function toggleBrandDropdown() {
@@ -12641,6 +13092,568 @@ RÈGLES:
             lastKnownStats = { totalMinutes: 0, totalEuros: 0, reports: 0 };
             console.log('✅ Stats reset! Reload page to test celebration');
         };
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // CALENDAR FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════════════════
+        let techCalDate = new Date();
+        let techCalView = 'day';
+        let calendarEvents = [];
+        let editingEventId = null;
+
+        function initTechCalendar() {
+            const stored = localStorage.getItem('fixair_calendar_events');
+            if (stored) {
+                calendarEvents = JSON.parse(stored);
+            } else {
+                // Demo events for today
+                const today = new Date();
+                const todayStr = formatDateKey(today);
+                calendarEvents = [
+                    { id: 'demo1', date: todayStr, startTime: '09:00', endTime: '11:00', title: 'Diagnostic PAC Mitsubishi', type: 'copilot', location: 'Hôtel Mercure', client: 'Jean Dupont', reminder: '30', repeat: 'none', visibility: 'private', notes: '' },
+                    { id: 'demo2', date: todayStr, startTime: '11:00', endTime: '12:00', title: 'Rapport maintenance Daikin', type: 'assistant', location: 'Carrefour', client: 'Marie Martin', reminder: '30', repeat: 'none', visibility: 'company', notes: '' },
+                    { id: 'demo3', date: todayStr, startTime: '14:00', endTime: '16:00', title: 'Mission Connect', type: 'connect', location: '15 Rue de Paris', client: 'M. Dupont', reminder: '60', repeat: 'none', visibility: 'connect', notes: '', jobId: 'job1' }
+                ];
+            }
+            renderTechCalendar();
+        }
+
+        function saveCalendarEventsToStorage() {
+            localStorage.setItem('fixair_calendar_events', JSON.stringify(calendarEvents));
+        }
+
+        function formatDateKey(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        function getEventsForDate(date) {
+            const dateKey = formatDateKey(date);
+            return calendarEvents.filter(e => e.date === dateKey);
+        }
+
+        function setTechCalView(view, btn) {
+            techCalView = view;
+            document.querySelectorAll('#techCalendar .calendar-tab').forEach(t => t.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            renderTechCalendar();
+        }
+
+        function navTechCal(dir) {
+            if (techCalView === 'day') {
+                techCalDate.setDate(techCalDate.getDate() + dir);
+            } else if (techCalView === 'week') {
+                techCalDate.setDate(techCalDate.getDate() + (dir * 7));
+            } else {
+                techCalDate.setMonth(techCalDate.getMonth() + dir);
+            }
+            renderTechCalendar();
+        }
+
+        function renderTechCalendar() {
+            const container = document.getElementById('techCalContent');
+            const title = document.getElementById('techCalTitle');
+            if (!container) return;
+
+            const days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+            const months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+
+            if (techCalView === 'day') {
+                title.textContent = `${days[techCalDate.getDay()]} ${techCalDate.getDate()} ${months[techCalDate.getMonth()]}`;
+                container.innerHTML = buildTechDayView();
+            } else if (techCalView === 'week') {
+                const weekStart = new Date(techCalDate);
+                const dayOfWeek = techCalDate.getDay();
+                const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+                weekStart.setDate(techCalDate.getDate() + diff);
+                title.textContent = `Semaine du ${weekStart.getDate()} ${months[weekStart.getMonth()]}`;
+                container.innerHTML = buildTechWeekView();
+            } else {
+                title.textContent = `${months[techCalDate.getMonth()]} ${techCalDate.getFullYear()}`;
+                container.innerHTML = buildTechMonthView();
+            }
+        }
+
+        function buildTechDayView() {
+            const hours = ['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'];
+            const dayEvents = getEventsForDate(techCalDate);
+            
+            const eventsByHour = {};
+            dayEvents.forEach(ev => {
+                const hour = ev.startTime;
+                eventsByHour[hour] = ev;
+            });
+
+            return `<div class="calendar-daily">${hours.map(h => {
+                const ev = eventsByHour[h];
+                const evType = ev ? ev.type : '';
+                return `<div class="daily-slot">
+                    <div class="daily-time">${h}</div>
+                    <div class="daily-content ${ev ? 'has-event ' + evType : ''}" onclick="${ev ? `openCalendarEvent('${ev.id}')` : `createCalendarEvent('${h}')`}" ${ev ? `oncontextmenu="showEventContextMenu(event, '${ev.id}')"` : ''}>
+                        ${ev ? `<div class="daily-event-title">${ev.title}</div><div class="daily-event-meta">${ev.client || ev.location || ''}</div>` : ''}
+                    </div>
+                </div>`;
+            }).join('')}</div>`;
+        }
+
+        function buildTechWeekView() {
+            const dayNames = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+            const today = new Date();
+            const todayStr = formatDateKey(today);
+            
+            const weekStart = new Date(techCalDate);
+            const dayOfWeek = techCalDate.getDay();
+            const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+            weekStart.setDate(techCalDate.getDate() + diff);
+            
+            const weekDays = [];
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(weekStart);
+                d.setDate(weekStart.getDate() + i);
+                weekDays.push({
+                    date: d,
+                    dateKey: formatDateKey(d),
+                    day: dayNames[i],
+                    num: d.getDate(),
+                    isToday: formatDateKey(d) === todayStr
+                });
+            }
+
+            return `<div class="calendar-week-wrapper"><div class="calendar-week">
+                <div></div>
+                ${weekDays.map(d => `<div class="week-header-cell ${d.isToday ? 'today' : ''}" onclick="goToTechDayViewDate('${d.dateKey}')"><div class="day-num">${d.num}</div><div>${d.day}</div></div>`).join('')}
+                <div class="week-time-label">AM</div>
+                ${weekDays.map(d => {
+                    const dayEvents = calendarEvents.filter(e => e.date === d.dateKey && parseInt(e.startTime) < 12);
+                    return `<div class="week-slot" onclick="createCalendarEventForDate('${d.dateKey}', '09:00')">${dayEvents.map(e => `<div class="week-slot-event ${e.type}" onclick="event.stopPropagation();openCalendarEvent('${e.id}')" oncontextmenu="event.stopPropagation();showEventContextMenu(event, '${e.id}')">${e.title.substring(0,12)}${e.title.length > 12 ? '...' : ''}</div>`).join('')}</div>`;
+                }).join('')}
+                <div class="week-time-label">PM</div>
+                ${weekDays.map(d => {
+                    const dayEvents = calendarEvents.filter(e => e.date === d.dateKey && parseInt(e.startTime) >= 12);
+                    return `<div class="week-slot" onclick="createCalendarEventForDate('${d.dateKey}', '14:00')">${dayEvents.map(e => `<div class="week-slot-event ${e.type}" onclick="event.stopPropagation();openCalendarEvent('${e.id}')" oncontextmenu="event.stopPropagation();showEventContextMenu(event, '${e.id}')">${e.title.substring(0,12)}${e.title.length > 12 ? '...' : ''}</div>`).join('')}</div>`;
+                }).join('')}
+            </div></div>`;
+        }
+
+        function buildTechMonthView() {
+            const year = techCalDate.getFullYear();
+            const month = techCalDate.getMonth();
+            const today = new Date();
+            const todayStr = formatDateKey(today);
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            
+            let startDayOfWeek = firstDay.getDay();
+            startDayOfWeek = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
+            
+            const prevMonthLastDay = new Date(year, month, 0).getDate();
+            const prevMonthDays = [];
+            for (let i = startDayOfWeek - 1; i >= 0; i--) {
+                prevMonthDays.push({ num: prevMonthLastDay - i, other: true });
+            }
+            
+            const currentMonthDays = [];
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                const hasEvents = calendarEvents.some(e => e.date === dateKey);
+                currentMonthDays.push({ 
+                    num: i, 
+                    other: false, 
+                    isToday: dateKey === todayStr,
+                    hasEvents,
+                    dateKey
+                });
+            }
+            
+            const totalCells = prevMonthDays.length + currentMonthDays.length;
+            const nextMonthDays = [];
+            const remaining = 7 - (totalCells % 7);
+            if (remaining < 7) {
+                for (let i = 1; i <= remaining; i++) {
+                    nextMonthDays.push({ num: i, other: true });
+                }
+            }
+            
+            const allDays = [...prevMonthDays, ...currentMonthDays, ...nextMonthDays];
+            
+            return `<div class="calendar-grid">
+                <div class="calendar-day-header">Lun</div>
+                <div class="calendar-day-header">Mar</div>
+                <div class="calendar-day-header">Mer</div>
+                <div class="calendar-day-header">Jeu</div>
+                <div class="calendar-day-header">Ven</div>
+                <div class="calendar-day-header">Sam</div>
+                <div class="calendar-day-header">Dim</div>
+                ${allDays.map(d => `<div class="calendar-day ${d.other ? 'other-month' : ''} ${d.isToday ? 'today' : ''} ${d.hasEvents ? 'has-events' : ''}" ${d.dateKey ? `onclick="goToTechDayViewDate('${d.dateKey}')"` : ''}>${d.num}</div>`).join('')}
+            </div>`;
+        }
+
+        function goToToday() {
+            techCalDate = new Date();
+            techCalView = 'day';
+            document.querySelectorAll('#techCalendar .calendar-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector('#techCalendar .calendar-tab').classList.add('active');
+            renderTechCalendar();
+        }
+
+        function goToTechDayViewDate(dateKey) {
+            techCalDate = new Date(dateKey + 'T12:00:00');
+            techCalView = 'day';
+            document.querySelectorAll('#techCalendar .calendar-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector('#techCalendar .calendar-tab').classList.add('active');
+            renderTechCalendar();
+        }
+
+        function openCalendarEvent(eventId) {
+            const ev = calendarEvents.find(e => e.id === eventId);
+            if (!ev) return;
+            
+            if (ev.type === 'connect') {
+                showPage('connect');
+                if (ev.jobId) {
+                    setTimeout(() => openConnectDrawer('job', ev.jobId), 300);
+                } else {
+                    setTimeout(() => openConnectDrawer('job', 'job1'), 300);
+                }
+            } else if (ev.type === 'copilot' || ev.type === 'assistant') {
+                if (ev.projectId) {
+                    loadProject(ev.projectId);
+                    return;
+                }
+                const projects = window.projectsData || [];
+                if (projects.length > 0) {
+                    const matchingProject = projects.find(p => {
+                        const hasAssistant = p.chats?.some(c => c.chat_type === 'assistant');
+                        const hasCopilot = p.chats?.some(c => c.chat_type === 'copilot');
+                        if (ev.type === 'assistant') return hasAssistant;
+                        if (ev.type === 'copilot') return hasCopilot;
+                        return false;
+                    });
+                    if (matchingProject) {
+                        loadProject(matchingProject.id);
+                        return;
+                    }
+                }
+                switchMode(ev.type);
+            } else {
+                // Personal event - show edit drawer
+                openEventDrawerForEdit(eventId);
+            }
+        }
+
+        function createCalendarEvent(time) {
+            openEventDrawer(formatDateKey(techCalDate), time);
+        }
+
+        function createCalendarEventForDate(dateKey, time) {
+            openEventDrawer(dateKey, time);
+        }
+
+        // ═══ EVENT DRAWER FUNCTIONS ═══
+        let selectedEventType = 'copilot';
+
+        function openEventDrawer(dateKey, startTime) {
+            editingEventId = null;
+            document.getElementById('eventDrawerTitle').textContent = 'Nouvel événement';
+            document.getElementById('eventDrawerSubtitle').textContent = 'Planifier une intervention';
+            document.getElementById('eventName').value = '';
+            document.getElementById('eventDate').value = dateKey;
+            document.getElementById('eventStartTime').value = startTime || '09:00';
+            
+            const [h, m] = (startTime || '09:00').split(':');
+            const endHour = (parseInt(h) + 1).toString().padStart(2, '0');
+            document.getElementById('eventEndTime').value = `${endHour}:${m}`;
+            
+            document.getElementById('eventLocation').value = '';
+            document.getElementById('eventClient').value = '';
+            document.getElementById('eventRepeat').value = 'none';
+            document.getElementById('eventReminder').value = '30';
+            document.getElementById('eventVisibility').value = 'private';
+            document.getElementById('eventNotes').value = '';
+            document.getElementById('eventAllDay').classList.remove('active');
+            document.getElementById('eventTimeRow').style.display = 'flex';
+            
+            document.getElementById('eventMoreOptions').classList.remove('show');
+            document.getElementById('moreOptionsToggle').classList.remove('expanded');
+            
+            selectedEventType = 'copilot';
+            document.querySelectorAll('.event-type-pill').forEach(p => {
+                p.classList.remove('active');
+                if (p.dataset.type === 'copilot') p.classList.add('active');
+            });
+            
+            document.getElementById('eventDrawerOverlay').classList.add('show');
+            document.getElementById('eventDrawer').classList.add('show');
+        }
+
+        function openEventDrawerForEdit(eventId) {
+            const ev = calendarEvents.find(e => e.id === eventId);
+            if (!ev) return;
+            
+            editingEventId = eventId;
+            document.getElementById('eventDrawerTitle').textContent = 'Modifier événement';
+            document.getElementById('eventDrawerSubtitle').textContent = ev.title;
+            document.getElementById('eventName').value = ev.title;
+            document.getElementById('eventDate').value = ev.date;
+            document.getElementById('eventStartTime').value = ev.startTime;
+            document.getElementById('eventEndTime').value = ev.endTime;
+            document.getElementById('eventLocation').value = ev.location || '';
+            document.getElementById('eventClient').value = ev.client || '';
+            document.getElementById('eventRepeat').value = ev.repeat || 'none';
+            document.getElementById('eventReminder').value = ev.reminder || '30';
+            document.getElementById('eventVisibility').value = ev.visibility || 'private';
+            document.getElementById('eventNotes').value = ev.notes || '';
+            
+            if (ev.allDay) {
+                document.getElementById('eventAllDay').classList.add('active');
+                document.getElementById('eventTimeRow').style.display = 'none';
+            } else {
+                document.getElementById('eventAllDay').classList.remove('active');
+                document.getElementById('eventTimeRow').style.display = 'flex';
+            }
+            
+            if (ev.client || ev.repeat !== 'none' || ev.visibility !== 'private') {
+                document.getElementById('eventMoreOptions').classList.add('show');
+                document.getElementById('moreOptionsToggle').classList.add('expanded');
+            } else {
+                document.getElementById('eventMoreOptions').classList.remove('show');
+                document.getElementById('moreOptionsToggle').classList.remove('expanded');
+            }
+            
+            selectedEventType = ev.type;
+            document.querySelectorAll('.event-type-pill').forEach(p => {
+                p.classList.remove('active');
+                if (p.dataset.type === ev.type) p.classList.add('active');
+            });
+            
+            document.getElementById('eventDrawerOverlay').classList.add('show');
+            document.getElementById('eventDrawer').classList.add('show');
+        }
+
+        function closeEventDrawer() {
+            document.getElementById('eventDrawer').classList.remove('show');
+            document.getElementById('eventDrawerOverlay').classList.remove('show');
+            editingEventId = null;
+        }
+
+        function selectEventType(el) {
+            document.querySelectorAll('.event-type-pill').forEach(p => p.classList.remove('active'));
+            el.classList.add('active');
+            selectedEventType = el.dataset.type;
+        }
+
+        function toggleEventAllDay() {
+            const toggle = document.getElementById('eventAllDay');
+            toggle.classList.toggle('active');
+            document.getElementById('eventTimeRow').style.display = toggle.classList.contains('active') ? 'none' : 'flex';
+        }
+
+        function toggleMoreOptions() {
+            const options = document.getElementById('eventMoreOptions');
+            const toggle = document.getElementById('moreOptionsToggle');
+            options.classList.toggle('show');
+            toggle.classList.toggle('expanded');
+        }
+
+        function saveCalendarEvent() {
+            const name = document.getElementById('eventName').value.trim();
+            if (!name) {
+                showToast('Veuillez entrer un nom', 'error');
+                return;
+            }
+            
+            const eventData = {
+                id: editingEventId || 'ev-' + Date.now(),
+                title: name,
+                type: selectedEventType,
+                date: document.getElementById('eventDate').value,
+                startTime: document.getElementById('eventStartTime').value,
+                endTime: document.getElementById('eventEndTime').value,
+                allDay: document.getElementById('eventAllDay').classList.contains('active'),
+                location: document.getElementById('eventLocation').value,
+                client: document.getElementById('eventClient').value,
+                repeat: document.getElementById('eventRepeat').value,
+                reminder: document.getElementById('eventReminder').value,
+                visibility: document.getElementById('eventVisibility').value,
+                notes: document.getElementById('eventNotes').value
+            };
+            
+            if (editingEventId) {
+                const idx = calendarEvents.findIndex(e => e.id === editingEventId);
+                if (idx >= 0) calendarEvents[idx] = eventData;
+            } else {
+                calendarEvents.push(eventData);
+            }
+            
+            saveCalendarEventsToStorage();
+            closeEventDrawer();
+            renderTechCalendar();
+            showToast(editingEventId ? 'Événement modifié ✓' : 'Événement créé ✓', 'success');
+        }
+
+        // ═══ EVENT CONTEXT MENU FUNCTIONS ═══
+        let contextEventId = null;
+
+        function showEventContextMenu(e, eventId) {
+            e.preventDefault();
+            e.stopPropagation();
+            contextEventId = eventId;
+            
+            const menu = document.getElementById('eventContextMenu');
+            menu.classList.add('show');
+            
+            const x = e.clientX;
+            const y = e.clientY;
+            
+            const menuWidth = 150;
+            const menuHeight = 90;
+            const maxX = window.innerWidth - menuWidth;
+            const maxY = window.innerHeight - menuHeight;
+            
+            menu.style.left = Math.min(x, maxX) + 'px';
+            menu.style.top = Math.min(y, maxY) + 'px';
+            
+            setTimeout(() => {
+                document.addEventListener('click', hideEventContextMenu);
+            }, 10);
+        }
+
+        function hideEventContextMenu() {
+            document.getElementById('eventContextMenu').classList.remove('show');
+            document.removeEventListener('click', hideEventContextMenu);
+            contextEventId = null;
+        }
+
+        function modifyContextEvent() {
+            if (contextEventId) {
+                openEventDrawerForEdit(contextEventId);
+            }
+            hideEventContextMenu();
+        }
+
+        function deleteContextEvent() {
+            if (contextEventId) {
+                const ev = calendarEvents.find(e => e.id === contextEventId);
+                if (ev && confirm(`Supprimer "${ev.title}" ?`)) {
+                    calendarEvents = calendarEvents.filter(e => e.id !== contextEventId);
+                    saveCalendarEventsToStorage();
+                    renderTechCalendar();
+                    showToast('Événement supprimé', 'success');
+                }
+            }
+            hideEventContextMenu();
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // CONNECT FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════════════════
+        let connectActivated = false;
+        let connectOnline = true;
+
+        const connectJobsData = {
+            job1: { title: 'AC ne refroidit plus', type: 'Climatisation', status: 'urgent', price: '€85-120', distance: '2.3 km', time: 'ASAP', client: 'Pierre Martin', address: '45 Rue du Commerce, 75015 Paris', phone: '+33 6 12 34 56 78', desc: 'Split mural Samsung qui ne produit plus de froid. Le client indique que l\'unité extérieure fait du bruit.' },
+            job2: { title: 'Bruit anormal PAC', type: 'Pompe à chaleur', status: 'new', price: '€120-180', distance: '4.1 km', time: 'Aujourd\'hui 14h', client: 'Sophie Durand', address: '12 Avenue des Lilas, 75020 Paris', phone: '+33 6 98 76 54 32', desc: 'PAC Daikin Altherma avec bruit de claquement au démarrage. Installation de 2019.' },
+            job3: { title: 'Entretien annuel clim', type: 'Maintenance', status: 'scheduled', price: '€65-90', distance: '5.8 km', time: 'Demain 9h', client: 'Marc Leroy', address: '8 Rue de la Paix, 75002 Paris', phone: '+33 6 55 44 33 22', desc: 'Entretien préventif sur 2 splits Mitsubishi. Accès facile, client présent.' },
+            myjob1: { title: 'Réparation compresseur', type: 'Réparation', status: 'progress', price: '€180', distance: '0 km', time: 'En cours', client: 'Marie Dupont', address: '15 Rue de Paris, 75001 Paris', phone: '+33 6 11 22 33 44', desc: 'Remplacement compresseur sur groupe froid. Pièces commandées et reçues.', started: '10:45' },
+            myjob2: { title: 'Diagnostic VRV', type: 'Diagnostic', status: 'scheduled', price: '€95', distance: '3.2 km', time: 'Demain 10h', client: 'Jean Martin', address: '22 Bd Haussmann, 75009 Paris', phone: '+33 6 77 88 99 00', desc: 'Système VRV Daikin avec code erreur U4. Prévoir multimètre et manomètres.' }
+        };
+
+        function openConnect() {
+            document.getElementById('connectView').classList.add('active');
+            document.getElementById('navConnect').classList.add('active');
+        }
+
+        function closeConnect() {
+            closeConnectDrawer();
+            document.getElementById('connectView').classList.remove('active', 'drawer-open');
+            document.getElementById('navConnect').classList.remove('active');
+            goToHome();
+        }
+
+        function activateConnect() {
+            connectActivated = true;
+            document.getElementById('connectPromo').style.display = 'none';
+            document.getElementById('connectActive').style.display = 'block';
+            document.getElementById('connectEarnings').textContent = '€0';
+            document.getElementById('connectMissions').textContent = '0';
+            document.getElementById('connectRating').textContent = '-';
+            showToast('Connect activé ! Recevez des missions.', 'success');
+        }
+
+        function openConnectDrawer(type, jobId) {
+            const job = connectJobsData[jobId];
+            if (!job) return;
+            
+            document.getElementById('connectView').classList.add('drawer-open');
+            document.getElementById('connectDrawerTitle').textContent = job.title;
+            document.getElementById('connectDrawerSubtitle').textContent = job.type;
+            
+            let bodyHTML = `
+                <div class="connect-detail-section">
+                    <div class="connect-detail-label">Client</div>
+                    <div class="connect-detail-card">
+                        <div class="connect-detail-row">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            <div class="connect-detail-text">${job.client}</div>
+                        </div>
+                        <div class="connect-detail-row">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                            <div class="connect-detail-text">${job.address}<small>${job.distance}</small></div>
+                        </div>
+                        <div class="connect-detail-row">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                            <div class="connect-detail-text">${job.phone}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="connect-detail-section">
+                    <div class="connect-detail-label">Description</div>
+                    <div class="connect-detail-card">
+                        <div class="connect-detail-desc">${job.desc}</div>
+                    </div>
+                </div>
+                <div class="connect-detail-section">
+                    <div class="connect-detail-label">Rémunération</div>
+                    <div class="connect-detail-card" style="text-align:center;">
+                        <div class="connect-price-big">${job.price}</div>
+                        <div class="connect-price-note">Estimation selon durée</div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('connectDrawerBody').innerHTML = bodyHTML;
+            
+            const footer = document.getElementById('connectDrawerFooter');
+            if (type === 'myjob') {
+                footer.innerHTML = `
+                    <button class="connect-drawer-btn danger" onclick="closeConnectDrawer()">Annuler mission</button>
+                    <button class="connect-drawer-btn primary" onclick="closeConnectDrawer();showToast('Mission terminée!','success')">Terminer</button>
+                `;
+            } else {
+                footer.innerHTML = `
+                    <button class="connect-drawer-btn secondary" onclick="closeConnectDrawer()">Fermer</button>
+                    <button class="connect-drawer-btn primary" onclick="acceptConnectJob('${jobId}')">Accepter</button>
+                `;
+            }
+        }
+
+        function closeConnectDrawer() {
+            document.getElementById('connectView').classList.remove('drawer-open');
+        }
+
+        function acceptConnectJob(jobId) {
+            closeConnectDrawer();
+            showToast('Mission acceptée ! 🎉', 'success');
+            
+            // Update stats
+            const missions = parseInt(document.getElementById('connectMissions').textContent) + 1;
+            document.getElementById('connectMissions').textContent = missions;
+        }
+
+        // Initialize calendar when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(initTechCalendar, 500);
+        });
     </script>
     
     </div><!-- End app-wrapper -->
@@ -12666,6 +13679,291 @@ RÈGLES:
                 <button class="rename-modal-btn cancel" onclick="closeRenameModal()">Annuler</button>
                 <button class="rename-modal-btn save" onclick="saveProjectRename()">Enregistrer</button>
             </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════
+         CONNECT VIEW
+         ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="connect-view" id="connectView">
+        <div class="connect-content">
+            <div class="connect-header">
+                <button class="connect-header-back" onclick="closeConnect()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <div class="connect-header-info">
+                    <div class="connect-header-title">
+                        FixAIR Connect
+                        <span class="connect-online-dot" id="connectOnlineDot"></span>
+                    </div>
+                    <div class="connect-header-sub" id="connectHeaderSub">Missions disponibles</div>
+                </div>
+            </div>
+            <div class="connect-body">
+                <div class="connect-content-inner">
+                    <!-- Promo (when not activated) -->
+                    <div class="connect-promo" id="connectPromo">
+                        <div class="connect-promo-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></svg>
+                        </div>
+                        <div class="connect-promo-title">Gagnez plus avec Connect</div>
+                        <div class="connect-promo-desc">Recevez des missions de dépannage dans votre zone et augmentez vos revenus.</div>
+                        <div class="connect-promo-features">
+                            <div class="connect-promo-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Missions urgentes</div>
+                            <div class="connect-promo-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Paiement garanti</div>
+                            <div class="connect-promo-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Choisissez vos horaires</div>
+                            <div class="connect-promo-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Support 24/7</div>
+                        </div>
+                        <button class="connect-btn-activate" onclick="activateConnect()">
+                            Activer Connect
+                            <span class="connect-btn-badge">GRATUIT</span>
+                        </button>
+                        <div class="connect-promo-note">Aucun engagement • Désactivable à tout moment</div>
+                    </div>
+                    
+                    <!-- Active content (when activated) -->
+                    <div id="connectActive" style="display:none;">
+                        <div class="connect-stats-bar">
+                            <div class="connect-stat-pill highlight">
+                                <div class="connect-stat-val" id="connectEarnings">€0</div>
+                                <div class="connect-stat-lbl">Ce mois</div>
+                            </div>
+                            <div class="connect-stat-pill">
+                                <div class="connect-stat-val" id="connectMissions">0</div>
+                                <div class="connect-stat-lbl">Missions</div>
+                            </div>
+                            <div class="connect-stat-pill">
+                                <div class="connect-stat-val" id="connectRating">-</div>
+                                <div class="connect-stat-lbl">Note</div>
+                            </div>
+                        </div>
+                        
+                        <div class="connect-sec">
+                            <div class="connect-sec-head">
+                                <span class="connect-sec-title">Missions disponibles</span>
+                                <div class="connect-sec-line"></div>
+                                <span class="connect-sec-badge" id="connectAvailCount">3</span>
+                            </div>
+                            <div class="connect-jobs-list" id="connectAvailJobs">
+                                <div class="connect-job-card urgent" onclick="openConnectDrawer('job', 'job1')">
+                                    <span class="connect-job-tag urgent">URGENT</span>
+                                    <div class="connect-job-body">
+                                        <div class="connect-job-name">AC ne refroidit plus</div>
+                                        <div class="connect-job-detail">Climatisation • 2.3 km • ASAP</div>
+                                    </div>
+                                    <div class="connect-job-price">€85-120</div>
+                                    <div class="connect-job-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+                                </div>
+                                <div class="connect-job-card new" onclick="openConnectDrawer('job', 'job2')">
+                                    <span class="connect-job-tag new">NOUVEAU</span>
+                                    <div class="connect-job-body">
+                                        <div class="connect-job-name">Bruit anormal PAC</div>
+                                        <div class="connect-job-detail">Pompe à chaleur • 4.1 km • Aujourd'hui 14h</div>
+                                    </div>
+                                    <div class="connect-job-price">€120-180</div>
+                                    <div class="connect-job-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+                                </div>
+                                <div class="connect-job-card scheduled" onclick="openConnectDrawer('job', 'job3')">
+                                    <span class="connect-job-tag scheduled">PLANIFIÉ</span>
+                                    <div class="connect-job-body">
+                                        <div class="connect-job-name">Entretien annuel clim</div>
+                                        <div class="connect-job-detail">Maintenance • 5.8 km • Demain 9h</div>
+                                    </div>
+                                    <div class="connect-job-price">€65-90</div>
+                                    <div class="connect-job-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="connect-sec">
+                            <div class="connect-sec-head">
+                                <span class="connect-sec-title">Mes missions</span>
+                                <div class="connect-sec-line"></div>
+                            </div>
+                            <div class="connect-jobs-list" id="connectMyJobs">
+                                <div class="connect-job-card progress" onclick="openConnectDrawer('myjob', 'myjob1')">
+                                    <span class="connect-job-tag progress">EN COURS</span>
+                                    <div class="connect-job-body">
+                                        <div class="connect-job-name">Réparation compresseur</div>
+                                        <div class="connect-job-detail">Réparation • Démarré 10:45</div>
+                                    </div>
+                                    <div class="connect-job-price">€180</div>
+                                    <div class="connect-job-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+                                </div>
+                                <div class="connect-job-card scheduled" onclick="openConnectDrawer('myjob', 'myjob2')">
+                                    <span class="connect-job-tag scheduled">PLANIFIÉ</span>
+                                    <div class="connect-job-body">
+                                        <div class="connect-job-name">Diagnostic VRV</div>
+                                        <div class="connect-job-detail">Diagnostic • Demain 10h</div>
+                                    </div>
+                                    <div class="connect-job-price">€95</div>
+                                    <div class="connect-job-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Connect Drawer -->
+        <div class="connect-drawer" id="connectDrawer">
+            <div class="connect-drawer-header">
+                <button class="connect-drawer-close" onclick="closeConnectDrawer()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+                <div class="connect-drawer-info">
+                    <div class="connect-drawer-title" id="connectDrawerTitle">Mission</div>
+                    <div class="connect-drawer-subtitle" id="connectDrawerSubtitle">Détails</div>
+                </div>
+            </div>
+            <div class="connect-drawer-body" id="connectDrawerBody">
+                <!-- Dynamic content -->
+            </div>
+            <div class="connect-drawer-footer" id="connectDrawerFooter">
+                <button class="connect-drawer-btn secondary" onclick="closeConnectDrawer()">Fermer</button>
+                <button class="connect-drawer-btn primary" id="connectDrawerAction">Accepter</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EVENT CONTEXT MENU (Right-click on events) -->
+    <div class="event-context-menu" id="eventContextMenu">
+        <div class="event-context-item" onclick="modifyContextEvent()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Modifier
+        </div>
+        <div class="event-context-item delete" onclick="deleteContextEvent()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            Supprimer
+        </div>
+    </div>
+
+    <!-- EVENT CREATION DRAWER -->
+    <div class="event-drawer-overlay" id="eventDrawerOverlay" onclick="closeEventDrawer()"></div>
+    <div class="event-drawer" id="eventDrawer">
+        <div class="event-drawer-header">
+            <button class="event-drawer-close" onclick="closeEventDrawer()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+            <div class="event-drawer-info">
+                <div class="event-drawer-title" id="eventDrawerTitle">Nouvel événement</div>
+                <div class="event-drawer-subtitle" id="eventDrawerSubtitle">Planifier une intervention</div>
+            </div>
+        </div>
+        
+        <div class="event-drawer-body">
+            <div class="event-section">
+                <div class="event-section-title"><span>Informations</span><div class="event-section-line"></div></div>
+                <div class="event-field">
+                    <div class="event-field-label">Nom de l'événement</div>
+                    <input type="text" class="event-field-input" id="eventName" placeholder="Diagnostic, Maintenance, Réunion...">
+                </div>
+                <div class="event-field">
+                    <div class="event-field-label">Type</div>
+                    <div class="event-type-pills">
+                        <div class="event-type-pill active copilot" data-type="copilot" onclick="selectEventType(this)">
+                            <span class="pill-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span>
+                            Diagnostic
+                        </div>
+                        <div class="event-type-pill assistant" data-type="assistant" onclick="selectEventType(this)">
+                            <span class="pill-icon"><svg viewBox="0 0 24 24"><use href="#icon-clipboard"/></svg></span>
+                            Rapport
+                        </div>
+                        <div class="event-type-pill connect" data-type="connect" onclick="selectEventType(this)">
+                            <span class="pill-icon"><svg viewBox="0 0 24 24"><use href="#icon-connect"/></svg></span>
+                            Connect
+                        </div>
+                        <div class="event-type-pill personal" data-type="personal" onclick="selectEventType(this)">
+                            <span class="pill-icon"><svg viewBox="0 0 24 24"><use href="#icon-user"/></svg></span>
+                            Personnel
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="event-section">
+                <div class="event-section-title"><span>Date & Heure</span><div class="event-section-line"></div></div>
+                <div class="event-toggle-row">
+                    <span class="event-toggle-label">Journée entière</span>
+                    <div class="event-toggle" id="eventAllDay" onclick="toggleEventAllDay()"></div>
+                </div>
+                <div class="event-field">
+                    <div class="event-field-label">Date</div>
+                    <input type="date" class="event-field-input" id="eventDate">
+                </div>
+                <div class="event-field-row" id="eventTimeRow">
+                    <div class="event-field">
+                        <div class="event-field-label">Début</div>
+                        <input type="time" class="event-field-input" id="eventStartTime" value="09:00">
+                    </div>
+                    <div class="event-field">
+                        <div class="event-field-label">Fin</div>
+                        <input type="time" class="event-field-input" id="eventEndTime" value="10:00">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="event-section">
+                <div class="event-section-title"><span>Détails</span><div class="event-section-line"></div></div>
+                <div class="event-field">
+                    <div class="event-field-label">Lieu</div>
+                    <input type="text" class="event-field-input" id="eventLocation" placeholder="Adresse ou nom du site">
+                </div>
+                <div class="event-field">
+                    <div class="event-field-label">Notes</div>
+                    <textarea class="event-field-textarea" id="eventNotes" placeholder="Détails, équipements..."></textarea>
+                </div>
+            </div>
+
+            <div class="event-more-toggle" id="moreOptionsToggle" onclick="toggleMoreOptions()">
+                <span>Plus d'options</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+
+            <div class="event-more-options" id="eventMoreOptions">
+                <div class="event-section">
+                    <div class="event-section-title"><span>Options avancées</span><div class="event-section-line"></div></div>
+                    <div class="event-field">
+                        <div class="event-field-label">Client / Contact</div>
+                        <input type="text" class="event-field-input" id="eventClient" placeholder="Nom du client">
+                    </div>
+                    <div class="event-field-row">
+                        <div class="event-field">
+                            <div class="event-field-label">Répétition</div>
+                            <select class="event-field-select" id="eventRepeat">
+                                <option value="none">Ne pas répéter</option>
+                                <option value="daily">Tous les jours</option>
+                                <option value="weekly">Toutes les semaines</option>
+                                <option value="monthly">Tous les mois</option>
+                            </select>
+                        </div>
+                        <div class="event-field">
+                            <div class="event-field-label">Rappel</div>
+                            <select class="event-field-select" id="eventReminder">
+                                <option value="none">Aucun</option>
+                                <option value="15">15 min avant</option>
+                                <option value="30" selected>30 min avant</option>
+                                <option value="60">1h avant</option>
+                                <option value="1440">1 jour avant</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="event-field">
+                        <div class="event-field-label">Visibilité</div>
+                        <select class="event-field-select" id="eventVisibility">
+                            <option value="private">Privé (moi uniquement)</option>
+                            <option value="company">Entreprise (managers)</option>
+                            <option value="connect">FixAIR Connect</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="event-drawer-footer">
+            <button class="event-drawer-btn secondary" onclick="closeEventDrawer()">Annuler</button>
+            <button class="event-drawer-btn primary" onclick="saveCalendarEvent()">Enregistrer</button>
         </div>
     </div>
 </body>
