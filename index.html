@@ -13209,22 +13209,19 @@ RÈGLES:
             }
             
             try {
+                // Only use columns that exist in the table
                 const supabaseData = {
                     user_id: userId,
                     title: eventData.title,
                     type: eventData.type,
                     date: eventData.date,
-                    start_time: eventData.startTime,
-                    end_time: eventData.endTime,
+                    start_time: eventData.startTime || null,
+                    end_time: eventData.endTime || null,
                     all_day: eventData.allDay || false,
                     location: eventData.location || null,
                     client: eventData.client || null,
-                    repeat_type: eventData.repeat || 'none',
-                    reminder: parseInt(eventData.reminder) || 30,
-                    visibility: eventData.visibility || 'private',
                     notes: eventData.notes || null,
-                    project_id: eventData.projectId || null,
-                    job_id: eventData.jobId || null
+                    project_id: eventData.projectId || null
                 };
                 
                 console.log('📅 Supabase data to insert:', JSON.stringify(supabaseData, null, 2));
