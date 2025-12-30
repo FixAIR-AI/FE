@@ -13114,12 +13114,13 @@ RÈGLES:
 
         async function initTechCalendar() {
             // Try to load from Supabase first
-            if (window.supabase && currentUserId) {
+            const userId = await getCurrentUserId();
+            if (db && userId && !userId.startsWith('demo-')) {
                 try {
-                    const { data, error } = await window.supabase
+                    const { data, error } = await db
                         .from('calendar_events')
                         .select('*')
-                        .eq('user_id', currentUserId)
+                        .eq('user_id', userId)
                         .order('date', { ascending: true });
                     
                     if (!error && data) {
@@ -13172,14 +13173,15 @@ RÈGLES:
         }
 
         async function saveEventToSupabase(eventData) {
-            if (!window.supabase || !currentUserId) {
-                console.log('📅 Supabase not available, saving to localStorage only');
+            const userId = await getCurrentUserId();
+            if (!db || !userId || userId.startsWith('demo-')) {
+                console.log('📅 Supabase not available or demo mode, saving to localStorage only');
                 return null;
             }
             
             try {
                 const supabaseData = {
-                    user_id: currentUserId,
+                    user_id: userId,
                     title: eventData.title,
                     type: eventData.type,
                     date: eventData.date,
@@ -13198,11 +13200,11 @@ RÈGLES:
                 
                 if (eventData.id && !eventData.id.startsWith('ev-') && !eventData.id.startsWith('demo')) {
                     // Update existing
-                    const { data, error } = await window.supabase
+                    const { data, error } = await db
                         .from('calendar_events')
                         .update(supabaseData)
                         .eq('id', eventData.id)
-                        .eq('user_id', currentUserId)
+                        .eq('user_id', userId)
                         .select()
                         .single();
                     
@@ -13212,7 +13214,7 @@ RÈGLES:
                 } else {
                     // Insert new
                     delete supabaseData.id;
-                    const { data, error } = await window.supabase
+                    const { data, error } = await db
                         .from('calendar_events')
                         .insert(supabaseData)
                         .select()
@@ -13229,15 +13231,16 @@ RÈGLES:
         }
 
         async function deleteEventFromSupabase(eventId) {
-            if (!window.supabase || !currentUserId) return;
+            const userId = await getCurrentUserId();
+            if (!db || !userId || userId.startsWith('demo-')) return;
             if (eventId.startsWith('ev-') || eventId.startsWith('demo')) return; // Local-only event
             
             try {
-                const { error } = await window.supabase
+                const { error } = await db
                     .from('calendar_events')
                     .delete()
                     .eq('id', eventId)
-                    .eq('user_id', currentUserId);
+                    .eq('user_id', userId);
                 
                 if (error) throw error;
                 console.log('📅 Event deleted from Supabase:', eventId);
@@ -13248,14 +13251,15 @@ RÈGLES:
 
         async function createProjectForEvent(eventData) {
             // Create a project when event type is copilot or assistant
-            if (!window.supabase || !currentUserId) return null;
+            const userId = await getCurrentUserId();
+            if (!db || !userId || userId.startsWith('demo-')) return null;
             if (eventData.type !== 'copilot' && eventData.type !== 'assistant') return null;
             
             try {
-                const { data: project, error } = await window.supabase
+                const { data: project, error } = await db
                     .from('projects')
                     .insert({
-                        user_id: currentUserId,
+                        user_id: userId,
                         title: eventData.title,
                         brand: brand || 'mitsubishi'
                     })
