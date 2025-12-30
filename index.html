@@ -1081,7 +1081,11 @@
 
         /* PROJECTS LIST */
         .projects { display: flex; flex-direction: column; gap: 10px; }
-        .proj { display: flex; align-items: center; gap: 12px; padding: 14px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+        .proj { display: flex; align-items: center; gap: 12px; padding: 14px 14px 14px 18px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; position: relative; overflow: hidden; }
+        .proj::before { content: ''; position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px; border-radius: 0 2px 2px 0; }
+        .proj.copilot-bar::before { background: var(--copilot); }
+        .proj.assistant-bar::before { background: var(--assistant); }
+        .proj.both-bar::before { background: linear-gradient(180deg, var(--copilot) 0%, var(--copilot) 50%, var(--assistant) 50%, var(--assistant) 100%); }
         .proj:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.15); }
         .proj-icons { display: flex; align-items: center; position: relative; width: 36px; height: 36px; flex-shrink: 0; }
         .proj-icons.dual { width: 44px; height: 40px; }
@@ -1323,11 +1327,12 @@
         .calendar-daily { display: flex; flex-direction: column; gap: 2px; max-height: 280px; overflow-y: auto; }
         .daily-slot { display: flex; gap: 8px; min-height: 36px; }
         .daily-time { width: 40px; font-size: 10px; color: var(--text-dim); padding-top: 4px; flex-shrink: 0; }
-        .daily-content { flex: 1; border-radius: 6px; padding: 4px 8px; cursor: pointer; min-height: 28px; border: 1px solid transparent; }
+        .daily-content { flex: 1; border-radius: 0 6px 6px 0; padding: 4px 8px; cursor: pointer; min-height: 28px; border: 1px solid transparent; border-left: none; }
         .daily-content:hover { background: rgba(255,255,255,0.04); }
-        .daily-content.has-event { border-left: 3px solid var(--copilot); background: var(--copilot-bg); }
+        .daily-content.has-event { border-left: 3px solid var(--copilot); background: var(--copilot-bg); border-radius: 0 6px 6px 0; }
         .daily-content.has-event.assistant { border-left-color: var(--assistant); background: var(--assistant-bg); }
         .daily-content.has-event.connect { border-left-color: var(--connect); background: var(--connect-bg); }
+        .daily-content.has-event.personal { border-left-color: #8b5cf6; background: rgba(139,92,246,0.08); }
         .daily-content.has-event.pending { border-left-color: var(--text-dim); background: rgba(255,255,255,0.04); }
         .daily-event-title { font-size: 11px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .daily-event-meta { font-size: 9px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1342,9 +1347,9 @@
         .week-header-cell.today .day-num { color: var(--copilot); }
         .week-header-cell > div:last-child { font-size: 9px; color: var(--text-dim); }
         .week-time-label { font-size: 9px; color: var(--text-dim); display: flex; align-items: center; justify-content: center; }
-        .week-slot { min-height: 50px; background: rgba(255,255,255,0.02); border-radius: 4px; padding: 3px; display: flex; flex-direction: column; gap: 2px; cursor: pointer; }
+        .week-slot { min-height: 85px; background: rgba(255,255,255,0.02); border-radius: 4px; padding: 3px; display: flex; flex-direction: column; gap: 2px; cursor: pointer; }
         .week-slot:hover { background: rgba(255,255,255,0.04); }
-        .week-slot-event { font-size: 9px; padding: 3px 5px; border-radius: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+        .week-slot-event { font-size: 9px; padding: 3px 5px; border-radius: 0 3px 3px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
         .week-slot-event.copilot { background: var(--copilot-bg); color: var(--copilot); border-left: 2px solid var(--copilot); }
         .week-slot-event.assistant { background: var(--assistant-bg); color: var(--assistant); border-left: 2px solid var(--assistant); }
         .week-slot-event.connect { background: var(--connect-bg); color: var(--connect); border-left: 2px solid var(--connect); }
@@ -7160,6 +7165,11 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             
             const timeAgo = formatTimeAgo(new Date(project.updated_at));
             
+            // Status bar class
+            let barClass = 'copilot-bar';
+            if (hasBoth) barClass = 'both-bar';
+            else if (hasAssistant) barClass = 'assistant-bar';
+            
             let iconHtml = '';
             if (hasBoth) {
                 iconHtml = `<div class="proj-icons dual">
@@ -7186,7 +7196,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextMenu(event, '${project.id}', '${escapeHtml(project.title || 'Sans titre')}')" ontouchstart="startLongPress(event, '${project.id}', '${escapeHtml(project.title || 'Sans titre')}')" ontouchend="cancelLongPress()" ontouchmove="cancelLongPress()"` : '';
             
             return `
-                <div class="proj" onclick="loadProject('${project.id}')" ${contextMenuAttr} data-project-id="${project.id}">
+                <div class="proj ${barClass}" onclick="loadProject('${project.id}')" ${contextMenuAttr} data-project-id="${project.id}">
                     ${iconHtml}
                     <div class="proj-info">
                         <div class="proj-title">${escapeHtml(project.title || 'Sans titre')}</div>
@@ -13101,7 +13111,44 @@ RÈGLES:
         let calendarEvents = [];
         let editingEventId = null;
 
-        function initTechCalendar() {
+        async function initTechCalendar() {
+            // Try to load from Supabase first
+            if (window.supabase && currentUserId) {
+                try {
+                    const { data, error } = await window.supabase
+                        .from('calendar_events')
+                        .select('*')
+                        .eq('user_id', currentUserId)
+                        .order('date', { ascending: true });
+                    
+                    if (!error && data && data.length > 0) {
+                        calendarEvents = data.map(ev => ({
+                            id: ev.id,
+                            title: ev.title,
+                            type: ev.type,
+                            date: ev.date,
+                            startTime: ev.start_time,
+                            endTime: ev.end_time,
+                            allDay: ev.all_day,
+                            location: ev.location,
+                            client: ev.client,
+                            repeat: ev.repeat_type,
+                            reminder: ev.reminder,
+                            visibility: ev.visibility,
+                            notes: ev.notes,
+                            projectId: ev.project_id,
+                            jobId: ev.job_id
+                        }));
+                        console.log('📅 Calendar events loaded from Supabase:', calendarEvents.length);
+                        renderTechCalendar();
+                        return;
+                    }
+                } catch (err) {
+                    console.error('Error loading calendar events:', err);
+                }
+            }
+            
+            // Fallback to localStorage
             const stored = localStorage.getItem('fixair_calendar_events');
             if (stored) {
                 calendarEvents = JSON.parse(stored);
@@ -13118,8 +13165,109 @@ RÈGLES:
             renderTechCalendar();
         }
 
-        function saveCalendarEventsToStorage() {
+        async function saveCalendarEventsToStorage() {
+            // Always save to localStorage as backup
             localStorage.setItem('fixair_calendar_events', JSON.stringify(calendarEvents));
+        }
+
+        async function saveEventToSupabase(eventData) {
+            if (!window.supabase || !currentUserId) {
+                console.log('📅 Supabase not available, saving to localStorage only');
+                return null;
+            }
+            
+            try {
+                const supabaseData = {
+                    user_id: currentUserId,
+                    title: eventData.title,
+                    type: eventData.type,
+                    date: eventData.date,
+                    start_time: eventData.startTime,
+                    end_time: eventData.endTime,
+                    all_day: eventData.allDay || false,
+                    location: eventData.location || null,
+                    client: eventData.client || null,
+                    repeat_type: eventData.repeat || 'none',
+                    reminder: parseInt(eventData.reminder) || 30,
+                    visibility: eventData.visibility || 'private',
+                    notes: eventData.notes || null,
+                    project_id: eventData.projectId || null,
+                    job_id: eventData.jobId || null
+                };
+                
+                if (eventData.id && !eventData.id.startsWith('ev-') && !eventData.id.startsWith('demo')) {
+                    // Update existing
+                    const { data, error } = await window.supabase
+                        .from('calendar_events')
+                        .update(supabaseData)
+                        .eq('id', eventData.id)
+                        .eq('user_id', currentUserId)
+                        .select()
+                        .single();
+                    
+                    if (error) throw error;
+                    console.log('📅 Event updated in Supabase:', data.id);
+                    return data;
+                } else {
+                    // Insert new
+                    delete supabaseData.id;
+                    const { data, error } = await window.supabase
+                        .from('calendar_events')
+                        .insert(supabaseData)
+                        .select()
+                        .single();
+                    
+                    if (error) throw error;
+                    console.log('📅 Event created in Supabase:', data.id);
+                    return data;
+                }
+            } catch (err) {
+                console.error('Error saving event to Supabase:', err);
+                return null;
+            }
+        }
+
+        async function deleteEventFromSupabase(eventId) {
+            if (!window.supabase || !currentUserId) return;
+            if (eventId.startsWith('ev-') || eventId.startsWith('demo')) return; // Local-only event
+            
+            try {
+                const { error } = await window.supabase
+                    .from('calendar_events')
+                    .delete()
+                    .eq('id', eventId)
+                    .eq('user_id', currentUserId);
+                
+                if (error) throw error;
+                console.log('📅 Event deleted from Supabase:', eventId);
+            } catch (err) {
+                console.error('Error deleting event from Supabase:', err);
+            }
+        }
+
+        async function createProjectForEvent(eventData) {
+            // Create a project when event type is copilot or assistant
+            if (!window.supabase || !currentUserId) return null;
+            if (eventData.type !== 'copilot' && eventData.type !== 'assistant') return null;
+            
+            try {
+                const { data: project, error } = await window.supabase
+                    .from('projects')
+                    .insert({
+                        user_id: currentUserId,
+                        title: eventData.title,
+                        brand: brand || 'mitsubishi'
+                    })
+                    .select()
+                    .single();
+                
+                if (error) throw error;
+                console.log('📅 Project created for event:', project.id);
+                return project.id;
+            } catch (err) {
+                console.error('Error creating project for event:', err);
+                return null;
+            }
         }
 
         function formatDateKey(date) {
@@ -13456,7 +13604,7 @@ RÈGLES:
             toggle.classList.toggle('expanded');
         }
 
-        function saveCalendarEvent() {
+        async function saveCalendarEvent() {
             const name = document.getElementById('eventName').value.trim();
             if (!name) {
                 showToast('Veuillez entrer un nom', 'error');
@@ -13476,8 +13624,24 @@ RÈGLES:
                 repeat: document.getElementById('eventRepeat').value,
                 reminder: document.getElementById('eventReminder').value,
                 visibility: document.getElementById('eventVisibility').value,
-                notes: document.getElementById('eventNotes').value
+                notes: document.getElementById('eventNotes').value,
+                projectId: null
             };
+            
+            // Create project for copilot/assistant events (only for new events)
+            if (!editingEventId && (selectedEventType === 'copilot' || selectedEventType === 'assistant')) {
+                const projectId = await createProjectForEvent(eventData);
+                if (projectId) {
+                    eventData.projectId = projectId;
+                    console.log('📅 Event linked to project:', projectId);
+                }
+            }
+            
+            // Save to Supabase
+            const savedEvent = await saveEventToSupabase(eventData);
+            if (savedEvent) {
+                eventData.id = savedEvent.id; // Use Supabase ID
+            }
             
             if (editingEventId) {
                 const idx = calendarEvents.findIndex(e => e.id === editingEventId);
@@ -13490,6 +13654,11 @@ RÈGLES:
             closeEventDrawer();
             renderTechCalendar();
             showToast(editingEventId ? 'Événement modifié ✓' : 'Événement créé ✓', 'success');
+            
+            // Refresh projects list if we created a new project
+            if (eventData.projectId && !editingEventId) {
+                await loadUserProjects();
+            }
         }
 
         // ═══ EVENT CONTEXT MENU FUNCTIONS ═══
@@ -13532,10 +13701,13 @@ RÈGLES:
             hideEventContextMenu();
         }
 
-        function deleteContextEvent() {
+        async function deleteContextEvent() {
             if (contextEventId) {
                 const ev = calendarEvents.find(e => e.id === contextEventId);
                 if (ev && confirm(`Supprimer "${ev.title}" ?`)) {
+                    // Delete from Supabase
+                    await deleteEventFromSupabase(contextEventId);
+                    
                     calendarEvents = calendarEvents.filter(e => e.id !== contextEventId);
                     saveCalendarEventsToStorage();
                     renderTechCalendar();
