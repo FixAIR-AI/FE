@@ -13672,6 +13672,8 @@ RÈGLES:
         }
 
         async function saveCalendarEvent() {
+            console.log('📅 saveCalendarEvent called!');
+            
             const name = document.getElementById('eventName').value.trim();
             if (!name) {
                 showToast('Veuillez entrer un nom', 'error');
