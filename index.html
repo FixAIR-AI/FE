@@ -5441,6 +5441,24 @@
     <div class="toast" id="toast"></div>
 
     <script>
+        // ═══════════════════════════════════════════════════════════════
+        // PRODUCTION MODE - Set to false for debugging
+        // ═══════════════════════════════════════════════════════════════
+        const PRODUCTION_MODE = true;
+        
+        // Suppress debug logs in production (keeps errors visible)
+        if (PRODUCTION_MODE) {
+            const originalLog = console.log;
+            console.log = function(...args) {
+                // Only show critical errors, hide debug messages
+                const msg = args[0]?.toString() || '';
+                if (msg.includes('Error') || msg.includes('error') || msg.includes('❌')) {
+                    originalLog.apply(console, args);
+                }
+                // All other logs are suppressed in production
+            };
+        }
+        
         // BROWSER DETECTION & DYNAMIC HEIGHT FIX
         const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -13391,10 +13409,13 @@ RÈGLES:
             const hours = ['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'];
             const dayEvents = getEventsForDate(techCalDate);
             
+            // Match events by hour (handles "10:00", "10:30", "10:00:00" etc.)
             const eventsByHour = {};
             dayEvents.forEach(ev => {
-                const hour = ev.startTime;
-                eventsByHour[hour] = ev;
+                if (ev.startTime) {
+                    const hourKey = ev.startTime.substring(0, 2) + ':00';
+                    eventsByHour[hourKey] = ev;
+                }
             });
 
             return `<div class="calendar-daily">${hours.map(h => {
