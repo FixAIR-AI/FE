@@ -1327,7 +1327,7 @@
         .calendar-daily { display: flex; flex-direction: column; gap: 2px; min-height: 280px; max-height: 280px; overflow-y: auto; }
         .daily-slot { display: flex; gap: 8px; min-height: 36px; }
         .daily-time { width: 40px; font-size: 10px; color: var(--text-dim); padding-top: 4px; flex-shrink: 0; }
-        .daily-content { flex: 1; border-radius: 0 6px 6px 0; padding: 4px 8px; cursor: pointer; min-height: 28px; border: 1px solid transparent; border-left: none; }
+        .daily-content { flex: 1; border-radius: 0 6px 6px 0; padding: 4px 8px; cursor: pointer; min-height: 28px; border: 1px solid transparent; border-left: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
         .daily-content:hover { background: rgba(255,255,255,0.04); }
         .daily-content.has-event { border-left: 3px solid var(--copilot); background: var(--copilot-bg); border-radius: 0 6px 6px 0; }
         .daily-content.has-event.assistant { border-left-color: var(--assistant); background: var(--assistant-bg); }
@@ -1349,7 +1349,7 @@
         .week-time-label { font-size: 9px; color: var(--text-dim); display: flex; align-items: center; justify-content: center; }
         .week-slot { min-height: 115px; background: rgba(255,255,255,0.02); border-radius: 4px; padding: 3px; display: flex; flex-direction: column; gap: 2px; cursor: pointer; }
         .week-slot:hover { background: rgba(255,255,255,0.04); }
-        .week-slot-event { font-size: 9px; padding: 3px 5px; border-radius: 0 3px 3px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+        .week-slot-event { font-size: 9px; padding: 3px 5px; border-radius: 0 3px 3px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
         .week-slot-event.copilot { background: var(--copilot-bg); color: var(--copilot); border-left: 2px solid var(--copilot); }
         .week-slot-event.assistant { background: var(--assistant-bg); color: var(--assistant); border-left: 2px solid var(--assistant); }
         .week-slot-event.connect { background: var(--connect-bg); color: var(--connect); border-left: 2px solid var(--connect); }
@@ -13122,7 +13122,7 @@ RÈGLES:
                         .eq('user_id', currentUserId)
                         .order('date', { ascending: true });
                     
-                    if (!error && data && data.length > 0) {
+                    if (!error && data) {
                         calendarEvents = data.map(ev => ({
                             id: ev.id,
                             title: ev.title,
@@ -13141,27 +13141,27 @@ RÈGLES:
                             jobId: ev.job_id
                         }));
                         console.log('📅 Calendar events loaded from Supabase:', calendarEvents.length);
+                        // Clear old localStorage demo events
+                        localStorage.removeItem('fixair_calendar_events');
                         renderTechCalendar();
                         return;
+                    } else if (error) {
+                        console.error('Supabase calendar error:', error);
                     }
                 } catch (err) {
                     console.error('Error loading calendar events:', err);
                 }
             }
             
-            // Fallback to localStorage
+            // Fallback to localStorage (but filter out demo events)
             const stored = localStorage.getItem('fixair_calendar_events');
             if (stored) {
-                calendarEvents = JSON.parse(stored);
+                const parsed = JSON.parse(stored);
+                // Filter out old demo events
+                calendarEvents = parsed.filter(ev => !ev.id.startsWith('demo'));
             } else {
-                // Demo events for today
-                const today = new Date();
-                const todayStr = formatDateKey(today);
-                calendarEvents = [
-                    { id: 'demo1', date: todayStr, startTime: '09:00', endTime: '11:00', title: 'Diagnostic PAC Mitsubishi', type: 'copilot', location: 'Hôtel Mercure', client: 'Jean Dupont', reminder: '30', repeat: 'none', visibility: 'private', notes: '' },
-                    { id: 'demo2', date: todayStr, startTime: '11:00', endTime: '12:00', title: 'Rapport maintenance Daikin', type: 'assistant', location: 'Carrefour', client: 'Marie Martin', reminder: '30', repeat: 'none', visibility: 'company', notes: '' },
-                    { id: 'demo3', date: todayStr, startTime: '14:00', endTime: '16:00', title: 'Mission Connect', type: 'connect', location: '15 Rue de Paris', client: 'M. Dupont', reminder: '60', repeat: 'none', visibility: 'connect', notes: '', jobId: 'job1' }
-                ];
+                // Start with empty calendar - no demo events
+                calendarEvents = [];
             }
             renderTechCalendar();
         }
@@ -13335,9 +13335,10 @@ RÈGLES:
             return `<div class="calendar-daily">${hours.map(h => {
                 const ev = eventsByHour[h];
                 const evType = ev ? ev.type : '';
+                const longPressAttr = ev ? `ontouchstart="startEventLongPress(event, '${ev.id}')" ontouchend="cancelEventLongPress()" ontouchmove="cancelEventLongPress()"` : '';
                 return `<div class="daily-slot">
                     <div class="daily-time">${h}</div>
-                    <div class="daily-content ${ev ? 'has-event ' + evType : ''}" onclick="${ev ? `openCalendarEvent('${ev.id}')` : `createCalendarEvent('${h}')`}" ${ev ? `oncontextmenu="showEventContextMenu(event, '${ev.id}')"` : ''}>
+                    <div class="daily-content ${ev ? 'has-event ' + evType : ''}" onclick="${ev ? `handleEventClick(event, '${ev.id}')` : `createCalendarEvent('${h}')`}" ${ev ? `oncontextmenu="showEventContextMenu(event, '${ev.id}')"` : ''} ${longPressAttr}>
                         ${ev ? `<div class="daily-event-title">${ev.title}</div><div class="daily-event-meta">${ev.client || ev.location || ''}</div>` : ''}
                     </div>
                 </div>`;
@@ -13373,12 +13374,12 @@ RÈGLES:
                 <div class="week-time-label">AM</div>
                 ${weekDays.map(d => {
                     const dayEvents = calendarEvents.filter(e => e.date === d.dateKey && parseInt(e.startTime) < 12);
-                    return `<div class="week-slot" onclick="createCalendarEventForDate('${d.dateKey}', '09:00')">${dayEvents.map(e => `<div class="week-slot-event ${e.type}" onclick="event.stopPropagation();openCalendarEvent('${e.id}')" oncontextmenu="event.stopPropagation();showEventContextMenu(event, '${e.id}')">${e.title.substring(0,12)}${e.title.length > 12 ? '...' : ''}</div>`).join('')}</div>`;
+                    return `<div class="week-slot" onclick="createCalendarEventForDate('${d.dateKey}', '09:00')">${dayEvents.map(e => `<div class="week-slot-event ${e.type}" onclick="event.stopPropagation();handleEventClick(event, '${e.id}')" oncontextmenu="event.stopPropagation();showEventContextMenu(event, '${e.id}')" ontouchstart="event.stopPropagation();startEventLongPress(event, '${e.id}')" ontouchend="cancelEventLongPress()" ontouchmove="cancelEventLongPress()">${e.title.substring(0,12)}${e.title.length > 12 ? '...' : ''}</div>`).join('')}</div>`;
                 }).join('')}
                 <div class="week-time-label">PM</div>
                 ${weekDays.map(d => {
                     const dayEvents = calendarEvents.filter(e => e.date === d.dateKey && parseInt(e.startTime) >= 12);
-                    return `<div class="week-slot" onclick="createCalendarEventForDate('${d.dateKey}', '14:00')">${dayEvents.map(e => `<div class="week-slot-event ${e.type}" onclick="event.stopPropagation();openCalendarEvent('${e.id}')" oncontextmenu="event.stopPropagation();showEventContextMenu(event, '${e.id}')">${e.title.substring(0,12)}${e.title.length > 12 ? '...' : ''}</div>`).join('')}</div>`;
+                    return `<div class="week-slot" onclick="createCalendarEventForDate('${d.dateKey}', '14:00')">${dayEvents.map(e => `<div class="week-slot-event ${e.type}" onclick="event.stopPropagation();handleEventClick(event, '${e.id}')" oncontextmenu="event.stopPropagation();showEventContextMenu(event, '${e.id}')" ontouchstart="event.stopPropagation();startEventLongPress(event, '${e.id}')" ontouchend="cancelEventLongPress()" ontouchmove="cancelEventLongPress()">${e.title.substring(0,12)}${e.title.length > 12 ? '...' : ''}</div>`).join('')}</div>`;
                 }).join('')}
             </div></div>`;
         }
@@ -13612,6 +13613,9 @@ RÈGLES:
                 return;
             }
             
+            // Get existing event data if editing (to preserve projectId)
+            const existingEvent = editingEventId ? calendarEvents.find(e => e.id === editingEventId) : null;
+            
             const eventData = {
                 id: editingEventId || 'ev-' + Date.now(),
                 title: name,
@@ -13626,11 +13630,12 @@ RÈGLES:
                 reminder: document.getElementById('eventReminder').value,
                 visibility: document.getElementById('eventVisibility').value,
                 notes: document.getElementById('eventNotes').value,
-                projectId: null
+                projectId: existingEvent?.projectId || null,
+                jobId: existingEvent?.jobId || null
             };
             
-            // Create project for copilot/assistant events (only for new events)
-            if (!editingEventId && (selectedEventType === 'copilot' || selectedEventType === 'assistant')) {
+            // Create project for copilot/assistant events (only for new events without projectId)
+            if (!eventData.projectId && (selectedEventType === 'copilot' || selectedEventType === 'assistant')) {
                 const projectId = await createProjectForEvent(eventData);
                 if (projectId) {
                     eventData.projectId = projectId;
@@ -13642,6 +13647,10 @@ RÈGLES:
             const savedEvent = await saveEventToSupabase(eventData);
             if (savedEvent) {
                 eventData.id = savedEvent.id; // Use Supabase ID
+                // Also update projectId from saved event in case it was set
+                if (savedEvent.project_id) {
+                    eventData.projectId = savedEvent.project_id;
+                }
             }
             
             if (editingEventId) {
@@ -13664,6 +13673,8 @@ RÈGLES:
 
         // ═══ EVENT CONTEXT MENU FUNCTIONS ═══
         let contextEventId = null;
+        let eventLongPressTimer = null;
+        let eventLongPressTriggered = false;
 
         function showEventContextMenu(e, eventId) {
             e.preventDefault();
@@ -13673,8 +13684,9 @@ RÈGLES:
             const menu = document.getElementById('eventContextMenu');
             menu.classList.add('show');
             
-            const x = e.clientX;
-            const y = e.clientY;
+            // Get touch or mouse position
+            const x = e.clientX || (e.touches && e.touches[0]?.clientX) || 100;
+            const y = e.clientY || (e.touches && e.touches[0]?.clientY) || 100;
             
             const menuWidth = 150;
             const menuHeight = 90;
@@ -13684,8 +13696,12 @@ RÈGLES:
             menu.style.left = Math.min(x, maxX) + 'px';
             menu.style.top = Math.min(y, maxY) + 'px';
             
+            // Haptic feedback
+            if (navigator.vibrate) navigator.vibrate(30);
+            
             setTimeout(() => {
                 document.addEventListener('click', hideEventContextMenu);
+                document.addEventListener('touchstart', hideEventContextMenu, { once: true });
             }, 10);
         }
 
@@ -13693,6 +13709,35 @@ RÈGLES:
             document.getElementById('eventContextMenu').classList.remove('show');
             document.removeEventListener('click', hideEventContextMenu);
             contextEventId = null;
+        }
+
+        // Long-press handling for calendar events (like project cards)
+        function startEventLongPress(event, eventId) {
+            eventLongPressTriggered = false;
+            eventLongPressTimer = setTimeout(() => {
+                eventLongPressTriggered = true;
+                event.preventDefault();
+                if (navigator.vibrate) navigator.vibrate(30);
+                showEventContextMenu(event, eventId);
+            }, 500); // 500ms long press
+        }
+
+        function cancelEventLongPress() {
+            if (eventLongPressTimer) {
+                clearTimeout(eventLongPressTimer);
+                eventLongPressTimer = null;
+            }
+        }
+
+        // Handle event click - only open if not long press
+        function handleEventClick(event, eventId) {
+            if (eventLongPressTriggered) {
+                eventLongPressTriggered = false;
+                event.preventDefault();
+                event.stopPropagation();
+                return;
+            }
+            openCalendarEvent(eventId);
         }
 
         function modifyContextEvent() {
