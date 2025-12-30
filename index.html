@@ -7434,12 +7434,39 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             currentChatId = { assistant: null, copilot: null };
             projectMessageCount = 0;
             
-            // Open chat view immediately (show loading state)
-            const lastMode = mode || 'assistant';
-            openChat(lastMode);
+            // First, check what chats exist for this project to determine mode
+            let initialMode = mode || 'copilot';
+            try {
+                const { data: projectChats } = await db
+                    .from('chats')
+                    .select('chat_type')
+                    .eq('project_id', projectId);
+                
+                if (projectChats && projectChats.length > 0) {
+                    const chatTypes = projectChats.map(c => c.chat_type);
+                    console.log('📋 Project has chat types:', chatTypes);
+                    
+                    // If project only has assistant, switch to assistant
+                    if (chatTypes.includes('assistant') && !chatTypes.includes('copilot')) {
+                        initialMode = 'assistant';
+                        console.log('🔄 Switching to assistant mode (project has assistant chat)');
+                    }
+                    // If project only has copilot, switch to copilot
+                    else if (chatTypes.includes('copilot') && !chatTypes.includes('assistant')) {
+                        initialMode = 'copilot';
+                        console.log('🔄 Switching to copilot mode (project has copilot chat)');
+                    }
+                    // If both, use current mode
+                }
+            } catch (e) {
+                console.log('Could not pre-check chat types:', e);
+            }
+            
+            // Open chat view with correct mode
+            openChat(initialMode);
             
             // Show loading indicator in chat
-            const body = document.getElementById(lastMode + 'Body');
+            const body = document.getElementById(initialMode + 'Body');
             if (body) {
                 body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);"><div style="margin-bottom:10px;">⏳</div>Chargement...</div>';
             }
@@ -13174,6 +13201,8 @@ RÈGLES:
 
         async function saveEventToSupabase(eventData) {
             const userId = await getCurrentUserId();
+            console.log('📅 Attempting to save event, userId:', userId, 'eventType:', eventData.type);
+            
             if (!db || !userId || userId.startsWith('demo-')) {
                 console.log('📅 Supabase not available or demo mode, saving to localStorage only');
                 return null;
@@ -13198,6 +13227,8 @@ RÈGLES:
                     job_id: eventData.jobId || null
                 };
                 
+                console.log('📅 Supabase data to insert:', JSON.stringify(supabaseData, null, 2));
+                
                 if (eventData.id && !eventData.id.startsWith('ev-') && !eventData.id.startsWith('demo')) {
                     // Update existing
                     const { data, error } = await db
@@ -13208,7 +13239,10 @@ RÈGLES:
                         .select()
                         .single();
                     
-                    if (error) throw error;
+                    if (error) {
+                        console.error('📅 Supabase UPDATE error:', error.message, error.details, error.hint);
+                        throw error;
+                    }
                     console.log('📅 Event updated in Supabase:', data.id);
                     return data;
                 } else {
@@ -13220,12 +13254,17 @@ RÈGLES:
                         .select()
                         .single();
                     
-                    if (error) throw error;
+                    if (error) {
+                        console.error('📅 Supabase INSERT error:', error.message, error.details, error.hint);
+                        console.error('📅 Full error object:', JSON.stringify(error));
+                        throw error;
+                    }
                     console.log('📅 Event created in Supabase:', data.id);
                     return data;
                 }
             } catch (err) {
-                console.error('Error saving event to Supabase:', err);
+                console.error('📅 Error saving event to Supabase:', err);
+                showToast('Erreur sauvegarde calendrier', 'error');
                 return null;
             }
         }
@@ -13252,11 +13291,18 @@ RÈGLES:
         async function createProjectForEvent(eventData) {
             // Create a project when event type is copilot or assistant
             const userId = await getCurrentUserId();
-            if (!db || !userId || userId.startsWith('demo-')) return null;
-            if (eventData.type !== 'copilot' && eventData.type !== 'assistant') return null;
+            if (!db || !userId || userId.startsWith('demo-')) {
+                console.log('📅 Cannot create project: no valid user');
+                return null;
+            }
+            if (eventData.type !== 'copilot' && eventData.type !== 'assistant') {
+                console.log('📅 Event type is not copilot/assistant, skipping project creation');
+                return null;
+            }
             
             try {
-                const { data: project, error } = await db
+                // Create the project
+                const { data: project, error: projectError } = await db
                     .from('projects')
                     .insert({
                         user_id: userId,
@@ -13266,8 +13312,26 @@ RÈGLES:
                     .select()
                     .single();
                 
-                if (error) throw error;
+                if (projectError) throw projectError;
                 console.log('📅 Project created for event:', project.id);
+                
+                // Create a chat with the correct type (copilot or assistant)
+                const { data: chat, error: chatError } = await db
+                    .from('chats')
+                    .insert({
+                        project_id: project.id,
+                        user_id: userId,
+                        chat_type: eventData.type // 'copilot' or 'assistant'
+                    })
+                    .select()
+                    .single();
+                
+                if (chatError) {
+                    console.error('Error creating chat for project:', chatError);
+                } else {
+                    console.log('📅 Chat created with type:', eventData.type, 'id:', chat.id);
+                }
+                
                 return project.id;
             } catch (err) {
                 console.error('Error creating project for event:', err);
@@ -13617,6 +13681,8 @@ RÈGLES:
                 return;
             }
             
+            console.log('📅 Saving event with type:', selectedEventType);
+            
             // Get existing event data if editing (to preserve projectId)
             const existingEvent = editingEventId ? calendarEvents.find(e => e.id === editingEventId) : null;
             
@@ -13638,6 +13704,8 @@ RÈGLES:
                 jobId: existingEvent?.jobId || null
             };
             
+            console.log('📅 Event data:', JSON.stringify(eventData, null, 2));
+            
             // Create project for copilot/assistant events (only for new events without projectId)
             if (!eventData.projectId && (selectedEventType === 'copilot' || selectedEventType === 'assistant')) {
                 const projectId = await createProjectForEvent(eventData);
@@ -13655,6 +13723,9 @@ RÈGLES:
                 if (savedEvent.project_id) {
                     eventData.projectId = savedEvent.project_id;
                 }
+                console.log('📅 Event saved successfully with ID:', eventData.id);
+            } else {
+                console.log('📅 Event NOT saved to Supabase, keeping local ID:', eventData.id);
             }
             
             if (editingEventId) {
