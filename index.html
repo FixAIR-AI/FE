@@ -10419,7 +10419,11 @@ RÈGLES:
 ` : ''
                 };
                 
+                // Get the right webhook based on panel (copilot vs assistant)
+                const webhookUrl = getWebhookUrl(panel);
+                
                 console.log('📤 Sending to n8n:', webhookUrl);
+                console.log('📤 Panel:', panel);
                 console.log('📤 Session ID:', currentSessionId);
                 console.log('📤 Is existing conversation:', isExistingConversation, '(', previousUserMessages, 'user msgs,', previousAiMessages, 'AI msgs)');
                 console.log('📤 History length:', recentHistory.length, '(system msg:', systemMsg ? 'yes' : 'no', ')');
@@ -10430,7 +10434,7 @@ RÈGLES:
                 }
                 
                 // Call n8n webhook
-                const webhookUrl = getWebhookUrl(panel); console.log('📤 Webhook:', webhookUrl, '| Panel:', panel);  const response = await fetch(webhookUrl, {
+                const response = await fetch(webhookUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
