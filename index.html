@@ -6931,7 +6931,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
         
         // Send message
         // n8n Webhook URL
-        const N8N_WEBHOOK_URL = 'https://cherhabil.app.n8n.cloud/webhook/fixair-assistant';
+        const WEBHOOKS = {     'copilot': 'https://cherhabil.app.n8n.cloud/webhook/fixair-copilot',     'assistant': 'https://cherhabil.app.n8n.cloud/webhook/fixair-assistant' };  function getWebhookUrl(panel) {     return WEBHOOKS[panel] || WEBHOOKS['assistant']; }
         
         // Session IDs will be set based on project when a project is opened
         // This ensures memory persists across page reloads for the same project
@@ -10430,7 +10430,7 @@ RÈGLES:
                 }
                 
                 // Call n8n webhook
-                const response = await fetch(N8N_WEBHOOK_URL, {
+                const webhookUrl = getWebhookUrl(panel); console.log('📤 Webhook:', webhookUrl, '| Panel:', panel);  const response = await fetch(webhookUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
