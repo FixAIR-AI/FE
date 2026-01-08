@@ -7212,7 +7212,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             
             const modeLabel = hasBoth ? 'Diagnostic + Rapport' : (hasAssistant ? 'Rapport' : 'Diagnostic');
             
-            const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextMenu(event, '${project.id}', '${escapeHtml(project.title || 'Sans titre')}')" ontouchstart="startLongPress(event, '${project.id}', '${escapeHtml(project.title || 'Sans titre')}')" ontouchend="cancelLongPress()" ontouchmove="cancelLongPress()"` : '';
+            const safeTitle = escapeForJs(project.title || 'Sans titre'); const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextMenu(event, '${project.id}', '${safeTitle}')" ontouchstart="startLongPress(event, '${project.id}', '${safeTitle}')" ontouchend="cancelLongPress()" ontouchmove="cancelLongPress()"` : '';
             
             return `
                 <div class="proj ${barClass}" onclick="loadProject('${project.id}')" ${contextMenuAttr} data-project-id="${project.id}">
