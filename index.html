@@ -7440,7 +7440,11 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             div.textContent = text;
             return div.innerHTML;
         }
-        
+        // Escape for JavaScript string attributes (handles single quotes)
+function escapeForJs(text) {
+    if (!text) return '';
+    return text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+}
         // Load a specific project (FIXED: uses separate queries for reliability)
         async function loadProject(projectId) {
             console.log('🔄 Loading project:', projectId);
