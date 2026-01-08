@@ -791,15 +791,15 @@
         }
         
         .stats-ring-progress {
-            fill: none;
-            stroke: url(#fireGrowthGradient);
-            stroke-width: 10;
-            stroke-linecap: round;
-            stroke-dasharray: 339.292;
-            stroke-dashoffset: 339.292;
-            transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1);
-            filter: drop-shadow(0 0 12px rgba(234, 88, 12, 0.5));
-        }
+    fill: none;
+    stroke: url(#fireGrowthGradient);
+    stroke-width: 10;
+    stroke-linecap: round;
+    stroke-dasharray: 339.292;
+    stroke-dashoffset: 339.292;
+    transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Removed drop-shadow filter to prevent rectangular artifact on desktop */
+}
         
         .stats-ring-content {
             position: absolute;
