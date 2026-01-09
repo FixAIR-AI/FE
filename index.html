@@ -7662,9 +7662,95 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                                     console.error('Error parsing OCR message:', e);
                                 }
                             } else {
-                                // Regular text message
-                                const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
-                                addMsg(chat.chat_type, role, content);
+                                // Check if this is a report message (AI response with report data)
+                                let reportExtracted = false;
+                                if (role === 'ai' && chat.chat_type === 'assistant') {
+                                    let extractedData = null;
+
+                                    // FORMAT 1: [REPORT_DATA]...[/REPORT_DATA] tags
+                                    const reportDataMatch = msg.content.match(/\[REPORT_DATA\]([\s\S]*?)\[\/REPORT_DATA\]/);
+                                    if (reportDataMatch) {
+                                        try {
+                                            extractedData = JSON.parse(reportDataMatch[1].trim());
+                                            console.log('📊 [History] Extracted from REPORT_DATA tags');
+                                        } catch (e) {
+                                            console.warn('[History] Failed to parse REPORT_DATA:', e);
+                                        }
+                                    }
+
+                                    // FORMAT 2: {"type":"report","data":{...}} - Full JSON object
+                                    if (!extractedData) {
+                                        try {
+                                            const jsonMatch = msg.content.match(/\{\s*"type"\s*:\s*"report"\s*,\s*"data"\s*:\s*(\{[\s\S]*\})\s*\}/);
+                                            if (jsonMatch) {
+                                                extractedData = JSON.parse(jsonMatch[1]);
+                                                console.log('📊 [History] Extracted from type:report JSON');
+                                            }
+                                        } catch (e) {
+                                            try {
+                                                const fullMatch = msg.content.match(/\{[\s\S]*"type"\s*:\s*"report"[\s\S]*\}/);
+                                                if (fullMatch) {
+                                                    const parsed = JSON.parse(fullMatch[0]);
+                                                    if (parsed.data) {
+                                                        extractedData = parsed.data;
+                                                        console.log('📊 [History] Extracted from full report object');
+                                                    }
+                                                }
+                                            } catch (e2) {}
+                                        }
+                                    }
+
+                                    // FORMAT 3: ```json ... ``` code blocks
+                                    if (!extractedData) {
+                                        const codeBlockMatch = msg.content.match(/```json\s*([\s\S]*?)\s*```/);
+                                        if (codeBlockMatch) {
+                                            try {
+                                                const parsed = JSON.parse(codeBlockMatch[1]);
+                                                if (parsed.type === 'report' && parsed.data) {
+                                                    extractedData = parsed.data;
+                                                } else if (parsed.client || parsed.systeme || parsed.travaux_effectues) {
+                                                    extractedData = parsed;
+                                                }
+                                                if (extractedData) console.log('📊 [History] Extracted from code block');
+                                            } catch (e) {}
+                                        }
+                                    }
+
+                                    // If we found report data, render it properly
+                                    if (extractedData) {
+                                        reportExtracted = true;
+                                        console.log('✅ [History] Report data found, rendering report...');
+
+                                        // Initialize or update lastReportData
+                                        if (!lastReportData) {
+                                            lastReportData = {
+                                                brand: currentBrandName || brandNames[brand] || brand,
+                                                brand_key: brand,
+                                                status: 'en_cours',
+                                                date: new Date().toLocaleDateString('fr-FR')
+                                            };
+                                        }
+
+                                        // Merge extracted data into lastReportData
+                                        Object.keys(extractedData).forEach(key => {
+                                            if (typeof extractedData[key] === 'object' && !Array.isArray(extractedData[key])) {
+                                                lastReportData[key] = { ...(lastReportData[key] || {}), ...extractedData[key] };
+                                            } else {
+                                                lastReportData[key] = extractedData[key];
+                                            }
+                                        });
+
+                                        // Render the report as a proper message
+                                        const reportHtml = renderReport(lastReportData);
+                                        addMsg(chat.chat_type, 'ai', reportHtml);
+                                    }
+                                }
+
+                                // Regular text message (if not a report)
+                                if (!reportExtracted) {
+                                    const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
+                                    addMsg(chat.chat_type, role, content);
+                                }
                             }
                             chatHistory[chat.chat_type].push({ role: msg.role, content: msg.content });
                             projectMessageCount++;
