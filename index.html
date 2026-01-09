@@ -7442,10 +7442,15 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
             div.textContent = text;
             return div.innerHTML;
         }
-        // Escape for JavaScript string attributes (handles single quotes)
+        // Escape for JavaScript string attributes (handles single quotes and Unicode apostrophes)
         function escapeForJs(text) {
         if (!text) return '';
-        return text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+        return text
+            .replace(/\\/g, '\\\\')
+            .replace(/'/g, "\\'")
+            .replace(/"/g, '\\"')
+            .replace(/\u2019/g, "\\'")  // Right single quotation mark (curly apostrophe)
+            .replace(/\u2018/g, "\\'"); // Left single quotation mark
         }
         // Load a specific project (FIXED: uses separate queries for reliability)
         async function loadProject(projectId) {
