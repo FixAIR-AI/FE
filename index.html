@@ -7653,22 +7653,33 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
 
                                 if (role === 'ai' && chat.chat_type === 'assistant') {
                                     // Try to detect report JSON in the message
-                                    const reportMatch = msg.content.match(/\{"type"\s*:\s*"report"\s*,\s*"data"\s*:\s*(\{[\s\S]*\})\s*\}/);
-                                    if (reportMatch) {
+                                    const reportStart = msg.content.indexOf('{"type":"report"');
+                                    if (reportStart !== -1) {
                                         try {
-                                            const fullMatch = msg.content.match(/\{"type"\s*:\s*"report"[\s\S]*\}/);
-                                            if (fullMatch) {
-                                                const parsed = JSON.parse(fullMatch[0]);
+                                            // Extract JSON by counting braces (handles nested objects correctly)
+                                            let braceCount = 0;
+                                            let jsonEnd = -1;
+                                            for (let i = reportStart; i < msg.content.length; i++) {
+                                                if (msg.content[i] === '{') braceCount++;
+                                                if (msg.content[i] === '}') braceCount--;
+                                                if (braceCount === 0) {
+                                                    jsonEnd = i + 1;
+                                                    break;
+                                                }
+                                            }
+
+                                            if (jsonEnd > reportStart) {
+                                                const jsonStr = msg.content.substring(reportStart, jsonEnd);
+                                                const parsed = JSON.parse(jsonStr);
                                                 if (parsed.type === 'report' && parsed.data) {
-                                                    // Render the report with nice HTML
                                                     const reportHtml = renderReport(parsed.data);
                                                     addMsg(chat.chat_type, 'ai', reportHtml);
                                                     reportRendered = true;
-                                                    console.log('📊 [History] Rendered report from JSON');
+                                                    console.log('[History] Rendered report successfully');
                                                 }
                                             }
                                         } catch (e) {
-                                            console.warn('[History] Failed to parse report JSON:', e);
+                                            console.log('[History] Failed to parse report JSON:', e);
                                         }
                                     }
                                 }
