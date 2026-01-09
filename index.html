@@ -10465,35 +10465,86 @@ RÈGLES:
                 // Parse markdown and add AI response
                 const aiResponse = data.response || data.message || data.output || 'Désolé, une erreur est survenue.';
                 
-                // ═══ EXTRACT REPORT_DATA FROM AI RESPONSE ═══
+                // ═══ EXTRACT REPORT DATA FROM AI RESPONSE ═══
+                // Supports multiple formats: REPORT_DATA tags, {"type":"report"} JSON, code blocks
                 if (panel === 'assistant') {
+                    let extractedData = null;
+
+                    // FORMAT 1: [REPORT_DATA]...[/REPORT_DATA] tags
                     const reportDataMatch = aiResponse.match(/\[REPORT_DATA\]([\s\S]*?)\[\/REPORT_DATA\]/);
                     if (reportDataMatch) {
                         try {
-                            const extractedData = JSON.parse(reportDataMatch[1].trim());
-                            console.log('📊 Extracted report data:', extractedData);
-                            
-                            // Merge with existing data
-                            if (!lastReportData) {
-                                lastReportData = {
-                                    brand: currentBrandName,
-                                    brand_key: brand,
-                                    status: 'en_cours',
-                                    date: new Date().toLocaleDateString('fr-FR')
-                                };
-                            }
-                            mergeReportData(lastReportData, extractedData);
-                            
-                            // Immediately update preview
-                            updateDrawerPreview(lastReportData);
-                            
-                            console.log('✅ Report preview updated with extracted data');
+                            extractedData = JSON.parse(reportDataMatch[1].trim());
+                            console.log('📊 Extracted from REPORT_DATA tags');
                         } catch (e) {
                             console.warn('Failed to parse REPORT_DATA:', e);
                         }
                     }
-                    
-                    // Also try to build partial report from text (fallback)
+
+                    // FORMAT 2: {"type":"report","data":{...}} - Full JSON object
+                    if (!extractedData) {
+                        try {
+                            // Try to find and parse the full report JSON
+                            const jsonMatch = aiResponse.match(/\{\s*"type"\s*:\s*"report"\s*,\s*"data"\s*:\s*(\{[\s\S]*\})\s*\}/);
+                            if (jsonMatch) {
+                                extractedData = JSON.parse(jsonMatch[1]);
+                                console.log('📊 Extracted from type:report JSON');
+                            }
+                        } catch (e) {
+                            // Try alternative: parse the whole thing
+                            try {
+                                const fullMatch = aiResponse.match(/\{[\s\S]*"type"\s*:\s*"report"[\s\S]*\}/);
+                                if (fullMatch) {
+                                    const parsed = JSON.parse(fullMatch[0]);
+                                    if (parsed.data) {
+                                        extractedData = parsed.data;
+                                        console.log('📊 Extracted from full report object');
+                                    }
+                                }
+                            } catch (e2) {
+                                console.warn('Failed to parse report JSON:', e2);
+                            }
+                        }
+                    }
+
+                    // FORMAT 3: ```json ... ``` code blocks
+                    if (!extractedData) {
+                        const codeBlockMatch = aiResponse.match(/```json\s*([\s\S]*?)\s*```/);
+                        if (codeBlockMatch) {
+                            try {
+                                const parsed = JSON.parse(codeBlockMatch[1]);
+                                if (parsed.type === 'report' && parsed.data) {
+                                    extractedData = parsed.data;
+                                } else if (parsed.client || parsed.systeme || parsed.travaux_effectues) {
+                                    extractedData = parsed;
+                                }
+                                if (extractedData) console.log('📊 Extracted from code block');
+                            } catch (e) {
+                                console.warn('Failed to parse code block:', e);
+                            }
+                        }
+                    }
+
+                    // APPLY EXTRACTED DATA TO DRAWER
+                    if (extractedData) {
+                        console.log('✅ Report data found, updating drawer...', Object.keys(extractedData));
+
+                        if (!lastReportData) {
+                            lastReportData = {
+                                brand: currentBrandName || brandNames[brand] || brand,
+                                brand_key: brand,
+                                status: 'en_cours',
+                                date: new Date().toLocaleDateString('fr-FR')
+                            };
+                        }
+
+                        mergeReportData(lastReportData, extractedData);
+                        updateDrawerPreview(lastReportData);
+
+                        console.log('✅ Drawer updated successfully');
+                    }
+
+                    // Also try text-based extraction as fallback
                     buildPartialReport();
                 }
                 
