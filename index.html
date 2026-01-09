@@ -7442,22 +7442,24 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
             div.textContent = text;
             return div.innerHTML;
         }
-        // Escape for JavaScript string attributes (handles quotes, newlines, and control characters)
+        // Escape for JavaScript string attributes (handles ALL problematic characters)
         function escapeForJs(text) {
             if (!text) return '';
-            return text
-                .replace(/\\/g, '\\\\')           // Backslashes first
-                .replace(/'/g, "\\'")             // ASCII single quote
-                .replace(/"/g, '\\"')             // ASCII double quote
-                .replace(/`/g, '\\`')             // Backtick
-                .replace(/\u2019/g, "\\'")        // Right single quote U+2019
-                .replace(/\u2018/g, "\\'")        // Left single quote U+2018
-                .replace(/\u201C/g, '\\"')        // Left double quote U+201C
-                .replace(/\u201D/g, '\\"')        // Right double quote U+201D
-                .replace(/\n/g, ' ')              // Newline to space
-                .replace(/\r/g, '')               // Remove carriage return
-                .replace(/\t/g, ' ')              // Tab to space
-                .replace(/[\x00-\x1F\x7F]/g, ''); // Remove other control characters
+            return String(text)
+                .replace(/\\/g, '\\\\')           // 1. Backslashes first (must be first!)
+                .replace(/'/g, "\\'")             // 2. ASCII single quote
+                .replace(/"/g, '\\"')             // 3. ASCII double quote
+                .replace(/`/g, '\\`')             // 4. Backtick
+                .replace(/\u2019/g, "\\'")        // 5. Right single quote ' (U+2019)
+                .replace(/\u2018/g, "\\'")        // 6. Left single quote ' (U+2018)
+                .replace(/\u201C/g, '\\"')        // 7. Left double quote " (U+201C)
+                .replace(/\u201D/g, '\\"')        // 8. Right double quote " (U+201D)
+                .replace(/\u00AB/g, '\\"')        // 9. Left guillemet « (U+00AB)
+                .replace(/\u00BB/g, '\\"')        // 10. Right guillemet » (U+00BB)
+                .replace(/\n/g, ' ')              // 11. Newline to space (CRITICAL for OCR)
+                .replace(/\r/g, '')               // 12. Remove carriage return
+                .replace(/\t/g, ' ')              // 13. Tab to space
+                .replace(/[\x00-\x1F\x7F]/g, ''); // 14. Remove ALL control characters
         }
         // Load a specific project (FIXED: uses separate queries for reliability)
         async function loadProject(projectId) {
