@@ -7214,10 +7214,9 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             
             const modeLabel = hasBoth ? 'Diagnostic + Rapport' : (hasAssistant ? 'Rapport' : 'Diagnostic');
             
-            const safeTitle = escapeForJs(project.title || 'Sans titre');
-const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextMenu(event, '${project.id}', '${safeTitle}')" ontouchstart="startLongPress(event, '${project.id}', '${safeTitle}')" ontouchend="cancelLongPress()" ontouchmove="cancelLongPress()"` : '';            
+            const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextMenu(event, '${project.id}')" ontouchstart="startLongPress(event, '${project.id}')" ontouchend="cancelLongPress()" ontouchmove="cancelLongPress()"` : '';            
             return `
-                <div class="proj ${barClass}" onclick="loadProject('${project.id}')" ${contextMenuAttr} data-project-id="${project.id}">
+                <div class="proj ${barClass}" onclick="loadProject('${project.id}')" ${contextMenuAttr} data-project-id="${project.id}" data-title="${escapeHtml(project.title || 'Sans titre')}">
                     ${iconHtml}
                     <div class="proj-info">
                         <div class="proj-title">${escapeHtml(project.title || 'Sans titre')}</div>
@@ -7264,12 +7263,13 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
         }
         
         // Show context menu for project
-        function showProjectContextMenu(event, projectId, projectTitle) {
+        function showProjectContextMenu(event, projectId) {
             event.preventDefault();
             event.stopPropagation();
-            
+
+            const projectEl = event.target.closest('.proj');
             contextMenuProjectId = projectId;
-            currentProjectTitle = projectTitle;
+            currentProjectTitle = projectEl?.dataset.title || 'Sans titre';
             
             const menu = document.getElementById('projectContextMenu');
             
@@ -7301,14 +7301,14 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
         let longPressTimer = null;
         let longPressTriggered = false;
         
-        function startLongPress(event, projectId, projectTitle) {
+        function startLongPress(event, projectId) {
             longPressTriggered = false;
             longPressTimer = setTimeout(() => {
                 longPressTriggered = true;
                 event.preventDefault();
                 // Haptic feedback immediately when long press triggers
                 if (navigator.vibrate) navigator.vibrate(30);
-                showProjectContextMenu(event, projectId, projectTitle);
+                showProjectContextMenu(event, projectId);
             }, 500); // 500ms for long press
         }
         
