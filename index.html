@@ -7214,9 +7214,10 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             
             const modeLabel = hasBoth ? 'Diagnostic + Rapport' : (hasAssistant ? 'Rapport' : 'Diagnostic');
             
-            const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextMenu(event, '${project.id}')" ontouchstart="startLongPress(event, '${project.id}')" ontouchend="cancelLongPress()" ontouchmove="cancelLongPress()"` : '';            
+            const safeTitle = escapeForJs(project.title || 'Sans titre');
+const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextMenu(event, '${project.id}', '${safeTitle}')" ontouchstart="startLongPress(event, '${project.id}', '${safeTitle}')" ontouchend="cancelLongPress()" ontouchmove="cancelLongPress()"` : '';            
             return `
-                <div class="proj ${barClass}" onclick="loadProject('${project.id}')" ${contextMenuAttr} data-project-id="${project.id}" data-title="${escapeHtml(project.title || 'Sans titre')}">
+                <div class="proj ${barClass}" onclick="loadProject('${project.id}')" ${contextMenuAttr} data-project-id="${project.id}">
                     ${iconHtml}
                     <div class="proj-info">
                         <div class="proj-title">${escapeHtml(project.title || 'Sans titre')}</div>
@@ -7263,13 +7264,12 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
         }
         
         // Show context menu for project
-        function showProjectContextMenu(event, projectId) {
+        function showProjectContextMenu(event, projectId, projectTitle) {
             event.preventDefault();
             event.stopPropagation();
-
-            const projectEl = event.target.closest('.proj');
+            
             contextMenuProjectId = projectId;
-            currentProjectTitle = projectEl?.dataset.title || 'Sans titre';
+            currentProjectTitle = projectTitle;
             
             const menu = document.getElementById('projectContextMenu');
             
@@ -7301,14 +7301,14 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
         let longPressTimer = null;
         let longPressTriggered = false;
         
-        function startLongPress(event, projectId) {
+        function startLongPress(event, projectId, projectTitle) {
             longPressTriggered = false;
             longPressTimer = setTimeout(() => {
                 longPressTriggered = true;
                 event.preventDefault();
                 // Haptic feedback immediately when long press triggers
                 if (navigator.vibrate) navigator.vibrate(30);
-                showProjectContextMenu(event, projectId);
+                showProjectContextMenu(event, projectId, projectTitle);
             }, 500); // 500ms for long press
         }
         
@@ -7442,24 +7442,10 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             div.textContent = text;
             return div.innerHTML;
         }
-        // Escape for JavaScript string attributes (handles ALL problematic characters)
+        // Escape for JavaScript string attributes (handles single quotes)
         function escapeForJs(text) {
-            if (!text) return '';
-            return String(text)
-                .replace(/\\/g, '\\\\')           // 1. Backslashes first (must be first!)
-                .replace(/'/g, "\\'")             // 2. ASCII single quote
-                .replace(/"/g, '\\"')             // 3. ASCII double quote
-                .replace(/`/g, '\\`')             // 4. Backtick
-                .replace(/\u2019/g, "\\'")        // 5. Right single quote ' (U+2019)
-                .replace(/\u2018/g, "\\'")        // 6. Left single quote ' (U+2018)
-                .replace(/\u201C/g, '\\"')        // 7. Left double quote " (U+201C)
-                .replace(/\u201D/g, '\\"')        // 8. Right double quote " (U+201D)
-                .replace(/\u00AB/g, '\\"')        // 9. Left guillemet « (U+00AB)
-                .replace(/\u00BB/g, '\\"')        // 10. Right guillemet » (U+00BB)
-                .replace(/\n/g, ' ')              // 11. Newline to space (CRITICAL for OCR)
-                .replace(/\r/g, '')               // 12. Remove carriage return
-                .replace(/\t/g, ' ')              // 13. Tab to space
-                .replace(/[\x00-\x1F\x7F]/g, ''); // 14. Remove ALL control characters
+        if (!text) return '';
+        return text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
         }
         // Load a specific project (FIXED: uses separate queries for reliability)
         async function loadProject(projectId) {
@@ -7662,95 +7648,9 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                                     console.error('Error parsing OCR message:', e);
                                 }
                             } else {
-                                // Check if this is a report message (AI response with report data)
-                                let reportExtracted = false;
-                                if (role === 'ai' && chat.chat_type === 'assistant') {
-                                    let extractedData = null;
-
-                                    // FORMAT 1: [REPORT_DATA]...[/REPORT_DATA] tags
-                                    const reportDataMatch = msg.content.match(/\[REPORT_DATA\]([\s\S]*?)\[\/REPORT_DATA\]/);
-                                    if (reportDataMatch) {
-                                        try {
-                                            extractedData = JSON.parse(reportDataMatch[1].trim());
-                                            console.log('📊 [History] Extracted from REPORT_DATA tags');
-                                        } catch (e) {
-                                            console.warn('[History] Failed to parse REPORT_DATA:', e);
-                                        }
-                                    }
-
-                                    // FORMAT 2: {"type":"report","data":{...}} - Full JSON object
-                                    if (!extractedData) {
-                                        try {
-                                            const jsonMatch = msg.content.match(/\{\s*"type"\s*:\s*"report"\s*,\s*"data"\s*:\s*(\{[\s\S]*\})\s*\}/);
-                                            if (jsonMatch) {
-                                                extractedData = JSON.parse(jsonMatch[1]);
-                                                console.log('📊 [History] Extracted from type:report JSON');
-                                            }
-                                        } catch (e) {
-                                            try {
-                                                const fullMatch = msg.content.match(/\{[\s\S]*"type"\s*:\s*"report"[\s\S]*\}/);
-                                                if (fullMatch) {
-                                                    const parsed = JSON.parse(fullMatch[0]);
-                                                    if (parsed.data) {
-                                                        extractedData = parsed.data;
-                                                        console.log('📊 [History] Extracted from full report object');
-                                                    }
-                                                }
-                                            } catch (e2) {}
-                                        }
-                                    }
-
-                                    // FORMAT 3: ```json ... ``` code blocks
-                                    if (!extractedData) {
-                                        const codeBlockMatch = msg.content.match(/```json\s*([\s\S]*?)\s*```/);
-                                        if (codeBlockMatch) {
-                                            try {
-                                                const parsed = JSON.parse(codeBlockMatch[1]);
-                                                if (parsed.type === 'report' && parsed.data) {
-                                                    extractedData = parsed.data;
-                                                } else if (parsed.client || parsed.systeme || parsed.travaux_effectues) {
-                                                    extractedData = parsed;
-                                                }
-                                                if (extractedData) console.log('📊 [History] Extracted from code block');
-                                            } catch (e) {}
-                                        }
-                                    }
-
-                                    // If we found report data, render it properly
-                                    if (extractedData) {
-                                        reportExtracted = true;
-                                        console.log('✅ [History] Report data found, rendering report...');
-
-                                        // Initialize or update lastReportData
-                                        if (!lastReportData) {
-                                            lastReportData = {
-                                                brand: currentBrandName || brandNames[brand] || brand,
-                                                brand_key: brand,
-                                                status: 'en_cours',
-                                                date: new Date().toLocaleDateString('fr-FR')
-                                            };
-                                        }
-
-                                        // Merge extracted data into lastReportData
-                                        Object.keys(extractedData).forEach(key => {
-                                            if (typeof extractedData[key] === 'object' && !Array.isArray(extractedData[key])) {
-                                                lastReportData[key] = { ...(lastReportData[key] || {}), ...extractedData[key] };
-                                            } else {
-                                                lastReportData[key] = extractedData[key];
-                                            }
-                                        });
-
-                                        // Render the report as a proper message
-                                        const reportHtml = renderReport(lastReportData);
-                                        addMsg(chat.chat_type, 'ai', reportHtml);
-                                    }
-                                }
-
-                                // Regular text message (if not a report)
-                                if (!reportExtracted) {
-                                    const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
-                                    addMsg(chat.chat_type, role, content);
-                                }
+                                // Regular text message
+                                const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
+                                addMsg(chat.chat_type, role, content);
                             }
                             chatHistory[chat.chat_type].push({ role: msg.role, content: msg.content });
                             projectMessageCount++;
@@ -8966,35 +8866,24 @@ INSTRUCTIONS:
         
         // Update the drawer preview with report data
         function updateDrawerPreview(data) {
-            console.log('🎯 updateDrawerPreview called with data:', data ? Object.keys(data) : 'null');
-
             const emptyState = document.getElementById('reportPreviewEmpty');
             const previewContent = document.getElementById('reportPreviewContent');
             const headerProgress = document.getElementById('reportHeaderProgress');
             const progressFill = document.getElementById('reportProgressFill');
             const progressText = document.getElementById('reportProgressText');
-
-            if (!previewContent) {
-                console.error('❌ reportPreviewContent element not found!');
-                return;
-            }
-
+            
+            if (!previewContent) return;
+            
             // Always hide empty state - we show editable template instead
             if (emptyState) emptyState.style.display = 'none';
             previewContent.style.display = 'block';
-
+            
             // Use provided data or empty object
             const reportData = data || {};
-
-            // Debug: Log key fields that should be displayed
-            console.log('🎯 Fluide in data:', reportData.fluide);
-            console.log('🎯 Adressage in data:', reportData.adressage?.length, 'items');
-            console.log('🎯 Remarques in data:', reportData.remarques ? 'yes' : 'no');
-            console.log('🎯 Rapport technicien in data:', reportData.rapport_technicien ? 'yes' : 'no');
-
+            
             // Calculate completion percentage
             const completionStatus = calculateReportCompletion(reportData);
-
+            
             // Update header progress bar
             if (headerProgress && progressFill && progressText) {
                 if (completionStatus.percentage > 0) {
@@ -9007,16 +8896,15 @@ INSTRUCTIONS:
                     progressText.textContent = '0%';
                 }
             }
-
+            
             // Generate editable template HTML
             const previewHtml = renderReportPreview(reportData, completionStatus);
             previewContent.innerHTML = previewHtml;
-
+            
             // Attach event listeners for editable fields
             initEditableReport();
-
+            
             console.log('📋 Drawer preview updated - Completion:', completionStatus.percentage + '%');
-            console.log('📋 Filled fields:', completionStatus.filledFields?.join(', ') || 'none');
         }
         
         // Calculate report completion for manager visibility
@@ -9365,18 +9253,16 @@ INSTRUCTIONS:
         // Merge incoming data into existing report data
         function mergeReportData(target, source) {
             if (!source) return;
-
-            console.log('🔄 mergeReportData called with source keys:', Object.keys(source));
-
+            
             for (const [key, value] of Object.entries(source)) {
                 if (value === null || value === undefined || value === '') continue;
-
+                
                 if (Array.isArray(value)) {
-                    // For arrays from AI response, replace the target array entirely
-                    // This ensures we get the latest data structure
-                    if (value.length > 0) {
-                        // Special handling for codes_defaut - merge to avoid duplicates
-                        if (key === 'codes_defaut' && Array.isArray(target[key])) {
+                    // For arrays, append new items
+                    if (!target[key]) target[key] = [];
+                    if (Array.isArray(target[key])) {
+                        // Avoid duplicates for codes_defaut
+                        if (key === 'codes_defaut') {
                             const existingCodes = new Set(target[key].map(c => c.code));
                             for (const item of value) {
                                 if (!existingCodes.has(item.code)) {
@@ -9384,24 +9270,20 @@ INSTRUCTIONS:
                                 }
                             }
                         } else {
-                            // Replace array entirely with new data
-                            target[key] = value;
+                            target[key].push(...value);
                         }
-                        console.log('🔄 Array', key, 'set with', value.length, 'items');
                     }
                 } else if (typeof value === 'object') {
                     // For nested objects, merge recursively
                     if (!target[key]) target[key] = {};
                     mergeReportData(target[key], value);
                 } else {
-                    // For primitives, ALWAYS update with new value from AI
-                    // (Previous behavior only updated if empty, which was wrong)
-                    target[key] = value;
-                    console.log('🔄 Field', key, 'set to:', value);
+                    // For primitives, only overwrite if target is empty
+                    if (!target[key]) {
+                        target[key] = value;
+                    }
                 }
             }
-
-            console.log('🔄 Merged report data. Target keys:', Object.keys(target));
         }
         
         // Render EDITABLE report template for drawer
@@ -10583,208 +10465,35 @@ RÈGLES:
                 // Parse markdown and add AI response
                 const aiResponse = data.response || data.message || data.output || 'Désolé, une erreur est survenue.';
                 
-                // ═══ EXTRACT REPORT DATA FROM AI RESPONSE ═══
-                // Supports multiple formats: REPORT_DATA tags, {"type":"report"} JSON, code blocks
+                // ═══ EXTRACT REPORT_DATA FROM AI RESPONSE ═══
                 if (panel === 'assistant') {
-                    let extractedData = null;
-
-                    // Debug logging for extraction
-                    console.log('🔍 Raw AI response length:', aiResponse.length);
-                    console.log('🔍 Looking for REPORT_DATA...');
-
-                    // FORMAT 1: [REPORT_DATA]...[/REPORT_DATA] tags
                     const reportDataMatch = aiResponse.match(/\[REPORT_DATA\]([\s\S]*?)\[\/REPORT_DATA\]/);
                     if (reportDataMatch) {
-                        console.log('✅ Found REPORT_DATA block');
                         try {
-                            extractedData = JSON.parse(reportDataMatch[1].trim());
-                            console.log('📊 Extracted from REPORT_DATA tags');
-                            console.log('📊 Parsed data keys:', Object.keys(extractedData));
-                            console.log('📊 Fluide:', extractedData.fluide);
-                            console.log('📊 Adressage count:', extractedData.adressage?.length);
+                            const extractedData = JSON.parse(reportDataMatch[1].trim());
+                            console.log('📊 Extracted report data:', extractedData);
+                            
+                            // Merge with existing data
+                            if (!lastReportData) {
+                                lastReportData = {
+                                    brand: currentBrandName,
+                                    brand_key: brand,
+                                    status: 'en_cours',
+                                    date: new Date().toLocaleDateString('fr-FR')
+                                };
+                            }
+                            mergeReportData(lastReportData, extractedData);
+                            
+                            // Immediately update preview
+                            updateDrawerPreview(lastReportData);
+                            
+                            console.log('✅ Report preview updated with extracted data');
                         } catch (e) {
-                            console.error('❌ JSON parse error:', e);
                             console.warn('Failed to parse REPORT_DATA:', e);
                         }
-                    } else {
-                        console.log('❌ No REPORT_DATA block found in format 1');
                     }
-
-                    // FORMAT 2: {"type":"report","data":{...}} - Full JSON object
-                    if (!extractedData) {
-                        try {
-                            // Try to find and parse the full report JSON
-                            const jsonMatch = aiResponse.match(/\{\s*"type"\s*:\s*"report"\s*,\s*"data"\s*:\s*(\{[\s\S]*\})\s*\}/);
-                            if (jsonMatch) {
-                                extractedData = JSON.parse(jsonMatch[1]);
-                                console.log('📊 Extracted from type:report JSON');
-                            }
-                        } catch (e) {
-                            // Try alternative: parse the whole thing
-                            try {
-                                const fullMatch = aiResponse.match(/\{[\s\S]*"type"\s*:\s*"report"[\s\S]*\}/);
-                                if (fullMatch) {
-                                    const parsed = JSON.parse(fullMatch[0]);
-                                    if (parsed.data) {
-                                        extractedData = parsed.data;
-                                        console.log('📊 Extracted from full report object');
-                                    }
-                                }
-                            } catch (e2) {
-                                console.warn('Failed to parse report JSON:', e2);
-                            }
-                        }
-                    }
-
-                    // FORMAT 3: ```json ... ``` code blocks
-                    if (!extractedData) {
-                        const codeBlockMatch = aiResponse.match(/```json\s*([\s\S]*?)\s*```/);
-                        if (codeBlockMatch) {
-                            try {
-                                const parsed = JSON.parse(codeBlockMatch[1]);
-                                if (parsed.type === 'report' && parsed.data) {
-                                    extractedData = parsed.data;
-                                } else if (parsed.client || parsed.systeme || parsed.travaux_effectues) {
-                                    extractedData = parsed;
-                                }
-                                if (extractedData) console.log('📊 Extracted from code block');
-                            } catch (e) {
-                                console.warn('Failed to parse code block:', e);
-                            }
-                        }
-                    }
-
-                    // APPLY EXTRACTED DATA TO DRAWER
-                    if (extractedData) {
-                        console.log('✅ Report data found, updating drawer...', Object.keys(extractedData));
-
-                        if (!lastReportData) {
-                            lastReportData = {
-                                brand: currentBrandName || brandNames[brand] || brand,
-                                brand_key: brand,
-                                status: 'en_cours',
-                                date: new Date().toLocaleDateString('fr-FR')
-                            };
-                        }
-
-                        // ═══ EXPLICIT FIELD MAPPING ═══
-                        // Map fluide (handle both nested and flat structures)
-                        if (extractedData.fluide) {
-                            if (!lastReportData.fluide) lastReportData.fluide = {};
-                            if (extractedData.fluide.type) {
-                                lastReportData.fluide.type = extractedData.fluide.type;
-                                console.log('📋 Fluide type mapped:', extractedData.fluide.type);
-                            }
-                            if (extractedData.fluide.charge_totale) {
-                                lastReportData.fluide.charge_totale = extractedData.fluide.charge_totale;
-                                console.log('📋 Fluide charge_totale mapped:', extractedData.fluide.charge_totale);
-                            }
-                            if (extractedData.fluide.charge_initiale) {
-                                lastReportData.fluide.charge_initiale = extractedData.fluide.charge_initiale;
-                            }
-                            if (extractedData.fluide.type_huile) {
-                                lastReportData.fluide.type_huile = extractedData.fluide.type_huile;
-                            }
-                        }
-                        // Also handle flat fluide_type field
-                        if (extractedData.fluide_type) {
-                            if (!lastReportData.fluide) lastReportData.fluide = {};
-                            lastReportData.fluide.type = extractedData.fluide_type;
-                            console.log('📋 Flat fluide_type mapped:', extractedData.fluide_type);
-                        }
-
-                        // Map adressage array
-                        if (extractedData.adressage && Array.isArray(extractedData.adressage)) {
-                            lastReportData.adressage = extractedData.adressage;
-                            console.log('📋 Adressage mapped:', lastReportData.adressage.length, 'units');
-                        }
-
-                        // Map remarques
-                        if (extractedData.remarques) {
-                            lastReportData.remarques = extractedData.remarques;
-                            console.log('📋 Remarques mapped');
-                        }
-
-                        // Map rapport_technicien
-                        if (extractedData.rapport_technicien) {
-                            lastReportData.rapport_technicien = extractedData.rapport_technicien;
-                            console.log('📋 Rapport technicien mapped');
-                        }
-
-                        // Map systeme (handle nested)
-                        if (extractedData.systeme) {
-                            if (!lastReportData.systeme) lastReportData.systeme = {};
-                            Object.assign(lastReportData.systeme, extractedData.systeme);
-                            console.log('📋 Systeme mapped:', Object.keys(extractedData.systeme));
-                        }
-
-                        // Map client (handle nested)
-                        if (extractedData.client) {
-                            if (!lastReportData.client) lastReportData.client = {};
-                            Object.assign(lastReportData.client, extractedData.client);
-                            console.log('📋 Client mapped:', Object.keys(extractedData.client));
-                        }
-
-                        // Map site (handle nested)
-                        if (extractedData.site) {
-                            if (!lastReportData.site) lastReportData.site = {};
-                            Object.assign(lastReportData.site, extractedData.site);
-                            console.log('📋 Site mapped:', Object.keys(extractedData.site));
-                        }
-
-                        // Map codes_defaut
-                        if (extractedData.codes_defaut && Array.isArray(extractedData.codes_defaut)) {
-                            lastReportData.codes_defaut = extractedData.codes_defaut;
-                            console.log('📋 Codes défaut mapped:', lastReportData.codes_defaut.length);
-                        }
-
-                        // Map mesures
-                        if (extractedData.mesures && Array.isArray(extractedData.mesures)) {
-                            lastReportData.mesures = extractedData.mesures;
-                            console.log('📋 Mesures mapped:', lastReportData.mesures.length);
-                        }
-
-                        // Map travaux_effectues
-                        if (extractedData.travaux_effectues && Array.isArray(extractedData.travaux_effectues)) {
-                            lastReportData.travaux_effectues = extractedData.travaux_effectues;
-                            console.log('📋 Travaux effectués mapped:', lastReportData.travaux_effectues.length);
-                        }
-
-                        // Map travaux_prevoir
-                        if (extractedData.travaux_prevoir && Array.isArray(extractedData.travaux_prevoir)) {
-                            lastReportData.travaux_prevoir = extractedData.travaux_prevoir;
-                            console.log('📋 Travaux à prévoir mapped');
-                        }
-
-                        // Map resultat
-                        if (extractedData.resultat) {
-                            if (!lastReportData.resultat) lastReportData.resultat = {};
-                            Object.assign(lastReportData.resultat, extractedData.resultat);
-                            console.log('📋 Résultat mapped:', Object.keys(extractedData.resultat));
-                        }
-
-                        // Map simple fields
-                        const simpleFields = ['type_intervention', 'reference', 'resume', 'status', 'date', 'reserves'];
-                        for (const field of simpleFields) {
-                            if (extractedData[field] !== undefined && extractedData[field] !== null) {
-                                lastReportData[field] = extractedData[field];
-                                console.log('📋 Field', field, 'mapped:', extractedData[field]);
-                            }
-                        }
-
-                        // Also merge any remaining fields not explicitly handled
-                        mergeReportData(lastReportData, extractedData);
-
-                        console.log('📊 Final lastReportData keys:', Object.keys(lastReportData));
-                        console.log('📊 Final fluide:', lastReportData.fluide);
-                        console.log('📊 Final adressage count:', lastReportData.adressage?.length);
-
-                        updateDrawerPreview(lastReportData);
-
-                        console.log('✅ Drawer updated successfully');
-                    }
-
-                    // Also try text-based extraction as fallback
+                    
+                    // Also try to build partial report from text (fallback)
                     buildPartialReport();
                 }
                 
