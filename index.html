@@ -7215,9 +7215,9 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             const modeLabel = hasBoth ? 'Diagnostic + Rapport' : (hasAssistant ? 'Rapport' : 'Diagnostic');
             
             const safeTitle = escapeForJs(project.title || 'Sans titre');
-const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextMenu(event, '${project.id}', '${safeTitle}')" ontouchstart="startLongPress(event, '${project.id}', '${safeTitle}')" ontouchend="cancelLongPress()" ontouchmove="cancelLongPress()"` : '';            
+const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextMenu(event, '${project.id}', '${safeTitle}')" ontouchstart="startLongPress(event, '${project.id}', '${safeTitle}')" ontouchend="handleProjectTouchEnd()" ontouchmove="cancelLongPress()"` : '';            
             return `
-                <div class="proj ${barClass}" onclick="loadProject('${project.id}')" ${contextMenuAttr} data-project-id="${project.id}">
+                <div class="proj ${barClass}" onclick="handleProjectClick(event, '${project.id}')" ${contextMenuAttr} data-project-id="${project.id}">
                     ${iconHtml}
                     <div class="proj-info">
                         <div class="proj-title">${escapeHtml(project.title || 'Sans titre')}</div>
@@ -7318,13 +7318,35 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                 longPressTimer = null;
             }
         }
-        
-        // Prevent click if long-press was triggered
+
+        // Handle touch end on project card - properly reset long press state
+        function handleProjectTouchEnd() {
+            cancelLongPress();
+            // If long press was triggered, reset after a short delay to allow click prevention
+            if (longPressTriggered) {
+                setTimeout(() => {
+                    longPressTriggered = false;
+                }, 300);
+            }
+        }
+
+        // Handle click on project card - prevents navigation after long press
+        function handleProjectClick(event, projectId) {
+            // If a long press just triggered the context menu, don't navigate
+            if (longPressTriggered) {
+                event.preventDefault();
+                event.stopPropagation();
+                return;
+            }
+            // Normal click - navigate to project
+            loadProject(projectId);
+        }
+
+        // Backup capture phase listener (redundant safety measure)
         document.addEventListener('click', (e) => {
             if (longPressTriggered && e.target.closest('.proj')) {
                 e.preventDefault();
                 e.stopPropagation();
-                longPressTriggered = false;
             }
         }, true);
         
@@ -9270,7 +9292,132 @@ INSTRUCTIONS:
                     partialData.fluide.type = fluideMatch[1].toUpperCase();
                 }
             }
-            
+
+            // ═══ ENHANCED EXTRACTION FOR MISSING FIELDS ═══
+
+            // Detect technician name
+            if (!partialData.technicien?.nom) {
+                const techPatterns = [
+                    /(?:technicien|tech|je suis|c'est)\s*:?\s*([A-ZÀ-Ÿ][a-zà-ÿ]+(?:\s+[A-ZÀ-Ÿ][a-zà-ÿ]+)?)/i,
+                    /(?:fait par|réalisé par|intervention de)\s*:?\s*([A-ZÀ-Ÿ][a-zà-ÿ]+(?:\s+[A-ZÀ-Ÿ][a-zà-ÿ]+)?)/i
+                ];
+                for (const pattern of techPatterns) {
+                    const match = allTextOriginal.match(pattern);
+                    if (match && match[1].length > 2 && match[1].length < 40) {
+                        partialData.technicien = partialData.technicien || {};
+                        partialData.technicien.nom = match[1].trim();
+                        break;
+                    }
+                }
+            }
+
+            // Detect arrival/departure times
+            if (!partialData.technicien?.heure_arrivee) {
+                const arrivalMatch = allText.match(/(?:arrivée?|arrivé|arrive|début)\s*[:\sàa]*\s*(\d{1,2})[h:.](\d{2})?/i);
+                if (arrivalMatch) {
+                    partialData.technicien = partialData.technicien || {};
+                    partialData.technicien.heure_arrivee = arrivalMatch[1] + ':' + (arrivalMatch[2] || '00');
+                }
+            }
+            if (!partialData.technicien?.heure_depart) {
+                const departMatch = allText.match(/(?:départ|parti|fin)\s*[:\sàa]*\s*(\d{1,2})[h:.](\d{2})?/i);
+                if (departMatch) {
+                    partialData.technicien = partialData.technicien || {};
+                    partialData.technicien.heure_depart = departMatch[1] + ':' + (departMatch[2] || '00');
+                }
+            }
+
+            // Detect dates
+            if (!partialData.dates?.debut_date) {
+                const dateMatch = allTextOriginal.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+                if (dateMatch) {
+                    partialData.dates = partialData.dates || {};
+                    const year = dateMatch[3].length === 2 ? '20' + dateMatch[3] : dateMatch[3];
+                    partialData.dates.debut_date = dateMatch[1].padStart(2, '0') + '/' + dateMatch[2].padStart(2, '0') + '/' + year;
+                }
+            }
+
+            // Detect measurements (HP, BP, temperatures)
+            if (!partialData.mesures || partialData.mesures.length === 0) {
+                const measurePatterns = [
+                    { pattern: /(?:HP|haute pression)\s*[:\s=]*\s*(\d+(?:[.,]\d+)?)\s*(?:bars?|b)?/gi, label: 'HP', unite: 'bar' },
+                    { pattern: /(?:BP|basse pression)\s*[:\s=]*\s*(\d+(?:[.,]\d+)?)\s*(?:bars?|b)?/gi, label: 'BP', unite: 'bar' },
+                    { pattern: /(?:surchauffe|SC)\s*[:\s=]*\s*(\d+(?:[.,]\d+)?)\s*(?:°?[CK]|degrés?)?/gi, label: 'Surchauffe', unite: '°C' },
+                    { pattern: /(?:sous[- ]?refroidissement|SR)\s*[:\s=]*\s*(\d+(?:[.,]\d+)?)\s*(?:°?[CK]|degrés?)?/gi, label: 'Sous-refroidissement', unite: '°C' },
+                    { pattern: /(?:vide|tirage au vide|TAV)\s*[:\s=]*\s*(\d+(?:[.,]\d+)?)\s*(?:mbar|mb|Pa)?/gi, label: 'Vide', unite: 'mbar' },
+                    { pattern: /(?:temp(?:érature)?[.\s]*soufflage)\s*[:\s=]*\s*(\d+(?:[.,]\d+)?)\s*(?:°?[CK])?/gi, label: 'T° soufflage', unite: '°C' },
+                    { pattern: /(?:temp(?:érature)?[.\s]*reprise)\s*[:\s=]*\s*(\d+(?:[.,]\d+)?)\s*(?:°?[CK])?/gi, label: 'T° reprise', unite: '°C' }
+                ];
+                const foundMeasures = [];
+                for (const { pattern, label, unite } of measurePatterns) {
+                    let match;
+                    while ((match = pattern.exec(allTextOriginal)) !== null) {
+                        const value = match[1].replace(',', '.');
+                        if (!foundMeasures.some(m => m.label === label)) {
+                            foundMeasures.push({ label, valeur: value, unite, status: 'ok' });
+                        }
+                    }
+                }
+                if (foundMeasures.length > 0) {
+                    partialData.mesures = foundMeasures;
+                }
+            }
+
+            // Detect fluide charge amounts
+            if (!partialData.fluide?.charge_totale) {
+                const chargeMatch = allTextOriginal.match(/(?:charge|recharge|appoint)\s*[:\s=]*\s*(\d+(?:[.,]\d+)?)\s*(?:kg|g)/i);
+                if (chargeMatch) {
+                    partialData.fluide = partialData.fluide || {};
+                    partialData.fluide.charge_totale = chargeMatch[1].replace(',', '.') + ' kg';
+                }
+            }
+
+            // Detect contact phone
+            if (!partialData.client?.telephone) {
+                const phoneMatch = allTextOriginal.match(/(?:0[1-9])[\s.-]?(?:\d{2}[\s.-]?){4}/);
+                if (phoneMatch) {
+                    partialData.client = partialData.client || {};
+                    partialData.client.telephone = phoneMatch[0].replace(/[\s.-]/g, ' ');
+                }
+            }
+
+            // Detect travaux from action verbs
+            if (!partialData.travaux_effectues || partialData.travaux_effectues.length === 0) {
+                const travauxPatterns = [
+                    /(?:j'ai|on a|nous avons)\s+(remplacé|changé|vérifié|testé|nettoyé|réparé|installé|configuré|ajusté|rechargé)[^.!?\n]{5,60}/gi,
+                    /(?:remplacement|vérification|nettoyage|réparation|installation|configuration|ajustement)\s+(?:de|du|des|d')\s+[^.!?\n]{3,50}/gi
+                ];
+                const foundTravaux = [];
+                for (const pattern of travauxPatterns) {
+                    let match;
+                    while ((match = pattern.exec(allTextOriginal)) !== null) {
+                        const travail = match[0].trim();
+                        if (travail.length > 10 && !foundTravaux.some(t => t.texte === travail)) {
+                            foundTravaux.push({ texte: travail, status: 'done' });
+                        }
+                    }
+                }
+                if (foundTravaux.length > 0) {
+                    partialData.travaux_effectues = foundTravaux;
+                }
+            }
+
+            // Detect serial number
+            if (!partialData.systeme?.serie) {
+                const seriePatterns = [
+                    /(?:série|serial|s\/n|n°\s*série)\s*[:\s=]*\s*([A-Z0-9]{6,20})/i,
+                    /\b([A-Z]{2,3}\d{6,12})\b/
+                ];
+                for (const pattern of seriePatterns) {
+                    const match = allTextOriginal.match(pattern);
+                    if (match) {
+                        partialData.systeme = partialData.systeme || {};
+                        partialData.systeme.serie = match[1].toUpperCase();
+                        break;
+                    }
+                }
+            }
+
             // Update the stored data and refresh preview
             lastReportData = partialData;
             updateDrawerPreview(partialData);
@@ -10581,112 +10728,162 @@ RÈGLES:
                             };
                         }
 
-                        // ═══ EXPLICIT FIELD MAPPING ═══
-                        // Map fluide (handle both nested and flat structures)
+                        // ═══════════════════════════════════════════════════════════════
+                        // COMPREHENSIVE FIELD MAPPING - Maps ALL fields from REPORT_DATA
+                        // ═══════════════════════════════════════════════════════════════
+
+                        // Helper function to safely map nested objects
+                        const mapNestedObject = (target, source, keys) => {
+                            if (!source) return;
+                            keys.forEach(key => {
+                                if (source[key] !== undefined && source[key] !== null && source[key] !== '') {
+                                    target[key] = source[key];
+                                }
+                            });
+                        };
+
+                        // ═══ 1. SIMPLE TOP-LEVEL FIELDS ═══
+                        const simpleFields = [
+                            'type_intervention', 'reference', 'resume', 'status', 'date',
+                            'remarques', 'rapport_technicien', 'observation_client'
+                        ];
+                        simpleFields.forEach(field => {
+                            if (extractedData[field] !== undefined && extractedData[field] !== null && extractedData[field] !== '') {
+                                lastReportData[field] = extractedData[field];
+                                console.log('📋 Field', field, 'mapped');
+                            }
+                        });
+
+                        // ═══ 2. CLIENT OBJECT ═══
+                        if (extractedData.client) {
+                            if (!lastReportData.client) lastReportData.client = {};
+                            mapNestedObject(lastReportData.client, extractedData.client, [
+                                'societe', 'contact', 'telephone', 'email', 'dossier', 'reference'
+                            ]);
+                            // Also map dossier to reference for drawer compatibility
+                            if (extractedData.client.dossier && !lastReportData.client.reference) {
+                                lastReportData.client.reference = extractedData.client.dossier;
+                            }
+                            console.log('📋 Client mapped:', Object.keys(lastReportData.client));
+                        }
+
+                        // ═══ 3. SITE OBJECT ═══
+                        if (extractedData.site) {
+                            if (!lastReportData.site) lastReportData.site = {};
+                            mapNestedObject(lastReportData.site, extractedData.site, [
+                                'adresse', 'ville', 'numero_affaire', 'batiment', 'acces'
+                            ]);
+                            console.log('📋 Site mapped:', Object.keys(lastReportData.site));
+                        }
+
+                        // ═══ 4. SYSTEME OBJECT ═══
+                        if (extractedData.systeme) {
+                            if (!lastReportData.systeme) lastReportData.systeme = {};
+                            mapNestedObject(lastReportData.systeme, extractedData.systeme, [
+                                'type', 'modele', 'serie', 'puissance', 'annee_installation', 'garantie'
+                            ]);
+                            console.log('📋 Systeme mapped:', Object.keys(lastReportData.systeme));
+                        }
+
+                        // ═══ 5. FLUIDE OBJECT ═══
                         if (extractedData.fluide) {
                             if (!lastReportData.fluide) lastReportData.fluide = {};
-                            if (extractedData.fluide.type) {
-                                lastReportData.fluide.type = extractedData.fluide.type;
-                                console.log('📋 Fluide type mapped:', extractedData.fluide.type);
-                            }
-                            if (extractedData.fluide.charge_totale) {
-                                lastReportData.fluide.charge_totale = extractedData.fluide.charge_totale;
-                                console.log('📋 Fluide charge_totale mapped:', extractedData.fluide.charge_totale);
-                            }
-                            if (extractedData.fluide.charge_initiale) {
-                                lastReportData.fluide.charge_initiale = extractedData.fluide.charge_initiale;
-                            }
-                            if (extractedData.fluide.type_huile) {
-                                lastReportData.fluide.type_huile = extractedData.fluide.type_huile;
-                            }
+                            mapNestedObject(lastReportData.fluide, extractedData.fluide, [
+                                'type', 'charge_initiale', 'charge_appoint', 'charge_totale', 'type_huile'
+                            ]);
+                            console.log('📋 Fluide mapped:', Object.keys(lastReportData.fluide));
                         }
-                        // Also handle flat fluide_type field
+                        // Also handle flat fluide_type field from older formats
                         if (extractedData.fluide_type) {
                             if (!lastReportData.fluide) lastReportData.fluide = {};
                             lastReportData.fluide.type = extractedData.fluide_type;
-                            console.log('📋 Flat fluide_type mapped:', extractedData.fluide_type);
                         }
 
-                        // Map adressage array
-                        if (extractedData.adressage && Array.isArray(extractedData.adressage)) {
-                            lastReportData.adressage = extractedData.adressage;
-                            console.log('📋 Adressage mapped:', lastReportData.adressage.length, 'units');
+                        // ═══ 6. DATES OBJECT ═══
+                        if (extractedData.dates) {
+                            if (!lastReportData.dates) lastReportData.dates = {};
+                            mapNestedObject(lastReportData.dates, extractedData.dates, [
+                                'debut_date', 'debut_heure', 'fin_date', 'fin_heure'
+                            ]);
+                            console.log('📋 Dates mapped:', Object.keys(lastReportData.dates));
                         }
 
-                        // Map remarques
-                        if (extractedData.remarques) {
-                            lastReportData.remarques = extractedData.remarques;
-                            console.log('📋 Remarques mapped');
+                        // ═══ 7. TECHNICIEN OBJECT ═══
+                        if (extractedData.technicien) {
+                            if (!lastReportData.technicien) lastReportData.technicien = {};
+                            mapNestedObject(lastReportData.technicien, extractedData.technicien, [
+                                'nom', 'entreprise', 'heure_arrivee', 'heure_depart', 'autres'
+                            ]);
+                            console.log('📋 Technicien mapped:', Object.keys(lastReportData.technicien));
                         }
 
-                        // Map rapport_technicien
-                        if (extractedData.rapport_technicien) {
-                            lastReportData.rapport_technicien = extractedData.rapport_technicien;
-                            console.log('📋 Rapport technicien mapped');
+                        // ═══ 8. SECURITE OBJECT ═══
+                        if (extractedData.securite) {
+                            if (!lastReportData.securite) lastReportData.securite = {};
+                            mapNestedObject(lastReportData.securite, extractedData.securite, [
+                                'etat', 'risques'
+                            ]);
+                            console.log('📋 Securite mapped:', Object.keys(lastReportData.securite));
                         }
 
-                        // Map systeme (handle nested)
-                        if (extractedData.systeme) {
-                            if (!lastReportData.systeme) lastReportData.systeme = {};
-                            Object.assign(lastReportData.systeme, extractedData.systeme);
-                            console.log('📋 Systeme mapped:', Object.keys(extractedData.systeme));
+                        // ═══ 9. FONCTIONNEMENT OBJECT ═══
+                        if (extractedData.fonctionnement) {
+                            if (!lastReportData.fonctionnement) lastReportData.fonctionnement = {};
+                            mapNestedObject(lastReportData.fonctionnement, extractedData.fonctionnement, [
+                                'heures_compresseur', 'nb_demarrages'
+                            ]);
+                            console.log('📋 Fonctionnement mapped:', Object.keys(lastReportData.fonctionnement));
                         }
 
-                        // Map client (handle nested)
-                        if (extractedData.client) {
-                            if (!lastReportData.client) lastReportData.client = {};
-                            Object.assign(lastReportData.client, extractedData.client);
-                            console.log('📋 Client mapped:', Object.keys(extractedData.client));
-                        }
-
-                        // Map site (handle nested)
-                        if (extractedData.site) {
-                            if (!lastReportData.site) lastReportData.site = {};
-                            Object.assign(lastReportData.site, extractedData.site);
-                            console.log('📋 Site mapped:', Object.keys(extractedData.site));
-                        }
-
-                        // Map codes_defaut
-                        if (extractedData.codes_defaut && Array.isArray(extractedData.codes_defaut)) {
-                            lastReportData.codes_defaut = extractedData.codes_defaut;
-                            console.log('📋 Codes défaut mapped:', lastReportData.codes_defaut.length);
-                        }
-
-                        // Map mesures
-                        if (extractedData.mesures && Array.isArray(extractedData.mesures)) {
-                            lastReportData.mesures = extractedData.mesures;
-                            console.log('📋 Mesures mapped:', lastReportData.mesures.length);
-                        }
-
-                        // Map travaux_effectues
-                        if (extractedData.travaux_effectues && Array.isArray(extractedData.travaux_effectues)) {
-                            lastReportData.travaux_effectues = extractedData.travaux_effectues;
-                            console.log('📋 Travaux effectués mapped:', lastReportData.travaux_effectues.length);
-                        }
-
-                        // Map travaux_prevoir
-                        if (extractedData.travaux_prevoir && Array.isArray(extractedData.travaux_prevoir)) {
-                            lastReportData.travaux_prevoir = extractedData.travaux_prevoir;
-                            console.log('📋 Travaux à prévoir mapped');
-                        }
-
-                        // Map resultat
+                        // ═══ 10. RESULTAT OBJECT ═══
                         if (extractedData.resultat) {
                             if (!lastReportData.resultat) lastReportData.resultat = {};
-                            Object.assign(lastReportData.resultat, extractedData.resultat);
-                            console.log('📋 Résultat mapped:', Object.keys(extractedData.resultat));
+                            mapNestedObject(lastReportData.resultat, extractedData.resultat, [
+                                'status', 'label', 'description'
+                            ]);
+                            console.log('📋 Resultat mapped:', Object.keys(lastReportData.resultat));
                         }
 
-                        // Map simple fields
-                        const simpleFields = ['type_intervention', 'reference', 'resume', 'status', 'date', 'reserves'];
-                        for (const field of simpleFields) {
-                            if (extractedData[field] !== undefined && extractedData[field] !== null) {
+                        // ═══ 11. SIGNATURES OBJECT ═══
+                        if (extractedData.signatures) {
+                            if (!lastReportData.signatures) lastReportData.signatures = {};
+                            mapNestedObject(lastReportData.signatures, extractedData.signatures, [
+                                'nom_client', 'nom_technicien'
+                            ]);
+                            console.log('📋 Signatures mapped');
+                        }
+
+                        // ═══ 12. ALL ARRAY FIELDS ═══
+                        const arrayFields = [
+                            'adressage', 'codes_defaut', 'mesures',
+                            'travaux_effectues', 'travaux_prevoir',
+                            'reserves', 'pieces', 'photos'
+                        ];
+                        arrayFields.forEach(field => {
+                            if (extractedData[field] && Array.isArray(extractedData[field]) && extractedData[field].length > 0) {
                                 lastReportData[field] = extractedData[field];
-                                console.log('📋 Field', field, 'mapped:', extractedData[field]);
+                                console.log('📋', field, 'mapped:', extractedData[field].length, 'items');
                             }
+                        });
+
+                        // ═══ 13. UNITES_INTERIEURES (alternative name for adressage) ═══
+                        if (extractedData.unites_interieures && Array.isArray(extractedData.unites_interieures) && extractedData.unites_interieures.length > 0) {
+                            // Map to adressage format for drawer compatibility
+                            if (!lastReportData.adressage) lastReportData.adressage = [];
+                            extractedData.unites_interieures.forEach(ui => {
+                                lastReportData.adressage.push({
+                                    ref_usine: ui.modele || '',
+                                    serie: ui.serie || '',
+                                    adresse: ui.adresse || '',
+                                    designation: ui.zone || '',
+                                    commentaire: ui.etat || '',
+                                    puissance: ui.puissance || ''
+                                });
+                            });
+                            console.log('📋 Unites interieures mapped to adressage:', lastReportData.adressage.length, 'items');
                         }
 
-                        // Also merge any remaining fields not explicitly handled
+                        // ═══ 14. CATCH-ALL: Merge any remaining fields ═══
                         mergeReportData(lastReportData, extractedData);
 
                         console.log('📊 Final lastReportData keys:', Object.keys(lastReportData));
