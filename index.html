@@ -7648,9 +7648,36 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                                     console.error('Error parsing OCR message:', e);
                                 }
                             } else {
-                                // Regular text message
-                                const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
-                                addMsg(chat.chat_type, role, content);
+                                // Check if this is a report message (AI response with report JSON)
+                                let reportRendered = false;
+
+                                if (role === 'ai' && chat.chat_type === 'assistant') {
+                                    // Try to detect report JSON in the message
+                                    const reportMatch = msg.content.match(/\{"type"\s*:\s*"report"\s*,\s*"data"\s*:\s*(\{[\s\S]*\})\s*\}/);
+                                    if (reportMatch) {
+                                        try {
+                                            const fullMatch = msg.content.match(/\{"type"\s*:\s*"report"[\s\S]*\}/);
+                                            if (fullMatch) {
+                                                const parsed = JSON.parse(fullMatch[0]);
+                                                if (parsed.type === 'report' && parsed.data) {
+                                                    // Render the report with nice HTML
+                                                    const reportHtml = renderReport(parsed.data);
+                                                    addMsg(chat.chat_type, 'ai', reportHtml);
+                                                    reportRendered = true;
+                                                    console.log('📊 [History] Rendered report from JSON');
+                                                }
+                                            }
+                                        } catch (e) {
+                                            console.warn('[History] Failed to parse report JSON:', e);
+                                        }
+                                    }
+                                }
+
+                                if (!reportRendered) {
+                                    // Regular text message
+                                    const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
+                                    addMsg(chat.chat_type, role, content);
+                                }
                             }
                             chatHistory[chat.chat_type].push({ role: msg.role, content: msg.content });
                             projectMessageCount++;
