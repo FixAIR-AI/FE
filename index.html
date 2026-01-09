@@ -11958,7 +11958,7 @@ RÈGLES:
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const photoData = e.target.result;
-                    addPhotoToReport(photoData, file.name.replace(/\.[^/.]+$/, ''));
+                    addPhotoToReportDirect(photoData, file.name.replace(/\.[^/.]+$/, ''));
                 };
                 reader.readAsDataURL(file);
             }
@@ -11987,21 +11987,21 @@ RÈGLES:
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const photoData = e.target.result;
-                    addPhotoToReport(photoData, file.name.replace(/\.[^/.]+$/, ''));
+                    addPhotoToReportDirect(photoData, file.name.replace(/\.[^/.]+$/, ''));
                 };
                 reader.readAsDataURL(file);
             }
         }
         
-        function addPhotoToReport(photoData, caption = 'Photo') {
+        function addPhotoToReportDirect(photoData, caption = 'Photo') {
             if (!window.reportPhotos) window.reportPhotos = [];
-            
+
             window.reportPhotos.push({
                 data: photoData,
                 caption: caption,
                 timestamp: new Date().toISOString()
             });
-            
+
             refreshReportPreview();
             initPhotoDragDrop();
             toast('Photo ajoutée');
