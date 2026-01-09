@@ -7442,15 +7442,22 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
             div.textContent = text;
             return div.innerHTML;
         }
-        // Escape for JavaScript string attributes (handles single quotes and Unicode apostrophes)
+        // Escape for JavaScript string attributes (handles quotes, newlines, and control characters)
         function escapeForJs(text) {
             if (!text) return '';
             return text
-                .replace(/\\/g, '\\\\')
-                .replace(/'/g, "\\'")
-                .replace(/"/g, '\\"')
-                .replace(/\u2019/g, "\\'")  // Right Single Quotation Mark (')
-                .replace(/\u2018/g, "\\'"); // Left Single Quotation Mark (')
+                .replace(/\\/g, '\\\\')           // Backslashes first
+                .replace(/'/g, "\\'")             // ASCII single quote
+                .replace(/"/g, '\\"')             // ASCII double quote
+                .replace(/`/g, '\\`')             // Backtick
+                .replace(/\u2019/g, "\\'")        // Right single quote U+2019
+                .replace(/\u2018/g, "\\'")        // Left single quote U+2018
+                .replace(/\u201C/g, '\\"')        // Left double quote U+201C
+                .replace(/\u201D/g, '\\"')        // Right double quote U+201D
+                .replace(/\n/g, ' ')              // Newline to space
+                .replace(/\r/g, '')               // Remove carriage return
+                .replace(/\t/g, ' ')              // Tab to space
+                .replace(/[\x00-\x1F\x7F]/g, ''); // Remove other control characters
         }
         // Load a specific project (FIXED: uses separate queries for reliability)
         async function loadProject(projectId) {
