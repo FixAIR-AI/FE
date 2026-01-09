@@ -8878,24 +8878,35 @@ INSTRUCTIONS:
         
         // Update the drawer preview with report data
         function updateDrawerPreview(data) {
+            console.log('🎯 updateDrawerPreview called with data:', data ? Object.keys(data) : 'null');
+
             const emptyState = document.getElementById('reportPreviewEmpty');
             const previewContent = document.getElementById('reportPreviewContent');
             const headerProgress = document.getElementById('reportHeaderProgress');
             const progressFill = document.getElementById('reportProgressFill');
             const progressText = document.getElementById('reportProgressText');
-            
-            if (!previewContent) return;
-            
+
+            if (!previewContent) {
+                console.error('❌ reportPreviewContent element not found!');
+                return;
+            }
+
             // Always hide empty state - we show editable template instead
             if (emptyState) emptyState.style.display = 'none';
             previewContent.style.display = 'block';
-            
+
             // Use provided data or empty object
             const reportData = data || {};
-            
+
+            // Debug: Log key fields that should be displayed
+            console.log('🎯 Fluide in data:', reportData.fluide);
+            console.log('🎯 Adressage in data:', reportData.adressage?.length, 'items');
+            console.log('🎯 Remarques in data:', reportData.remarques ? 'yes' : 'no');
+            console.log('🎯 Rapport technicien in data:', reportData.rapport_technicien ? 'yes' : 'no');
+
             // Calculate completion percentage
             const completionStatus = calculateReportCompletion(reportData);
-            
+
             // Update header progress bar
             if (headerProgress && progressFill && progressText) {
                 if (completionStatus.percentage > 0) {
@@ -8908,15 +8919,16 @@ INSTRUCTIONS:
                     progressText.textContent = '0%';
                 }
             }
-            
+
             // Generate editable template HTML
             const previewHtml = renderReportPreview(reportData, completionStatus);
             previewContent.innerHTML = previewHtml;
-            
+
             // Attach event listeners for editable fields
             initEditableReport();
-            
+
             console.log('📋 Drawer preview updated - Completion:', completionStatus.percentage + '%');
+            console.log('📋 Filled fields:', completionStatus.filledFields?.join(', ') || 'none');
         }
         
         // Calculate report completion for manager visibility
@@ -9265,16 +9277,18 @@ INSTRUCTIONS:
         // Merge incoming data into existing report data
         function mergeReportData(target, source) {
             if (!source) return;
-            
+
+            console.log('🔄 mergeReportData called with source keys:', Object.keys(source));
+
             for (const [key, value] of Object.entries(source)) {
                 if (value === null || value === undefined || value === '') continue;
-                
+
                 if (Array.isArray(value)) {
-                    // For arrays, append new items
-                    if (!target[key]) target[key] = [];
-                    if (Array.isArray(target[key])) {
-                        // Avoid duplicates for codes_defaut
-                        if (key === 'codes_defaut') {
+                    // For arrays from AI response, replace the target array entirely
+                    // This ensures we get the latest data structure
+                    if (value.length > 0) {
+                        // Special handling for codes_defaut - merge to avoid duplicates
+                        if (key === 'codes_defaut' && Array.isArray(target[key])) {
                             const existingCodes = new Set(target[key].map(c => c.code));
                             for (const item of value) {
                                 if (!existingCodes.has(item.code)) {
@@ -9282,20 +9296,24 @@ INSTRUCTIONS:
                                 }
                             }
                         } else {
-                            target[key].push(...value);
+                            // Replace array entirely with new data
+                            target[key] = value;
                         }
+                        console.log('🔄 Array', key, 'set with', value.length, 'items');
                     }
                 } else if (typeof value === 'object') {
                     // For nested objects, merge recursively
                     if (!target[key]) target[key] = {};
                     mergeReportData(target[key], value);
                 } else {
-                    // For primitives, only overwrite if target is empty
-                    if (!target[key]) {
-                        target[key] = value;
-                    }
+                    // For primitives, ALWAYS update with new value from AI
+                    // (Previous behavior only updated if empty, which was wrong)
+                    target[key] = value;
+                    console.log('🔄 Field', key, 'set to:', value);
                 }
             }
+
+            console.log('🔄 Merged report data. Target keys:', Object.keys(target));
         }
         
         // Render EDITABLE report template for drawer
@@ -10482,15 +10500,26 @@ RÈGLES:
                 if (panel === 'assistant') {
                     let extractedData = null;
 
+                    // Debug logging for extraction
+                    console.log('🔍 Raw AI response length:', aiResponse.length);
+                    console.log('🔍 Looking for REPORT_DATA...');
+
                     // FORMAT 1: [REPORT_DATA]...[/REPORT_DATA] tags
                     const reportDataMatch = aiResponse.match(/\[REPORT_DATA\]([\s\S]*?)\[\/REPORT_DATA\]/);
                     if (reportDataMatch) {
+                        console.log('✅ Found REPORT_DATA block');
                         try {
                             extractedData = JSON.parse(reportDataMatch[1].trim());
                             console.log('📊 Extracted from REPORT_DATA tags');
+                            console.log('📊 Parsed data keys:', Object.keys(extractedData));
+                            console.log('📊 Fluide:', extractedData.fluide);
+                            console.log('📊 Adressage count:', extractedData.adressage?.length);
                         } catch (e) {
+                            console.error('❌ JSON parse error:', e);
                             console.warn('Failed to parse REPORT_DATA:', e);
                         }
+                    } else {
+                        console.log('❌ No REPORT_DATA block found in format 1');
                     }
 
                     // FORMAT 2: {"type":"report","data":{...}} - Full JSON object
@@ -10550,7 +10579,118 @@ RÈGLES:
                             };
                         }
 
+                        // ═══ EXPLICIT FIELD MAPPING ═══
+                        // Map fluide (handle both nested and flat structures)
+                        if (extractedData.fluide) {
+                            if (!lastReportData.fluide) lastReportData.fluide = {};
+                            if (extractedData.fluide.type) {
+                                lastReportData.fluide.type = extractedData.fluide.type;
+                                console.log('📋 Fluide type mapped:', extractedData.fluide.type);
+                            }
+                            if (extractedData.fluide.charge_totale) {
+                                lastReportData.fluide.charge_totale = extractedData.fluide.charge_totale;
+                                console.log('📋 Fluide charge_totale mapped:', extractedData.fluide.charge_totale);
+                            }
+                            if (extractedData.fluide.charge_initiale) {
+                                lastReportData.fluide.charge_initiale = extractedData.fluide.charge_initiale;
+                            }
+                            if (extractedData.fluide.type_huile) {
+                                lastReportData.fluide.type_huile = extractedData.fluide.type_huile;
+                            }
+                        }
+                        // Also handle flat fluide_type field
+                        if (extractedData.fluide_type) {
+                            if (!lastReportData.fluide) lastReportData.fluide = {};
+                            lastReportData.fluide.type = extractedData.fluide_type;
+                            console.log('📋 Flat fluide_type mapped:', extractedData.fluide_type);
+                        }
+
+                        // Map adressage array
+                        if (extractedData.adressage && Array.isArray(extractedData.adressage)) {
+                            lastReportData.adressage = extractedData.adressage;
+                            console.log('📋 Adressage mapped:', lastReportData.adressage.length, 'units');
+                        }
+
+                        // Map remarques
+                        if (extractedData.remarques) {
+                            lastReportData.remarques = extractedData.remarques;
+                            console.log('📋 Remarques mapped');
+                        }
+
+                        // Map rapport_technicien
+                        if (extractedData.rapport_technicien) {
+                            lastReportData.rapport_technicien = extractedData.rapport_technicien;
+                            console.log('📋 Rapport technicien mapped');
+                        }
+
+                        // Map systeme (handle nested)
+                        if (extractedData.systeme) {
+                            if (!lastReportData.systeme) lastReportData.systeme = {};
+                            Object.assign(lastReportData.systeme, extractedData.systeme);
+                            console.log('📋 Systeme mapped:', Object.keys(extractedData.systeme));
+                        }
+
+                        // Map client (handle nested)
+                        if (extractedData.client) {
+                            if (!lastReportData.client) lastReportData.client = {};
+                            Object.assign(lastReportData.client, extractedData.client);
+                            console.log('📋 Client mapped:', Object.keys(extractedData.client));
+                        }
+
+                        // Map site (handle nested)
+                        if (extractedData.site) {
+                            if (!lastReportData.site) lastReportData.site = {};
+                            Object.assign(lastReportData.site, extractedData.site);
+                            console.log('📋 Site mapped:', Object.keys(extractedData.site));
+                        }
+
+                        // Map codes_defaut
+                        if (extractedData.codes_defaut && Array.isArray(extractedData.codes_defaut)) {
+                            lastReportData.codes_defaut = extractedData.codes_defaut;
+                            console.log('📋 Codes défaut mapped:', lastReportData.codes_defaut.length);
+                        }
+
+                        // Map mesures
+                        if (extractedData.mesures && Array.isArray(extractedData.mesures)) {
+                            lastReportData.mesures = extractedData.mesures;
+                            console.log('📋 Mesures mapped:', lastReportData.mesures.length);
+                        }
+
+                        // Map travaux_effectues
+                        if (extractedData.travaux_effectues && Array.isArray(extractedData.travaux_effectues)) {
+                            lastReportData.travaux_effectues = extractedData.travaux_effectues;
+                            console.log('📋 Travaux effectués mapped:', lastReportData.travaux_effectues.length);
+                        }
+
+                        // Map travaux_prevoir
+                        if (extractedData.travaux_prevoir && Array.isArray(extractedData.travaux_prevoir)) {
+                            lastReportData.travaux_prevoir = extractedData.travaux_prevoir;
+                            console.log('📋 Travaux à prévoir mapped');
+                        }
+
+                        // Map resultat
+                        if (extractedData.resultat) {
+                            if (!lastReportData.resultat) lastReportData.resultat = {};
+                            Object.assign(lastReportData.resultat, extractedData.resultat);
+                            console.log('📋 Résultat mapped:', Object.keys(extractedData.resultat));
+                        }
+
+                        // Map simple fields
+                        const simpleFields = ['type_intervention', 'reference', 'resume', 'status', 'date', 'reserves'];
+                        for (const field of simpleFields) {
+                            if (extractedData[field] !== undefined && extractedData[field] !== null) {
+                                lastReportData[field] = extractedData[field];
+                                console.log('📋 Field', field, 'mapped:', extractedData[field]);
+                            }
+                        }
+
+                        // Also merge any remaining fields not explicitly handled
                         mergeReportData(lastReportData, extractedData);
+
+                        console.log('📊 Final lastReportData keys:', Object.keys(lastReportData));
+                        console.log('📊 Final fluide:', lastReportData.fluide);
+                        console.log('📊 Final adressage count:', lastReportData.adressage?.length);
+
                         updateDrawerPreview(lastReportData);
 
                         console.log('✅ Drawer updated successfully');
