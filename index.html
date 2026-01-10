@@ -7648,47 +7648,9 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                                     console.error('Error parsing OCR message:', e);
                                 }
                             } else {
-                                // Check if this is a report message (AI response with report JSON)
-                                let reportRendered = false;
-
-                                if (role === 'ai' && chat.chat_type === 'assistant') {
-                                    // Try to detect report JSON in the message
-                                    const reportStart = msg.content.indexOf('{"type":"report"');
-                                    if (reportStart !== -1) {
-                                        try {
-                                            // Extract JSON by counting braces (handles nested objects correctly)
-                                            let braceCount = 0;
-                                            let jsonEnd = -1;
-                                            for (let i = reportStart; i < msg.content.length; i++) {
-                                                if (msg.content[i] === '{') braceCount++;
-                                                if (msg.content[i] === '}') braceCount--;
-                                                if (braceCount === 0) {
-                                                    jsonEnd = i + 1;
-                                                    break;
-                                                }
-                                            }
-
-                                            if (jsonEnd > reportStart) {
-                                                const jsonStr = msg.content.substring(reportStart, jsonEnd);
-                                                const parsed = JSON.parse(jsonStr);
-                                                if (parsed.type === 'report' && parsed.data) {
-                                                    const reportHtml = renderReport(parsed.data);
-                                                    addMsg(chat.chat_type, 'ai', reportHtml);
-                                                    reportRendered = true;
-                                                    console.log('[History] Rendered report successfully');
-                                                }
-                                            }
-                                        } catch (e) {
-                                            console.log('[History] Failed to parse report JSON:', e);
-                                        }
-                                    }
-                                }
-
-                                if (!reportRendered) {
-                                    // Regular text message
-                                    const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
-                                    addMsg(chat.chat_type, role, content);
-                                }
+                                // Regular text message
+                                const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
+                                addMsg(chat.chat_type, role, content);
                             }
                             chatHistory[chat.chat_type].push({ role: msg.role, content: msg.content });
                             projectMessageCount++;
@@ -10013,6 +9975,12 @@ INSTRUCTIONS:
             // ═══ CHECK FOR JSON REPORT ═══
             // If the AI returns structured JSON, use the beautiful template
             let trimmed = text.trim();
+            
+            // ═══ CRITICAL FIX: Remove [REPORT_DATA] block before parsing ═══
+            // The AI generates BOTH a JSON report AND a [REPORT_DATA] block for the drawer
+            // The [REPORT_DATA] block was preventing JSON parsing after page reload
+            // We must strip it to properly parse and render the HTML report
+            trimmed = trimmed.replace(/\[REPORT_DATA\][\s\S]*?\[\/REPORT_DATA\]/g, '').trim();
             
             // Check if JSON is wrapped in markdown code block
             // Pattern handles: ```json, ``` json, ```\njson, ``` \n json, etc.
