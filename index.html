@@ -3107,6 +3107,48 @@
             min-width: 40px;
         }
         
+        /* Check-list grid for boolean items */
+        .rpt-checklist-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            background: rgba(255,255,255,0.03);
+        }
+        .checklist-item .check-icon {
+            font-weight: bold;
+            width: 16px;
+            text-align: center;
+        }
+        .checklist-item.check-ok {
+            color: #4ade80;
+        }
+        .checklist-item.check-ok .check-icon {
+            color: #22c55e;
+        }
+        .checklist-item.check-nok {
+            color: #f87171;
+        }
+        .checklist-item.check-nok .check-icon {
+            color: #ef4444;
+        }
+        .checklist-item.check-na {
+            color: rgba(255,255,255,0.4);
+        }
+        @media (max-width: 500px) {
+            .rpt-checklist-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
         /* Code defaut item */
         .rpt-code-item {
             display: flex;
@@ -7442,16 +7484,10 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
             div.textContent = text;
             return div.innerHTML;
         }
-        // Escape for JavaScript string attributes (handles single quotes, newlines, etc.)
+        // Escape for JavaScript string attributes (handles single quotes)
         function escapeForJs(text) {
-            if (!text) return '';
-            return text
-                .replace(/\\/g, '\\\\')    // Escape backslashes first
-                .replace(/'/g, "\\'")       // Escape single quotes
-                .replace(/"/g, '\\"')       // Escape double quotes
-                .replace(/\n/g, '\\n')      // Escape newlines (CRITICAL for OCR titles)
-                .replace(/\r/g, '\\r')      // Escape carriage returns
-                .replace(/\t/g, '\\t');     // Escape tabs
+        if (!text) return '';
+        return text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
         }
         // Load a specific project (FIXED: uses separate queries for reliability)
         async function loadProject(projectId) {
@@ -9499,6 +9535,53 @@ INSTRUCTIONS:
             html += `</div>`;
             html += `</div></div>`;
             
+            // Tests & Validation (MES)
+            if (reportData.tests && Object.values(reportData.tests).some(v => v !== null && v !== '')) {
+                html += `<div class="rpt-section"><div class="rpt-label">Tests & Validation</div>`;
+                html += `<div class="rpt-grid">`;
+                html += `<div class="rpt-group">`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Pression test</span><span class="rpt-row-value">${editableNested('tests', 'pression_test_bar', reportData.tests?.pression_test_bar || '', 'bar')}</span></div>`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Durée test</span><span class="rpt-row-value">${editableNested('tests', 'duree_test_heures', reportData.tests?.duree_test_heures || '', 'heures')}</span></div>`;
+                html += `</div>`;
+                html += `<div class="rpt-group">`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Vacuomètre</span><span class="rpt-row-value">${editableNested('tests', 'valeur_vacuometre_mbar', reportData.tests?.valeur_vacuometre_mbar || '', 'mbar')}</span></div>`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Tirage au vide</span><span class="rpt-row-value">${styledSelect('tests.tirage_vide_ok', reportData.tests?.tirage_vide_ok === true ? 'oui' : reportData.tests?.tirage_vide_ok === false ? 'non' : '', ['oui', 'non'], 'OK?')}</span></div>`;
+                html += `</div>`;
+                html += `</div></div>`;
+            }
+            
+            // Tuyauteries (si données présentes)
+            if (reportData.tuyauteries && Object.values(reportData.tuyauteries).some(v => v !== null && v !== '' && v !== undefined)) {
+                html += `<div class="rpt-section"><div class="rpt-label">Longueurs tuyauteries</div>`;
+                html += `<div class="rpt-grid">`;
+                html += `<div class="rpt-group">`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Longueur totale</span><span class="rpt-row-value">${editableNested('tuyauteries', 'longueur_totale_m', reportData.tuyauteries?.longueur_totale_m || '', 'm')}</span></div>`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">UE → UI max</span><span class="rpt-row-value">${editableNested('tuyauteries', 'longueur_oc_ui_max_m', reportData.tuyauteries?.longueur_oc_ui_max_m || '', 'm')}</span></div>`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">1er Té → UI max</span><span class="rpt-row-value">${editableNested('tuyauteries', 'longueur_te_ui_max_m', reportData.tuyauteries?.longueur_te_ui_max_m || '', 'm')}</span></div>`;
+                html += `</div>`;
+                html += `<div class="rpt-group">`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Dénivelé UE-UI</span><span class="rpt-row-value">${editableNested('tuyauteries', 'denivele_oc_ui_m', reportData.tuyauteries?.denivele_oc_ui_m || '', 'm')}</span></div>`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Dénivelé UI-UI</span><span class="rpt-row-value">${editableNested('tuyauteries', 'denivele_ui_ui_m', reportData.tuyauteries?.denivele_ui_ui_m || '', 'm')}</span></div>`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Appoint calculé</span><span class="rpt-row-value">${editableNested('tuyauteries', 'appoint_calcule_kg', reportData.tuyauteries?.appoint_calcule_kg || '', 'kg')}</span></div>`;
+                html += `</div>`;
+                html += `</div></div>`;
+            }
+            
+            // Hydraulique (si données présentes)
+            if (reportData.hydraulique && Object.values(reportData.hydraulique).some(v => v !== null && v !== '' && v !== undefined)) {
+                html += `<div class="rpt-section"><div class="rpt-label">Hydraulique</div>`;
+                html += `<div class="rpt-grid">`;
+                html += `<div class="rpt-group">`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Filtre à eau</span><span class="rpt-row-value">${styledSelect('hydraulique.filtre_eau', reportData.hydraulique?.filtre_eau === true ? 'oui' : reportData.hydraulique?.filtre_eau === false ? 'non' : '', ['oui', 'non'], 'Présent?')}</span></div>`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Volume eau</span><span class="rpt-row-value">${editableNested('hydraulique', 'volume_eau_litres', reportData.hydraulique?.volume_eau_litres || '', 'L')}</span></div>`;
+                html += `</div>`;
+                html += `<div class="rpt-group">`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Débit</span><span class="rpt-row-value">${editableNested('hydraulique', 'debit_m3h', reportData.hydraulique?.debit_m3h || '', 'm³/h')}</span></div>`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Antigel</span><span class="rpt-row-value">${editableNested('hydraulique', 'type_antigel', reportData.hydraulique?.type_antigel || '', 'Type %')}</span></div>`;
+                html += `</div>`;
+                html += `</div></div>`;
+            }
+            
             // Adressage système (table)
             html += `<div class="rpt-section">
                 <div class="rpt-label">Adressage du système <button class="add-item-btn" onclick="addReportListItem('adressage')">+</button></div>
@@ -9593,6 +9676,72 @@ INSTRUCTIONS:
             html += `<div class="rpt-row"><span class="rpt-row-label">Heures compresseur</span><span class="rpt-row-value">${editableNested('fonctionnement', 'heures_compresseur', reportData.fonctionnement?.heures_compresseur || '', 'heures')}</span></div>`;
             html += `<div class="rpt-row"><span class="rpt-row-label">Nb démarrages</span><span class="rpt-row-value">${editableNested('fonctionnement', 'nb_demarrages', reportData.fonctionnement?.nb_demarrages || '', 'cycles')}</span></div>`;
             html += `</div></div>`;
+            
+            // Mesures électriques (si données présentes)
+            if (reportData.electrique && Object.values(reportData.electrique).some(v => v !== null && v !== '' && v !== undefined)) {
+                html += `<div class="rpt-section"><div class="rpt-label">Mesures électriques</div>`;
+                html += `<div class="rpt-grid">`;
+                html += `<div class="rpt-group">`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Disjoncteur</span><span class="rpt-row-value">${editableNested('electrique', 'calibre_disjoncteur', reportData.electrique?.calibre_disjoncteur || '', 'Ex: C50')}</span></div>`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Section câble</span><span class="rpt-row-value">${editableNested('electrique', 'section_cable', reportData.electrique?.section_cable || '', 'Ex: 5G10²')}</span></div>`;
+                html += `</div>`;
+                html += `<div class="rpt-group">`;
+                if (reportData.electrique?.tensions_avant) {
+                    html += `<div class="rpt-row"><span class="rpt-row-label">L1-L2</span><span class="rpt-row-value">${editableNested('electrique.tensions_avant', 'l1_l2', reportData.electrique?.tensions_avant?.l1_l2 || '', 'V')}</span></div>`;
+                    html += `<div class="rpt-row"><span class="rpt-row-label">L2-L3</span><span class="rpt-row-value">${editableNested('electrique.tensions_avant', 'l2_l3', reportData.electrique?.tensions_avant?.l2_l3 || '', 'V')}</span></div>`;
+                }
+                html += `</div>`;
+                html += `</div></div>`;
+            }
+            
+            // Relevés UE (si données présentes)
+            if (reportData.releves_ue && Object.values(reportData.releves_ue).some(v => v !== null && v !== '' && v !== undefined)) {
+                html += `<div class="rpt-section"><div class="rpt-label">Relevés Unité Extérieure</div>`;
+                html += `<div class="rpt-grid">`;
+                html += `<div class="rpt-group">`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Mode</span><span class="rpt-row-value">${styledSelect('releves_ue.mode', reportData.releves_ue?.mode, ['froid', 'chaud'], 'Mode')}</span></div>`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">HP (Pd1)</span><span class="rpt-row-value">${editableNested('releves_ue', 'pd1_bar', reportData.releves_ue?.pd1_bar || '', 'bar')}</span></div>`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">BP (Ps)</span><span class="rpt-row-value">${editableNested('releves_ue', 'ps_bar', reportData.releves_ue?.ps_bar || '', 'bar')}</span></div>`;
+                html += `</div>`;
+                html += `<div class="rpt-group">`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">T° ext (TA)</span><span class="rpt-row-value">${editableNested('releves_ue', 'ta_celsius', reportData.releves_ue?.ta_celsius || '', '°C')}</span></div>`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Fréq INV1</span><span class="rpt-row-value">${editableNested('releves_ue', 'freq_inv1_hz', reportData.releves_ue?.freq_inv1_hz || '', 'Hz')}</span></div>`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Fréq INV2</span><span class="rpt-row-value">${editableNested('releves_ue', 'freq_inv2_hz', reportData.releves_ue?.freq_inv2_hz || '', 'Hz')}</span></div>`;
+                html += `</div>`;
+                html += `</div></div>`;
+            }
+            
+            // Relevés UI (tableau si données présentes)
+            if (reportData.releves_ui && reportData.releves_ui.length > 0) {
+                html += `<div class="rpt-section">
+                    <div class="rpt-label">Relevés Unités Intérieures</div>
+                    <div class="rpt-table-wrapper">
+                        <table class="rpt-table">
+                            <thead>
+                                <tr>
+                                    <th>Emplacement</th>
+                                    <th>Adr</th>
+                                    <th>TA</th>
+                                    <th>TC1</th>
+                                    <th>TC2</th>
+                                    <th>PMV</th>
+                                    <th>Souffl.</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                reportData.releves_ui.forEach((ui, i) => {
+                    html += `<tr>
+                        <td><span class="editable-field" contenteditable="true" data-field="releves_ui.${i}.emplacement">${ui.emplacement || ''}</span></td>
+                        <td><span class="editable-field" contenteditable="true" data-field="releves_ui.${i}.adresse">${ui.adresse || ''}</span></td>
+                        <td><span class="editable-field" contenteditable="true" data-field="releves_ui.${i}.ta_celsius">${ui.ta_celsius || ''}</span></td>
+                        <td><span class="editable-field" contenteditable="true" data-field="releves_ui.${i}.tc1_celsius">${ui.tc1_celsius || ''}</span></td>
+                        <td><span class="editable-field" contenteditable="true" data-field="releves_ui.${i}.tc2_celsius">${ui.tc2_celsius || ''}</span></td>
+                        <td><span class="editable-field" contenteditable="true" data-field="releves_ui.${i}.pmv">${ui.pmv || ''}</span></td>
+                        <td><span class="editable-field" contenteditable="true" data-field="releves_ui.${i}.t_soufflage_celsius">${ui.t_soufflage_celsius || ''}</span></td>
+                    </tr>`;
+                });
+                html += `</tbody></table></div></div>`;
+            }
             
             // ═══════════════════════════════════════════════════════════════
             // SECTION 6: TRAVAUX EFFECTUÉS & À PRÉVOIR
@@ -9768,6 +9917,124 @@ INSTRUCTIONS:
             html += `<div class="rpt-section"><div class="rpt-label">Observation(s) Client</div>`;
             html += editableField('observation_client', reportData.observation_client || '', 'Observations du client...', true);
             html += `</div>`;
+            
+            // Check-list Pré-MES (si données présentes)
+            if (reportData.checklist && Object.values(reportData.checklist).some(v => v === true || v === false)) {
+                html += `<div class="rpt-section"><div class="rpt-label">Check-list Pré-mise en service</div>`;
+                html += `<div class="rpt-checklist-grid">`;
+                const checklistItems = [
+                    { key: 'synoptique_conforme', label: 'Synoptique conforme' },
+                    { key: 'supports_fixes', label: 'Supports fixés' },
+                    { key: 'derivations_horizontales', label: 'Dérivations horizontales' },
+                    { key: 'liaisons_calorifugees', label: 'Liaisons calorifugées' },
+                    { key: 'brasures_azote', label: 'Brasures sous azote' },
+                    { key: 'test_pression_40bar_24h', label: 'Test pression 40 bar 24h' },
+                    { key: 'pompe_vide_arrivee', label: 'Pompe à vide à l\'arrivée' },
+                    { key: 'bus_blinde_terre', label: 'Bus blindé à la terre' },
+                    { key: 'polarite_bus', label: 'Polarité bus respectée' },
+                    { key: 'disjoncteur_ue', label: 'Disjoncteur par UE' },
+                    { key: 'disjoncteur_ui', label: 'Disjoncteur par UI' },
+                    { key: 'ui_niveau', label: 'UI de niveau' },
+                    { key: 'ue_anti_vibratiles', label: 'UE sur anti-vibratiles' },
+                    { key: 'espaces_ue', label: 'Espaces UE respectés' }
+                ];
+                checklistItems.forEach(item => {
+                    const val = reportData.checklist?.[item.key];
+                    const statusClass = val === true ? 'check-ok' : val === false ? 'check-nok' : 'check-na';
+                    const statusIcon = val === true ? '✓' : val === false ? '✗' : '—';
+                    html += `<div class="checklist-item ${statusClass}"><span class="check-icon">${statusIcon}</span><span>${item.label}</span></div>`;
+                });
+                html += `</div></div>`;
+            }
+            
+            // Préconisations Mitsubishi (si données présentes)
+            if (reportData.preconisations && Object.values(reportData.preconisations).some(v => v === true || v === false)) {
+                html += `<div class="rpt-section"><div class="rpt-label">Préconisations constructeur</div>`;
+                html += `<div class="rpt-checklist-grid">`;
+                const precoItems = [
+                    { key: 'presence_installateur', label: '01. Présence installateur' },
+                    { key: 'acces_site_securite', label: '02. Accès site / sécurité' },
+                    { key: 'tension_presente', label: '03. Tension présente' },
+                    { key: 'installation_au_vide', label: '04. Installation au vide' },
+                    { key: 'tes_raccords_ok', label: '05. Tés et raccords OK' },
+                    { key: 'longueurs_deniveles_ok', label: '06. Longueurs/dénivelés OK' },
+                    { key: 'distance_te_ui_40m', label: '07. Distance Té-UI < 40m' },
+                    { key: 'tests_etancheite', label: '08. Tests étanchéité' },
+                    { key: 'brasures_azote', label: '09. Brasures sous azote' },
+                    { key: 'cable_disjoncteur', label: '10. Câble/disjoncteur' },
+                    { key: 'cable_bus_com', label: '11. Câble bus communication' },
+                    { key: 'groupe_local_technique', label: '12. Groupe en local technique' }
+                ];
+                precoItems.forEach(item => {
+                    const val = reportData.preconisations?.[item.key];
+                    const statusClass = val === true ? 'check-ok' : val === false ? 'check-nok' : 'check-na';
+                    const statusIcon = val === true ? '✓' : val === false ? '✗' : '—';
+                    html += `<div class="checklist-item ${statusClass}"><span class="check-icon">${statusIcon}</span><span>${item.label}</span></div>`;
+                });
+                html += `</div></div>`;
+            }
+            
+            // EH&S - Environnement Santé Sécurité (si données présentes)
+            if (reportData.ehs && Object.values(reportData.ehs).some(v => v !== null && v !== '' && v !== undefined)) {
+                html += `<div class="rpt-section"><div class="rpt-label">EH&S - Sécurité intervention</div>`;
+                html += `<div class="rpt-grid">`;
+                html += `<div class="rpt-group">`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Accès sécurisé</span><span class="rpt-row-value">${styledSelect('ehs.acces_securise', reportData.ehs?.acces_securise === true ? 'oui' : reportData.ehs?.acces_securise === false ? 'non' : '', ['oui', 'non'], '?')}</span></div>`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Risques mortels ID</span><span class="rpt-row-value">${styledSelect('ehs.risques_mortels_identifies', reportData.ehs?.risques_mortels_identifies === true ? 'oui' : reportData.ehs?.risques_mortels_identifies === false ? 'non' : '', ['oui', 'non'], '?')}</span></div>`;
+                html += `</div>`;
+                html += `<div class="rpt-group">`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">N° urgence</span><span class="rpt-row-value">${editableNested('ehs', 'numero_urgence', reportData.ehs?.numero_urgence || '', 'N° tél')}</span></div>`;
+                html += `</div>`;
+                html += `</div>`;
+                if (reportData.ehs?.risques_specifiques && reportData.ehs.risques_specifiques.length > 0) {
+                    html += `<div class="rpt-row" style="margin-top:8px;"><span class="rpt-row-label">Risques spécifiques</span><span class="rpt-row-value">${reportData.ehs.risques_specifiques.join(', ')}</span></div>`;
+                }
+                html += `</div>`;
+            }
+            
+            // Garantie (si données présentes)
+            if (reportData.garantie && Object.values(reportData.garantie).some(v => v !== null && v !== '')) {
+                html += `<div class="rpt-section"><div class="rpt-label">Dates de garantie</div>`;
+                html += `<div class="rpt-grid">`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Fin garantie pièces</span><span class="rpt-row-value">${editableNested('garantie', 'fin_garantie_pieces', reportData.garantie?.fin_garantie_pieces || '', 'JJ/MM/AAAA')}</span></div>`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Fin garantie compresseur</span><span class="rpt-row-value">${editableNested('garantie', 'fin_garantie_compresseur', reportData.garantie?.fin_garantie_compresseur || '', 'JJ/MM/AAAA')}</span></div>`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Fin garantie MO</span><span class="rpt-row-value">${editableNested('garantie', 'fin_garantie_main_oeuvre', reportData.garantie?.fin_garantie_main_oeuvre || '', 'JJ/MM/AAAA')}</span></div>`;
+                html += `</div></div>`;
+            }
+            
+            // CERFA - Fiche manipulation fluides (si données présentes)
+            if (reportData.cerfa && Object.values(reportData.cerfa).some(v => v !== null && v !== '' && v !== undefined)) {
+                html += `<div class="rpt-section"><div class="rpt-label section-header">Fiche CERFA - Manipulation fluides</div>`;
+                html += `<div class="rpt-grid">`;
+                html += `<div class="rpt-group">`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">N° Fiche</span><span class="rpt-row-value">${editableNested('cerfa', 'numero_fiche', reportData.cerfa?.numero_fiche || '', 'N° fiche')}</span></div>`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Attestation capacité</span><span class="rpt-row-value">${editableNested('cerfa', 'attestation_capacite', reportData.cerfa?.attestation_capacite || '', 'N° attestation')}</span></div>`;
+                html += `</div>`;
+                html += `<div class="rpt-group">`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Tonnage éq. CO2</span><span class="rpt-row-value">${editableNested('cerfa', 'tonnage_co2_eq', reportData.cerfa?.tonnage_co2_eq || '', 't.éq.CO2')}</span></div>`;
+                html += `</div>`;
+                html += `</div>`;
+                html += `<div class="rpt-grid" style="margin-top:12px;">`;
+                html += `<div class="rpt-group">`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Fluide chargé (vierge)</span><span class="rpt-row-value">${editableNested('cerfa', 'fluide_charge_vierge_kg', reportData.cerfa?.fluide_charge_vierge_kg || '', 'kg')}</span></div>`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Fluide chargé (recyclé)</span><span class="rpt-row-value">${editableNested('cerfa', 'fluide_charge_recycle_kg', reportData.cerfa?.fluide_charge_recycle_kg || '', 'kg')}</span></div>`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Total chargé</span><span class="rpt-row-value">${editableNested('cerfa', 'fluide_total_charge_kg', reportData.cerfa?.fluide_total_charge_kg || '', 'kg')}</span></div>`;
+                html += `</div>`;
+                html += `<div class="rpt-group">`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Fluide récupéré (traitement)</span><span class="rpt-row-value">${editableNested('cerfa', 'fluide_recupere_traitement_kg', reportData.cerfa?.fluide_recupere_traitement_kg || '', 'kg')}</span></div>`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Fluide récupéré (réintro)</span><span class="rpt-row-value">${editableNested('cerfa', 'fluide_recupere_reintro_kg', reportData.cerfa?.fluide_recupere_reintro_kg || '', 'kg')}</span></div>`;
+                html += `<div class="rpt-row"><span class="rpt-row-label">Total récupéré</span><span class="rpt-row-value">${editableNested('cerfa', 'fluide_total_recupere_kg', reportData.cerfa?.fluide_total_recupere_kg || '', 'kg')}</span></div>`;
+                html += `</div>`;
+                html += `</div>`;
+                if (reportData.cerfa?.fuites && reportData.cerfa.fuites.length > 0) {
+                    html += `<div style="margin-top:12px;"><span class="rpt-row-label">Fuites constatées:</span>`;
+                    reportData.cerfa.fuites.forEach((f, i) => {
+                        html += `<div class="rpt-row"><span class="rpt-row-label">${f.localisation || 'Fuite ' + (i+1)}</span><span class="rpt-row-value">${f.reparation || ''}</span></div>`;
+                    });
+                    html += `</div>`;
+                }
+                html += `</div>`;
+            }
             
             // Signatures (interactive - click to add)
             const hasClientSig = reportData.signature_client;
@@ -9981,12 +10248,6 @@ INSTRUCTIONS:
             // ═══ CHECK FOR JSON REPORT ═══
             // If the AI returns structured JSON, use the beautiful template
             let trimmed = text.trim();
-            
-            // ═══ CRITICAL FIX: Remove [REPORT_DATA] block before parsing ═══
-            // The AI generates BOTH a JSON report AND a [REPORT_DATA] block for the drawer
-            // The [REPORT_DATA] block was preventing JSON parsing after page reload
-            // We must strip it to properly parse and render the HTML report
-            trimmed = trimmed.replace(/\[REPORT_DATA\][\s\S]*?\[\/REPORT_DATA\]/g, '').trim();
             
             // Check if JSON is wrapped in markdown code block
             // Pattern handles: ```json, ``` json, ```\njson, ``` \n json, etc.
