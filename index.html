@@ -7166,7 +7166,12 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             // Simple name generation: use first user message
             const firstUserMsg = messages.find(m => m.role === 'user');
             if (firstUserMsg) {
-                let title = firstUserMsg.content.substring(0, 50);
+                // Clean the title: remove problematic characters
+                let title = firstUserMsg.content
+                    .replace(/[\n\r\t]/g, ' ')    // Remove newlines, tabs
+                    .replace(/\s+/g, ' ')          // Collapse multiple spaces
+                    .trim()
+                    .substring(0, 50);
                 if (firstUserMsg.content.length > 50) title += '...';
                 
                 await db
@@ -7412,8 +7417,14 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
         }
         
         async function saveProjectRename() {
-            const newTitle = document.getElementById('renameInput').value.trim();
+            let newTitle = document.getElementById('renameInput').value.trim();
             if (!newTitle || !contextMenuProjectId) return;
+            
+            // Clean the title
+            newTitle = newTitle
+                .replace(/[\n\r\t]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
             
             const { error } = await db
                 .from('projects')
@@ -7504,8 +7515,17 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
         }
         // Escape for JavaScript string attributes (handles single quotes)
         function escapeForJs(text) {
-        if (!text) return '';
-        return text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+            if (!text) return '';
+            return text
+                .replace(/\\/g, '\\\\')      // Backslashes first
+                .replace(/'/g, "\\'")         // Single quotes
+                .replace(/"/g, '\\"')         // Double quotes
+                .replace(/`/g, '\\`')         // Backticks
+                .replace(/\n/g, ' ')          // Newlines → space
+                .replace(/\r/g, '')           // Carriage returns → remove
+                .replace(/\t/g, ' ')          // Tabs → space
+                .replace(/</g, '&lt;')        // Less than (prevent HTML injection)
+                .replace(/>/g, '&gt;');       // Greater than
         }
         // Load a specific project (FIXED: uses separate queries for reliability)
         async function loadProject(projectId) {
