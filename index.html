@@ -3107,6 +3107,51 @@
             min-width: 40px;
         }
         
+        /* Check-list grid for boolean items */
+        .rpt-checklist-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            background: rgba(255,255,255,0.03);
+        }
+        .checklist-item .check-icon {
+            font-weight: bold;
+            width: 16px;
+            text-align: center;
+        }
+        .checklist-item.check-ok {
+            color: #4ade80;
+        }
+        .checklist-item.check-ok .check-icon {
+            color: #22c55e;
+        }
+        .checklist-item.check-nok {
+            color: #f87171;
+        }
+        .checklist-item.check-nok .check-icon {
+            color: #ef4444;
+        }
+        .rpt-row-value.check-ok {
+            color: #22c55e;
+        }
+        .rpt-row-value.check-nok {
+            color: #ef4444;
+        }
+        @media (max-width: 500px) {
+            .rpt-checklist-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
         /* Code defaut item */
         .rpt-code-item {
             display: flex;
@@ -9910,6 +9955,106 @@ INSTRUCTIONS:
                         html += `<div class="rpt-row"><span class="rpt-row-label">Fin garantie pièces</span><span class="rpt-row-value">${editableNested('garantie', 'fin_garantie_pieces', reportData.garantie.fin_garantie_pieces || '', '')}</span></div>`;
                         html += `<div class="rpt-row"><span class="rpt-row-label">Fin garantie compresseur</span><span class="rpt-row-value">${editableNested('garantie', 'fin_garantie_compresseur', reportData.garantie.fin_garantie_compresseur || '', '')}</span></div>`;
                         html += `</div></div>`;
+                    }
+                }
+                
+                // Hydraulique
+                if (reportData.hydraulique && typeof reportData.hydraulique === 'object') {
+                    const hasHydroData = Object.keys(reportData.hydraulique).some(k => reportData.hydraulique[k] != null && reportData.hydraulique[k] !== '');
+                    if (hasHydroData) {
+                        html += `<div class="rpt-section"><div class="rpt-label">Hydraulique</div>`;
+                        html += `<div class="rpt-grid">`;
+                        html += `<div class="rpt-group">`;
+                        html += `<div class="rpt-row"><span class="rpt-row-label">Volume eau</span><span class="rpt-row-value">${editableNested('hydraulique', 'volume_eau_litres', reportData.hydraulique.volume_eau_litres || '', 'L')}</span></div>`;
+                        html += `<div class="rpt-row"><span class="rpt-row-label">Débit</span><span class="rpt-row-value">${editableNested('hydraulique', 'debit_m3h', reportData.hydraulique.debit_m3h || '', 'm³/h')}</span></div>`;
+                        html += `</div>`;
+                        html += `<div class="rpt-group">`;
+                        html += `<div class="rpt-row"><span class="rpt-row-label">Type antigel</span><span class="rpt-row-value">${editableNested('hydraulique', 'type_antigel', reportData.hydraulique.type_antigel || '', '')}</span></div>`;
+                        html += `</div>`;
+                        html += `</div></div>`;
+                    }
+                }
+                
+                // Check-list Pré-MES
+                if (reportData.checklist && typeof reportData.checklist === 'object') {
+                    const hasChecklistData = Object.keys(reportData.checklist).some(k => reportData.checklist[k] === true || reportData.checklist[k] === false);
+                    if (hasChecklistData) {
+                        html += `<div class="rpt-section"><div class="rpt-label">Check-list Pré-mise en service</div>`;
+                        html += `<div class="rpt-checklist-grid">`;
+                        const checklistItems = [
+                            { key: 'synoptique_conforme', label: 'Synoptique conforme' },
+                            { key: 'supports_fixes', label: 'Supports fixés' },
+                            { key: 'liaisons_calorifugees', label: 'Liaisons calorifugées' },
+                            { key: 'brasures_azote', label: 'Brasures sous azote' },
+                            { key: 'test_pression_40bar_24h', label: 'Test pression 40 bar 24h' },
+                            { key: 'bus_blinde_terre', label: 'Bus blindé à la terre' },
+                            { key: 'disjoncteur_ue', label: 'Disjoncteur par UE' },
+                            { key: 'ui_niveau', label: 'UI de niveau' },
+                            { key: 'ue_anti_vibratiles', label: 'UE sur anti-vibratiles' },
+                            { key: 'espaces_ue', label: 'Espaces UE respectés' }
+                        ];
+                        checklistItems.forEach(item => {
+                            const val = reportData.checklist[item.key];
+                            if (val === true || val === false) {
+                                const statusClass = val === true ? 'check-ok' : 'check-nok';
+                                const statusIcon = val === true ? '✓' : '✗';
+                                html += `<div class="checklist-item ${statusClass}"><span class="check-icon">${statusIcon}</span><span>${item.label}</span></div>`;
+                            }
+                        });
+                        html += `</div></div>`;
+                    }
+                }
+                
+                // Préconisations constructeur
+                if (reportData.preconisations && typeof reportData.preconisations === 'object') {
+                    const hasPrecoData = Object.keys(reportData.preconisations).some(k => reportData.preconisations[k] === true || reportData.preconisations[k] === false);
+                    if (hasPrecoData) {
+                        html += `<div class="rpt-section"><div class="rpt-label">Préconisations constructeur</div>`;
+                        html += `<div class="rpt-checklist-grid">`;
+                        const precoItems = [
+                            { key: 'presence_installateur', label: 'Présence installateur' },
+                            { key: 'acces_site_securite', label: 'Accès site / sécurité' },
+                            { key: 'tension_presente', label: 'Tension présente' },
+                            { key: 'installation_au_vide', label: 'Installation au vide' },
+                            { key: 'longueurs_deniveles_ok', label: 'Longueurs/dénivelés OK' },
+                            { key: 'tests_etancheite', label: 'Tests étanchéité' },
+                            { key: 'brasures_azote', label: 'Brasures sous azote' },
+                            { key: 'cable_disjoncteur', label: 'Câble/disjoncteur' },
+                            { key: 'cable_bus_com', label: 'Câble bus communication' }
+                        ];
+                        precoItems.forEach(item => {
+                            const val = reportData.preconisations[item.key];
+                            if (val === true || val === false) {
+                                const statusClass = val === true ? 'check-ok' : 'check-nok';
+                                const statusIcon = val === true ? '✓' : '✗';
+                                html += `<div class="checklist-item ${statusClass}"><span class="check-icon">${statusIcon}</span><span>${item.label}</span></div>`;
+                            }
+                        });
+                        html += `</div></div>`;
+                    }
+                }
+                
+                // EH&S - Sécurité intervention
+                if (reportData.ehs && typeof reportData.ehs === 'object') {
+                    const hasEhsData = Object.keys(reportData.ehs).some(k => reportData.ehs[k] != null && reportData.ehs[k] !== '');
+                    if (hasEhsData) {
+                        html += `<div class="rpt-section"><div class="rpt-label">EH&S - Sécurité intervention</div>`;
+                        html += `<div class="rpt-grid">`;
+                        html += `<div class="rpt-group">`;
+                        if (reportData.ehs.acces_securise !== undefined) {
+                            const accesIcon = reportData.ehs.acces_securise ? '✓' : '✗';
+                            const accesClass = reportData.ehs.acces_securise ? 'check-ok' : 'check-nok';
+                            html += `<div class="rpt-row"><span class="rpt-row-label">Accès sécurisé</span><span class="rpt-row-value ${accesClass}">${accesIcon}</span></div>`;
+                        }
+                        if (reportData.ehs.numero_urgence) {
+                            html += `<div class="rpt-row"><span class="rpt-row-label">N° urgence</span><span class="rpt-row-value">${editableNested('ehs', 'numero_urgence', reportData.ehs.numero_urgence || '', '')}</span></div>`;
+                        }
+                        html += `</div>`;
+                        html += `</div>`;
+                        if (reportData.ehs.risques_specifiques && Array.isArray(reportData.ehs.risques_specifiques) && reportData.ehs.risques_specifiques.length > 0) {
+                            html += `<div class="rpt-row" style="margin-top:8px;"><span class="rpt-row-label">Risques spécifiques</span><span class="rpt-row-value">${reportData.ehs.risques_specifiques.join(', ')}</span></div>`;
+                        }
+                        html += `</div>`;
                     }
                 }
             } catch (e) {
