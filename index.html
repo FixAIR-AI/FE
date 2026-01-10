@@ -6708,6 +6708,21 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                                 // Regular text message
                                 const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
                                 addMsg(m, role, content);
+                                
+                                // ═══ FIX: Extract REPORT_DATA from loaded AI messages to update drawer ═══
+                                if (role === 'ai' && msg.content.includes('[REPORT_DATA]')) {
+                                    try {
+                                        const reportDataMatch = msg.content.match(/\[REPORT_DATA\]([\s\S]*?)\[\/REPORT_DATA\]/);
+                                        if (reportDataMatch) {
+                                            const reportData = JSON.parse(reportDataMatch[1].trim());
+                                            lastReportData = reportData;
+                                            updateDrawerPreview(reportData);
+                                            console.log('📊 Restored report data from saved message');
+                                        }
+                                    } catch (e) {
+                                        console.warn('Could not parse saved REPORT_DATA:', e);
+                                    }
+                                }
                             }
                             chatHistory[m].push({ role: msg.role, content: msg.content });
                         }
@@ -7442,16 +7457,10 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
             div.textContent = text;
             return div.innerHTML;
         }
-        // Escape for JavaScript string attributes (handles single quotes, newlines, etc.)
+        // Escape for JavaScript string attributes (handles single quotes)
         function escapeForJs(text) {
-            if (!text) return '';
-            return text
-                .replace(/\\/g, '\\\\')    // Escape backslashes first
-                .replace(/'/g, "\\'")       // Escape single quotes
-                .replace(/"/g, '\\"')       // Escape double quotes
-                .replace(/\n/g, '\\n')      // Escape newlines (CRITICAL for OCR titles)
-                .replace(/\r/g, '\\r')      // Escape carriage returns
-                .replace(/\t/g, '\\t');     // Escape tabs
+        if (!text) return '';
+        return text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
         }
         // Load a specific project (FIXED: uses separate queries for reliability)
         async function loadProject(projectId) {
@@ -7657,6 +7666,21 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                                 // Regular text message
                                 const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
                                 addMsg(chat.chat_type, role, content);
+                                
+                                // ═══ FIX: Extract REPORT_DATA from loaded AI messages to update drawer ═══
+                                if (role === 'ai' && msg.content.includes('[REPORT_DATA]')) {
+                                    try {
+                                        const reportDataMatch = msg.content.match(/\[REPORT_DATA\]([\s\S]*?)\[\/REPORT_DATA\]/);
+                                        if (reportDataMatch) {
+                                            const reportData = JSON.parse(reportDataMatch[1].trim());
+                                            lastReportData = reportData;
+                                            updateDrawerPreview(reportData);
+                                            console.log('📊 Restored report data from saved message');
+                                        }
+                                    } catch (e) {
+                                        console.warn('Could not parse saved REPORT_DATA:', e);
+                                    }
+                                }
                             }
                             chatHistory[chat.chat_type].push({ role: msg.role, content: msg.content });
                             projectMessageCount++;
@@ -9769,6 +9793,129 @@ INSTRUCTIONS:
             html += editableField('observation_client', reportData.observation_client || '', 'Observations du client...', true);
             html += `</div>`;
             
+            // ═══════════════════════════════════════════════════════════════
+            // SECTIONS TECHNIQUES ADDITIONNELLES (conditionnelles)
+            // ═══════════════════════════════════════════════════════════════
+            
+            try {
+                // Tests & Validation
+                if (reportData.tests && typeof reportData.tests === 'object') {
+                    const hasTestData = Object.keys(reportData.tests).some(k => reportData.tests[k] != null && reportData.tests[k] !== '');
+                    if (hasTestData) {
+                        html += `<div class="rpt-section"><div class="rpt-label">Tests & Validation</div>`;
+                        html += `<div class="rpt-grid">`;
+                        html += `<div class="rpt-group">`;
+                        html += `<div class="rpt-row"><span class="rpt-row-label">Pression test</span><span class="rpt-row-value">${editableNested('tests', 'pression_test_bar', reportData.tests.pression_test_bar || '', 'bar')}</span></div>`;
+                        html += `<div class="rpt-row"><span class="rpt-row-label">Durée test</span><span class="rpt-row-value">${editableNested('tests', 'duree_test_heures', reportData.tests.duree_test_heures || '', 'h')}</span></div>`;
+                        html += `</div>`;
+                        html += `<div class="rpt-group">`;
+                        html += `<div class="rpt-row"><span class="rpt-row-label">Vacuomètre</span><span class="rpt-row-value">${editableNested('tests', 'valeur_vacuometre_mbar', reportData.tests.valeur_vacuometre_mbar || '', 'mbar')}</span></div>`;
+                        html += `</div>`;
+                        html += `</div></div>`;
+                    }
+                }
+                
+                // Tuyauteries
+                if (reportData.tuyauteries && typeof reportData.tuyauteries === 'object') {
+                    const hasTuyData = Object.keys(reportData.tuyauteries).some(k => reportData.tuyauteries[k] != null && reportData.tuyauteries[k] !== '');
+                    if (hasTuyData) {
+                        html += `<div class="rpt-section"><div class="rpt-label">Longueurs tuyauteries</div>`;
+                        html += `<div class="rpt-grid">`;
+                        html += `<div class="rpt-group">`;
+                        html += `<div class="rpt-row"><span class="rpt-row-label">Longueur totale</span><span class="rpt-row-value">${editableNested('tuyauteries', 'longueur_totale_m', reportData.tuyauteries.longueur_totale_m || '', 'm')}</span></div>`;
+                        html += `<div class="rpt-row"><span class="rpt-row-label">Dénivelé UE-UI</span><span class="rpt-row-value">${editableNested('tuyauteries', 'denivele_oc_ui_m', reportData.tuyauteries.denivele_oc_ui_m || '', 'm')}</span></div>`;
+                        html += `</div>`;
+                        html += `<div class="rpt-group">`;
+                        html += `<div class="rpt-row"><span class="rpt-row-label">Appoint calculé</span><span class="rpt-row-value">${editableNested('tuyauteries', 'appoint_calcule_kg', reportData.tuyauteries.appoint_calcule_kg || '', 'kg')}</span></div>`;
+                        html += `</div>`;
+                        html += `</div></div>`;
+                    }
+                }
+                
+                // Mesures électriques
+                if (reportData.electrique && typeof reportData.electrique === 'object') {
+                    const hasElecData = Object.keys(reportData.electrique).some(k => reportData.electrique[k] != null && reportData.electrique[k] !== '');
+                    if (hasElecData) {
+                        html += `<div class="rpt-section"><div class="rpt-label">Mesures électriques</div>`;
+                        html += `<div class="rpt-grid">`;
+                        html += `<div class="rpt-group">`;
+                        html += `<div class="rpt-row"><span class="rpt-row-label">Disjoncteur</span><span class="rpt-row-value">${editableNested('electrique', 'calibre_disjoncteur', reportData.electrique.calibre_disjoncteur || '', '')}</span></div>`;
+                        html += `<div class="rpt-row"><span class="rpt-row-label">Section câble</span><span class="rpt-row-value">${editableNested('electrique', 'section_cable', reportData.electrique.section_cable || '', '')}</span></div>`;
+                        html += `</div>`;
+                        html += `</div></div>`;
+                    }
+                }
+                
+                // Relevés UE
+                if (reportData.releves_ue && typeof reportData.releves_ue === 'object') {
+                    const hasUEData = Object.keys(reportData.releves_ue).some(k => reportData.releves_ue[k] != null && reportData.releves_ue[k] !== '');
+                    if (hasUEData) {
+                        html += `<div class="rpt-section"><div class="rpt-label">Relevés Unité Extérieure</div>`;
+                        html += `<div class="rpt-grid">`;
+                        html += `<div class="rpt-group">`;
+                        html += `<div class="rpt-row"><span class="rpt-row-label">HP (Pd1)</span><span class="rpt-row-value">${editableNested('releves_ue', 'pd1_bar', reportData.releves_ue.pd1_bar || '', 'bar')}</span></div>`;
+                        html += `<div class="rpt-row"><span class="rpt-row-label">BP (Ps)</span><span class="rpt-row-value">${editableNested('releves_ue', 'ps_bar', reportData.releves_ue.ps_bar || '', 'bar')}</span></div>`;
+                        html += `</div>`;
+                        html += `<div class="rpt-group">`;
+                        html += `<div class="rpt-row"><span class="rpt-row-label">T° ext (TA)</span><span class="rpt-row-value">${editableNested('releves_ue', 'ta_celsius', reportData.releves_ue.ta_celsius || '', '°C')}</span></div>`;
+                        html += `<div class="rpt-row"><span class="rpt-row-label">Fréq compresseur</span><span class="rpt-row-value">${editableNested('releves_ue', 'freq_inv1_hz', reportData.releves_ue.freq_inv1_hz || '', 'Hz')}</span></div>`;
+                        html += `</div>`;
+                        html += `</div></div>`;
+                    }
+                }
+                
+                // Relevés UI (tableau)
+                if (reportData.releves_ui && Array.isArray(reportData.releves_ui) && reportData.releves_ui.length > 0) {
+                    html += `<div class="rpt-section">
+                        <div class="rpt-label">Relevés Unités Intérieures</div>
+                        <div class="rpt-table-wrapper">
+                            <table class="rpt-table">
+                                <thead><tr><th>Emplacement</th><th>Adr</th><th>TA</th><th>TC1</th><th>PMV</th></tr></thead>
+                                <tbody>`;
+                    reportData.releves_ui.forEach((ui, i) => {
+                        html += `<tr>
+                            <td>${ui.emplacement || ''}</td>
+                            <td>${ui.adresse || ''}</td>
+                            <td>${ui.ta_celsius || ''}</td>
+                            <td>${ui.tc1_celsius || ''}</td>
+                            <td>${ui.pmv || ''}</td>
+                        </tr>`;
+                    });
+                    html += `</tbody></table></div></div>`;
+                }
+                
+                // CERFA - Manipulation fluides
+                if (reportData.cerfa && typeof reportData.cerfa === 'object') {
+                    const hasCerfaData = Object.keys(reportData.cerfa).some(k => reportData.cerfa[k] != null && reportData.cerfa[k] !== '');
+                    if (hasCerfaData) {
+                        html += `<div class="rpt-section"><div class="rpt-label section-header">Fiche CERFA - Fluides frigorigènes</div>`;
+                        html += `<div class="rpt-grid">`;
+                        html += `<div class="rpt-group">`;
+                        html += `<div class="rpt-row"><span class="rpt-row-label">Fluide chargé</span><span class="rpt-row-value">${editableNested('cerfa', 'fluide_total_charge_kg', reportData.cerfa.fluide_total_charge_kg || '', 'kg')}</span></div>`;
+                        html += `<div class="rpt-row"><span class="rpt-row-label">Fluide récupéré</span><span class="rpt-row-value">${editableNested('cerfa', 'fluide_total_recupere_kg', reportData.cerfa.fluide_total_recupere_kg || '', 'kg')}</span></div>`;
+                        html += `</div>`;
+                        html += `<div class="rpt-group">`;
+                        html += `<div class="rpt-row"><span class="rpt-row-label">N° attestation</span><span class="rpt-row-value">${editableNested('cerfa', 'attestation_capacite', reportData.cerfa.attestation_capacite || '', '')}</span></div>`;
+                        html += `</div>`;
+                        html += `</div></div>`;
+                    }
+                }
+                
+                // Garantie
+                if (reportData.garantie && typeof reportData.garantie === 'object') {
+                    const hasGarantieData = Object.keys(reportData.garantie).some(k => reportData.garantie[k] != null && reportData.garantie[k] !== '');
+                    if (hasGarantieData) {
+                        html += `<div class="rpt-section"><div class="rpt-label">Garanties</div>`;
+                        html += `<div class="rpt-grid">`;
+                        html += `<div class="rpt-row"><span class="rpt-row-label">Fin garantie pièces</span><span class="rpt-row-value">${editableNested('garantie', 'fin_garantie_pieces', reportData.garantie.fin_garantie_pieces || '', '')}</span></div>`;
+                        html += `<div class="rpt-row"><span class="rpt-row-label">Fin garantie compresseur</span><span class="rpt-row-value">${editableNested('garantie', 'fin_garantie_compresseur', reportData.garantie.fin_garantie_compresseur || '', '')}</span></div>`;
+                        html += `</div></div>`;
+                    }
+                }
+            } catch (e) {
+                console.warn('Erreur sections additionnelles:', e);
+            }
+            
             // Signatures (interactive - click to add)
             const hasClientSig = reportData.signature_client;
             const hasTechSig = reportData.signature_technicien;
@@ -9978,15 +10125,12 @@ INSTRUCTIONS:
         function parseMarkdown(text) {
             if (!text) return '';
             
+            // ═══ FIX: Strip [REPORT_DATA] blocks (they were saved to DB but shouldn't display) ═══
+            text = text.replace(/\[REPORT_DATA\][\s\S]*?\[\/REPORT_DATA\]/g, '').trim();
+            
             // ═══ CHECK FOR JSON REPORT ═══
             // If the AI returns structured JSON, use the beautiful template
             let trimmed = text.trim();
-            
-            // ═══ CRITICAL FIX: Remove [REPORT_DATA] block before parsing ═══
-            // The AI generates BOTH a JSON report AND a [REPORT_DATA] block for the drawer
-            // The [REPORT_DATA] block was preventing JSON parsing after page reload
-            // We must strip it to properly parse and render the HTML report
-            trimmed = trimmed.replace(/\[REPORT_DATA\][\s\S]*?\[\/REPORT_DATA\]/g, '').trim();
             
             // Check if JSON is wrapped in markdown code block
             // Pattern handles: ```json, ``` json, ```\njson, ``` \n json, etc.
