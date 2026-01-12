@@ -697,6 +697,27 @@
         .login-btn { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #FF6B35, #E55A2B); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .login-btn .icon { width: 12px; height: 12px; }
 
+        /* ==================== LOGIN STATUS MESSAGES ==================== */
+        .login-status { 
+            min-height: 24px; 
+            margin-top: 16px; 
+            text-align: center; 
+            font-size: 13px; 
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .login-status:empty { display: none; }
+        .login-status.success { color: #22c55e; }
+        .login-status.error { color: #ef4444; }
+        .login-status.info { color: rgba(255,255,255,0.7); }
+        .login-status a { 
+            color: inherit; 
+            text-decoration: underline; 
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        .login-status a:hover { opacity: 0.8; }
+
         /* ==================== PENDING & CONFIRMATION SCREENS ==================== */
         .pending-screen { display: none; }
         .pending-screen.active { display: flex; }
@@ -4816,6 +4837,7 @@
                 </div>
                 <button type="button" class="login-btn" id="loginBtn" onclick="nextLoginStep()"><span class="icon"><svg><use href="#icon-arrow-right"/></svg></span></button>
             </div>
+            <div class="login-status" id="loginStatus"></div>
         </div>
     </div>
 
@@ -6003,6 +6025,52 @@
         // Initialize auth on page load
         setTimeout(() => initAuth(), 500);
 
+        // ═══ LOGIN STATUS MESSAGES ═══
+        let existingUserName = '';
+        
+        function setLoginStatus(message, type = 'info', showReset = false) {
+            const statusEl = document.getElementById('loginStatus');
+            if (!statusEl) return;
+            
+            statusEl.className = 'login-status ' + type;
+            
+            if (showReset) {
+                statusEl.innerHTML = message + ' <a onclick="resetPassword()">Réinitialiser</a>';
+            } else {
+                statusEl.textContent = message;
+            }
+        }
+        
+        function clearLoginStatus() {
+            const statusEl = document.getElementById('loginStatus');
+            if (statusEl) {
+                statusEl.textContent = '';
+                statusEl.className = 'login-status';
+            }
+        }
+        
+        async function resetPassword() {
+            const email = document.getElementById('loginEmail').value.trim();
+            if (!email.includes('@')) {
+                setLoginStatus('Entrez votre email d\'abord', 'error');
+                return;
+            }
+            
+            try {
+                const { error } = await db.auth.resetPasswordForEmail(email, {
+                    redirectTo: window.location.origin
+                });
+                
+                if (error) {
+                    setLoginStatus('Erreur: ' + error.message, 'error');
+                } else {
+                    setLoginStatus('Email de réinitialisation envoyé !', 'success');
+                }
+            } catch (err) {
+                setLoginStatus('Erreur lors de l\'envoi', 'error');
+            }
+        }
+
         // LOGIN STEPS
         async function nextLoginStep() {
             const btn = document.getElementById('loginBtn');
@@ -6012,8 +6080,13 @@
                 // Step 0: Check email
                 const email = document.getElementById('loginEmail').value.trim();
                 console.log('📧 Email entered:', email);
-                if (!email.includes('@')) { toast('Email invalide'); return; }
                 
+                if (!email.includes('@')) { 
+                    setLoginStatus('Veuillez entrer un email valide', 'error');
+                    return; 
+                }
+                
+                clearLoginStatus();
                 btn.disabled = true;
                 btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
                 
@@ -6021,7 +6094,7 @@
                     // Check if user exists in database
                     const { data, error } = await db
                         .from('users')
-                        .select('id, status')
+                        .select('id, first_name, status')
                         .eq('email', email)
                         .maybeSingle();
                     
@@ -6031,8 +6104,15 @@
                     const pwdInput = document.getElementById('loginPassword');
                     if (isNewUser) {
                         pwdInput.placeholder = 'Créez votre mot de passe';
+                        setLoginStatus('Nouveau compte ! Choisissez un mot de passe', 'success');
                     } else {
+                        existingUserName = data.first_name || '';
                         pwdInput.placeholder = 'Entrez votre mot de passe';
+                        if (existingUserName) {
+                            setLoginStatus('Bienvenue ' + existingUserName + ' ! Entrez votre mot de passe', 'info');
+                        } else {
+                            setLoginStatus('Bienvenue ! Entrez votre mot de passe', 'info');
+                        }
                     }
                     
                     loginStep = 1;
@@ -6040,7 +6120,7 @@
                     
                 } catch (error) {
                     console.error('❌ Check email error:', error);
-                    toast('Erreur de connexion');
+                    setLoginStatus('Nouveau compte ! Choisissez un mot de passe', 'success');
                     isNewUser = true;
                     loginStep = 1;
                     updateLoginUI();
@@ -6054,10 +6134,15 @@
                 const email = document.getElementById('loginEmail').value.trim();
                 const password = document.getElementById('loginPassword').value;
                 
-                if (password.length < 6) { toast('Mot de passe: 6 caractères minimum'); return; }
+                if (password.length < 6) { 
+                    setLoginStatus('Mot de passe: 6 caractères minimum', 'error');
+                    return; 
+                }
                 
                 if (isNewUser) {
                     // New user: go to phone step
+                    clearLoginStatus();
+                    setLoginStatus('Entrez votre numéro (optionnel)', 'info');
                     loginStep = 2;
                     updateLoginUI();
                 } else {
@@ -6073,9 +6158,10 @@
                         
                         if (error) {
                             console.error('Login error:', error);
-                            toast(error.message || 'Email ou mot de passe incorrect');
+                            setLoginStatus('Mot de passe incorrect', 'error', true);
                         } else {
                             console.log('✅ Login successful:', data.user.email);
+                            clearLoginStatus();
                             supabaseUser = data.user;
                             
                             // Load user profile
@@ -6103,11 +6189,11 @@
                                 toast('Bienvenue ' + profile.first_name + ' !');
                                 doLogin();
                             } else {
-                                toast('Erreur: profil non trouvé');
+                                setLoginStatus('Erreur: profil non trouvé', 'error');
                             }
                         }
                     } catch (error) {
-                        toast('Erreur de connexion au serveur');
+                        setLoginStatus('Erreur de connexion au serveur', 'error');
                         console.error('Login error:', error);
                     } finally {
                         btn.disabled = false;
@@ -6120,11 +6206,13 @@
                 
                 // Phone is optional but recommended
                 if (phone && phone.length < 8) { 
-                    toast('Numéro de téléphone invalide'); 
+                    setLoginStatus('Numéro de téléphone invalide', 'error');
                     return; 
                 }
                 
                 // Go to name step
+                clearLoginStatus();
+                setLoginStatus('Comment vous appelez-vous ?', 'info');
                 loginStep = 3;
                 document.getElementById('loginBtn').innerHTML = '<span class="icon"><svg><use href="#icon-check"/></svg></span>';
                 document.getElementById('loginBtn').onclick = completeLogin;
@@ -6141,6 +6229,7 @@
         function prevLoginStep() {
             if (loginStep > 0) {
                 loginStep--;
+                clearLoginStatus();
                 updateLoginUI();
                 if (loginStep < 3) {
                     document.getElementById('loginBtn').innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
@@ -6151,7 +6240,7 @@
 
         async function completeLogin() {
             const name = document.getElementById('loginName').value.trim();
-            if (!name) { toast('Entrez votre prénom'); return; }
+            if (!name) { setLoginStatus('Entrez votre prénom', 'error'); return; }
             
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
@@ -6176,7 +6265,7 @@
                 
                 if (error) {
                     console.error('Registration error:', error);
-                    toast(error.message || 'Erreur lors de la création du compte');
+                    setLoginStatus(error.message || 'Erreur lors de la création du compte', 'error');
                     return;
                 }
                 
@@ -6193,7 +6282,7 @@
                 }
                 
             } catch (error) {
-                toast('Erreur de connexion');
+                setLoginStatus('Erreur de connexion', 'error');
                 console.error('Register error:', error);
             } finally {
                 btn.disabled = false;
@@ -6203,6 +6292,7 @@
 
         // ═══ SCREEN HELPER FUNCTIONS ═══
         function showEmailConfirmScreen(email) {
+            clearLoginStatus();
             document.getElementById('confirmEmail').textContent = email;
             document.getElementById('loginScreen').classList.remove('active');
             document.getElementById('mainApp').classList.remove('active');
@@ -6211,6 +6301,7 @@
         }
 
         function showPendingScreen(email) {
+            clearLoginStatus();
             document.getElementById('pendingEmail').textContent = email;
             document.getElementById('loginScreen').classList.remove('active');
             document.getElementById('mainApp').classList.remove('active');
@@ -6236,6 +6327,7 @@
         }
 
         function backToLogin() {
+            clearLoginStatus();
             document.getElementById('emailConfirmScreen').classList.remove('active');
             document.getElementById('pendingScreen').classList.remove('active');
             document.getElementById('loginScreen').classList.add('active');
@@ -6253,6 +6345,7 @@
             supabaseUser = null;
             currentUser = null;
             localStorage.removeItem('fixair_onboarding_done');
+            clearLoginStatus();
             
             document.getElementById('pendingScreen').classList.remove('active');
             document.getElementById('emailConfirmScreen').classList.remove('active');
@@ -6291,6 +6384,7 @@
             isNewUser = false;
             onboardingComplete = false;
             localStorage.removeItem('fixair_onboarding_done');
+            clearLoginStatus();
             
             document.getElementById('profileView').classList.remove('active');
             document.querySelector('.onboarding-section').classList.remove('hidden');
