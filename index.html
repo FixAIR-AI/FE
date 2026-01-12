@@ -5867,12 +5867,64 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTcyMTksImV4cCI6MjA4MTgzMzIxOX0.8ryQm1tsdx5ox3aFJiiflmwuEGGxxH_PlobGxXMgFuQ';
         
         let db;
+        let supabaseReady = false;
+        
         if (window.supabase && window.supabase.createClient) {
-            db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                auth: {
+                    persistSession: true,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: true,
+                    flowType: 'implicit'
+                }
+            });
             console.log('✅ Supabase client initialized');
+            
+            // Wait for auth to be ready before allowing queries
+            setTimeout(() => {
+                supabaseReady = true;
+                console.log('✅ Supabase ready for queries');
+            }, 500);
         } else {
             console.error('❌ Supabase library not loaded! window.supabase =', window.supabase);
             alert('Erreur: Supabase non chargé. Veuillez rafraîchir la page.');
+        }
+        
+        // Helper function to wait for Supabase to be ready
+        async function waitForSupabase() {
+            if (supabaseReady) return true;
+            let attempts = 0;
+            while (!supabaseReady && attempts < 20) {
+                await new Promise(r => setTimeout(r, 100));
+                attempts++;
+            }
+            return supabaseReady;
+        }
+        
+        // Safe query wrapper that handles AbortError
+        async function safeQuery(queryFn, retries = 3) {
+            await waitForSupabase();
+            
+            for (let attempt = 0; attempt < retries; attempt++) {
+                try {
+                    const result = await queryFn();
+                    // Check if result has AbortError
+                    if (result.error && result.error.message && result.error.message.includes('AbortError')) {
+                        console.log('🔄 Query AbortError, retrying...', attempt + 1);
+                        await new Promise(r => setTimeout(r, 300 * (attempt + 1)));
+                        continue;
+                    }
+                    return result;
+                } catch (err) {
+                    if (err.message && err.message.includes('AbortError') && attempt < retries - 1) {
+                        console.log('🔄 Query exception, retrying...', attempt + 1);
+                        await new Promise(r => setTimeout(r, 300 * (attempt + 1)));
+                        continue;
+                    }
+                    throw err;
+                }
+            }
+            return { data: null, error: { message: 'Query failed after retries' } };
         }
         
         // ═══ TOAST UTILITY (needed early for error handling) ═══
@@ -5932,11 +5984,12 @@
         // ═══ GET CURRENT USER FROM PUBLIC.USERS TABLE ═══
         async function loadUserProfile(authId) {
             try {
-                const { data, error } = await db
-                    .from('users')
-                    .select('*')
-                    .eq('id', authId)
-                    .single();
+                const { data, error } = await safeQuery(() => 
+                    db.from('users')
+                      .select('*')
+                      .eq('id', authId)
+                      .single()
+                );
                 
                 if (error) {
                     console.error('Error loading user profile:', error);
@@ -5952,6 +6005,9 @@
         // ═══ CHECK SUPABASE AUTH SESSION ON LOAD ═══
         async function initAuth() {
             console.log('🔐 Checking Supabase Auth session...');
+            
+            // Wait for Supabase to be ready
+            await waitForSupabase();
             
             const { data: { session }, error } = await db.auth.getSession();
             
@@ -6104,13 +6160,17 @@
                 try {
                     console.log('🔍 Checking if user exists...');
                     
+                    // Wait for Supabase to be ready
+                    await waitForSupabase();
+                    
                     // FIXED: Check both public.users table AND auth by trying signIn
-                    // First check public.users table
-                    const { data: publicUser, error: publicError } = await db
-                        .from('users')
-                        .select('id, first_name, status')
-                        .eq('email', email)
-                        .maybeSingle();
+                    // First check public.users table using safe query
+                    const { data: publicUser, error: publicError } = await safeQuery(() => 
+                        db.from('users')
+                          .select('id, first_name, status')
+                          .eq('email', email)
+                          .maybeSingle()
+                    );
                     
                     console.log('📊 Public users table - data:', publicUser, 'error:', publicError);
                     
@@ -7440,6 +7500,9 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                 currentUserId = currentUser.id;
                 return currentUser.id;
             }
+            
+            // Wait for Supabase to be ready
+            await waitForSupabase();
             
             // Fallback: get from Supabase Auth session
             try {
@@ -14696,7 +14759,11 @@ RÈGLES:
 
         // Initialize calendar when page loads
         document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(initTechCalendar, 500);
+            // Wait longer to ensure Supabase is ready
+            setTimeout(async function() {
+                await waitForSupabase();
+                initTechCalendar();
+            }, 1000);
         });
     </script>
     
