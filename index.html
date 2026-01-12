@@ -5935,7 +5935,7 @@
                 const { data, error } = await db
                     .from('users')
                     .select('*')
-                    .eq('auth_id', authId)
+                    .eq('id', authId)
                     .single();
                 
                 if (error) {
