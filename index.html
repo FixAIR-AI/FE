@@ -5571,7 +5571,7 @@
     // ═══════════════════════════════════════════════════════════════
         // PRODUCTION MODE - Set to false for debugging
         // ═══════════════════════════════════════════════════════════════
-        const PRODUCTION_MODE = true;
+        const PRODUCTION_MODE = false;
         
         // Suppress debug logs in production (keeps errors visible)
         if (PRODUCTION_MODE) {
@@ -5866,8 +5866,14 @@
         const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTcyMTksImV4cCI6MjA4MTgzMzIxOX0.8ryQm1tsdx5ox3aFJiiflmwuEGGxxH_PlobGxXMgFuQ';
         
-        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log('✅ Supabase client initialized');
+        let db;
+        if (window.supabase && window.supabase.createClient) {
+            db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log('✅ Supabase client initialized');
+        } else {
+            console.error('❌ Supabase library not loaded! window.supabase =', window.supabase);
+            alert('Erreur: Supabase non chargé. Veuillez rafraîchir la page.');
+        }
         
         // ═══ TOAST UTILITY (needed early for error handling) ═══
         let toastTimeout = null;
@@ -6084,19 +6090,67 @@
                     return; 
                 }
                 
+                // Check if Supabase is available
+                if (!db) {
+                    console.error('❌ Database not initialized!');
+                    setLoginStatus('Erreur de connexion. Rafraîchissez la page.', 'error');
+                    return;
+                }
+                
                 clearLoginStatus();
                 btn.disabled = true;
                 btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
                 
                 try {
-                    // Check if user exists in database
-                    const { data, error } = await db
+                    console.log('🔍 Checking if user exists...');
+                    
+                    // FIXED: Check both public.users table AND auth by trying signIn
+                    // First check public.users table
+                    const { data: publicUser, error: publicError } = await db
                         .from('users')
                         .select('id, first_name, status')
                         .eq('email', email)
                         .maybeSingle();
                     
-                    isNewUser = !data;
+                    console.log('📊 Public users table - data:', publicUser, 'error:', publicError);
+                    
+                    // If found in public.users, user exists
+                    if (publicUser) {
+                        isNewUser = false;
+                        existingUserName = publicUser.first_name || '';
+                        console.log('✅ User found in public.users table');
+                    } else {
+                        // Not in public.users - check if exists in Supabase Auth
+                        // by trying a fake password sign-in (will tell us if user exists)
+                        console.log('🔍 Not in public.users, checking Supabase Auth...');
+                        
+                        const { error: authCheckError } = await db.auth.signInWithPassword({
+                            email: email,
+                            password: 'check_if_exists_fake_password_12345'
+                        });
+                        
+                        console.log('📊 Auth check error:', authCheckError?.message);
+                        
+                        // If error is "Invalid login credentials" = user EXISTS (wrong password)
+                        // If error is "Email not confirmed" = user EXISTS (not confirmed)
+                        // If error contains "User not found" or similar = new user
+                        if (authCheckError) {
+                            const errMsg = authCheckError.message.toLowerCase();
+                            if (errMsg.includes('invalid login credentials') || 
+                                errMsg.includes('email not confirmed') ||
+                                errMsg.includes('invalid credentials')) {
+                                isNewUser = false;
+                                console.log('✅ User exists in Supabase Auth');
+                            } else {
+                                isNewUser = true;
+                                console.log('👤 User does not exist - new user');
+                            }
+                        } else {
+                            // Somehow signed in with fake password? Shouldn't happen
+                            isNewUser = false;
+                        }
+                    }
+                    
                     console.log('👤 Is new user:', isNewUser);
                     
                     const pwdInput = document.getElementById('loginPassword');
@@ -6104,7 +6158,6 @@
                         pwdInput.placeholder = 'Créez votre mot de passe';
                         setLoginStatus('Nouveau compte ! Choisissez un mot de passe', 'success');
                     } else {
-                        existingUserName = data.first_name || '';
                         pwdInput.placeholder = 'Entrez votre mot de passe';
                         if (existingUserName) {
                             setLoginStatus('Bienvenue ' + existingUserName + ' ! Entrez votre mot de passe', 'info');
