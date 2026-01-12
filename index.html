@@ -4855,7 +4855,7 @@
             <p class="pending-subtitle">
                 Un email de confirmation a été envoyé à votre adresse. Cliquez sur le lien pour activer votre compte.
             </p>
-            <div class="pending-email" id="confirmEmail">email@example.com</div>
+            <div class="pending-email" id="confirmEmail"></div>
             <button class="pending-logout" onclick="resendConfirmation()" style="margin-top: 8px; border-color: var(--copilot); color: var(--copilot);">
                 Renvoyer l'email
             </button>
@@ -5567,6 +5567,7 @@
 
     <div class="toast" id="toast"></div>
 
+    <script>
     // ═══════════════════════════════════════════════════════════════
         // PRODUCTION MODE - Set to false for debugging
         // ═══════════════════════════════════════════════════════════════
@@ -14944,6 +14945,3 @@ RÈGLES:
                         <select class="event-field-select" id="eventVisibility">
                             <option value="private">Privé (moi uniquement)</option>
                             <option value="company">Entreprise (managers)</option>
-                            <option value="connect">FixAIR Connect</option>
-                        </select>
-                    </div>
