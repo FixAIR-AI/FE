@@ -697,6 +697,19 @@
         .login-btn { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #FF6B35, #E55A2B); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .login-btn .icon { width: 12px; height: 12px; }
 
+        /* ==================== PENDING & CONFIRMATION SCREENS ==================== */
+        .pending-screen { display: none; }
+        .pending-screen.active { display: flex; }
+        .pending-container { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 40px; text-align: center; }
+        .pending-icon { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, rgba(255,107,53,0.2), rgba(255,107,53,0.05)); display: flex; align-items: center; justify-content: center; animation: pendingPulse 2s ease-in-out infinite; }
+        .pending-icon svg { width: 40px; height: 40px; color: var(--copilot); }
+        @keyframes pendingPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } }
+        .pending-title { font-size: 24px; font-weight: 700; color: var(--text); }
+        .pending-subtitle { font-size: 14px; color: var(--text-dim); max-width: 300px; line-height: 1.5; }
+        .pending-email { font-size: 13px; color: var(--copilot); font-weight: 500; padding: 8px 16px; background: rgba(255,107,53,0.1); border-radius: 8px; }
+        .pending-logout { margin-top: 16px; padding: 10px 24px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--text-dim); font-size: 13px; cursor: pointer; transition: all 0.2s; }
+        .pending-logout:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+
         /* ==================== MAIN APP ==================== */
         .main-app { height: 100%; }
         .app-header { position: fixed; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: center; padding: 12px 16px; padding-top: max(12px, env(safe-area-inset-top)); z-index: 100; background: linear-gradient(180deg, rgba(13,17,23,0.95), transparent); }
@@ -4794,12 +4807,59 @@
                             <input type="password" class="login-input" id="loginPassword" placeholder="Quel est votre mot de passe ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
                         </div>
                         <div class="login-input-slide">
+                            <input type="tel" class="login-input" id="loginPhone" placeholder="Quel est votre numéro de téléphone ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
+                        </div>
+                        <div class="login-input-slide">
                             <input type="text" class="login-input" id="loginName" placeholder="Quel est votre prénom ?" onkeypress="if(event.key==='Enter')completeLogin()">
                         </div>
                     </div>
                 </div>
                 <button type="button" class="login-btn" id="loginBtn" onclick="nextLoginStep()"><span class="icon"><svg><use href="#icon-arrow-right"/></svg></span></button>
             </div>
+        </div>
+    </div>
+
+    <!-- EMAIL CONFIRMATION SCREEN -->
+    <div class="screen pending-screen" id="emailConfirmScreen">
+        <div class="scan-line"></div>
+        <div class="pending-container">
+            <div class="pending-icon" style="background: linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.05));">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #22c55e;">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                </svg>
+            </div>
+            <h1 class="pending-title">Vérifiez votre email</h1>
+            <p class="pending-subtitle">
+                Un email de confirmation a été envoyé à votre adresse. Cliquez sur le lien pour activer votre compte.
+            </p>
+            <div class="pending-email" id="confirmEmail">email@example.com</div>
+            <button class="pending-logout" onclick="resendConfirmation()" style="margin-top: 8px; border-color: var(--copilot); color: var(--copilot);">
+                Renvoyer l'email
+            </button>
+            <button class="pending-logout" onclick="backToLogin()">
+                Retour à la connexion
+            </button>
+        </div>
+    </div>
+
+    <!-- PENDING APPROVAL SCREEN -->
+    <div class="screen pending-screen" id="pendingScreen">
+        <div class="scan-line"></div>
+        <div class="pending-container">
+            <div class="pending-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                </svg>
+            </div>
+            <h1 class="pending-title">Demande en attente</h1>
+            <p class="pending-subtitle">
+                Votre email a été confirmé ! Un administrateur va valider votre accès dans les plus brefs délais.
+            </p>
+            <div class="pending-email" id="pendingEmail">email@example.com</div>
+            <button class="pending-logout" onclick="logoutFromPending()">
+                Se déconnecter
+            </button>
         </div>
     </div>
 
@@ -5785,51 +5845,142 @@
         // Auth state
         const API_BASE = 'https://cherhabil.app.n8n.cloud/webhook';
         let isNewUser = false;
-        let authToken = localStorage.getItem('fixair_token') || null;
-        let currentUser = JSON.parse(localStorage.getItem('fixair_user') || 'null');
+        let authToken = null;
+        let currentUser = null;
+        let supabaseUser = null;
         
         const colors = {carrier:'#3B82F6', daikin:'#10B981', mitsubishi:'#E60012'};
         const names = {carrier:'Carrier', daikin:'Daikin', mitsubishi:'Mitsubishi'};
 
-        // Check if already logged in
-        if (authToken && currentUser && currentUser.id) {
-            console.log('🔐 Auto-login with saved session:', currentUser);
-            // Auto-login
-            setTimeout(() => {
-                document.getElementById('userName').textContent = currentUser.first_name || 'Utilisateur';
-                document.getElementById('profileFirstName').value = currentUser.first_name || '';
-                if (currentUser.email) document.getElementById('profileEmail').value = currentUser.email;
-                console.log('👤 Profile loaded from localStorage:', currentUser.first_name, currentUser.email);
-                
-                // Check if onboarding was completed
-                const onboardingDone = localStorage.getItem('fixair_onboarding_done');
-                if (onboardingDone) {
-                    onboardingComplete = true;
-                    document.querySelector('.onboarding-section').classList.add('hidden');
-                    document.getElementById('homepageContent').classList.add('active');
-                } else {
-                    // Show onboarding for returning users who haven't completed it
-                    onboardingComplete = false;
-                    document.querySelector('.onboarding-section').classList.remove('hidden');
-                    // Homepage stays hidden (no 'active' class)
+        // ═══ SECURE API KEY STORAGE ═══
+        let cachedApiKeys = {};
+        
+        async function getApiKey(keyName) {
+            if (cachedApiKeys[keyName]) {
+                return cachedApiKeys[keyName];
+            }
+            try {
+                const { data, error } = await db
+                    .from('app_settings')
+                    .select('value')
+                    .eq('key', keyName)
+                    .single();
+                if (error) {
+                    console.error('Failed to fetch API key:', keyName, error);
+                    return null;
                 }
-                
-                document.getElementById('loginScreen').classList.remove('active');
-                document.getElementById('mainApp').classList.add('active');
-                
-                // ═══ SUPABASE: Load projects list ═══
-                loadProjectsList();
-                // ═══ GAMIFICATION: Initialize stats ═══
-                initGamification();
-                // ═══ END SUPABASE ═══
-            }, 500);
-        } else {
-            // Clear any partial/invalid auth data
-            localStorage.removeItem('fixair_token');
-            localStorage.removeItem('fixair_user');
-            authToken = null;
-            currentUser = null;
+                cachedApiKeys[keyName] = data.value;
+                return data.value;
+            } catch (err) {
+                console.error('Error fetching API key:', err);
+                return null;
+            }
         }
+        
+        async function prefetchApiKeys() {
+            await getApiKey('elevenlabs_api_key');
+            console.log('✅ API keys prefetched');
+        }
+
+        // ═══ GET CURRENT USER FROM PUBLIC.USERS TABLE ═══
+        async function loadUserProfile(authId) {
+            try {
+                const { data, error } = await db
+                    .from('users')
+                    .select('*')
+                    .eq('auth_id', authId)
+                    .single();
+                
+                if (error) {
+                    console.error('Error loading user profile:', error);
+                    return null;
+                }
+                return data;
+            } catch (err) {
+                console.error('Exception loading user profile:', err);
+                return null;
+            }
+        }
+
+        // ═══ CHECK SUPABASE AUTH SESSION ON LOAD ═══
+        async function initAuth() {
+            console.log('🔐 Checking Supabase Auth session...');
+            
+            const { data: { session }, error } = await db.auth.getSession();
+            
+            if (error) {
+                console.error('Auth session error:', error);
+                return;
+            }
+            
+            if (session && session.user) {
+                console.log('🔐 Found existing session:', session.user.email);
+                supabaseUser = session.user;
+                
+                // Load user profile from public.users
+                const profile = await loadUserProfile(session.user.id);
+                
+                if (profile) {
+                    currentUser = profile;
+                    
+                    // Check approval status
+                    if (profile.status !== 'approved' && profile.status !== 'active') {
+                        console.log('⏳ User pending approval');
+                        showPendingScreen(profile.email);
+                        return;
+                    }
+                    
+                    // User is approved - proceed to app
+                    console.log('✅ User approved, loading app');
+                    document.getElementById('userName').textContent = profile.first_name || 'Utilisateur';
+                    document.getElementById('profileFirstName').value = profile.first_name || '';
+                    if (profile.email) document.getElementById('profileEmail').value = profile.email;
+                    
+                    const onboardingDone = localStorage.getItem('fixair_onboarding_done');
+                    if (onboardingDone) {
+                        onboardingComplete = true;
+                        document.querySelector('.onboarding-section').classList.add('hidden');
+                        document.getElementById('homepageContent').classList.add('active');
+                    }
+                    
+                    document.getElementById('loginScreen').classList.remove('active');
+                    document.getElementById('mainApp').classList.add('active');
+                    
+                    loadProjectsList();
+                    initGamification();
+                    prefetchApiKeys();
+                } else {
+                    console.log('⚠️ No user profile found, showing pending...');
+                    showPendingScreen(session.user.email);
+                }
+            } else {
+                console.log('🔐 No session found, showing login');
+            }
+        }
+
+        // Listen for auth state changes
+        db.auth.onAuthStateChange(async (event, session) => {
+            console.log('🔐 Auth state changed:', event);
+            
+            if (event === 'SIGNED_IN' && session) {
+                supabaseUser = session.user;
+                if (!currentUser) {
+                    const profile = await loadUserProfile(session.user.id);
+                    if (profile) {
+                        currentUser = profile;
+                        if (profile.status === 'approved' || profile.status === 'active') {
+                            location.reload();
+                        }
+                    }
+                }
+            } else if (event === 'SIGNED_OUT') {
+                supabaseUser = null;
+                currentUser = null;
+            }
+        });
+
+        // Initialize auth on page load
+        setTimeout(() => initAuth(), 500);
 
         // LOGIN STEPS
         async function nextLoginStep() {
@@ -5846,20 +5997,16 @@
                 btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
                 
                 try {
-                    console.log('🔄 Calling check-email API...');
-                    const response = await fetch(`${API_BASE}/auth/check-email`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email })
-                    });
-                    console.log('📨 Response status:', response.status);
-                    const data = await response.json();
-                    console.log('📨 Check email response:', data);
+                    // Check if user exists in database
+                    const { data, error } = await db
+                        .from('users')
+                        .select('id, status')
+                        .eq('email', email)
+                        .maybeSingle();
                     
-                    isNewUser = (data.exists === false);
+                    isNewUser = !data;
                     console.log('👤 Is new user:', isNewUser);
                     
-                    // Update password placeholder based on user type
                     const pwdInput = document.getElementById('loginPassword');
                     if (isNewUser) {
                         pwdInput.placeholder = 'Créez votre mot de passe';
@@ -5873,9 +6020,6 @@
                 } catch (error) {
                     console.error('❌ Check email error:', error);
                     toast('Erreur de connexion');
-                    
-                    // Safari fallback: proceed anyway assuming new user
-                    console.log('⚠️ Fallback: proceeding as new user');
                     isNewUser = true;
                     loginStep = 1;
                     updateLoginUI();
@@ -5892,50 +6036,54 @@
                 if (password.length < 6) { toast('Mot de passe: 6 caractères minimum'); return; }
                 
                 if (isNewUser) {
-                    // New user: go to name step
+                    // New user: go to phone step
                     loginStep = 2;
-                    document.getElementById('loginBtn').innerHTML = '<span class="icon"><svg><use href="#icon-check"/></svg></span>';
-                    document.getElementById('loginBtn').onclick = completeLogin;
                     updateLoginUI();
                 } else {
-                    // Existing user: try login
+                    // Existing user: try Supabase Auth login
                     btn.disabled = true;
                     btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
                     
                     try {
-                        const response = await fetch(`${API_BASE}/auth/login`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ email, password })
+                        const { data, error } = await db.auth.signInWithPassword({
+                            email: email,
+                            password: password
                         });
                         
-                        const data = await response.json();
-                        console.log('Login response:', response.status, data);
-                        
-                        // Check both response status and success flag
-                        if (response.ok && data.success === true && data.token) {
-                            // Save auth data
-                            authToken = data.token;
-                            currentUser = data.user;
-                            localStorage.setItem('fixair_token', authToken);
-                            localStorage.setItem('fixair_user', JSON.stringify(currentUser));
-                            
-                            // Update UI with user info
-                            document.getElementById('userName').textContent = currentUser.first_name;
-                            document.getElementById('profileFirstName').value = currentUser.first_name;
-                            if (currentUser.email) document.getElementById('profileEmail').value = currentUser.email;
-                            
-                            // Existing user - skip onboarding, go to main app
-                            onboardingComplete = true;
-                            document.querySelector('.onboarding-section').classList.add('hidden');
-                            document.getElementById('homepageContent').classList.add('active');
-                            localStorage.setItem('fixair_onboarding_done', 'true');
-                            
-                            toast('Bienvenue ' + currentUser.first_name + ' !');
-                            doLogin();
+                        if (error) {
+                            console.error('Login error:', error);
+                            toast(error.message || 'Email ou mot de passe incorrect');
                         } else {
-                            // Login failed - show error, do NOT proceed
-                            toast(data.error || 'Email ou mot de passe incorrect');
+                            console.log('✅ Login successful:', data.user.email);
+                            supabaseUser = data.user;
+                            
+                            // Load user profile
+                            const profile = await loadUserProfile(data.user.id);
+                            
+                            if (profile) {
+                                currentUser = profile;
+                                
+                                // Check approval status
+                                if (profile.status !== 'approved' && profile.status !== 'active') {
+                                    showPendingScreen(profile.email);
+                                    return;
+                                }
+                                
+                                // User is approved
+                                document.getElementById('userName').textContent = profile.first_name;
+                                document.getElementById('profileFirstName').value = profile.first_name;
+                                if (profile.email) document.getElementById('profileEmail').value = profile.email;
+                                
+                                onboardingComplete = true;
+                                document.querySelector('.onboarding-section').classList.add('hidden');
+                                document.getElementById('homepageContent').classList.add('active');
+                                localStorage.setItem('fixair_onboarding_done', 'true');
+                                
+                                toast('Bienvenue ' + profile.first_name + ' !');
+                                doLogin();
+                            } else {
+                                toast('Erreur: profil non trouvé');
+                            }
                         }
                     } catch (error) {
                         toast('Erreur de connexion au serveur');
@@ -5945,6 +6093,21 @@
                         btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
                     }
                 }
+            } else if (loginStep === 2) {
+                // Step 2: Phone number (new users only)
+                const phone = document.getElementById('loginPhone').value.trim();
+                
+                // Phone is optional but recommended
+                if (phone && phone.length < 8) { 
+                    toast('Numéro de téléphone invalide'); 
+                    return; 
+                }
+                
+                // Go to name step
+                loginStep = 3;
+                document.getElementById('loginBtn').innerHTML = '<span class="icon"><svg><use href="#icon-check"/></svg></span>';
+                document.getElementById('loginBtn').onclick = completeLogin;
+                updateLoginUI();
             }
         }
         
@@ -5958,7 +6121,7 @@
             if (loginStep > 0) {
                 loginStep--;
                 updateLoginUI();
-                if (loginStep < 2) {
+                if (loginStep < 3) {
                     document.getElementById('loginBtn').innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
                     document.getElementById('loginBtn').onclick = nextLoginStep;
                 }
@@ -5971,43 +6134,43 @@
             
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
+            const phone = document.getElementById('loginPhone').value.trim();
             
             const btn = document.getElementById('loginBtn');
             btn.disabled = true;
             btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-check"/></svg></span>';
             
             try {
-                const response = await fetch(`${API_BASE}/auth/register`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password, first_name: name })
+                // Register with Supabase Auth
+                const { data, error } = await db.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: {
+                            first_name: name,
+                            phone: phone
+                        }
+                    }
                 });
-                const data = await response.json();
                 
-                if (data.success) {
-                    // Save auth data
-                    authToken = data.token;
-                    currentUser = data.user;
-                    localStorage.setItem('fixair_token', authToken);
-                    localStorage.setItem('fixair_user', JSON.stringify(currentUser));
-                    
-                    // Update UI with user info
-                    document.getElementById('userName').textContent = name;
-                    document.getElementById('profileFirstName').value = name;
-                    document.getElementById('profileEmail').value = email;
-                    
-                    toast('Compte créé !');
-                    
-                    // New user - show onboarding
-                    document.getElementById('loginScreen').classList.remove('active');
-                    document.getElementById('mainApp').classList.add('active');
-                    
-                    // ═══ LOAD DATA after login ═══
-                    loadProjectsList();
-                    initGamification();
-                } else {
-                    toast(data.error || 'Erreur lors de la création du compte');
+                if (error) {
+                    console.error('Registration error:', error);
+                    toast(error.message || 'Erreur lors de la création du compte');
+                    return;
                 }
+                
+                console.log('✅ Registration successful:', data);
+                
+                // Check if email confirmation is required
+                if (data.user && !data.user.email_confirmed_at) {
+                    showEmailConfirmScreen(email);
+                    toast('Vérifiez votre email !');
+                } else if (data.user) {
+                    supabaseUser = data.user;
+                    showPendingScreen(email);
+                    toast('Compte créé !');
+                }
+                
             } catch (error) {
                 toast('Erreur de connexion');
                 console.error('Register error:', error);
@@ -6017,37 +6180,104 @@
             }
         }
 
+        // ═══ SCREEN HELPER FUNCTIONS ═══
+        function showEmailConfirmScreen(email) {
+            document.getElementById('confirmEmail').textContent = email;
+            document.getElementById('loginScreen').classList.remove('active');
+            document.getElementById('mainApp').classList.remove('active');
+            document.getElementById('pendingScreen').classList.remove('active');
+            document.getElementById('emailConfirmScreen').classList.add('active');
+        }
+
+        function showPendingScreen(email) {
+            document.getElementById('pendingEmail').textContent = email;
+            document.getElementById('loginScreen').classList.remove('active');
+            document.getElementById('mainApp').classList.remove('active');
+            document.getElementById('emailConfirmScreen').classList.remove('active');
+            document.getElementById('pendingScreen').classList.add('active');
+        }
+
+        async function resendConfirmation() {
+            const email = document.getElementById('confirmEmail').textContent;
+            try {
+                const { error } = await db.auth.resend({
+                    type: 'signup',
+                    email: email
+                });
+                if (error) {
+                    toast('Erreur: ' + error.message);
+                } else {
+                    toast('Email renvoyé !');
+                }
+            } catch (err) {
+                toast('Erreur lors de l\'envoi');
+            }
+        }
+
+        function backToLogin() {
+            document.getElementById('emailConfirmScreen').classList.remove('active');
+            document.getElementById('pendingScreen').classList.remove('active');
+            document.getElementById('loginScreen').classList.add('active');
+            
+            loginStep = 0;
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('loginPhone').value = '';
+            document.getElementById('loginName').value = '';
+            updateLoginUI();
+        }
+
+        async function logoutFromPending() {
+            await db.auth.signOut();
+            supabaseUser = null;
+            currentUser = null;
+            localStorage.removeItem('fixair_onboarding_done');
+            
+            document.getElementById('pendingScreen').classList.remove('active');
+            document.getElementById('emailConfirmScreen').classList.remove('active');
+            document.getElementById('loginScreen').classList.add('active');
+            
+            loginStep = 0;
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('loginPhone').value = '';
+            document.getElementById('loginName').value = '';
+            document.getElementById('loginSlider').style.transform = 'translateX(0)';
+            document.getElementById('loginSphere').style.display = 'flex';
+            document.getElementById('loginBack').style.display = 'none';
+            document.getElementById('loginBtn').innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+            document.getElementById('loginBtn').onclick = nextLoginStep;
+            
+            toast('Déconnecté');
+        }
+
         function doLogin() {
             document.getElementById('loginScreen').classList.remove('active');
+            document.getElementById('emailConfirmScreen').classList.remove('active');
+            document.getElementById('pendingScreen').classList.remove('active');
             document.getElementById('mainApp').classList.add('active');
             
-            // Load projects and initialize gamification
             loadProjectsList();
             initGamification();
+            prefetchApiKeys();
         }
-        
-        function logout() {
-            localStorage.removeItem('fixair_token');
-            localStorage.removeItem('fixair_user');
-            localStorage.removeItem('fixair_onboarding_done');
-            authToken = null;
+
+        async function logout() {
+            await db.auth.signOut();
+            supabaseUser = null;
             currentUser = null;
             loginStep = 0;
             isNewUser = false;
             onboardingComplete = false;
+            localStorage.removeItem('fixair_onboarding_done');
             
-            // Close profile view first
             document.getElementById('profileView').classList.remove('active');
-            
-            // Reset onboarding section visibility
             document.querySelector('.onboarding-section').classList.remove('hidden');
-            
-            // Reset homepage content
             document.getElementById('homepageContent').classList.remove('active');
             
-            // Reset UI
             document.getElementById('loginEmail').value = '';
             document.getElementById('loginPassword').value = '';
+            document.getElementById('loginPhone').value = '';
             document.getElementById('loginName').value = '';
             document.getElementById('loginSlider').style.transform = 'translateX(0)';
             document.getElementById('loginSphere').style.display = 'flex';
@@ -7040,16 +7270,28 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
         
         // Get current user ID from existing auth (uses your n8n auth system)
         async function getCurrentUserId() {
-            if (currentUserId) return currentUserId;
-            
-            // Use the existing auth from your login system
-            const savedUser = JSON.parse(localStorage.getItem('fixair_user') || 'null');
-            if (savedUser && savedUser.id) {
-                currentUserId = savedUser.id;
-                return savedUser.id;
+            // First try to get from currentUser
+            if (currentUser && currentUser.id) {
+                currentUserId = currentUser.id;
+                return currentUser.id;
             }
             
-            // Fallback for demo/testing
+            // Fallback: get from Supabase Auth session
+            try {
+                const { data: { session } } = await db.auth.getSession();
+                if (session && session.user) {
+                    const profile = await loadUserProfile(session.user.id);
+                    if (profile) {
+                        currentUser = profile;
+                        currentUserId = profile.id;
+                        return profile.id;
+                    }
+                }
+            } catch (err) {
+                console.error('Error getting user ID:', err);
+            }
+            
+            // Demo fallback
             let localId = localStorage.getItem('fixair_demo_user_id');
             if (!localId) {
                 localId = 'demo-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
@@ -11019,9 +11261,8 @@ RÈGLES:
         }
         
         // ═══════════════════════════════════════════════════════════════
-        // ELEVENLABS SPEECH-TO-TEXT
+        // ELEVENLABS SPEECH-TO-TEXT (API key fetched from Supabase)
         // ═══════════════════════════════════════════════════════════════
-        const ELEVENLABS_API_KEY = 'sk_22d550a1aecd2627750e50b5cf337ef5372bbbbcd35c8b71';
         
         async function transcribeWithElevenLabs(panel, audioBlob) {
             const input = document.getElementById(panel + 'Input');
@@ -11034,6 +11275,12 @@ RÈGLES:
             input.placeholder = '';
             
             try {
+                // ═══ FETCH API KEY FROM SUPABASE ═══
+                const apiKey = await getApiKey('elevenlabs_api_key');
+                if (!apiKey) {
+                    throw new Error('API key not available');
+                }
+                
                 const formData = new FormData();
                 formData.append('file', audioBlob, 'recording.webm');
                 formData.append('model_id', 'scribe_v1');
@@ -11042,7 +11289,7 @@ RÈGLES:
                 const response = await fetch('https://api.elevenlabs.io/v1/speech-to-text', {
                     method: 'POST',
                     headers: {
-                        'xi-api-key': ELEVENLABS_API_KEY
+                        'xi-api-key': apiKey
                     },
                     body: formData
                 });
