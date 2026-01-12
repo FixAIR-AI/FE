@@ -5901,13 +5901,22 @@
             return supabaseReady;
         }
         
-        // Safe query wrapper that handles AbortError
-        async function safeQuery(queryFn, retries = 3) {
+        // Safe query wrapper that handles AbortError with timeout
+        async function safeQuery(queryFn, retries = 3, timeoutMs = 5000) {
             await waitForSupabase();
             
             for (let attempt = 0; attempt < retries; attempt++) {
                 try {
-                    const result = await queryFn();
+                    console.log('🔄 safeQuery attempt', attempt + 1);
+                    
+                    // Add timeout to prevent infinite hang
+                    const timeoutPromise = new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Query timeout')), timeoutMs)
+                    );
+                    
+                    const result = await Promise.race([queryFn(), timeoutPromise]);
+                    console.log('📊 safeQuery result:', result);
+                    
                     // Check if result has AbortError
                     if (result.error && result.error.message && result.error.message.includes('AbortError')) {
                         console.log('🔄 Query AbortError, retrying...', attempt + 1);
@@ -5916,12 +5925,14 @@
                     }
                     return result;
                 } catch (err) {
-                    if (err.message && err.message.includes('AbortError') && attempt < retries - 1) {
+                    console.log('❌ safeQuery error:', err.message);
+                    if ((err.message.includes('AbortError') || err.message.includes('timeout')) && attempt < retries - 1) {
                         console.log('🔄 Query exception, retrying...', attempt + 1);
                         await new Promise(r => setTimeout(r, 300 * (attempt + 1)));
                         continue;
                     }
-                    throw err;
+                    // Don't throw, return error object
+                    return { data: null, error: { message: err.message } };
                 }
             }
             return { data: null, error: { message: 'Query failed after retries' } };
