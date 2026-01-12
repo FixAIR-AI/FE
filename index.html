@@ -4832,7 +4832,7 @@
             <p class="pending-subtitle">
                 Un email de confirmation a été envoyé à votre adresse. Cliquez sur le lien pour activer votre compte.
             </p>
-            <div class="pending-email" id="confirmEmail">email@example.com</div>
+            <div class="pending-email" id="confirmEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="7d18101c14113d18051c100d1118531e1210">[email&#160;protected]</a></div>
             <button class="pending-logout" onclick="resendConfirmation()" style="margin-top: 8px; border-color: var(--copilot); color: var(--copilot);">
                 Renvoyer l'email
             </button>
@@ -4856,7 +4856,7 @@
             <p class="pending-subtitle">
                 Votre email a été confirmé ! Un administrateur va valider votre accès dans les plus brefs délais.
             </p>
-            <div class="pending-email" id="pendingEmail">email@example.com</div>
+            <div class="pending-email" id="pendingEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="cda8a0aca4a18da8b5aca0bda1a8e3aea2a0">[email&#160;protected]</a></div>
             <button class="pending-logout" onclick="logoutFromPending()">
                 Se déconnecter
             </button>
@@ -5547,7 +5547,7 @@
 
     <div class="toast" id="toast"></div>
 
-    <script>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
         // ═══════════════════════════════════════════════════════════════
         // PRODUCTION MODE - Set to false for debugging
         // ═══════════════════════════════════════════════════════════════
@@ -5841,6 +5841,27 @@
         let step3Done = false;
         let step4Done = false;
         let onboardingBrand = null;
+        
+        // ═══ SUPABASE CLIENT INITIALIZATION (must be before auth code) ═══
+        const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTcyMTksImV4cCI6MjA4MTgzMzIxOX0.8ryQm1tsdx5ox3aFJiiflmwuEGGxxH_PlobGxXMgFuQ';
+        
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('✅ Supabase client initialized');
+        
+        // ═══ TOAST UTILITY (needed early for error handling) ═══
+        let toastTimeout = null;
+        function toast(m) {
+            const t = document.getElementById('toast');
+            if (!t) { console.log('Toast:', m); return; }
+            t.textContent = m;
+            t.classList.add('show');
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                t.classList.remove('show');
+                toastTimeout = null;
+            }, 2000);
+        }
         
         // Auth state
         const API_BASE = 'https://cherhabil.app.n8n.cloud/webhook';
@@ -7247,13 +7268,8 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
         }
         
         // ═══════════════════════════════════════════════════════════════
-        // SUPABASE CONFIGURATION
+        // SUPABASE PROJECT MANAGEMENT
         // ═══════════════════════════════════════════════════════════════
-        
-        const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTcyMTksImV4cCI6MjA4MTgzMzIxOX0.8ryQm1tsdx5ox3aFJiiflmwuEGGxxH_PlobGxXMgFuQ';
-        
-        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
         // Current project/chat state
         let currentUserId = null;
@@ -13053,18 +13069,6 @@ RÈGLES:
             document.getElementById('hotlineChatMessages').scrollTop = document.getElementById('hotlineChatMessages').scrollHeight;
         }
 
-        let toastTimeout = null;
-        function toast(m) {
-            const t = document.getElementById('toast');
-            t.textContent = m;
-            t.classList.add('show');
-            if (toastTimeout) clearTimeout(toastTimeout);
-            toastTimeout = setTimeout(() => {
-                t.classList.remove('show');
-                toastTimeout = null;
-            }, 2000);
-        }
-
         const divider = document.getElementById('divider');
         const pC = document.getElementById('panelCopilot');
         const pA = document.getElementById('panelAssistant');
@@ -14848,14 +14852,3 @@ RÈGLES:
                             <option value="connect">FixAIR Connect</option>
                         </select>
                     </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="event-drawer-footer">
-            <button class="event-drawer-btn secondary" onclick="closeEventDrawer()">Annuler</button>
-            <button class="event-drawer-btn primary" onclick="saveCalendarEvent()">Enregistrer</button>
-        </div>
-    </div>
-</body>
-</html>
