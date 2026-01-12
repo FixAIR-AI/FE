@@ -6073,28 +6073,61 @@
         }
 
         // Listen for auth state changes
+        let authHandled = false;
         db.auth.onAuthStateChange(async (event, session) => {
             console.log('🔐 Auth state changed:', event);
             
-            if (event === 'SIGNED_IN' && session) {
+            // Ignore if we already handled this session
+            if (authHandled && event === 'INITIAL_SESSION') {
+                console.log('🔐 Skipping INITIAL_SESSION - already handled');
+                return;
+            }
+            
+            if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
                 supabaseUser = session.user;
+                
+                // Only process if we don't have currentUser yet
                 if (!currentUser) {
+                    authHandled = true;
                     const profile = await loadUserProfile(session.user.id);
                     if (profile) {
                         currentUser = profile;
-                        if (profile.status === 'approved' || profile.status === 'active') {
-                            location.reload();
+                        
+                        // Check if user is approved and not already in app
+                        if ((profile.status === 'approved' || profile.status === 'active') && 
+                            !document.getElementById('mainApp').classList.contains('active')) {
+                            console.log('✅ User approved, loading app from auth change');
+                            document.getElementById('userName').textContent = profile.first_name || 'Utilisateur';
+                            document.getElementById('profileFirstName').value = profile.first_name || '';
+                            if (profile.email) document.getElementById('profileEmail').value = profile.email;
+                            
+                            document.getElementById('loginScreen').classList.remove('active');
+                            document.getElementById('mainApp').classList.add('active');
+                            
+                            const onboardingDone = localStorage.getItem('fixair_onboarding_done');
+                            if (onboardingDone) {
+                                onboardingComplete = true;
+                                document.querySelector('.onboarding-section').classList.add('hidden');
+                                document.getElementById('homepageContent').classList.add('active');
+                            }
+                            
+                            loadProjectsList();
+                            initGamification();
+                            prefetchApiKeys();
+                        } else if (profile.status !== 'approved' && profile.status !== 'active') {
+                            showPendingScreen(profile.email);
                         }
                     }
                 }
             } else if (event === 'SIGNED_OUT') {
                 supabaseUser = null;
                 currentUser = null;
+                authHandled = false;
             }
         });
 
         // Initialize auth on page load
-        setTimeout(() => initAuth(), 500);
+        setTimeout(() => initAuth(), 800);
 
         // ═══ LOGIN STATUS MESSAGES ═══
         let existingUserName = '';
