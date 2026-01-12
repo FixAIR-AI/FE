@@ -722,6 +722,8 @@
         .pending-screen { display: none; }
         .pending-screen.active { display: flex; }
         .pending-container { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 40px; text-align: center; }
+        .pending-logo { margin-bottom: 8px; }
+        .pending-logo svg { height: 40px; width: auto; }
         .pending-icon { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, rgba(255,107,53,0.2), rgba(255,107,53,0.05)); display: flex; align-items: center; justify-content: center; animation: pendingPulse 2s ease-in-out infinite; }
         .pending-icon svg { width: 40px; height: 40px; color: var(--copilot); }
         @keyframes pendingPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } }
@@ -4845,16 +4847,14 @@
     <div class="screen pending-screen" id="emailConfirmScreen">
         <div class="scan-line"></div>
         <div class="pending-container">
-            <div class="pending-icon" style="background: linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.05));">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #22c55e;">
-                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-                </svg>
+            <div class="pending-logo">
+                <svg viewBox="0 0 235 48" style="height: 40px; color: var(--copilot);"><use href="#icon-fixair-logo"/></svg>
             </div>
             <h1 class="pending-title">Vérifiez votre email</h1>
             <p class="pending-subtitle">
                 Un email de confirmation a été envoyé à votre adresse. Cliquez sur le lien pour activer votre compte.
             </p>
-            <div class="pending-email" id="confirmEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="7d18101c14113d18051c100d1118531e1210">[email&#160;protected]</a></div>
+            <div class="pending-email" id="confirmEmail">email@example.com</div>
             <button class="pending-logout" onclick="resendConfirmation()" style="margin-top: 8px; border-color: var(--copilot); color: var(--copilot);">
                 Renvoyer l'email
             </button>
@@ -4868,11 +4868,8 @@
     <div class="screen pending-screen" id="pendingScreen">
         <div class="scan-line"></div>
         <div class="pending-container">
-            <div class="pending-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14"/>
-                </svg>
+            <div class="pending-logo">
+                <svg viewBox="0 0 235 48" style="height: 40px; color: var(--copilot);"><use href="#icon-fixair-logo"/></svg>
             </div>
             <h1 class="pending-title">Demande en attente</h1>
             <p class="pending-subtitle">
@@ -6142,7 +6139,7 @@
                 if (isNewUser) {
                     // New user: go to phone step
                     clearLoginStatus();
-                    setLoginStatus('Entrez votre numéro (optionnel)', 'info');
+                    setLoginStatus('Entrez votre numéro de téléphone', 'info');
                     loginStep = 2;
                     updateLoginUI();
                 } else {
@@ -6201,11 +6198,15 @@
                     }
                 }
             } else if (loginStep === 2) {
-                // Step 2: Phone number (new users only)
+                // Step 2: Phone number (required)
                 const phone = document.getElementById('loginPhone').value.trim();
                 
-                // Phone is optional but recommended
-                if (phone && phone.length < 8) { 
+                // Phone is required
+                if (!phone) { 
+                    setLoginStatus('Veuillez entrer votre numéro de téléphone', 'error');
+                    return; 
+                }
+                if (phone.length < 8) { 
                     setLoginStatus('Numéro de téléphone invalide', 'error');
                     return; 
                 }
