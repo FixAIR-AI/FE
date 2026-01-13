@@ -6915,8 +6915,24 @@
             // Update UI immediately
             document.getElementById('userName').textContent = firstName;
 
+            // ═══ GET USER ID (priority: currentUser > session > localStorage) ═══
+            let userId = currentUser?.id;
+            if (!userId && typeof db !== 'undefined') {
+                try {
+                    const { data: { session } } = await db.auth.getSession();
+                    userId = session?.user?.id;
+                } catch (e) { }
+            }
+            if (!userId) {
+                const savedUser = JSON.parse(localStorage.getItem('fixair_user') || '{}');
+                userId = savedUser.id;
+            }
+
+            console.log('saveProfile - userId:', userId);
+
             // ═══ SAVE TO LOCALSTORAGE (ALWAYS WORKS) ═══
             const savedUser = JSON.parse(localStorage.getItem('fixair_user') || '{}');
+            savedUser.id = userId; // Ensure ID is saved
             savedUser.first_name = firstName;
             savedUser.last_name = lastName;
             if (email) savedUser.email = email;
@@ -6928,7 +6944,7 @@
             let dbSaveSuccess = false;
 
             // ═══ SAVE TO SUPABASE users table ═══
-            if (savedUser.id && typeof db !== 'undefined') {
+            if (userId && typeof db !== 'undefined') {
                 try {
                     const updateData = {
                         first_name: firstName,
@@ -6939,21 +6955,20 @@
                         updated_at: new Date().toISOString()
                     };
 
-                    console.log('Saving profile to Supabase:', updateData);
+                    console.log('Saving profile to Supabase:', updateData, 'for user:', userId);
 
                     const { data, error } = await db
                         .from('users')
                         .update(updateData)
-                        .eq('id', savedUser.id)
+                        .eq('id', userId)
                         .select();
 
                     if (error) {
-                        // Update failed - try upsert as fallback
-                        // This handles: record not found, RLS issues, permission errors, etc.
                         console.error('Profile update error:', error.code, error.message);
 
+                        // Try upsert as fallback
                         const upsertData = {
-                            id: savedUser.id,
+                            id: userId,
                             first_name: firstName,
                             last_name: lastName,
                             email: email,
@@ -6979,6 +6994,8 @@
                 } catch (e) {
                     console.error('Profile save exception:', e);
                 }
+            } else {
+                console.log('Cannot save to Supabase - no userId or db not available');
             }
 
             // ═══ ALSO TRY n8n API (if endpoint exists) ═══
