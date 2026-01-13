@@ -302,6 +302,7 @@
         
         async function doLogout() {
             log('Logging out...');
+            localStorage.removeItem('supabase.auth.token');
             await db.auth.signOut();
         }
         
@@ -372,69 +373,88 @@
         }
         
         // ===========================================
+        // PARSE URL HASH FOR TOKENS
+        // ===========================================
+        function parseHashParams(hash) {
+            if (!hash || hash.length < 2) return {};
+            const params = {};
+            const hashContent = hash.substring(1); // Remove #
+            const pairs = hashContent.split('&');
+            for (const pair of pairs) {
+                const [key, value] = pair.split('=');
+                if (key && value) {
+                    params[decodeURIComponent(key)] = decodeURIComponent(value);
+                }
+            }
+            return params;
+        }
+
+        // ===========================================
         // INITIALIZATION
         // ===========================================
         async function init() {
             log('Starting...');
             showLoading('Initialisation...');
 
-            // Check if URL has recovery token
+            // Parse URL hash for tokens BEFORE creating client
             const hash = window.location.hash;
-            const hasRecoveryToken = hash.includes('type=recovery');
-            const hasAnyToken = hash.includes('access_token');
+            const hashParams = parseHashParams(hash);
 
-            if (hasRecoveryToken) {
-                log('Recovery token detected');
-                showLoading('Traitement du lien...');
-            } else if (hasAnyToken) {
-                log('Auth token detected');
-                showLoading('Confirmation...');
+            const hasAccessToken = !!hashParams.access_token;
+            const hasRefreshToken = !!hashParams.refresh_token;
+            const tokenType = hashParams.type; // 'recovery', 'signup', 'magiclink', etc.
+            const isRecoveryLink = tokenType === 'recovery';
+
+            if (isRecoveryLink) {
+                log('Recovery token detected in URL');
+                showLoading('Traitement du lien de récupération...');
+            } else if (hasAccessToken) {
+                log('Auth token detected in URL (type: ' + (tokenType || 'unknown') + ')');
+                showLoading('Confirmation en cours...');
             }
 
-            // Create Supabase client - detectSessionInUrl handles URL tokens automatically
-            // IMPORTANT: Don't call getSession() immediately after this - let auth events handle it
+            // CRITICAL: Clean URL hash BEFORE creating Supabase client
+            // This prevents Supabase from internally trying to process the tokens
+            // which causes AbortError in fresh browsers
+            if (hash) {
+                window.history.replaceState(null, '', window.location.pathname + window.location.search);
+                log('URL hash removed before client creation');
+            }
+
+            // Create Supabase client - DISABLE automatic features
             db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
                 auth: {
-                    autoRefreshToken: true,
-                    persistSession: true,
-                    detectSessionInUrl: true  // CRITICAL - handles URL tokens automatically
+                    autoRefreshToken: false,
+                    persistSession: false,
+                    detectSessionInUrl: false
                 }
             });
 
             log('Client created');
 
-            // Listen for auth changes - this is the ONLY way we should handle auth state
-            // DO NOT call getSession() directly - it causes AbortError race conditions
+            // Set up auth state change listener FIRST
             db.auth.onAuthStateChange((event, session) => {
                 log('Auth event: ' + event);
 
                 if (event === 'PASSWORD_RECOVERY') {
-                    // User clicked password reset link
                     log('PASSWORD_RECOVERY mode');
                     isPasswordRecovery = true;
                     isReady = true;
                     showPasswordReset();
-                    // Don't clean URL yet - Supabase needs the tokens
-                } else if (event === 'SIGNED_IN' && !isPasswordRecovery) {
-                    // User signed in (login or email confirmation)
-                    isReady = true;
-                    loadUserAndShowApp(session.user);
-                    // Clean URL after successful sign in
-                    if (hasAnyToken) {
-                        window.history.replaceState(null, '', window.location.pathname);
-                        log('URL cleaned after SIGNED_IN');
+                } else if (event === 'SIGNED_IN') {
+                    if (isPasswordRecovery) {
+                        // During password recovery, stay on reset form
+                        showPasswordReset();
+                    } else {
+                        isReady = true;
+                        loadUserAndShowApp(session.user);
                     }
-                } else if (event === 'SIGNED_IN' && isPasswordRecovery) {
-                    // During password recovery, SIGNED_IN fires but we stay on reset form
-                    showPasswordReset();
                 } else if (event === 'SIGNED_OUT') {
-                    // User signed out
                     isPasswordRecovery = false;
                     isReady = true;
                     currentUser = null;
                     showLoggedOut();
                 } else if (event === 'USER_UPDATED') {
-                    // Password was changed successfully
                     log('User updated');
                     isPasswordRecovery = false;
                     isReady = true;
@@ -442,27 +462,127 @@
                         loadUserAndShowApp(session.user);
                     }
                 } else if (event === 'INITIAL_SESSION') {
-                    // First load - session from storage or URL token processing
-                    if (session && session.user && !isPasswordRecovery) {
-                        isReady = true;
-                        loadUserAndShowApp(session.user);
-                        // Clean URL if we had tokens
-                        if (hasAnyToken) {
-                            window.history.replaceState(null, '', window.location.pathname);
-                            log('URL cleaned after INITIAL_SESSION');
+                    // Only handle if we're NOT processing URL tokens manually
+                    if (!hasAccessToken) {
+                        if (session && session.user) {
+                            isReady = true;
+                            loadUserAndShowApp(session.user);
+                        } else {
+                            isReady = true;
+                            showLoggedOut();
                         }
-                    } else if (!session && !hasAnyToken) {
-                        // No session and no tokens - show login
-                        isReady = true;
-                        showLoggedOut();
                     }
-                    // If hasAnyToken but no session yet, wait for other events
                 }
             });
 
-            // NO setTimeout hacks
-            // NO manual checkSession() calls
-            // Let the auth events drive everything
+            // If we have tokens in URL, manually set the session
+            if (hasAccessToken && hasRefreshToken) {
+                log('Manually processing URL tokens...');
+
+                try {
+                    // Set the session using the tokens from the URL
+                    const { data, error } = await db.auth.setSession({
+                        access_token: hashParams.access_token,
+                        refresh_token: hashParams.refresh_token
+                    });
+
+                    if (error) {
+                        log('setSession error: ' + error.message);
+                        showLoggedOut();
+                        return;
+                    }
+
+                    log('Session set successfully');
+
+                    // Manually persist session to localStorage since we disabled persistSession
+                    if (data.session) {
+                        localStorage.setItem('supabase.auth.token', JSON.stringify({
+                            currentSession: data.session,
+                            expiresAt: data.session.expires_at
+                        }));
+                        log('Session saved to localStorage');
+                    }
+
+                    // Handle based on token type
+                    if (isRecoveryLink) {
+                        log('Showing password reset form');
+                        isPasswordRecovery = true;
+                        isReady = true;
+                        showPasswordReset();
+                    } else if (data.session && data.session.user) {
+                        log('User authenticated: ' + data.session.user.email);
+                        isReady = true;
+                        loadUserAndShowApp(data.session.user);
+                    }
+
+                } catch (err) {
+                    log('Exception during token processing: ' + err.message);
+                    console.error('Token processing error:', err);
+                    showLoggedOut();
+                }
+            } else if (hasAccessToken && !hasRefreshToken) {
+                // Some flows only have access_token - try to use it anyway
+                log('Only access_token found, attempting session...');
+
+                try {
+                    const { data, error } = await db.auth.setSession({
+                        access_token: hashParams.access_token,
+                        refresh_token: hashParams.access_token // Use same token as fallback
+                    });
+
+                    if (error) {
+                        log('setSession error (no refresh): ' + error.message);
+                        showLoggedOut();
+                        return;
+                    }
+
+                    // Manually persist session
+                    if (data.session) {
+                        localStorage.setItem('supabase.auth.token', JSON.stringify({
+                            currentSession: data.session,
+                            expiresAt: data.session.expires_at
+                        }));
+                    }
+
+                    if (isRecoveryLink) {
+                        isPasswordRecovery = true;
+                        isReady = true;
+                        showPasswordReset();
+                    } else if (data.session && data.session.user) {
+                        isReady = true;
+                        loadUserAndShowApp(data.session.user);
+                    }
+
+                } catch (err) {
+                    log('Exception: ' + err.message);
+                    showLoggedOut();
+                }
+            } else {
+                // No URL tokens - check localStorage for existing session
+                try {
+                    const stored = localStorage.getItem('supabase.auth.token');
+                    if (stored) {
+                        const parsed = JSON.parse(stored);
+                        if (parsed.currentSession) {
+                            log('Found stored session, restoring...');
+                            const { data, error } = await db.auth.setSession({
+                                access_token: parsed.currentSession.access_token,
+                                refresh_token: parsed.currentSession.refresh_token
+                            });
+                            if (!error && data.session) {
+                                isReady = true;
+                                loadUserAndShowApp(data.session.user);
+                                return;
+                            }
+                        }
+                    }
+                } catch (err) {
+                    log('Error restoring session: ' + err.message);
+                }
+                // No valid session found
+                isReady = true;
+                showLoggedOut();
+            }
         }
         
         // Start
