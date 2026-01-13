@@ -4883,6 +4883,34 @@
         </div>
     </div>
 
+    <!-- PASSWORD RESET SCREEN -->
+    <div class="screen pending-screen" id="passwordResetScreen">
+        <div class="scan-line"></div>
+        <div class="pending-container">
+            <div class="pending-logo">
+                <svg viewBox="0 0 235 48" style="height: 40px; color: var(--copilot);"><use href="#icon-fixair-logo"/></svg>
+            </div>
+            <h1 class="pending-title">Nouveau mot de passe</h1>
+            <p class="pending-subtitle">
+                Créez un nouveau mot de passe pour votre compte.
+            </p>
+            <div style="width: 100%; max-width: 300px; margin: 20px auto;">
+                <input type="password" id="newPasswordInput" placeholder="Nouveau mot de passe (min 6 caractères)"
+                    style="width: 100%; padding: 12px 16px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; margin-bottom: 12px;">
+                <input type="password" id="confirmPasswordInput" placeholder="Confirmer le mot de passe"
+                    style="width: 100%; padding: 12px 16px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; margin-bottom: 12px;">
+                <div id="passwordResetStatus" style="margin-bottom: 12px; padding: 8px; border-radius: 6px; font-size: 13px; display: none;"></div>
+                <button onclick="setNewPassword()"
+                    style="width: 100%; padding: 12px 16px; background: var(--copilot); border: none; border-radius: 8px; color: #000; font-size: 14px; font-weight: 600; cursor: pointer;">
+                    Mettre à jour le mot de passe
+                </button>
+            </div>
+            <button class="pending-logout" onclick="cancelPasswordReset()" style="margin-top: 8px;">
+                Annuler
+            </button>
+        </div>
+    </div>
+
     <!-- MAIN APP -->
     <div class="screen main-app" id="mainApp">
         <header class="app-header">
@@ -5865,26 +5893,64 @@
         // ═══ SUPABASE CLIENT INITIALIZATION (must be before auth code) ═══
         const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTcyMTksImV4cCI6MjA4MTgzMzIxOX0.8ryQm1tsdx5ox3aFJiiflmwuEGGxxH_PlobGxXMgFuQ';
-        
+
         let db;
         let supabaseReady = false;
-        
+
+        // ═══ PARSE URL HASH FOR AUTH TOKENS ═══
+        // This must happen BEFORE createClient to prevent AbortError in cross-browser scenarios
+        function parseHashParams(hash) {
+            if (!hash || hash.length < 2) return {};
+            const params = {};
+            const hashContent = hash.substring(1); // Remove #
+            const pairs = hashContent.split('&');
+            for (const pair of pairs) {
+                const [key, value] = pair.split('=');
+                if (key && value) {
+                    params[decodeURIComponent(key)] = decodeURIComponent(value);
+                }
+            }
+            return params;
+        }
+
+        // Parse URL hash for tokens BEFORE creating client
+        const initialHash = window.location.hash;
+        const hashParams = parseHashParams(initialHash);
+        const hasAccessToken = !!hashParams.access_token;
+        const hasRefreshToken = !!hashParams.refresh_token;
+        const tokenType = hashParams.type; // 'recovery', 'signup', 'magiclink', etc.
+        const isRecoveryLink = tokenType === 'recovery';
+
+        if (isRecoveryLink) {
+            console.log('🔑 Recovery token detected in URL');
+        } else if (hasAccessToken) {
+            console.log('🔐 Auth token detected in URL (type: ' + (tokenType || 'unknown') + ')');
+        }
+
+        // CRITICAL: Clean URL hash BEFORE creating Supabase client
+        // This prevents Supabase from internally trying to process the tokens
+        // which causes AbortError in fresh browsers (different browser than signup)
+        if (initialHash) {
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            console.log('🧹 URL hash removed before client creation');
+        }
+
         if (window.supabase && window.supabase.createClient) {
+            // DISABLE automatic features to avoid AbortError in cross-browser scenarios
+            // We handle URL tokens manually in initAuth()
             db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
                 auth: {
-                    persistSession: true,
-                    autoRefreshToken: true,
-                    detectSessionInUrl: true,
+                    persistSession: false,     // Disabled - we handle manually to avoid lock issues
+                    autoRefreshToken: false,   // Disabled - we handle manually
+                    detectSessionInUrl: false, // Disabled - we parse tokens manually above
                     flowType: 'implicit'
                 }
             });
-            console.log('✅ Supabase client initialized');
-            
-            // Wait for auth to be ready before allowing queries
-            setTimeout(() => {
-                supabaseReady = true;
-                console.log('✅ Supabase ready for queries');
-            }, 500);
+            console.log('✅ Supabase client initialized (manual token handling mode)');
+
+            // Mark Supabase as ready immediately since we handle auth manually
+            supabaseReady = true;
+            console.log('✅ Supabase ready for queries');
         } else {
             console.error('❌ Supabase library not loaded! window.supabase =', window.supabase);
             alert('Erreur: Supabase non chargé. Veuillez rafraîchir la page.');
@@ -5958,6 +6024,8 @@
         let authToken = null;
         let currentUser = null;
         let supabaseUser = null;
+        let isPasswordRecovery = false;  // Track if user is in password recovery flow
+        let isReady = false;  // Prevents duplicate handling
         
         const colors = {carrier:'#3B82F6', daikin:'#10B981', mitsubishi:'#E60012'};
         const names = {carrier:'Carrier', daikin:'Daikin', mitsubishi:'Mitsubishi'};
@@ -6013,62 +6081,186 @@
             }
         }
 
-        // ═══ CHECK SUPABASE AUTH SESSION ON LOAD ═══
-        async function initAuth() {
-            console.log('🔐 Checking Supabase Auth session...');
-            
-            // Wait for Supabase to be ready
-            await waitForSupabase();
-            
-            const { data: { session }, error } = await db.auth.getSession();
-            
-            if (error) {
-                console.error('Auth session error:', error);
+        // ═══ HELPER: Load user and show appropriate screen ═══
+        async function loadUserAndShowApp(user) {
+            if (!user) {
+                console.log('❌ No user provided to loadUserAndShowApp');
                 return;
             }
-            
-            if (session && session.user) {
-                console.log('🔐 Found existing session:', session.user.email);
-                supabaseUser = session.user;
-                
-                // Load user profile from public.users
-                const profile = await loadUserProfile(session.user.id);
-                
-                if (profile) {
-                    currentUser = profile;
-                    
-                    // Check approval status
-                    if (profile.status !== 'approved' && profile.status !== 'active') {
-                        console.log('⏳ User pending approval');
-                        showPendingScreen(profile.email);
+
+            console.log('🔐 Loading user:', user.email);
+            supabaseUser = user;
+
+            // Load user profile from public.users
+            const profile = await loadUserProfile(user.id);
+
+            if (profile) {
+                currentUser = profile;
+
+                // Check approval status
+                if (profile.status !== 'approved' && profile.status !== 'active') {
+                    console.log('⏳ User pending approval');
+                    showPendingScreen(profile.email);
+                    return;
+                }
+
+                // User is approved - proceed to app
+                console.log('✅ User approved, loading app');
+                document.getElementById('userName').textContent = profile.first_name || 'Utilisateur';
+                document.getElementById('profileFirstName').value = profile.first_name || '';
+                if (profile.email) document.getElementById('profileEmail').value = profile.email;
+
+                const onboardingDone = localStorage.getItem('fixair_onboarding_done');
+                if (onboardingDone) {
+                    onboardingComplete = true;
+                    document.querySelector('.onboarding-section').classList.add('hidden');
+                    document.getElementById('homepageContent').classList.add('active');
+                }
+
+                document.getElementById('loginScreen').classList.remove('active');
+                document.getElementById('passwordResetScreen')?.classList.remove('active');
+                document.getElementById('mainApp').classList.add('active');
+
+                loadProjectsList();
+                initGamification();
+                prefetchApiKeys();
+            } else {
+                console.log('⚠️ No user profile found, showing pending...');
+                showPendingScreen(user.email);
+            }
+        }
+
+        // ═══ HELPER: Show password reset screen ═══
+        function showPasswordResetScreen() {
+            console.log('🔑 Showing password reset screen');
+            document.getElementById('loginScreen').classList.remove('active');
+            document.getElementById('pendingScreen')?.classList.remove('active');
+            document.getElementById('emailConfirmScreen')?.classList.remove('active');
+            document.getElementById('mainApp').classList.remove('active');
+            document.getElementById('passwordResetScreen').classList.add('active');
+        }
+
+        // ═══ CHECK SUPABASE AUTH SESSION ON LOAD ═══
+        async function initAuth() {
+            console.log('🔐 Initializing auth...');
+
+            // If we have tokens in URL, manually set the session
+            if (hasAccessToken && hasRefreshToken) {
+                console.log('🔐 Manually processing URL tokens...');
+
+                // IMPORTANT: Set recovery flag BEFORE setSession to prevent race condition
+                // The SIGNED_IN event will fire during setSession, and we need isPasswordRecovery
+                // to be true so the event handler shows the password reset form
+                if (isRecoveryLink) {
+                    isPasswordRecovery = true;
+                    console.log('🔑 Password recovery mode enabled');
+                }
+
+                try {
+                    // Set the session using the tokens from the URL
+                    const { data, error } = await db.auth.setSession({
+                        access_token: hashParams.access_token,
+                        refresh_token: hashParams.refresh_token
+                    });
+
+                    if (error) {
+                        console.error('❌ setSession error:', error.message);
+                        isPasswordRecovery = false;
                         return;
                     }
-                    
-                    // User is approved - proceed to app
-                    console.log('✅ User approved, loading app');
-                    document.getElementById('userName').textContent = profile.first_name || 'Utilisateur';
-                    document.getElementById('profileFirstName').value = profile.first_name || '';
-                    if (profile.email) document.getElementById('profileEmail').value = profile.email;
-                    
-                    const onboardingDone = localStorage.getItem('fixair_onboarding_done');
-                    if (onboardingDone) {
-                        onboardingComplete = true;
-                        document.querySelector('.onboarding-section').classList.add('hidden');
-                        document.getElementById('homepageContent').classList.add('active');
+
+                    console.log('✅ Session set successfully');
+
+                    // Manually persist session to localStorage since we disabled persistSession
+                    if (data.session) {
+                        localStorage.setItem('supabase.auth.token', JSON.stringify({
+                            currentSession: data.session,
+                            expiresAt: data.session.expires_at
+                        }));
+                        console.log('💾 Session saved to localStorage');
                     }
-                    
-                    document.getElementById('loginScreen').classList.remove('active');
-                    document.getElementById('mainApp').classList.add('active');
-                    
-                    loadProjectsList();
-                    initGamification();
-                    prefetchApiKeys();
-                } else {
-                    console.log('⚠️ No user profile found, showing pending...');
-                    showPendingScreen(session.user.email);
+
+                    // Handle based on token type
+                    if (isRecoveryLink) {
+                        console.log('🔑 Showing password reset form');
+                        isReady = true;
+                        showPasswordResetScreen();
+                    } else if (data.session && data.session.user) {
+                        console.log('✅ User authenticated:', data.session.user.email);
+                        isReady = true;
+                        await loadUserAndShowApp(data.session.user);
+                    }
+
+                } catch (err) {
+                    console.error('❌ Exception during token processing:', err.message);
+                    isPasswordRecovery = false;
+                }
+            } else if (hasAccessToken && !hasRefreshToken) {
+                // Some flows only have access_token - try to use it anyway
+                console.log('🔐 Only access_token found, attempting session...');
+
+                if (isRecoveryLink) {
+                    isPasswordRecovery = true;
+                }
+
+                try {
+                    const { data, error } = await db.auth.setSession({
+                        access_token: hashParams.access_token,
+                        refresh_token: hashParams.access_token // Use same token as fallback
+                    });
+
+                    if (error) {
+                        console.error('❌ setSession error (no refresh):', error.message);
+                        isPasswordRecovery = false;
+                        return;
+                    }
+
+                    // Manually persist session
+                    if (data.session) {
+                        localStorage.setItem('supabase.auth.token', JSON.stringify({
+                            currentSession: data.session,
+                            expiresAt: data.session.expires_at
+                        }));
+                    }
+
+                    if (isRecoveryLink) {
+                        isReady = true;
+                        showPasswordResetScreen();
+                    } else if (data.session && data.session.user) {
+                        isReady = true;
+                        await loadUserAndShowApp(data.session.user);
+                    }
+
+                } catch (err) {
+                    console.error('❌ Exception:', err.message);
+                    isPasswordRecovery = false;
                 }
             } else {
+                // No URL tokens - check localStorage for existing session
+                console.log('🔐 No URL tokens, checking localStorage...');
+                try {
+                    const stored = localStorage.getItem('supabase.auth.token');
+                    if (stored) {
+                        const parsed = JSON.parse(stored);
+                        if (parsed.currentSession) {
+                            console.log('💾 Found stored session, restoring...');
+                            const { data, error } = await db.auth.setSession({
+                                access_token: parsed.currentSession.access_token,
+                                refresh_token: parsed.currentSession.refresh_token
+                            });
+                            if (!error && data.session) {
+                                isReady = true;
+                                await loadUserAndShowApp(data.session.user);
+                                return;
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.error('❌ Error restoring session:', err.message);
+                }
+                // No valid session found
                 console.log('🔐 No session found, showing login');
+                isReady = true;
             }
         }
 
@@ -6076,58 +6268,76 @@
         let authHandled = false;
         db.auth.onAuthStateChange(async (event, session) => {
             console.log('🔐 Auth state changed:', event);
-            
-            // Ignore if we already handled this session
-            if (authHandled && event === 'INITIAL_SESSION') {
-                console.log('🔐 Skipping INITIAL_SESSION - already handled');
+
+            // Handle PASSWORD_RECOVERY event
+            if (event === 'PASSWORD_RECOVERY') {
+                console.log('🔑 PASSWORD_RECOVERY event received');
+                isPasswordRecovery = true;
+                isReady = true;
+                showPasswordResetScreen();
                 return;
             }
-            
-            if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
-                supabaseUser = session.user;
-                
-                // Only process if we don't have currentUser yet
-                if (!currentUser) {
-                    authHandled = true;
-                    const profile = await loadUserProfile(session.user.id);
-                    if (profile) {
-                        currentUser = profile;
-                        
-                        // Check if user is approved and not already in app
-                        if ((profile.status === 'approved' || profile.status === 'active') && 
-                            !document.getElementById('mainApp').classList.contains('active')) {
-                            console.log('✅ User approved, loading app from auth change');
-                            document.getElementById('userName').textContent = profile.first_name || 'Utilisateur';
-                            document.getElementById('profileFirstName').value = profile.first_name || '';
-                            if (profile.email) document.getElementById('profileEmail').value = profile.email;
-                            
-                            document.getElementById('loginScreen').classList.remove('active');
-                            document.getElementById('mainApp').classList.add('active');
-                            
-                            const onboardingDone = localStorage.getItem('fixair_onboarding_done');
-                            if (onboardingDone) {
-                                onboardingComplete = true;
-                                document.querySelector('.onboarding-section').classList.add('hidden');
-                                document.getElementById('homepageContent').classList.add('active');
-                            }
-                            
-                            loadProjectsList();
-                            initGamification();
-                            prefetchApiKeys();
-                        } else if (profile.status !== 'approved' && profile.status !== 'active') {
-                            showPendingScreen(profile.email);
-                        }
-                    }
+
+            // Handle USER_UPDATED event (after password change)
+            if (event === 'USER_UPDATED') {
+                console.log('🔐 User updated');
+                isPasswordRecovery = false;
+                isReady = true;
+                if (session && session.user) {
+                    await loadUserAndShowApp(session.user);
                 }
-            } else if (event === 'SIGNED_OUT') {
+                return;
+            }
+
+            // Handle SIGNED_IN event
+            if (event === 'SIGNED_IN' && session) {
+                // If we're in password recovery mode, stay on reset form
+                if (isPasswordRecovery) {
+                    console.log('🔑 SIGNED_IN during password recovery - staying on reset form');
+                    showPasswordResetScreen();
+                    return;
+                }
+
+                supabaseUser = session.user;
+
+                // Only process if we don't have currentUser yet and not already in app
+                if (!currentUser && !document.getElementById('mainApp').classList.contains('active')) {
+                    authHandled = true;
+                    isReady = true;
+                    await loadUserAndShowApp(session.user);
+                }
+                return;
+            }
+
+            // Handle INITIAL_SESSION event
+            if (event === 'INITIAL_SESSION') {
+                // Skip if we already handled or if we're processing URL tokens manually
+                if (authHandled || hasAccessToken) {
+                    console.log('🔐 Skipping INITIAL_SESSION - already handled or processing URL tokens');
+                    return;
+                }
+
+                if (session && session.user && !isPasswordRecovery) {
+                    supabaseUser = session.user;
+                    authHandled = true;
+                    isReady = true;
+                    await loadUserAndShowApp(session.user);
+                }
+                return;
+            }
+
+            // Handle SIGNED_OUT event
+            if (event === 'SIGNED_OUT') {
                 supabaseUser = null;
                 currentUser = null;
+                isPasswordRecovery = false;
                 authHandled = false;
+                isReady = true;
             }
         });
 
-        // Initialize auth on page load
-        setTimeout(() => initAuth(), 800);
+        // Initialize auth on page load (reduced timeout since we handle manually)
+        setTimeout(() => initAuth(), 300);
 
         // ═══ LOGIN STATUS MESSAGES ═══
         let existingUserName = '';
@@ -6180,6 +6390,87 @@
                 console.error('❌ Reset password exception:', err);
                 setLoginStatus('Erreur lors de l\'envoi', 'error');
             }
+        }
+
+        // ═══ SET NEW PASSWORD (from password recovery link) ═══
+        async function setNewPassword() {
+            const newPass = document.getElementById('newPasswordInput').value;
+            const confirmPass = document.getElementById('confirmPasswordInput').value;
+            const statusEl = document.getElementById('passwordResetStatus');
+
+            // Validation
+            if (!newPass || newPass.length < 6) {
+                statusEl.style.display = 'block';
+                statusEl.style.background = 'rgba(239,68,68,0.2)';
+                statusEl.style.border = '1px solid rgba(239,68,68,0.5)';
+                statusEl.style.color = '#ef4444';
+                statusEl.textContent = 'Le mot de passe doit contenir au moins 6 caractères';
+                return;
+            }
+
+            if (newPass !== confirmPass) {
+                statusEl.style.display = 'block';
+                statusEl.style.background = 'rgba(239,68,68,0.2)';
+                statusEl.style.border = '1px solid rgba(239,68,68,0.5)';
+                statusEl.style.color = '#ef4444';
+                statusEl.textContent = 'Les mots de passe ne correspondent pas';
+                return;
+            }
+
+            console.log('🔑 Updating password...');
+            statusEl.style.display = 'block';
+            statusEl.style.background = 'rgba(59,130,246,0.2)';
+            statusEl.style.border = '1px solid rgba(59,130,246,0.5)';
+            statusEl.style.color = '#3b82f6';
+            statusEl.textContent = 'Mise à jour en cours...';
+
+            try {
+                const { error } = await db.auth.updateUser({ password: newPass });
+
+                if (error) {
+                    console.error('❌ Password update error:', error);
+                    statusEl.style.background = 'rgba(239,68,68,0.2)';
+                    statusEl.style.border = '1px solid rgba(239,68,68,0.5)';
+                    statusEl.style.color = '#ef4444';
+                    statusEl.textContent = 'Erreur: ' + error.message;
+                    return;
+                }
+
+                console.log('✅ Password updated successfully');
+                statusEl.style.background = 'rgba(16,185,129,0.2)';
+                statusEl.style.border = '1px solid rgba(16,185,129,0.5)';
+                statusEl.style.color = '#10b981';
+                statusEl.textContent = 'Mot de passe mis à jour avec succès !';
+
+                // Reset the recovery flag - USER_UPDATED event will handle the rest
+                isPasswordRecovery = false;
+
+                // Clear the input fields
+                document.getElementById('newPasswordInput').value = '';
+                document.getElementById('confirmPasswordInput').value = '';
+
+            } catch (err) {
+                console.error('❌ Password update exception:', err);
+                statusEl.style.background = 'rgba(239,68,68,0.2)';
+                statusEl.style.border = '1px solid rgba(239,68,68,0.5)';
+                statusEl.style.color = '#ef4444';
+                statusEl.textContent = 'Erreur lors de la mise à jour';
+            }
+        }
+
+        // ═══ CANCEL PASSWORD RESET ═══
+        function cancelPasswordReset() {
+            console.log('🔑 Cancelling password reset');
+            isPasswordRecovery = false;
+            localStorage.removeItem('supabase.auth.token');
+            db.auth.signOut();
+            document.getElementById('passwordResetScreen').classList.remove('active');
+            document.getElementById('loginScreen').classList.add('active');
+
+            // Clear inputs
+            document.getElementById('newPasswordInput').value = '';
+            document.getElementById('confirmPasswordInput').value = '';
+            document.getElementById('passwordResetStatus').style.display = 'none';
         }
 
         // LOGIN STEPS
@@ -6501,8 +6792,10 @@
 
         async function logoutFromPending() {
             await db.auth.signOut();
+            localStorage.removeItem('supabase.auth.token');  // Clear manual session storage
             supabaseUser = null;
             currentUser = null;
+            isPasswordRecovery = false;
             localStorage.removeItem('fixair_onboarding_done');
             clearLoginStatus();
             
@@ -6537,8 +6830,10 @@
 
         async function logout() {
             await db.auth.signOut();
+            localStorage.removeItem('supabase.auth.token');  // Clear manual session storage
             supabaseUser = null;
             currentUser = null;
+            isPasswordRecovery = false;
             loginStep = 0;
             isNewUser = false;
             onboardingComplete = false;
