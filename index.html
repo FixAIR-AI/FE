@@ -6161,16 +6161,23 @@
             }
             
             try {
+                console.log('🔄 Sending password reset email to:', email);
+                const redirectUrl = window.location.origin + window.location.pathname;
+                console.log('🔄 Redirect URL:', redirectUrl);
+                
                 const { error } = await db.auth.resetPasswordForEmail(email, {
-                    redirectTo: window.location.origin
+                    redirectTo: redirectUrl
                 });
                 
                 if (error) {
+                    console.error('❌ Reset password error:', error);
                     setLoginStatus('Erreur: ' + error.message, 'error');
                 } else {
-                    setLoginStatus('Email de réinitialisation envoyé !', 'success');
+                    console.log('✅ Reset password email sent');
+                    setLoginStatus('Email de réinitialisation envoyé ! Vérifiez votre boîte mail (et spam).', 'success');
                 }
             } catch (err) {
+                console.error('❌ Reset password exception:', err);
                 setLoginStatus('Erreur lors de l\'envoi', 'error');
             }
         }
@@ -6207,8 +6214,9 @@
                     // Wait for Supabase to be ready
                     await waitForSupabase();
                     
-                    // FIXED: Check both public.users table AND auth by trying signIn
-                    // First check public.users table using safe query
+                    // SIMPLIFIED: Only check public.users table
+                    // If user is in public.users = existing user
+                    // If not = new user (will handle auth conflicts during signup)
                     const { data: publicUser, error: publicError } = await safeQuery(() => 
                         db.from('users')
                           .select('id, first_name, status')
@@ -6219,40 +6227,16 @@
                     console.log('📊 Public users table - data:', publicUser, 'error:', publicError);
                     
                     // If found in public.users, user exists
-                    if (publicUser) {
+                    if (publicUser && publicUser.id) {
                         isNewUser = false;
                         existingUserName = publicUser.first_name || '';
-                        console.log('✅ User found in public.users table');
+                        console.log('✅ User found in public.users table - EXISTING USER');
                     } else {
-                        // Not in public.users - check if exists in Supabase Auth
-                        // by trying a fake password sign-in (will tell us if user exists)
-                        console.log('🔍 Not in public.users, checking Supabase Auth...');
-                        
-                        const { error: authCheckError } = await db.auth.signInWithPassword({
-                            email: email,
-                            password: 'check_if_exists_fake_password_12345'
-                        });
-                        
-                        console.log('📊 Auth check error:', authCheckError?.message);
-                        
-                        // If error is "Invalid login credentials" = user EXISTS (wrong password)
-                        // If error is "Email not confirmed" = user EXISTS (not confirmed)
-                        // If error contains "User not found" or similar = new user
-                        if (authCheckError) {
-                            const errMsg = authCheckError.message.toLowerCase();
-                            if (errMsg.includes('invalid login credentials') || 
-                                errMsg.includes('email not confirmed') ||
-                                errMsg.includes('invalid credentials')) {
-                                isNewUser = false;
-                                console.log('✅ User exists in Supabase Auth');
-                            } else {
-                                isNewUser = true;
-                                console.log('👤 User does not exist - new user');
-                            }
-                        } else {
-                            // Somehow signed in with fake password? Shouldn't happen
-                            isNewUser = false;
-                        }
+                        // Not in public.users = treat as new user
+                        // If they have an auth account but no profile, signup will fail
+                        // and we'll handle that case then
+                        isNewUser = true;
+                        console.log('👤 User NOT in public.users - treating as NEW USER');
                     }
                     
                     console.log('👤 Is new user:', isNewUser);
@@ -6424,7 +6408,23 @@
                 
                 if (error) {
                     console.error('Registration error:', error);
-                    setLoginStatus(error.message || 'Erreur lors de la création du compte', 'error');
+                    const errMsg = error.message.toLowerCase();
+                    
+                    // Check if user already exists in auth (but not in public.users)
+                    if (errMsg.includes('already registered') || 
+                        errMsg.includes('already exists') ||
+                        errMsg.includes('user already') ||
+                        errMsg.includes('email already')) {
+                        // User has an auth account but no profile - ask them to login instead
+                        setLoginStatus('Ce compte existe déjà. Essayez de vous connecter ou réinitialisez votre mot de passe.', 'error', true);
+                        
+                        // Reset to login flow for existing user
+                        isNewUser = false;
+                        loginStep = 0;
+                        updateLoginUI();
+                    } else {
+                        setLoginStatus(error.message || 'Erreur lors de la création du compte', 'error');
+                    }
                     return;
                 }
                 
