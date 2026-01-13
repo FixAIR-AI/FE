@@ -396,7 +396,7 @@
             log('Starting...');
             showLoading('Initialisation...');
 
-            // Parse URL hash for tokens
+            // Parse URL hash for tokens BEFORE creating client
             const hash = window.location.hash;
             const hashParams = parseHashParams(hash);
 
@@ -413,13 +413,20 @@
                 showLoading('Confirmation en cours...');
             }
 
-            // Create Supabase client - DISABLE automatic features to avoid AbortError
-            // The AbortError happens during lock acquisition in fresh browsers
+            // CRITICAL: Clean URL hash BEFORE creating Supabase client
+            // This prevents Supabase from internally trying to process the tokens
+            // which causes AbortError in fresh browsers
+            if (hash) {
+                window.history.replaceState(null, '', window.location.pathname + window.location.search);
+                log('URL hash removed before client creation');
+            }
+
+            // Create Supabase client - DISABLE automatic features
             db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
                 auth: {
-                    autoRefreshToken: false,  // We'll handle refresh manually
-                    persistSession: false,    // Disable to avoid lock issues
-                    detectSessionInUrl: false // We handle tokens manually
+                    autoRefreshToken: false,
+                    persistSession: false,
+                    detectSessionInUrl: false
                 }
             });
 
@@ -496,10 +503,6 @@
                         log('Session saved to localStorage');
                     }
 
-                    // Clean URL after successful session
-                    window.history.replaceState(null, '', window.location.pathname);
-                    log('URL cleaned');
-
                     // Handle based on token type
                     if (isRecoveryLink) {
                         log('Showing password reset form');
@@ -540,8 +543,6 @@
                             expiresAt: data.session.expires_at
                         }));
                     }
-
-                    window.history.replaceState(null, '', window.location.pathname);
 
                     if (isRecoveryLink) {
                         isPasswordRecovery = true;
