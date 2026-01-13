@@ -4853,7 +4853,7 @@
             </div>
             <h1 class="pending-title">Vérifiez votre email</h1>
             <p class="pending-subtitle">
-                Un email de confirmation a été envoyé à votre adresse. Cliquez sur le lien pour activer votre compte.
+                Un email de confirmation a été envoyé à votre adresse (vérifiez vos spams). Cliquez sur le lien pour activer votre compte.
             </p>
             <div class="pending-email" id="confirmEmail"></div>
             <button class="pending-logout" onclick="resendConfirmation()" style="margin-top: 8px; border-color: var(--copilot); color: var(--copilot);">
@@ -6281,11 +6281,9 @@
             // Handle USER_UPDATED event (after password change)
             if (event === 'USER_UPDATED') {
                 console.log('🔐 User updated');
-                isPasswordRecovery = false;
+                // Don't auto-load app - the setNewPassword function handles the flow
+                // by signing out and showing a "Se connecter" button
                 isReady = true;
-                if (session && session.user) {
-                    await loadUserAndShowApp(session.user);
-                }
                 return;
             }
 
@@ -6442,12 +6440,29 @@
                 statusEl.style.color = '#10b981';
                 statusEl.textContent = 'Mot de passe mis à jour avec succès !';
 
-                // Reset the recovery flag - USER_UPDATED event will handle the rest
+                // Reset the recovery flag
                 isPasswordRecovery = false;
 
                 // Clear the input fields
                 document.getElementById('newPasswordInput').value = '';
                 document.getElementById('confirmPasswordInput').value = '';
+
+                // Sign out to force fresh login with new password
+                localStorage.removeItem('supabase.auth.token');
+                await db.auth.signOut();
+
+                // Change the update button to a "Se connecter" button
+                const updateBtn = document.querySelector('#passwordResetScreen button[onclick="setNewPassword()"]');
+                if (updateBtn) {
+                    updateBtn.textContent = 'Se connecter';
+                    updateBtn.onclick = goToLoginFromPasswordReset;
+                }
+
+                // Hide the cancel button
+                const cancelBtn = document.querySelector('#passwordResetScreen button[onclick="cancelPasswordReset()"]');
+                if (cancelBtn) {
+                    cancelBtn.style.display = 'none';
+                }
 
             } catch (err) {
                 console.error('❌ Password update exception:', err);
@@ -6458,13 +6473,40 @@
             }
         }
 
+        // ═══ GO TO LOGIN FROM PASSWORD RESET ═══
+        function goToLoginFromPasswordReset() {
+            console.log('🔑 Going to login after password reset');
+            document.getElementById('passwordResetScreen').classList.remove('active');
+            document.getElementById('loginScreen').classList.add('active');
+
+            // Reset the password reset screen for next use
+            const statusEl = document.getElementById('passwordResetStatus');
+            statusEl.style.display = 'none';
+
+            const updateBtn = document.querySelector('#passwordResetScreen button[onclick="goToLoginFromPasswordReset()"]');
+            if (updateBtn) {
+                updateBtn.textContent = 'Mettre à jour le mot de passe';
+                updateBtn.onclick = setNewPassword;
+            }
+
+            const cancelBtn = document.querySelector('#passwordResetScreen button[onclick="cancelPasswordReset()"]');
+            if (cancelBtn) {
+                cancelBtn.style.display = '';
+            }
+        }
+
         // ═══ CANCEL PASSWORD RESET ═══
         function cancelPasswordReset() {
             console.log('🔑 Cancelling password reset');
             isPasswordRecovery = false;
             localStorage.removeItem('supabase.auth.token');
             db.auth.signOut();
+
+            // Hide password reset screen and show login
             document.getElementById('passwordResetScreen').classList.remove('active');
+            document.getElementById('pendingScreen').classList.remove('active');
+            document.getElementById('emailConfirmScreen').classList.remove('active');
+            document.getElementById('mainApp').classList.remove('active');
             document.getElementById('loginScreen').classList.add('active');
 
             // Clear inputs
