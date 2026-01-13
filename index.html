@@ -114,6 +114,7 @@
         let db = null;
         let currentUser = null;
         let isPasswordRecovery = false;
+        let isReady = false;  // Prevents duplicate handling
         
         // ===========================================
         // LOGGING
@@ -213,34 +214,24 @@
         }
         
         // ===========================================
-        // CHECK SESSION AND UPDATE UI
+        // LOAD USER AND SHOW APP (uses session from callback - no getSession call)
         // ===========================================
-        async function checkSession() {
-            log('Checking session...');
-            
-            try {
-                const { data: { session }, error } = await db.auth.getSession();
-                
-                if (error) {
-                    log('Session error: ' + error.message);
-                    showLoggedOut();
-                    return;
-                }
-                
-                if (session && session.user) {
-                    currentUser = session.user;
-                    log('Logged in: ' + session.user.email);
-                    
-                    const status = await getUserStatus(session.user.id);
-                    showLoggedIn(session.user, status);
-                } else {
-                    log('Not logged in');
-                    currentUser = null;
-                    showLoggedOut();
-                }
-            } catch (err) {
-                log('Exception: ' + err.message);
+        async function loadUserAndShowApp(user) {
+            if (!user) {
+                log('No user provided');
                 showLoggedOut();
+                return;
+            }
+
+            currentUser = user;
+            log('Logged in: ' + user.email);
+
+            try {
+                const status = await getUserStatus(user.id);
+                showLoggedIn(user, status);
+            } catch (err) {
+                log('Error loading user status: ' + err.message);
+                showLoggedIn(user, 'unknown');
             }
         }
         
@@ -344,37 +335,37 @@
         async function setNewPassword() {
             const newPass = document.getElementById('newPassword').value;
             const confirmPass = document.getElementById('confirmPassword').value;
-            
+
             if (!newPass || newPass.length < 6) {
                 showStatus('resetPasswordStatus', 'Min 6 caractères', 'error');
                 return;
             }
-            
+
             if (newPass !== confirmPass) {
                 showStatus('resetPasswordStatus', 'Les mots de passe ne correspondent pas', 'error');
                 return;
             }
-            
+
             log('Updating password...');
-            
+
             try {
                 const { error } = await db.auth.updateUser({ password: newPass });
-                
+
                 if (error) {
                     showStatus('resetPasswordStatus', error.message, 'error');
                     return;
                 }
-                
+
                 log('Password updated!');
                 showStatus('resetPasswordStatus', '✅ Mot de passe mis à jour!', 'success');
-                
-                // Clean URL and reload after delay
+
+                // Clean URL AFTER successful update
                 window.history.replaceState(null, '', window.location.pathname);
-                setTimeout(() => {
-                    isPasswordRecovery = false;
-                    checkSession();
-                }, 1500);
-                
+
+                // USER_UPDATED event will fire automatically and handle UI update
+                // No need to call anything manually - just reset the recovery flag
+                isPasswordRecovery = false;
+
             } catch (err) {
                 showStatus('resetPasswordStatus', err.message, 'error');
             }
@@ -386,12 +377,12 @@
         async function init() {
             log('Starting...');
             showLoading('Initialisation...');
-            
+
             // Check if URL has recovery token
             const hash = window.location.hash;
             const hasRecoveryToken = hash.includes('type=recovery');
             const hasAnyToken = hash.includes('access_token');
-            
+
             if (hasRecoveryToken) {
                 log('Recovery token detected');
                 showLoading('Traitement du lien...');
@@ -399,64 +390,79 @@
                 log('Auth token detected');
                 showLoading('Confirmation...');
             }
-            
-            // Create Supabase client - this automatically processes URL tokens
+
+            // Create Supabase client - detectSessionInUrl handles URL tokens automatically
+            // IMPORTANT: Don't call getSession() immediately after this - let auth events handle it
             db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
                 auth: {
                     autoRefreshToken: true,
                     persistSession: true,
-                    detectSessionInUrl: true  // This handles URL tokens automatically
+                    detectSessionInUrl: true  // CRITICAL - handles URL tokens automatically
                 }
             });
-            
+
             log('Client created');
-            
-            // Listen for auth changes
+
+            // Listen for auth changes - this is the ONLY way we should handle auth state
+            // DO NOT call getSession() directly - it causes AbortError race conditions
             db.auth.onAuthStateChange((event, session) => {
                 log('Auth event: ' + event);
-                
+
                 if (event === 'PASSWORD_RECOVERY') {
+                    // User clicked password reset link
                     log('PASSWORD_RECOVERY mode');
                     isPasswordRecovery = true;
+                    isReady = true;
                     showPasswordReset();
-                } else if (event === 'SIGNED_IN') {
-                    if (isPasswordRecovery) {
-                        // Stay on password reset form
-                        showPasswordReset();
-                    } else {
-                        checkSession();
+                    // Don't clean URL yet - Supabase needs the tokens
+                } else if (event === 'SIGNED_IN' && !isPasswordRecovery) {
+                    // User signed in (login or email confirmation)
+                    isReady = true;
+                    loadUserAndShowApp(session.user);
+                    // Clean URL after successful sign in
+                    if (hasAnyToken) {
+                        window.history.replaceState(null, '', window.location.pathname);
+                        log('URL cleaned after SIGNED_IN');
                     }
+                } else if (event === 'SIGNED_IN' && isPasswordRecovery) {
+                    // During password recovery, SIGNED_IN fires but we stay on reset form
+                    showPasswordReset();
                 } else if (event === 'SIGNED_OUT') {
+                    // User signed out
                     isPasswordRecovery = false;
+                    isReady = true;
+                    currentUser = null;
                     showLoggedOut();
                 } else if (event === 'USER_UPDATED') {
+                    // Password was changed successfully
                     log('User updated');
                     isPasswordRecovery = false;
-                    checkSession();
-                } else if (event === 'INITIAL_SESSION') {
-                    // Initial load - check if we have a session
-                    if (!isPasswordRecovery) {
-                        checkSession();
+                    isReady = true;
+                    if (session && session.user) {
+                        loadUserAndShowApp(session.user);
                     }
+                } else if (event === 'INITIAL_SESSION') {
+                    // First load - session from storage or URL token processing
+                    if (session && session.user && !isPasswordRecovery) {
+                        isReady = true;
+                        loadUserAndShowApp(session.user);
+                        // Clean URL if we had tokens
+                        if (hasAnyToken) {
+                            window.history.replaceState(null, '', window.location.pathname);
+                            log('URL cleaned after INITIAL_SESSION');
+                        }
+                    } else if (!session && !hasAnyToken) {
+                        // No session and no tokens - show login
+                        isReady = true;
+                        showLoggedOut();
+                    }
+                    // If hasAnyToken but no session yet, wait for other events
                 }
             });
-            
-            // If we have tokens, wait a bit for Supabase to process them
-            if (hasAnyToken) {
-                log('Waiting for token processing...');
-                await new Promise(resolve => setTimeout(resolve, 2000));
-            }
-            
-            // Clean URL (remove tokens)
-            if (hasAnyToken && !isPasswordRecovery) {
-                window.history.replaceState(null, '', window.location.pathname);
-                log('URL cleaned');
-            }
-            
-            // If no auth event fired yet, check manually
-            if (!isPasswordRecovery) {
-                await checkSession();
-            }
+
+            // NO setTimeout hacks
+            // NO manual checkSession() calls
+            // Let the auth events drive everything
         }
         
         // Start
