@@ -302,6 +302,7 @@
         
         async function doLogout() {
             log('Logging out...');
+            localStorage.removeItem('supabase.auth.token');
             await db.auth.signOut();
         }
         
@@ -412,13 +413,13 @@
                 showLoading('Confirmation en cours...');
             }
 
-            // Create Supabase client - DISABLE automatic URL detection
-            // We will handle the tokens manually to avoid AbortError
+            // Create Supabase client - DISABLE automatic features to avoid AbortError
+            // The AbortError happens during lock acquisition in fresh browsers
             db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
                 auth: {
-                    autoRefreshToken: true,
-                    persistSession: true,
-                    detectSessionInUrl: false  // DISABLED - we handle tokens manually
+                    autoRefreshToken: false,  // We'll handle refresh manually
+                    persistSession: false,    // Disable to avoid lock issues
+                    detectSessionInUrl: false // We handle tokens manually
                 }
             });
 
@@ -486,6 +487,15 @@
 
                     log('Session set successfully');
 
+                    // Manually persist session to localStorage since we disabled persistSession
+                    if (data.session) {
+                        localStorage.setItem('supabase.auth.token', JSON.stringify({
+                            currentSession: data.session,
+                            expiresAt: data.session.expires_at
+                        }));
+                        log('Session saved to localStorage');
+                    }
+
                     // Clean URL after successful session
                     window.history.replaceState(null, '', window.location.pathname);
                     log('URL cleaned');
@@ -512,8 +522,6 @@
                 log('Only access_token found, attempting session...');
 
                 try {
-                    // For some email link types, we might need to use getSession
-                    // after the URL is processed, but let's try setSession first
                     const { data, error } = await db.auth.setSession({
                         access_token: hashParams.access_token,
                         refresh_token: hashParams.access_token // Use same token as fallback
@@ -521,9 +529,16 @@
 
                     if (error) {
                         log('setSession error (no refresh): ' + error.message);
-                        // Fall back to showing logged out
                         showLoggedOut();
                         return;
+                    }
+
+                    // Manually persist session
+                    if (data.session) {
+                        localStorage.setItem('supabase.auth.token', JSON.stringify({
+                            currentSession: data.session,
+                            expiresAt: data.session.expires_at
+                        }));
                     }
 
                     window.history.replaceState(null, '', window.location.pathname);
@@ -541,8 +556,32 @@
                     log('Exception: ' + err.message);
                     showLoggedOut();
                 }
+            } else {
+                // No URL tokens - check localStorage for existing session
+                try {
+                    const stored = localStorage.getItem('supabase.auth.token');
+                    if (stored) {
+                        const parsed = JSON.parse(stored);
+                        if (parsed.currentSession) {
+                            log('Found stored session, restoring...');
+                            const { data, error } = await db.auth.setSession({
+                                access_token: parsed.currentSession.access_token,
+                                refresh_token: parsed.currentSession.refresh_token
+                            });
+                            if (!error && data.session) {
+                                isReady = true;
+                                loadUserAndShowApp(data.session.user);
+                                return;
+                            }
+                        }
+                    }
+                } catch (err) {
+                    log('Error restoring session: ' + err.message);
+                }
+                // No valid session found
+                isReady = true;
+                showLoggedOut();
             }
-            // If no URL tokens, the INITIAL_SESSION event will handle it
         }
         
         // Start
