@@ -6121,8 +6121,14 @@
                 // User is approved - proceed to app
                 document.getElementById('userName').textContent = profile.first_name || 'Utilisateur';
                 document.getElementById('profileFirstName').value = profile.first_name || '';
+                document.getElementById('profileLastName').value = profile.last_name || '';
                 if (profile.email) document.getElementById('profileEmail').value = profile.email;
                 if (profile.phone) document.getElementById('profilePhone').value = profile.phone;
+
+                // Load language preference from database
+                if (profile.language && (profile.language === 'fr' || profile.language === 'en')) {
+                    setLanguage(profile.language);
+                }
 
                 // Check onboarding status from localStorage OR database
                 const onboardingDoneLocal = localStorage.getItem('fixair_onboarding_done');
@@ -6899,8 +6905,10 @@
 
         async function saveProfile() {
             const firstName = document.getElementById('profileFirstName').value.trim();
+            const lastName = document.getElementById('profileLastName').value.trim();
             const email = document.getElementById('profileEmail').value.trim();
             const phone = document.getElementById('profilePhone')?.value.trim() || '';
+            const language = currentLang || 'fr';
 
             if (!firstName) { toast('Entrez votre prénom'); return; }
 
@@ -6910,8 +6918,10 @@
             // ═══ SAVE TO LOCALSTORAGE (ALWAYS WORKS) ═══
             const savedUser = JSON.parse(localStorage.getItem('fixair_user') || '{}');
             savedUser.first_name = firstName;
+            savedUser.last_name = lastName;
             if (email) savedUser.email = email;
             if (phone) savedUser.phone = phone;
+            savedUser.language = language;
             localStorage.setItem('fixair_user', JSON.stringify(savedUser));
             currentUser = savedUser;
 
@@ -6922,10 +6932,14 @@
                 try {
                     const updateData = {
                         first_name: firstName,
+                        last_name: lastName,
                         email: email,
+                        phone: phone,
+                        language: language,
                         updated_at: new Date().toISOString()
                     };
-                    if (phone) updateData.phone = phone;
+
+                    console.log('Saving profile to Supabase:', updateData);
 
                     const { data, error } = await db
                         .from('users')
@@ -6941,10 +6955,12 @@
                         const upsertData = {
                             id: savedUser.id,
                             first_name: firstName,
+                            last_name: lastName,
                             email: email,
+                            phone: phone,
+                            language: language,
                             updated_at: new Date().toISOString()
                         };
-                        if (phone) upsertData.phone = phone;
 
                         const { error: upsertError } = await db
                             .from('users')
@@ -6952,11 +6968,13 @@
 
                         if (!upsertError) {
                             dbSaveSuccess = true;
+                            console.log('Profile saved via upsert');
                         } else {
                             console.error('Profile upsert error:', upsertError.code, upsertError.message);
                         }
                     } else {
                         dbSaveSuccess = true;
+                        console.log('Profile saved successfully:', data);
                     }
                 } catch (e) {
                     console.error('Profile save exception:', e);
@@ -6975,8 +6993,10 @@
                         body: JSON.stringify({
                             user_id: savedUser.id,
                             first_name: firstName,
+                            last_name: lastName,
                             email: email,
-                            phone: phone
+                            phone: phone,
+                            language: language
                         })
                     });
 
@@ -9090,27 +9110,9 @@ INSTRUCTIONS:
             general: { primary: '#EA580C', secondary: '#1a1a2e' }
         };
         
-        // Share report function
+        // Share report function - DISABLED (Premium feature)
         function shareReport() {
-            if (!lastReportData) {
-                toast('Aucun rapport à partager');
-                return;
-            }
-            
-            // Try native share API
-            if (navigator.share) {
-                const text = generateReportText(lastReportData);
-                navigator.share({
-                    title: 'Rapport d\'intervention FixAIR',
-                    text: text
-                }).catch(() => { /* Share cancelled */ });
-            } else {
-                // Fallback: copy to clipboard
-                const text = generateReportText(lastReportData);
-                navigator.clipboard.writeText(text).then(() => {
-                    toast('Rapport copié dans le presse-papier !');
-                });
-            }
+            toast('Partage disponible dans la version Pro');
         }
         
         // Generate plain text version of report
@@ -9168,23 +9170,9 @@ INSTRUCTIONS:
             return text;
         }
         
-        // Main PDF export function
+        // Main PDF export function - DISABLED (Premium feature)
         function exportReportPDF() {
-            if (!lastReportData) {
-                // Try to extract from last AI message
-                const assistantBody = document.getElementById('assistantBody');
-                if (assistantBody) {
-                    const reportDiv = assistantBody.querySelector('.rpt');
-                    if (!reportDiv) {
-                        toast('Aucun rapport à exporter');
-                        return;
-                    }
-                }
-                toast('Aucun rapport à exporter');
-                return;
-            }
-            
-            generatePDF(lastReportData);
+            toast('Export PDF disponible dans la version Pro');
         }
         
         // Generate professional PDF
@@ -11936,54 +11924,25 @@ RÈGLES:
             el.closest('.report-menu-dropdown').classList.remove('show');
         }
         
-        // Share from report card menu (different from main shareReport)
+        // Share from report card menu - DISABLED (Premium feature)
         function shareReportCard(event, el) {
             event.stopPropagation();
-            const card = el.closest('.report-card');
-            const content = card.innerText;
-            
-            if (navigator.share) {
-                navigator.share({
-                    title: 'Rapport d\'intervention FixAIR',
-                    text: content
-                }).catch(() => {});
-            } else {
-                navigator.clipboard.writeText(content);
-                toast('Rapport copié pour partage !');
-            }
             el.closest('.report-menu-dropdown').classList.remove('show');
+            toast('Partage disponible dans la version Pro');
         }
-        
-        // Menu version of export PDF (called from dropdown)
+
+        // Menu version of export PDF - DISABLED (Premium feature)
         function exportReportPDFMenu(event, el) {
             event.stopPropagation();
             el.closest('.report-menu-dropdown').classList.remove('show');
-            exportReportPDF();
+            toast('Export PDF disponible dans la version Pro');
         }
-        
-        // Menu version of share (called from dropdown in chat)
+
+        // Menu version of share - DISABLED (Premium feature)
         function shareReportMenu(event, el) {
             event.stopPropagation();
             el.closest('.report-menu-dropdown').classList.remove('show');
-            // Use lastReportData if available, otherwise use shareReport
-            if (lastReportData) {
-                shareReport();
-            } else {
-                // Fallback: try to get content from card
-                const card = el.closest('.report-card');
-                if (card) {
-                    const content = card.innerText;
-                    if (navigator.share) {
-                        navigator.share({
-                            title: 'Rapport d\'intervention FixAIR',
-                            text: content
-                        }).catch(() => {});
-                    } else {
-                        navigator.clipboard.writeText(content);
-                        toast('Rapport copié pour partage !');
-                    }
-                }
-            }
+            toast('Partage disponible dans la version Pro');
         }
         
         // Close report menu when clicking outside
@@ -14781,8 +14740,8 @@ RÈGLES:
         };
 
         function openConnect() {
-            document.getElementById('connectView').classList.add('active');
-            document.getElementById('navConnect').classList.add('active');
+            // DISABLED - Coming soon
+            toast('FixAIR Connect — Disponible prochainement');
         }
 
         function closeConnect() {
