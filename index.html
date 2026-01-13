@@ -3,570 +3,251 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FixAIR Auth Test v3</title>
+    <title>FixAIR Auth - Minimal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #0a0a0a; 
-            color: #fff;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container { max-width: 500px; margin: 0 auto; }
-        h1 { color: #10b981; margin-bottom: 20px; }
-        h2 { color: #888; font-size: 14px; margin: 20px 0 10px; text-transform: uppercase; }
-        
-        .card {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .form-group { margin-bottom: 15px; }
+        body { font-family: -apple-system, sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; padding: 20px; }
+        .container { max-width: 450px; margin: 0 auto; }
+        h1 { color: #10b981; margin-bottom: 20px; font-size: 24px; }
+        .card { background: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 20px; margin-bottom: 15px; }
+        .card h2 { color: #888; font-size: 12px; margin-bottom: 15px; text-transform: uppercase; }
         label { display: block; color: #888; font-size: 12px; margin-bottom: 5px; }
-        input {
-            width: 100%;
-            padding: 12px;
-            background: #0a0a0a;
-            border: 1px solid #333;
-            border-radius: 8px;
-            color: #fff;
-            font-size: 16px;
-        }
+        input { width: 100%; padding: 12px; background: #0a0a0a; border: 1px solid #333; border-radius: 8px; color: #fff; font-size: 16px; margin-bottom: 10px; }
         input:focus { outline: none; border-color: #10b981; }
-        
-        button {
-            width: 100%;
-            padding: 12px 20px;
-            background: #10b981;
-            color: #000;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 10px;
-        }
+        button { width: 100%; padding: 12px; background: #10b981; color: #000; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
         button:hover { background: #0d9668; }
-        button:disabled { background: #333; color: #666; cursor: not-allowed; }
         button.secondary { background: #333; color: #fff; }
         button.danger { background: #ef4444; }
-        
-        .status {
-            padding: 10px;
-            border-radius: 8px;
-            margin: 10px 0;
-            font-size: 14px;
-        }
+        .status { padding: 10px; border-radius: 8px; margin: 10px 0; font-size: 14px; }
         .status.success { background: #10b98133; border: 1px solid #10b981; }
         .status.error { background: #ef444433; border: 1px solid #ef4444; }
-        .status.info { background: #3b82f633; border: 1px solid #3b82f6; }
-        
-        .log {
-            background: #000;
-            border: 1px solid #333;
-            border-radius: 8px;
-            padding: 15px;
-            font-family: monospace;
-            font-size: 11px;
-            max-height: 300px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
-        .log .time { color: #666; }
-        .log .success { color: #10b981; }
-        .log .error { color: #ef4444; }
-        .log .info { color: #3b82f6; }
-        .log .warn { color: #f59e0b; }
-        
+        .status.warning { background: #f59e0b33; border: 1px solid #f59e0b; }
         .hidden { display: none; }
-        
-        .user-info {
-            background: #10b98122;
-            border: 1px solid #10b981;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-        .user-info p { margin: 5px 0; font-size: 14px; }
-        .user-info strong { color: #10b981; }
-        
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #888;
-        }
-        .spinner {
-            display: inline-block;
-            width: 30px;
-            height: 30px;
-            border: 3px solid #333;
-            border-top-color: #10b981;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
+        .loading { text-align: center; padding: 30px; }
+        .spinner { width: 30px; height: 30px; border: 3px solid #333; border-top-color: #10b981; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        
-        .recovery-card {
-            background: #f59e0b22;
-            border: 2px solid #f59e0b;
-        }
+        .user-box { background: #10b98122; border: 1px solid #10b981; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+        .user-box p { margin: 5px 0; font-size: 14px; }
+        .log { background: #000; border-radius: 8px; padding: 10px; font-family: monospace; font-size: 11px; max-height: 200px; overflow-y: auto; white-space: pre-wrap; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔧 FixAIR Auth Test v3</h1>
+        <h1>🔧 FixAIR Auth</h1>
         
-        <!-- Loading State -->
+        <!-- Loading -->
         <div class="card" id="loadingCard">
             <div class="loading">
                 <div class="spinner"></div>
-                <p style="margin-top: 15px;" id="loadingText">Initialisation...</p>
+                <p id="loadingText">Chargement...</p>
             </div>
         </div>
         
-        <!-- Password Recovery Form (shown when clicking reset link) -->
-        <div class="card recovery-card hidden" id="recoveryCard">
-            <h2>🔑 Définir un nouveau mot de passe</h2>
-            <p style="color: #f59e0b; margin-bottom: 15px;">Vous avez cliqué sur un lien de réinitialisation</p>
-            <div class="form-group">
-                <label>Nouveau mot de passe</label>
-                <input type="password" id="newPassword" placeholder="Min 6 caractères">
-            </div>
-            <div class="form-group">
-                <label>Confirmer le mot de passe</label>
-                <input type="password" id="confirmPassword" placeholder="Répétez le mot de passe">
-            </div>
-            <button onclick="updatePassword()">Mettre à jour le mot de passe</button>
-            <div id="recoveryStatus"></div>
+        <!-- Password Reset Form -->
+        <div class="card hidden" id="resetPasswordCard">
+            <h2>🔑 Nouveau mot de passe</h2>
+            <div class="status warning">Vous avez cliqué sur un lien de réinitialisation</div>
+            <label>Nouveau mot de passe</label>
+            <input type="password" id="newPassword" placeholder="Min 6 caractères">
+            <label>Confirmer</label>
+            <input type="password" id="confirmPassword" placeholder="Répétez">
+            <button onclick="setNewPassword()">Mettre à jour</button>
+            <div id="resetPasswordStatus"></div>
         </div>
         
-        <!-- Current State -->
-        <div class="card hidden" id="stateCard">
-            <h2>État actuel</h2>
-            <div id="currentState">
-                <p>Chargement...</p>
-            </div>
-        </div>
-        
-        <!-- User Info (when logged in) -->
-        <div class="card hidden" id="userInfoCard">
-            <h2>Utilisateur connecté</h2>
-            <div class="user-info">
+        <!-- Logged In -->
+        <div class="card hidden" id="loggedInCard">
+            <h2>✅ Connecté</h2>
+            <div class="user-box">
                 <p><strong>Email:</strong> <span id="userEmail">-</span></p>
-                <p><strong>Auth ID:</strong> <span id="userAuthId">-</span></p>
-                <p><strong>Email confirmé (auth):</strong> <span id="userEmailConfirmed">-</span></p>
-                <p><strong>Status (public.users):</strong> <span id="userProfileStatus">-</span></p>
+                <p><strong>Status:</strong> <span id="userStatus">-</span></p>
             </div>
-            <button class="danger" onclick="logout()">Se déconnecter</button>
-            <button class="secondary" onclick="refreshState()" style="margin-top: 5px;">Rafraîchir</button>
+            <button class="danger" onclick="doLogout()">Se déconnecter</button>
         </div>
         
-        <!-- Auth Forms (when not logged in) -->
-        <div id="authForms" class="hidden">
-            <!-- Signup -->
-            <div class="card">
-                <h2>1. Créer un compte</h2>
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="signupEmail" placeholder="nouveau@email.com">
-                </div>
-                <div class="form-group">
-                    <label>Mot de passe</label>
-                    <input type="password" id="signupPassword" placeholder="Min 6 caractères">
-                </div>
-                <div class="form-group">
-                    <label>Prénom</label>
-                    <input type="text" id="signupName" placeholder="Votre prénom">
-                </div>
-                <button onclick="signup()">Créer le compte</button>
-                <div id="signupStatus"></div>
-            </div>
-            
-            <!-- Login -->
-            <div class="card">
-                <h2>2. Se connecter</h2>
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="loginEmail" placeholder="votre@email.com">
-                </div>
-                <div class="form-group">
-                    <label>Mot de passe</label>
-                    <input type="password" id="loginPassword" placeholder="Votre mot de passe">
-                </div>
-                <button onclick="login()">Se connecter</button>
-                <div id="loginStatus"></div>
-            </div>
-            
-            <!-- Password Reset -->
-            <div class="card">
-                <h2>3. Réinitialiser mot de passe</h2>
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="resetEmail" placeholder="votre@email.com">
-                </div>
-                <button class="secondary" onclick="resetPassword()">Envoyer le lien</button>
-                <div id="resetStatus"></div>
-            </div>
+        <!-- Not Logged In -->
+        <div class="card hidden" id="signupCard">
+            <h2>1. Créer un compte</h2>
+            <label>Email</label>
+            <input type="email" id="signupEmail" placeholder="email@example.com">
+            <label>Mot de passe</label>
+            <input type="password" id="signupPassword" placeholder="Min 6 caractères">
+            <label>Prénom</label>
+            <input type="text" id="signupName" placeholder="Votre prénom">
+            <button onclick="doSignup()">Créer</button>
+            <div id="signupStatus"></div>
         </div>
         
-        <!-- Admin Actions -->
-        <div class="card hidden" id="adminCard">
-            <h2>🔧 Actions Admin</h2>
-            <div class="form-group">
-                <label>Email à approuver</label>
-                <input type="email" id="approveEmail" placeholder="user@email.com">
-            </div>
-            <button class="secondary" onclick="approveUser()">Approuver</button>
-            <div id="approveStatus"></div>
+        <div class="card hidden" id="loginCard">
+            <h2>2. Se connecter</h2>
+            <label>Email</label>
+            <input type="email" id="loginEmail" placeholder="email@example.com">
+            <label>Mot de passe</label>
+            <input type="password" id="loginPassword" placeholder="Mot de passe">
+            <button onclick="doLogin()">Connexion</button>
+            <div id="loginStatus"></div>
         </div>
         
-        <!-- Debug Log -->
+        <div class="card hidden" id="forgotCard">
+            <h2>3. Mot de passe oublié</h2>
+            <label>Email</label>
+            <input type="email" id="forgotEmail" placeholder="email@example.com">
+            <button class="secondary" onclick="doForgotPassword()">Envoyer le lien</button>
+            <div id="forgotStatus"></div>
+        </div>
+        
+        <!-- Log -->
         <div class="card">
-            <h2>📋 Log</h2>
-            <div class="log" id="debugLog"></div>
-            <button class="secondary" onclick="clearLog()" style="margin-top: 10px;">Effacer</button>
+            <h2>Log</h2>
+            <div class="log" id="log"></div>
         </div>
     </div>
 
     <script>
-        // ═══════════════════════════════════════════════════════════════
+        // ===========================================
         // CONFIGURATION
-        // ═══════════════════════════════════════════════════════════════
+        // ===========================================
         const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTcyMTksImV4cCI6MjA4MTgzMzIxOX0.8ryQm1tsdx5ox3aFJiiflmwuEGGxxH_PlobGxXMgFuQ';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTcyMTksImV4cCI6MjA4MTgzMzIxOX0.8ryQm1tsdx5ox3aFJiiflmwuEGGxxH_PlobGxXMgFuQ';
         
         let db = null;
-        let isReady = false;
-        let isRecoveryMode = false;
+        let currentUser = null;
+        let isPasswordRecovery = false;
         
-        // ═══════════════════════════════════════════════════════════════
+        // ===========================================
         // LOGGING
-        // ═══════════════════════════════════════════════════════════════
-        function log(message, type = 'info') {
-            const logEl = document.getElementById('debugLog');
+        // ===========================================
+        function log(msg) {
+            const el = document.getElementById('log');
             const time = new Date().toLocaleTimeString();
-            logEl.innerHTML += `<span class="time">[${time}]</span> <span class="${type}">${message}</span>\n`;
-            logEl.scrollTop = logEl.scrollHeight;
-            console.log(`[${type.toUpperCase()}]`, message);
+            el.innerHTML += `[${time}] ${msg}\n`;
+            el.scrollTop = el.scrollHeight;
+            console.log(msg);
         }
         
-        function clearLog() {
-            document.getElementById('debugLog').innerHTML = '';
-        }
-        
-        function showStatus(elementId, message, type) {
-            const el = document.getElementById(elementId);
+        function showStatus(id, msg, type) {
+            const el = document.getElementById(id);
             if (el) {
                 el.className = 'status ' + type;
-                el.textContent = message;
+                el.innerHTML = msg;
             }
         }
         
-        function setLoadingText(text) {
+        function showLoading(text) {
             document.getElementById('loadingText').textContent = text;
+            document.getElementById('loadingCard').classList.remove('hidden');
         }
         
-        function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
-        
-        // ═══════════════════════════════════════════════════════════════
-        // DETECT URL TOKEN TYPE
-        // ═══════════════════════════════════════════════════════════════
-        function detectUrlToken() {
-            const hash = window.location.hash;
-            const params = new URLSearchParams(hash.replace('#', ''));
-            
-            if (hash.includes('type=recovery')) {
-                return 'recovery';
-            } else if (hash.includes('type=signup') || hash.includes('type=email_confirmation')) {
-                return 'signup';
-            } else if (hash.includes('access_token')) {
-                return 'token';
-            }
-            return null;
-        }
-        
-        // ═══════════════════════════════════════════════════════════════
-        // INITIALIZATION
-        // ═══════════════════════════════════════════════════════════════
-        async function init() {
-            log('🚀 Initializing v3...');
-            log('URL: ' + window.location.href);
-            
-            // Detect token type
-            const tokenType = detectUrlToken();
-            
-            if (tokenType) {
-                log('📧 Token detected: ' + tokenType, 'info');
-                setLoadingText('Traitement du lien...');
-            }
-            
-            // Create Supabase client
-            db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            log('✅ Supabase client created');
-            
-            // Setup auth listener FIRST
-            db.auth.onAuthStateChange((event, session) => {
-                log(`🔔 Auth event: ${event}`, event === 'SIGNED_IN' ? 'success' : 'info');
-                
-                if (event === 'PASSWORD_RECOVERY') {
-                    log('🔑 PASSWORD_RECOVERY mode activated!', 'warn');
-                    isRecoveryMode = true;
-                    showRecoveryForm();
-                } else if (event === 'SIGNED_IN' && session && !isRecoveryMode) {
-                    if (isReady) {
-                        checkCurrentState();
-                    }
-                } else if (event === 'SIGNED_OUT') {
-                    isRecoveryMode = false;
-                    if (isReady) {
-                        checkCurrentState();
-                    }
-                } else if (event === 'USER_UPDATED') {
-                    log('✅ User updated (password changed?)', 'success');
-                    isRecoveryMode = false;
-                    hideRecoveryForm();
-                    checkCurrentState();
-                }
-            });
-            
-            // If we have a token, wait for Supabase to process it
-            if (tokenType) {
-                setLoadingText('Validation du token...');
-                
-                // Wait for auth state to settle
-                await new Promise((resolve) => {
-                    let resolved = false;
-                    
-                    const timeout = setTimeout(() => {
-                        if (!resolved) {
-                            log('⚠️ Token processing timeout (5s)', 'warn');
-                            resolved = true;
-                            resolve();
-                        }
-                    }, 5000);
-                    
-                    // Also listen for specific events
-                    const checkInterval = setInterval(async () => {
-                        const { data: { session } } = await db.auth.getSession();
-                        if (session || isRecoveryMode) {
-                            if (!resolved) {
-                                clearTimeout(timeout);
-                                clearInterval(checkInterval);
-                                resolved = true;
-                                await sleep(500); // Extra buffer
-                                resolve();
-                            }
-                        }
-                    }, 500);
-                });
-                
-                // Clear the hash from URL (but keep the page functional)
-                if (!isRecoveryMode) {
-                    window.history.replaceState(null, '', window.location.pathname);
-                    log('✅ URL cleaned');
-                }
-            } else {
-                // No token - just wait a moment for initial session
-                await sleep(500);
-            }
-            
-            isReady = true;
-            log('✅ Ready!', 'success');
-            
-            // Hide loading
+        function hideLoading() {
             document.getElementById('loadingCard').classList.add('hidden');
-            
-            // Show appropriate UI
-            if (isRecoveryMode) {
-                showRecoveryForm();
-            } else {
-                document.getElementById('stateCard').classList.remove('hidden');
-                document.getElementById('adminCard').classList.remove('hidden');
-                await checkCurrentState();
-            }
         }
         
-        // ═══════════════════════════════════════════════════════════════
-        // RECOVERY FORM
-        // ═══════════════════════════════════════════════════════════════
-        function showRecoveryForm() {
-            document.getElementById('loadingCard').classList.add('hidden');
-            document.getElementById('recoveryCard').classList.remove('hidden');
-            document.getElementById('stateCard').classList.add('hidden');
-            document.getElementById('userInfoCard').classList.add('hidden');
-            document.getElementById('authForms').classList.add('hidden');
-            document.getElementById('adminCard').classList.add('hidden');
-            log('📝 Showing password recovery form', 'info');
+        // ===========================================
+        // UI UPDATES
+        // ===========================================
+        function showLoggedIn(user, status) {
+            hideLoading();
+            document.getElementById('resetPasswordCard').classList.add('hidden');
+            document.getElementById('loggedInCard').classList.remove('hidden');
+            document.getElementById('signupCard').classList.add('hidden');
+            document.getElementById('loginCard').classList.add('hidden');
+            document.getElementById('forgotCard').classList.add('hidden');
+            
+            document.getElementById('userEmail').textContent = user.email;
+            document.getElementById('userStatus').textContent = status || 'unknown';
         }
         
-        function hideRecoveryForm() {
-            document.getElementById('recoveryCard').classList.add('hidden');
-            document.getElementById('stateCard').classList.remove('hidden');
-            document.getElementById('adminCard').classList.remove('hidden');
+        function showLoggedOut() {
+            hideLoading();
+            document.getElementById('resetPasswordCard').classList.add('hidden');
+            document.getElementById('loggedInCard').classList.add('hidden');
+            document.getElementById('signupCard').classList.remove('hidden');
+            document.getElementById('loginCard').classList.remove('hidden');
+            document.getElementById('forgotCard').classList.remove('hidden');
         }
         
-        async function updatePassword() {
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            
-            if (!newPassword || newPassword.length < 6) {
-                showStatus('recoveryStatus', 'Mot de passe minimum 6 caractères', 'error');
-                return;
-            }
-            
-            if (newPassword !== confirmPassword) {
-                showStatus('recoveryStatus', 'Les mots de passe ne correspondent pas', 'error');
-                return;
-            }
-            
-            log('🔐 Updating password...');
-            
+        function showPasswordReset() {
+            hideLoading();
+            document.getElementById('resetPasswordCard').classList.remove('hidden');
+            document.getElementById('loggedInCard').classList.add('hidden');
+            document.getElementById('signupCard').classList.add('hidden');
+            document.getElementById('loginCard').classList.add('hidden');
+            document.getElementById('forgotCard').classList.add('hidden');
+        }
+        
+        // ===========================================
+        // GET USER STATUS FROM public.users
+        // ===========================================
+        async function getUserStatus(userId) {
             try {
-                const { data, error } = await db.auth.updateUser({
-                    password: newPassword
-                });
+                const { data, error } = await db
+                    .from('users')
+                    .select('status')
+                    .eq('id', userId)
+                    .maybeSingle();
                 
                 if (error) {
-                    log('Error: ' + error.message, 'error');
-                    showStatus('recoveryStatus', error.message, 'error');
-                    return;
+                    log('Status error: ' + error.message);
+                    return 'error';
                 }
                 
-                log('✅ Password updated!', 'success');
-                showStatus('recoveryStatus', '✅ Mot de passe mis à jour!', 'success');
+                if (data) {
+                    return data.status;
+                }
                 
-                // Clear URL hash
-                window.history.replaceState(null, '', window.location.pathname);
-                
-                // Wait then show normal UI
-                await sleep(1500);
-                isRecoveryMode = false;
-                hideRecoveryForm();
-                checkCurrentState();
+                // User not in public.users - create them
+                log('Creating user in public.users...');
+                await db.from('users').insert({
+                    id: userId,
+                    email: currentUser.email,
+                    status: 'pending',
+                    created_at: new Date().toISOString()
+                });
+                return 'pending';
                 
             } catch (err) {
-                log('Exception: ' + err.message, 'error');
-                showStatus('recoveryStatus', err.message, 'error');
+                log('Exception: ' + err.message);
+                return 'error';
             }
         }
         
-        // ═══════════════════════════════════════════════════════════════
-        // CHECK CURRENT STATE
-        // ═══════════════════════════════════════════════════════════════
-        async function checkCurrentState() {
-            if (isRecoveryMode) return;
-            
-            log('Checking auth state...');
+        // ===========================================
+        // CHECK SESSION AND UPDATE UI
+        // ===========================================
+        async function checkSession() {
+            log('Checking session...');
             
             try {
                 const { data: { session }, error } = await db.auth.getSession();
                 
                 if (error) {
-                    log('Session error: ' + error.message, 'error');
-                    updateStateDisplay(null);
+                    log('Session error: ' + error.message);
+                    showLoggedOut();
                     return;
                 }
                 
                 if (session && session.user) {
-                    log('✅ Logged in: ' + session.user.email, 'success');
-                    await checkPublicUser(session.user);
-                    updateStateDisplay(session.user);
+                    currentUser = session.user;
+                    log('Logged in: ' + session.user.email);
+                    
+                    const status = await getUserStatus(session.user.id);
+                    showLoggedIn(session.user, status);
                 } else {
-                    log('Not logged in', 'info');
-                    updateStateDisplay(null);
+                    log('Not logged in');
+                    currentUser = null;
+                    showLoggedOut();
                 }
             } catch (err) {
-                log('Exception: ' + err.message, 'error');
-                updateStateDisplay(null);
+                log('Exception: ' + err.message);
+                showLoggedOut();
             }
         }
         
-        async function refreshState() {
-            log('🔄 Refreshing...');
-            await checkCurrentState();
-        }
-        
-        async function checkPublicUser(authUser) {
-            log('Checking public.users...');
-            
-            try {
-                const { data, error } = await db
-                    .from('users')
-                    .select('*')
-                    .eq('id', authUser.id)
-                    .maybeSingle();
-                
-                if (error) {
-                    log('Query error: ' + error.message, 'error');
-                    document.getElementById('userProfileStatus').textContent = 'Error';
-                    return null;
-                }
-                
-                if (data) {
-                    log('✅ Found - Status: ' + data.status, 'success');
-                    document.getElementById('userProfileStatus').textContent = data.status;
-                    return data;
-                } else {
-                    log('⚠️ NOT in public.users - creating...', 'warn');
-                    
-                    const { error: insertError } = await db
-                        .from('users')
-                        .insert({
-                            id: authUser.id,
-                            email: authUser.email,
-                            first_name: authUser.user_metadata?.first_name || '',
-                            status: 'pending',
-                            email_confirmed: authUser.email_confirmed_at ? true : false,
-                            created_at: new Date().toISOString()
-                        });
-                    
-                    if (insertError) {
-                        log('Insert error: ' + insertError.message, 'error');
-                    } else {
-                        log('✅ Created!', 'success');
-                        document.getElementById('userProfileStatus').textContent = 'pending (created)';
-                    }
-                    return null;
-                }
-            } catch (err) {
-                log('Exception: ' + err.message, 'error');
-                return null;
-            }
-        }
-        
-        function updateStateDisplay(user) {
-            const stateEl = document.getElementById('currentState');
-            const userInfoCard = document.getElementById('userInfoCard');
-            const authForms = document.getElementById('authForms');
-            
-            if (user) {
-                stateEl.innerHTML = '<p style="color: #10b981;">✅ Connecté</p>';
-                userInfoCard.classList.remove('hidden');
-                authForms.classList.add('hidden');
-                
-                document.getElementById('userEmail').textContent = user.email;
-                document.getElementById('userAuthId').textContent = user.id;
-                document.getElementById('userEmailConfirmed').textContent = 
-                    user.email_confirmed_at ? '✅ Oui' : '❌ Non';
-            } else {
-                stateEl.innerHTML = '<p style="color: #888;">Pas connecté</p>';
-                userInfoCard.classList.add('hidden');
-                authForms.classList.remove('hidden');
-            }
-        }
-        
-        // ═══════════════════════════════════════════════════════════════
-        // SIGNUP
-        // ═══════════════════════════════════════════════════════════════
-        async function signup() {
+        // ===========================================
+        // AUTH ACTIONS
+        // ===========================================
+        async function doSignup() {
             const email = document.getElementById('signupEmail').value.trim();
             const password = document.getElementById('signupPassword').value;
             const name = document.getElementById('signupName').value.trim();
@@ -576,12 +257,12 @@
                 return;
             }
             
-            log('📝 Signing up: ' + email);
+            log('Signing up: ' + email);
             
             try {
                 const { data, error } = await db.auth.signUp({
-                    email: email,
-                    password: password,
+                    email,
+                    password,
                     options: {
                         data: { first_name: name },
                         emailRedirectTo: window.location.origin + window.location.pathname
@@ -589,30 +270,19 @@
                 });
                 
                 if (error) {
-                    log('Signup error: ' + error.message, 'error');
                     showStatus('signupStatus', error.message, 'error');
                     return;
                 }
                 
-                log('✅ Signup OK! ID: ' + data.user?.id, 'success');
+                log('Signup OK!');
+                showStatus('signupStatus', '✅ Vérifiez votre email!', 'success');
                 
-                if (data.user && !data.user.email_confirmed_at) {
-                    showStatus('signupStatus', '✅ Vérifiez votre email!', 'success');
-                } else {
-                    showStatus('signupStatus', '✅ Compte créé!', 'success');
-                }
-                
-                setTimeout(checkCurrentState, 1000);
             } catch (err) {
-                log('Exception: ' + err.message, 'error');
                 showStatus('signupStatus', err.message, 'error');
             }
         }
         
-        // ═══════════════════════════════════════════════════════════════
-        // LOGIN
-        // ═══════════════════════════════════════════════════════════════
-        async function login() {
+        async function doLogin() {
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
             
@@ -621,57 +291,38 @@
                 return;
             }
             
-            log('🔐 Logging in: ' + email);
+            log('Logging in: ' + email);
             
             try {
-                const { data, error } = await db.auth.signInWithPassword({ email, password });
+                const { error } = await db.auth.signInWithPassword({ email, password });
                 
                 if (error) {
-                    log('Login error: ' + error.message, 'error');
                     showStatus('loginStatus', error.message, 'error');
                     return;
                 }
                 
-                log('✅ Login OK!', 'success');
-                showStatus('loginStatus', '✅ Connecté!', 'success');
-                checkCurrentState();
+                log('Login OK!');
+                // Auth state change will handle UI update
+                
             } catch (err) {
-                log('Exception: ' + err.message, 'error');
                 showStatus('loginStatus', err.message, 'error');
             }
         }
         
-        // ═══════════════════════════════════════════════════════════════
-        // LOGOUT
-        // ═══════════════════════════════════════════════════════════════
-        async function logout() {
-            log('👋 Logging out...');
-            
-            try {
-                const { error } = await db.auth.signOut();
-                if (error) {
-                    log('Logout error: ' + error.message, 'error');
-                    return;
-                }
-                log('✅ Logged out', 'success');
-                checkCurrentState();
-            } catch (err) {
-                log('Exception: ' + err.message, 'error');
-            }
+        async function doLogout() {
+            log('Logging out...');
+            await db.auth.signOut();
         }
         
-        // ═══════════════════════════════════════════════════════════════
-        // PASSWORD RESET
-        // ═══════════════════════════════════════════════════════════════
-        async function resetPassword() {
-            const email = document.getElementById('resetEmail').value.trim();
+        async function doForgotPassword() {
+            const email = document.getElementById('forgotEmail').value.trim();
             
             if (!email) {
-                showStatus('resetStatus', 'Email requis', 'error');
+                showStatus('forgotStatus', 'Email requis', 'error');
                 return;
             }
             
-            log('📧 Sending reset to: ' + email);
+            log('Sending reset: ' + email);
             
             try {
                 const { error } = await db.auth.resetPasswordForEmail(email, {
@@ -679,61 +330,136 @@
                 });
                 
                 if (error) {
-                    log('Reset error: ' + error.message, 'error');
-                    showStatus('resetStatus', error.message, 'error');
+                    showStatus('forgotStatus', error.message, 'error');
                     return;
                 }
                 
-                log('✅ Email sent!', 'success');
-                showStatus('resetStatus', '✅ Vérifiez votre email!', 'success');
+                showStatus('forgotStatus', '✅ Vérifiez votre email!', 'success');
+                
             } catch (err) {
-                log('Exception: ' + err.message, 'error');
-                showStatus('resetStatus', err.message, 'error');
+                showStatus('forgotStatus', err.message, 'error');
             }
         }
         
-        // ═══════════════════════════════════════════════════════════════
-        // APPROVE USER
-        // ═══════════════════════════════════════════════════════════════
-        async function approveUser() {
-            const email = document.getElementById('approveEmail').value.trim();
+        async function setNewPassword() {
+            const newPass = document.getElementById('newPassword').value;
+            const confirmPass = document.getElementById('confirmPassword').value;
             
-            if (!email) {
-                showStatus('approveStatus', 'Email requis', 'error');
+            if (!newPass || newPass.length < 6) {
+                showStatus('resetPasswordStatus', 'Min 6 caractères', 'error');
                 return;
             }
             
-            log('✅ Approving: ' + email);
+            if (newPass !== confirmPass) {
+                showStatus('resetPasswordStatus', 'Les mots de passe ne correspondent pas', 'error');
+                return;
+            }
+            
+            log('Updating password...');
             
             try {
-                const { data, error } = await db
-                    .from('users')
-                    .update({ status: 'approved' })
-                    .eq('email', email)
-                    .select();
+                const { error } = await db.auth.updateUser({ password: newPass });
                 
                 if (error) {
-                    log('Error: ' + error.message, 'error');
-                    showStatus('approveStatus', error.message, 'error');
+                    showStatus('resetPasswordStatus', error.message, 'error');
                     return;
                 }
                 
-                if (data && data.length > 0) {
-                    log('✅ Approved!', 'success');
-                    showStatus('approveStatus', '✅ Approuvé!', 'success');
-                } else {
-                    log('User not found', 'error');
-                    showStatus('approveStatus', 'Non trouvé', 'error');
-                }
+                log('Password updated!');
+                showStatus('resetPasswordStatus', '✅ Mot de passe mis à jour!', 'success');
+                
+                // Clean URL and reload after delay
+                window.history.replaceState(null, '', window.location.pathname);
+                setTimeout(() => {
+                    isPasswordRecovery = false;
+                    checkSession();
+                }, 1500);
+                
             } catch (err) {
-                log('Exception: ' + err.message, 'error');
-                showStatus('approveStatus', err.message, 'error');
+                showStatus('resetPasswordStatus', err.message, 'error');
             }
         }
         
-        // ═══════════════════════════════════════════════════════════════
-        // START
-        // ═══════════════════════════════════════════════════════════════
+        // ===========================================
+        // INITIALIZATION
+        // ===========================================
+        async function init() {
+            log('Starting...');
+            showLoading('Initialisation...');
+            
+            // Check if URL has recovery token
+            const hash = window.location.hash;
+            const hasRecoveryToken = hash.includes('type=recovery');
+            const hasAnyToken = hash.includes('access_token');
+            
+            if (hasRecoveryToken) {
+                log('Recovery token detected');
+                showLoading('Traitement du lien...');
+            } else if (hasAnyToken) {
+                log('Auth token detected');
+                showLoading('Confirmation...');
+            }
+            
+            // Create Supabase client - this automatically processes URL tokens
+            db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+                auth: {
+                    autoRefreshToken: true,
+                    persistSession: true,
+                    detectSessionInUrl: true  // This handles URL tokens automatically
+                }
+            });
+            
+            log('Client created');
+            
+            // Listen for auth changes
+            db.auth.onAuthStateChange((event, session) => {
+                log('Auth event: ' + event);
+                
+                if (event === 'PASSWORD_RECOVERY') {
+                    log('PASSWORD_RECOVERY mode');
+                    isPasswordRecovery = true;
+                    showPasswordReset();
+                } else if (event === 'SIGNED_IN') {
+                    if (isPasswordRecovery) {
+                        // Stay on password reset form
+                        showPasswordReset();
+                    } else {
+                        checkSession();
+                    }
+                } else if (event === 'SIGNED_OUT') {
+                    isPasswordRecovery = false;
+                    showLoggedOut();
+                } else if (event === 'USER_UPDATED') {
+                    log('User updated');
+                    isPasswordRecovery = false;
+                    checkSession();
+                } else if (event === 'INITIAL_SESSION') {
+                    // Initial load - check if we have a session
+                    if (!isPasswordRecovery) {
+                        checkSession();
+                    }
+                }
+            });
+            
+            // If we have tokens, wait a bit for Supabase to process them
+            if (hasAnyToken) {
+                log('Waiting for token processing...');
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+            
+            // Clean URL (remove tokens)
+            if (hasAnyToken && !isPasswordRecovery) {
+                window.history.replaceState(null, '', window.location.pathname);
+                log('URL cleaned');
+            }
+            
+            // If no auth event fired yet, check manually
+            if (!isPasswordRecovery) {
+                await checkSession();
+            }
+        }
+        
+        // Start
         init();
     </script>
 </body>
