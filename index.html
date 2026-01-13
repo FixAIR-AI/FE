@@ -6652,12 +6652,16 @@
                                 document.getElementById('userName').textContent = profile.first_name;
                                 document.getElementById('profileFirstName').value = profile.first_name;
                                 if (profile.email) document.getElementById('profileEmail').value = profile.email;
-                                
-                                onboardingComplete = true;
-                                document.querySelector('.onboarding-section').classList.add('hidden');
-                                document.getElementById('homepageContent').classList.add('active');
-                                localStorage.setItem('fixair_onboarding_done', 'true');
-                                
+
+                                // Check if onboarding was already done (only skip if previously completed)
+                                const onboardingDone = localStorage.getItem('fixair_onboarding_done');
+                                if (onboardingDone) {
+                                    onboardingComplete = true;
+                                    document.querySelector('.onboarding-section').classList.add('hidden');
+                                    document.getElementById('homepageContent').classList.add('active');
+                                }
+                                // If NOT done, onboarding will show (default visible state for new users)
+
                                 toast('Bienvenue ' + profile.first_name + ' !');
                                 doLogin();
                             } else {
