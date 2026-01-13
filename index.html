@@ -4811,36 +4811,50 @@
     </svg>
 
     <!-- LOGIN -->
-    <div class="screen login-screen active" id="loginScreen">
+    <div class="screen login-screen" id="loginScreen">
         <div class="scan-line"></div>
         <div class="login-container">
-            <div class="login-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
-            <h1 class="login-title">Bienvenue</h1>
-            <p class="login-sub">Assistant IA pour techniciens HVAC</p>
-            <div class="login-bar">
-                <div class="login-icon-slot">
-                    <div class="login-mini" id="loginSphere"><div class="glass-sphere"><div class="sphere-fog-container"><div class="sphere-fog"></div><div class="sphere-fog-2"></div></div></div></div>
-                    <button type="button" class="login-back" id="loginBack" onclick="prevLoginStep()"><svg viewBox="0 0 24 24"><use href="#icon-arrow-left"/></svg></button>
+            <!-- Loading spinner shown while checking auth -->
+            <div class="login-loading" id="loginLoading">
+                <div class="login-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
+                <div style="margin-top: 40px; color: var(--text-dim);">
+                    <span class="icon" style="animation: spin 1s linear infinite; display: inline-block;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 12a9 9 0 11-6.219-8.56"/>
+                        </svg>
+                    </span>
                 </div>
-                <div class="login-input-container">
-                    <div class="login-input-slider" id="loginSlider">
-                        <div class="login-input-slide">
-                            <input type="email" class="login-input" id="loginEmail" placeholder="Quelle est votre adresse email ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
-                        </div>
-                        <div class="login-input-slide">
-                            <input type="password" class="login-input" id="loginPassword" placeholder="Quel est votre mot de passe ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
-                        </div>
-                        <div class="login-input-slide">
-                            <input type="tel" class="login-input" id="loginPhone" placeholder="Quel est votre numéro de téléphone ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
-                        </div>
-                        <div class="login-input-slide">
-                            <input type="text" class="login-input" id="loginName" placeholder="Quel est votre prénom ?" onkeypress="if(event.key==='Enter')completeLogin()">
+            </div>
+            <!-- Actual login form (hidden initially) -->
+            <div class="login-form-content" id="loginFormContent" style="display: none;">
+                <div class="login-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
+                <h1 class="login-title">Bienvenue</h1>
+                <p class="login-sub">Assistant IA pour techniciens HVAC</p>
+                <div class="login-bar">
+                    <div class="login-icon-slot">
+                        <div class="login-mini" id="loginSphere"><div class="glass-sphere"><div class="sphere-fog-container"><div class="sphere-fog"></div><div class="sphere-fog-2"></div></div></div></div>
+                        <button type="button" class="login-back" id="loginBack" onclick="prevLoginStep()"><svg viewBox="0 0 24 24"><use href="#icon-arrow-left"/></svg></button>
+                    </div>
+                    <div class="login-input-container">
+                        <div class="login-input-slider" id="loginSlider">
+                            <div class="login-input-slide">
+                                <input type="email" class="login-input" id="loginEmail" placeholder="Quelle est votre adresse email ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
+                            </div>
+                            <div class="login-input-slide">
+                                <input type="password" class="login-input" id="loginPassword" placeholder="Quel est votre mot de passe ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
+                            </div>
+                            <div class="login-input-slide">
+                                <input type="tel" class="login-input" id="loginPhone" placeholder="Quel est votre numéro de téléphone ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
+                            </div>
+                            <div class="login-input-slide">
+                                <input type="text" class="login-input" id="loginName" placeholder="Quel est votre prénom ?" onkeypress="if(event.key==='Enter')completeLogin()">
+                            </div>
                         </div>
                     </div>
+                    <button type="button" class="login-btn" id="loginBtn" onclick="nextLoginStep()"><span class="icon"><svg><use href="#icon-arrow-right"/></svg></span></button>
                 </div>
-                <button type="button" class="login-btn" id="loginBtn" onclick="nextLoginStep()"><span class="icon"><svg><use href="#icon-arrow-right"/></svg></span></button>
+                <div class="login-status" id="loginStatus"></div>
             </div>
-            <div class="login-status" id="loginStatus"></div>
         </div>
     </div>
 
@@ -5880,14 +5894,42 @@
             });
             console.log('✅ Supabase client initialized');
             
-            // Wait for auth to be ready before allowing queries
+            // Wait for auth to be ready before allowing queries (increased timeout)
             setTimeout(() => {
                 supabaseReady = true;
                 console.log('✅ Supabase ready for queries');
-            }, 500);
+            }, 1000);
         } else {
             console.error('❌ Supabase library not loaded! window.supabase =', window.supabase);
             alert('Erreur: Supabase non chargé. Veuillez rafraîchir la page.');
+        }
+        
+        // Check if this is an email confirmation redirect
+        function checkForEmailConfirmation() {
+            const hash = window.location.hash;
+            const params = new URLSearchParams(window.location.search);
+            
+            // Check for email confirmation tokens in URL
+            if (hash.includes('access_token') || hash.includes('type=signup') || 
+                hash.includes('type=recovery') || params.has('token_hash')) {
+                console.log('📧 Email confirmation/recovery detected in URL');
+                return true;
+            }
+            return false;
+        }
+        
+        // Show login form (hide loading spinner)
+        function showLoginForm() {
+            const loading = document.getElementById('loginLoading');
+            const form = document.getElementById('loginFormContent');
+            if (loading) loading.style.display = 'none';
+            if (form) form.style.display = 'block';
+            document.getElementById('loginScreen').classList.add('active');
+        }
+        
+        // Hide login screen
+        function hideLoginScreen() {
+            document.getElementById('loginScreen').classList.remove('active');
         }
         
         // Helper function to wait for Supabase to be ready
@@ -6017,13 +6059,28 @@
         async function initAuth() {
             console.log('🔐 Checking Supabase Auth session...');
             
+            // Show login screen with loading state first
+            document.getElementById('loginScreen').classList.add('active');
+            
+            // Check for email confirmation in URL
+            const isEmailConfirm = checkForEmailConfirmation();
+            if (isEmailConfirm) {
+                console.log('📧 Processing email confirmation...');
+            }
+            
             // Wait for Supabase to be ready
             await waitForSupabase();
+            
+            // Extra wait for email confirmation processing
+            if (isEmailConfirm) {
+                await new Promise(r => setTimeout(r, 1500));
+            }
             
             const { data: { session }, error } = await db.auth.getSession();
             
             if (error) {
                 console.error('Auth session error:', error);
+                showLoginForm();
                 return;
             }
             
@@ -6040,6 +6097,7 @@
                     // Check approval status
                     if (profile.status !== 'approved' && profile.status !== 'active') {
                         console.log('⏳ User pending approval');
+                        hideLoginScreen();
                         showPendingScreen(profile.email);
                         return;
                     }
@@ -6057,7 +6115,7 @@
                         document.getElementById('homepageContent').classList.add('active');
                     }
                     
-                    document.getElementById('loginScreen').classList.remove('active');
+                    hideLoginScreen();
                     document.getElementById('mainApp').classList.add('active');
                     
                     loadProjectsList();
@@ -6065,10 +6123,12 @@
                     prefetchApiKeys();
                 } else {
                     console.log('⚠️ No user profile found, showing pending...');
+                    hideLoginScreen();
                     showPendingScreen(session.user.email);
                 }
             } else {
-                console.log('🔐 No session found, showing login');
+                console.log('🔐 No session found, showing login form');
+                showLoginForm();
             }
         }
 
@@ -6101,7 +6161,7 @@
                             document.getElementById('profileFirstName').value = profile.first_name || '';
                             if (profile.email) document.getElementById('profileEmail').value = profile.email;
                             
-                            document.getElementById('loginScreen').classList.remove('active');
+                            hideLoginScreen();
                             document.getElementById('mainApp').classList.add('active');
                             
                             const onboardingDone = localStorage.getItem('fixair_onboarding_done');
@@ -6115,19 +6175,27 @@
                             initGamification();
                             prefetchApiKeys();
                         } else if (profile.status !== 'approved' && profile.status !== 'active') {
+                            hideLoginScreen();
                             showPendingScreen(profile.email);
                         }
+                    } else {
+                        // User has session but no profile - show pending
+                        hideLoginScreen();
+                        showPendingScreen(session.user.email);
                     }
                 }
             } else if (event === 'SIGNED_OUT') {
                 supabaseUser = null;
                 currentUser = null;
                 authHandled = false;
+                showLoginForm();
             }
         });
 
-        // Initialize auth on page load
-        setTimeout(() => initAuth(), 800);
+        // Initialize auth on page load immediately
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => initAuth(), 100);
+        });
 
         // ═══ LOGIN STATUS MESSAGES ═══
         let existingUserName = '';
@@ -6489,7 +6557,6 @@
             clearLoginStatus();
             document.getElementById('emailConfirmScreen').classList.remove('active');
             document.getElementById('pendingScreen').classList.remove('active');
-            document.getElementById('loginScreen').classList.add('active');
             
             loginStep = 0;
             document.getElementById('loginEmail').value = '';
@@ -6497,18 +6564,24 @@
             document.getElementById('loginPhone').value = '';
             document.getElementById('loginName').value = '';
             updateLoginUI();
+            
+            showLoginForm();
         }
 
         async function logoutFromPending() {
             await db.auth.signOut();
             supabaseUser = null;
             currentUser = null;
+            authHandled = false;
             localStorage.removeItem('fixair_onboarding_done');
             clearLoginStatus();
             
             document.getElementById('pendingScreen').classList.remove('active');
             document.getElementById('emailConfirmScreen').classList.remove('active');
-            document.getElementById('loginScreen').classList.add('active');
+            
+            loginStep = 0;
+            updateLoginUI();
+            showLoginForm();
             
             loginStep = 0;
             document.getElementById('loginEmail').value = '';
