@@ -479,6 +479,13 @@
             if (hasAccessToken && hasRefreshToken) {
                 log('Manually processing URL tokens...');
 
+                // IMPORTANT: Set recovery flag BEFORE setSession to prevent race condition
+                // The SIGNED_IN event will fire during setSession, and we need isPasswordRecovery
+                // to be true so the event handler shows the password reset form
+                if (isRecoveryLink) {
+                    isPasswordRecovery = true;
+                }
+
                 try {
                     // Set the session using the tokens from the URL
                     const { data, error } = await db.auth.setSession({
@@ -488,6 +495,7 @@
 
                     if (error) {
                         log('setSession error: ' + error.message);
+                        isPasswordRecovery = false;
                         showLoggedOut();
                         return;
                     }
@@ -506,7 +514,6 @@
                     // Handle based on token type
                     if (isRecoveryLink) {
                         log('Showing password reset form');
-                        isPasswordRecovery = true;
                         isReady = true;
                         showPasswordReset();
                     } else if (data.session && data.session.user) {
@@ -518,11 +525,16 @@
                 } catch (err) {
                     log('Exception during token processing: ' + err.message);
                     console.error('Token processing error:', err);
+                    isPasswordRecovery = false;
                     showLoggedOut();
                 }
             } else if (hasAccessToken && !hasRefreshToken) {
                 // Some flows only have access_token - try to use it anyway
                 log('Only access_token found, attempting session...');
+
+                if (isRecoveryLink) {
+                    isPasswordRecovery = true;
+                }
 
                 try {
                     const { data, error } = await db.auth.setSession({
