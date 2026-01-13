@@ -5599,7 +5599,7 @@
     // ═══════════════════════════════════════════════════════════════
         // PRODUCTION MODE - Set to false for debugging
         // ═══════════════════════════════════════════════════════════════
-        const PRODUCTION_MODE = false;
+        const PRODUCTION_MODE = true;
         
         // Suppress debug logs in production (keeps errors visible)
         if (PRODUCTION_MODE) {
@@ -6074,9 +6074,42 @@
             supabaseUser = user;
 
             // Load user profile from public.users
-            const profile = await loadUserProfile(user.id);
+            let profile = await loadUserProfile(user.id);
 
             if (profile) {
+                // Sync missing user data from auth metadata to public.users
+                const authMeta = user.user_metadata || {};
+                const needsUpdate = {};
+
+                if (!profile.first_name && authMeta.first_name) {
+                    needsUpdate.first_name = authMeta.first_name;
+                }
+                if (!profile.phone && authMeta.phone) {
+                    needsUpdate.phone = authMeta.phone;
+                }
+                if (!profile.email && user.email) {
+                    needsUpdate.email = user.email;
+                }
+
+                // Update public.users if we have missing data from auth
+                if (Object.keys(needsUpdate).length > 0) {
+                    try {
+                        needsUpdate.updated_at = new Date().toISOString();
+                        const { data: updatedProfile } = await db
+                            .from('users')
+                            .update(needsUpdate)
+                            .eq('id', user.id)
+                            .select()
+                            .single();
+
+                        if (updatedProfile) {
+                            profile = updatedProfile;
+                        }
+                    } catch (e) {
+                        // Silently handle sync error
+                    }
+                }
+
                 currentUser = profile;
 
                 // Check approval status
@@ -6089,6 +6122,7 @@
                 document.getElementById('userName').textContent = profile.first_name || 'Utilisateur';
                 document.getElementById('profileFirstName').value = profile.first_name || '';
                 if (profile.email) document.getElementById('profileEmail').value = profile.email;
+                if (profile.phone) document.getElementById('profilePhone').value = profile.phone;
 
                 const onboardingDone = localStorage.getItem('fixair_onboarding_done');
                 if (onboardingDone) {
@@ -6250,6 +6284,12 @@
                     showPasswordResetScreen();
                     return;
                 }
+
+                // Persist session to localStorage for page reload persistence
+                localStorage.setItem('supabase.auth.token', JSON.stringify({
+                    currentSession: session,
+                    expiresAt: session.expires_at
+                }));
 
                 supabaseUser = session.user;
 
@@ -6583,6 +6623,7 @@
                                 document.getElementById('userName').textContent = profile.first_name;
                                 document.getElementById('profileFirstName').value = profile.first_name;
                                 if (profile.email) document.getElementById('profileEmail').value = profile.email;
+                                if (profile.phone) document.getElementById('profilePhone').value = profile.phone;
 
                                 // Check if onboarding was already done (only skip if previously completed)
                                 const onboardingDone = localStorage.getItem('fixair_onboarding_done');
@@ -6847,16 +6888,18 @@
         async function saveProfile() {
             const firstName = document.getElementById('profileFirstName').value.trim();
             const email = document.getElementById('profileEmail').value.trim();
-            
+            const phone = document.getElementById('profilePhone')?.value.trim() || '';
+
             if (!firstName) { toast('Entrez votre prénom'); return; }
-            
+
             // Update UI immediately
             document.getElementById('userName').textContent = firstName;
-            
+
             // ═══ SAVE TO LOCALSTORAGE (ALWAYS WORKS) ═══
             const savedUser = JSON.parse(localStorage.getItem('fixair_user') || '{}');
             savedUser.first_name = firstName;
             if (email) savedUser.email = email;
+            if (phone) savedUser.phone = phone;
             localStorage.setItem('fixair_user', JSON.stringify(savedUser));
             currentUser = savedUser;
 
@@ -6865,27 +6908,33 @@
             // ═══ SAVE TO SUPABASE users table ═══
             if (savedUser.id && typeof db !== 'undefined') {
                 try {
+                    const updateData = {
+                        first_name: firstName,
+                        email: email,
+                        updated_at: new Date().toISOString()
+                    };
+                    if (phone) updateData.phone = phone;
+
                     const { data, error } = await db
                         .from('users')
-                        .update({ 
-                            first_name: firstName,
-                            email: email,
-                            updated_at: new Date().toISOString()
-                        })
+                        .update(updateData)
                         .eq('id', savedUser.id)
                         .select();
-                    
+
                     if (error) {
                         // If table doesn't exist or record not found, try insert
                         if (error.code === '42P01' || error.code === 'PGRST116') {
+                            const upsertData = {
+                                id: savedUser.id,
+                                first_name: firstName,
+                                email: email,
+                                updated_at: new Date().toISOString()
+                            };
+                            if (phone) upsertData.phone = phone;
+
                             const { error: upsertError } = await db
                                 .from('users')
-                                .upsert({
-                                    id: savedUser.id,
-                                    first_name: firstName,
-                                    email: email,
-                                    updated_at: new Date().toISOString()
-                                });
+                                .upsert(upsertData);
 
                             if (!upsertError) {
                                 dbSaveSuccess = true;
@@ -6904,17 +6953,18 @@
                 try {
                     const response = await fetch(`${API_BASE}/auth/update-profile`, {
                         method: 'POST',
-                        headers: { 
+                        headers: {
                             'Content-Type': 'application/json',
                             'Authorization': `Bearer ${authToken}`
                         },
-                        body: JSON.stringify({ 
+                        body: JSON.stringify({
                             user_id: savedUser.id,
                             first_name: firstName,
-                            email: email
+                            email: email,
+                            phone: phone
                         })
                     });
-                    
+
                     if (response.ok) {
                         dbSaveSuccess = true;
                     }
@@ -7034,6 +7084,8 @@
             document.getElementById('welcomeSection').style.display = 'none';
             document.getElementById('onboardingCard').classList.add('congrats');
             onboardingComplete = true;
+            // Persist onboarding completion so it's remembered on page reload
+            localStorage.setItem('fixair_onboarding_done', 'true');
         }
 
         function closeCongrats() {
@@ -8996,7 +9048,7 @@ INSTRUCTIONS:
                 navigator.share({
                     title: 'Rapport d\'intervention FixAIR',
                     text: text
-                }).catch(err => console.log('Share cancelled'));
+                }).catch(() => { /* Share cancelled */ });
             } else {
                 // Fallback: copy to clipboard
                 const text = generateReportText(lastReportData);
@@ -9583,7 +9635,7 @@ INSTRUCTIONS:
                     lastReportData.status = 'complet';
                     lastReportData.exported_at = new Date().toISOString();
                     updateDrawerPreview(lastReportData);
-                    console.log('📄 Report exported and marked as complete');
+                    // Report exported and marked as complete
                 }
                 
                 // Track gamification
@@ -9641,7 +9693,7 @@ INSTRUCTIONS:
             // Attach event listeners for editable fields
             initEditableReport();
             
-            console.log('📋 Drawer preview updated - Completion:', completionStatus.percentage + '%');
+            // Drawer preview updated
         }
         
         // Calculate report completion for manager visibility
@@ -10824,7 +10876,7 @@ INSTRUCTIONS:
             updateReportProgress();
             showAutoSaveIndicator();
             
-            console.log('➕ Added item to', listName);
+            // Item added to list
         }
         
         // Remove an item from a list field
@@ -10838,7 +10890,7 @@ INSTRUCTIONS:
             updateReportProgress();
             showAutoSaveIndicator();
             
-            console.log('➖ Removed item from', listName, 'at index', index);
+            // Item removed from list
         }
         
         // Refresh the report preview with current data
@@ -11385,18 +11437,7 @@ RÈGLES:
                 
                 // Get the right webhook based on panel (copilot vs assistant)
                 const webhookUrl = getWebhookUrl(panel);
-                
-                console.log('📤 Sending to n8n:', webhookUrl);
-                console.log('📤 Panel:', panel);
-                console.log('📤 Session ID:', currentSessionId);
-                console.log('📤 Is existing conversation:', isExistingConversation, '(', previousUserMessages, 'user msgs,', previousAiMessages, 'AI msgs)');
-                console.log('📤 History length:', recentHistory.length, '(system msg:', systemMsg ? 'yes' : 'no', ')');
-                console.log('📤 Brand:', currentBrandName);
-                if (isExistingConversation) {
-                    console.log('📤 Full conversation summary being sent in brand_instruction');
-                    console.log('📤 Summary preview:', conversationSummary.substring(0, 500) + '...');
-                }
-                
+
                 // Call n8n webhook
                 const response = await fetch(webhookUrl, {
                     method: 'POST',
@@ -11405,9 +11446,7 @@ RÈGLES:
                     },
                     body: JSON.stringify(payload)
                 });
-                
-                console.log('📥 Response status:', response.status);
-                
+
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error('❌ n8n Error:', response.status, errorText);
@@ -11415,8 +11454,7 @@ RÈGLES:
                 }
                 
                 const data = await response.json();
-                console.log('📥 Response data:', data);
-                
+
                 // Remove loading
                 removeLoadingMsg(panel);
                 
@@ -11627,7 +11665,7 @@ RÈGLES:
                 recordings[panel] = { stream, startTime: Date.now(), mediaRecorder };
                 
             } catch (err) {
-                console.log('Mic access denied, using simulation');
+                // Mic access denied, using simulation
                 recordings[panel] = { startTime: Date.now(), simulated: true };
                 
                 // Simulate speaking patterns
@@ -11917,8 +11955,7 @@ RÈGLES:
         function attachAction(type, panel) {
             closeAllAttach();
             currentPhotoPanel = panel;
-            console.log('📸 attachAction:', type, 'panel:', panel);
-            
+
             if (type === 'camera') {
                 document.getElementById('cameraInput').click();
             } else if (type === 'file') {
@@ -12015,17 +12052,13 @@ RÈGLES:
         
         // Add photo directly to chat with action buttons
         async function addPhotoToChat(panel, imageData) {
-            console.log('📸 addPhotoToChat called, panel:', panel);
-            
             const container = document.getElementById(panel + 'Body');
             if (!container) {
-                console.error('❌ Chat container not found:', panel + 'Body');
                 toast('Erreur: chat non trouvé');
                 return;
             }
-            
+
             const msgId = 'photo-' + Date.now();
-            console.log('📸 Creating message:', msgId);
             
             const msgDiv = document.createElement('div');
             msgDiv.className = 'msg user';
@@ -13107,7 +13140,7 @@ RÈGLES:
                     .from('project-photos')
                     .getPublicUrl(filename);
                 
-                console.log('Photo uploaded:', urlData.publicUrl);
+                // Photo uploaded successfully
                 return urlData.publicUrl;
                 
             } catch (error) {
@@ -13141,7 +13174,7 @@ RÈGLES:
                     .update({ photos: updatedPhotos })
                     .eq('id', projectId);
                 
-                console.log('Photo saved to project:', projectId);
+                // Photo saved to project
                 
             } catch (error) {
                 console.error('Error saving photo to project:', error);
@@ -13246,14 +13279,12 @@ RÈGLES:
             
             // Get the correct agent ID for the selected brand
             const agentId = ELEVENLABS_AGENT_IDS[brand] || ELEVENLABS_AGENT_IDS['general'];
-            console.log('🎙️ Connecting to ElevenLabs agent:', agentId, 'for brand:', brand);
             
             try {
                 elevenLabsConversation = await window.ElevenLabsConversation.startSession({
                     agentId: agentId,
                     
                     onMessage: ({ message, source }) => {
-                        console.log('📨 Message from', source, ':', message);
                         if (source === 'user') {
                             addHotlineMessage(message, 'user');
                         } else {
@@ -13262,7 +13293,6 @@ RÈGLES:
                     },
                     
                     onModeChange: ({ mode }) => {
-                        console.log('🎤 Mode change:', mode);
                         if (mode === 'speaking') {
                             document.getElementById('pulseSphere').classList.add('ai-speaking');
                             showAISpeakingIndicator();
@@ -14043,7 +14073,6 @@ RÈGLES:
                             projectId: ev.project_id,
                             jobId: ev.job_id
                         }));
-                        console.log('📅 Calendar events loaded from Supabase:', calendarEvents.length);
                         // Clear old localStorage demo events
                         localStorage.removeItem('fixair_calendar_events');
                         renderTechCalendar();
@@ -14076,10 +14105,8 @@ RÈGLES:
 
         async function saveEventToSupabase(eventData) {
             const userId = await getCurrentUserId();
-            console.log('📅 Attempting to save event, userId:', userId, 'eventType:', eventData.type);
-            
+
             if (!db || !userId || userId.startsWith('demo-')) {
-                console.log('📅 Supabase not available or demo mode, saving to localStorage only');
                 return null;
             }
             
@@ -14098,9 +14125,7 @@ RÈGLES:
                     notes: eventData.notes || null,
                     project_id: eventData.projectId || null
                 };
-                
-                console.log('📅 Supabase data to insert:', JSON.stringify(supabaseData, null, 2));
-                
+
                 if (eventData.id && !eventData.id.startsWith('ev-') && !eventData.id.startsWith('demo')) {
                     // Update existing
                     const { data, error } = await db
@@ -14111,11 +14136,7 @@ RÈGLES:
                         .select()
                         .single();
                     
-                    if (error) {
-                        console.error('📅 Supabase UPDATE error:', error.message, error.details, error.hint);
-                        throw error;
-                    }
-                    console.log('📅 Event updated in Supabase:', data.id);
+                    if (error) throw error;
                     return data;
                 } else {
                     // Insert new
@@ -14126,16 +14147,10 @@ RÈGLES:
                         .select()
                         .single();
                     
-                    if (error) {
-                        console.error('📅 Supabase INSERT error:', error.message, error.details, error.hint);
-                        console.error('📅 Full error object:', JSON.stringify(error));
-                        throw error;
-                    }
-                    console.log('📅 Event created in Supabase:', data.id);
+                    if (error) throw error;
                     return data;
                 }
             } catch (err) {
-                console.error('📅 Error saving event to Supabase:', err);
                 toast('Erreur sauvegarde calendrier');
                 return null;
             }
@@ -14154,9 +14169,8 @@ RÈGLES:
                     .eq('user_id', userId);
                 
                 if (error) throw error;
-                console.log('📅 Event deleted from Supabase:', eventId);
             } catch (err) {
-                console.error('Error deleting event from Supabase:', err);
+                // Error deleting event
             }
         }
 
@@ -14164,11 +14178,9 @@ RÈGLES:
             // Create a project when event type is copilot or assistant
             const userId = await getCurrentUserId();
             if (!db || !userId || userId.startsWith('demo-')) {
-                console.log('📅 Cannot create project: no valid user');
                 return null;
             }
             if (eventData.type !== 'copilot' && eventData.type !== 'assistant') {
-                console.log('📅 Event type is not copilot/assistant, skipping project creation');
                 return null;
             }
             
@@ -14185,8 +14197,7 @@ RÈGLES:
                     .single();
                 
                 if (projectError) throw projectError;
-                console.log('📅 Project created for event:', project.id);
-                
+
                 // Create a chat with the correct type (copilot or assistant)
                 const { data: chat, error: chatError } = await db
                     .from('chats')
@@ -14198,15 +14209,10 @@ RÈGLES:
                     .select()
                     .single();
                 
-                if (chatError) {
-                    console.error('Error creating chat for project:', chatError);
-                } else {
-                    console.log('📅 Chat created with type:', eventData.type, 'id:', chat.id);
-                }
-                
+                // Chat creation error handled silently
+
                 return project.id;
             } catch (err) {
-                console.error('Error creating project for event:', err);
                 return null;
             }
         }
@@ -14550,15 +14556,11 @@ RÈGLES:
         }
 
         async function saveCalendarEvent() {
-            console.log('📅 saveCalendarEvent called!');
-            
             const name = document.getElementById('eventName').value.trim();
             if (!name) {
                 toast('Veuillez entrer un nom');
                 return;
             }
-            
-            console.log('📅 Saving event with type:', selectedEventType);
             
             // Get existing event data if editing (to preserve projectId)
             const existingEvent = editingEventId ? calendarEvents.find(e => e.id === editingEventId) : null;
@@ -14580,15 +14582,12 @@ RÈGLES:
                 projectId: existingEvent?.projectId || null,
                 jobId: existingEvent?.jobId || null
             };
-            
-            console.log('📅 Event data:', JSON.stringify(eventData, null, 2));
-            
+
             // Create project for copilot/assistant events (only for new events without projectId)
             if (!eventData.projectId && (selectedEventType === 'copilot' || selectedEventType === 'assistant')) {
                 const projectId = await createProjectForEvent(eventData);
                 if (projectId) {
                     eventData.projectId = projectId;
-                    console.log('📅 Event linked to project:', projectId);
                 }
             }
             
@@ -14600,9 +14599,6 @@ RÈGLES:
                 if (savedEvent.project_id) {
                     eventData.projectId = savedEvent.project_id;
                 }
-                console.log('📅 Event saved successfully with ID:', eventData.id);
-            } else {
-                console.log('📅 Event NOT saved to Supabase, keeping local ID:', eventData.id);
             }
             
             if (editingEventId) {
