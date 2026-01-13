@@ -6124,18 +6124,25 @@
                 if (profile.email) document.getElementById('profileEmail').value = profile.email;
                 if (profile.phone) document.getElementById('profilePhone').value = profile.phone;
 
-                const onboardingDone = localStorage.getItem('fixair_onboarding_done');
-                if (onboardingDone) {
+                // Check onboarding status from localStorage OR database
+                const onboardingDoneLocal = localStorage.getItem('fixair_onboarding_done');
+                const onboardingDoneDB = profile.onboarding_done;
+                if (onboardingDoneLocal || onboardingDoneDB) {
                     onboardingComplete = true;
                     document.querySelector('.onboarding-section').classList.add('hidden');
                     document.getElementById('homepageContent').classList.add('active');
+                    // Sync localStorage if DB has the flag but local doesn't
+                    if (onboardingDoneDB && !onboardingDoneLocal) {
+                        localStorage.setItem('fixair_onboarding_done', 'true');
+                    }
                 }
 
                 document.getElementById('loginScreen').classList.remove('active');
                 document.getElementById('passwordResetScreen')?.classList.remove('active');
                 document.getElementById('mainApp').classList.add('active');
 
-                loadProjectsList();
+                // Load projects and check if user should skip onboarding
+                await loadProjectsListAndCheckOnboarding();
                 initGamification();
                 prefetchApiKeys();
             } else {
@@ -6625,14 +6632,19 @@
                                 if (profile.email) document.getElementById('profileEmail').value = profile.email;
                                 if (profile.phone) document.getElementById('profilePhone').value = profile.phone;
 
-                                // Check if onboarding was already done (only skip if previously completed)
-                                const onboardingDone = localStorage.getItem('fixair_onboarding_done');
-                                if (onboardingDone) {
+                                // Check onboarding status from localStorage OR database
+                                const onboardingDoneLocal = localStorage.getItem('fixair_onboarding_done');
+                                const onboardingDoneDB = profile.onboarding_done;
+                                if (onboardingDoneLocal || onboardingDoneDB) {
                                     onboardingComplete = true;
                                     document.querySelector('.onboarding-section').classList.add('hidden');
                                     document.getElementById('homepageContent').classList.add('active');
+                                    // Sync localStorage if DB has the flag but local doesn't
+                                    if (onboardingDoneDB && !onboardingDoneLocal) {
+                                        localStorage.setItem('fixair_onboarding_done', 'true');
+                                    }
                                 }
-                                // If NOT done, onboarding will show (default visible state for new users)
+                                // If NOT done, loadProjectsListAndCheckOnboarding will check for existing projects
 
                                 toast('Bienvenue ' + profile.first_name + ' !');
                                 doLogin();
@@ -6833,13 +6845,13 @@
             toast('Déconnecté');
         }
 
-        function doLogin() {
+        async function doLogin() {
             document.getElementById('loginScreen').classList.remove('active');
             document.getElementById('emailConfirmScreen').classList.remove('active');
             document.getElementById('pendingScreen').classList.remove('active');
             document.getElementById('mainApp').classList.add('active');
-            
-            loadProjectsList();
+
+            await loadProjectsListAndCheckOnboarding();
             initGamification();
             prefetchApiKeys();
         }
@@ -6922,29 +6934,32 @@
                         .select();
 
                     if (error) {
-                        // If table doesn't exist or record not found, try insert
-                        if (error.code === '42P01' || error.code === 'PGRST116') {
-                            const upsertData = {
-                                id: savedUser.id,
-                                first_name: firstName,
-                                email: email,
-                                updated_at: new Date().toISOString()
-                            };
-                            if (phone) upsertData.phone = phone;
+                        // Update failed - try upsert as fallback
+                        // This handles: record not found, RLS issues, permission errors, etc.
+                        console.error('Profile update error:', error.code, error.message);
 
-                            const { error: upsertError } = await db
-                                .from('users')
-                                .upsert(upsertData);
+                        const upsertData = {
+                            id: savedUser.id,
+                            first_name: firstName,
+                            email: email,
+                            updated_at: new Date().toISOString()
+                        };
+                        if (phone) upsertData.phone = phone;
 
-                            if (!upsertError) {
-                                dbSaveSuccess = true;
-                            }
+                        const { error: upsertError } = await db
+                            .from('users')
+                            .upsert(upsertData);
+
+                        if (!upsertError) {
+                            dbSaveSuccess = true;
+                        } else {
+                            console.error('Profile upsert error:', upsertError.code, upsertError.message);
                         }
                     } else {
                         dbSaveSuccess = true;
                     }
                 } catch (e) {
-                    // Supabase exception
+                    console.error('Profile save exception:', e);
                 }
             }
 
@@ -7080,12 +7095,25 @@
             document.getElementById('onboardingProgress').textContent = completed + '/4';
         }
 
-        function showCongrats() {
+        async function showCongrats() {
             document.getElementById('welcomeSection').style.display = 'none';
             document.getElementById('onboardingCard').classList.add('congrats');
             onboardingComplete = true;
             // Persist onboarding completion so it's remembered on page reload
             localStorage.setItem('fixair_onboarding_done', 'true');
+
+            // Also save to database so it persists across devices/browsers
+            const userId = await getCurrentUserId();
+            if (userId && typeof db !== 'undefined') {
+                try {
+                    await db
+                        .from('users')
+                        .update({ onboarding_done: true, updated_at: new Date().toISOString() })
+                        .eq('id', userId);
+                } catch (e) {
+                    // Silently fail - localStorage is the backup
+                }
+            }
         }
 
         function closeCongrats() {
@@ -7981,6 +8009,33 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             }
         }
         
+        // Load projects and check if user should skip onboarding (has existing projects)
+        async function loadProjectsListAndCheckOnboarding() {
+            await loadProjectsList();
+
+            // If user has projects but hasn't completed onboarding, they're an existing user
+            // Skip onboarding for them and mark as done
+            if (!onboardingComplete && window.projectsData && window.projectsData.length > 0) {
+                onboardingComplete = true;
+                document.querySelector('.onboarding-section').classList.add('hidden');
+                document.getElementById('homepageContent').classList.add('active');
+                localStorage.setItem('fixair_onboarding_done', 'true');
+
+                // Also update database
+                const userId = await getCurrentUserId();
+                if (userId && typeof db !== 'undefined') {
+                    try {
+                        await db
+                            .from('users')
+                            .update({ onboarding_done: true, updated_at: new Date().toISOString() })
+                            .eq('id', userId);
+                    } catch (e) {
+                        // Silently fail - localStorage is the backup
+                    }
+                }
+            }
+        }
+
         // Load user's projects list
         async function loadProjectsList() {
             const userId = await getCurrentUserId();
