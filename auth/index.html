@@ -105,7 +105,52 @@
         @keyframes fogSwirl2 { 0% { transform: rotate(0deg) scale(0.9); } 50% { transform: rotate(180deg) scale(1.1); } 100% { transform: rotate(360deg) scale(0.9); } }
         @keyframes fogColor2 { 0%, 100% { color: #3B82F6; } 25% { color: #eab308; } 50% { color: #FF6B35; } 75% { color: #ef4444; } }
 
-        /* Input Bar (pill style) */
+        /* Login Bar (pill style with slider) */
+        .login-bar {
+            display: flex; align-items: center; gap: 8px;
+            padding: 5px 5px 5px 8px;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 40px; width: 100%;
+        }
+        .login-icon-slot { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; }
+        .login-mini { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; position: relative; }
+        .login-back {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: rgba(255,255,255,0.05); border: none;
+            color: var(--text-dim); cursor: pointer;
+            display: none; align-items: center; justify-content: center; flex-shrink: 0;
+            transition: all 0.2s;
+        }
+        .login-back:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+        .login-back svg { width: 16px; height: 16px; stroke: currentColor; fill: none; }
+        .login-input-container { flex: 1; position: relative; height: 32px; overflow: hidden; }
+        .login-input-slider { display: flex; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); height: 100%; }
+        .login-input-slide { min-width: 100%; display: flex; align-items: center; }
+        .login-input {
+            flex: 1; padding: 8px; background: transparent; border: none;
+            color: white; font-size: 13px; outline: none; caret-color: white;
+        }
+        .login-input::placeholder { color: rgba(255,255,255,0.25); }
+        .login-input:-webkit-autofill,
+        .login-input:-webkit-autofill:hover,
+        .login-input:-webkit-autofill:focus,
+        .login-input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+            -webkit-text-fill-color: white !important;
+            background-color: transparent !important;
+            transition: background-color 9999s ease-out 9999s !important;
+        }
+        .login-btn {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: linear-gradient(135deg, #FF6B35, #E55A2B);
+            border: none; color: white; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .login-btn .icon { width: 12px; height: 12px; }
+        .login-btn .icon svg { width: 100%; height: 100%; }
+        .login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Input Bar (for signup forms) */
         .input-bar {
             display: flex; align-items: center; gap: 8px;
             padding: 5px 5px 5px 12px;
@@ -146,7 +191,7 @@
             border-radius: 12px; color: var(--text); font-size: 14px;
             outline: none; transition: all 0.2s;
         }
-        .form-input:focus { border-color: var(--copilot); box-shadow: 0 0 0 3px rgba(255,107,53,0.1); }
+        .form-input:focus { border-color: var(--assistant); box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.15); }
         .form-input::placeholder { color: var(--text-dim); }
         .form-input.readonly { background: rgba(255,255,255,0.02); color: var(--text-dim); cursor: not-allowed; }
         .form-input:-webkit-autofill,
@@ -184,22 +229,22 @@
         /* User Type Cards */
         .user-type-cards { display: flex; flex-direction: column; gap: 12px; width: 100%; margin-bottom: 24px; }
         .user-type-card {
-            padding: 20px; background: var(--card); border: 2px solid var(--border);
+            padding: 20px; background: var(--card); border: 1px solid var(--border);
             border-radius: 16px; cursor: pointer; transition: all 0.2s;
             text-align: left;
         }
         .user-type-card:hover { border-color: rgba(255,255,255,0.15); }
-        .user-type-card.selected { border-color: var(--copilot); background: var(--copilot-bg); }
+        .user-type-card.selected { border-color: var(--assistant); background: var(--assistant-bg); }
         .user-type-card-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 10px; }
         .user-type-card-title .radio {
             width: 20px; height: 20px; border-radius: 50%;
-            border: 2px solid var(--border);
+            border: 1px solid var(--border);
             display: flex; align-items: center; justify-content: center;
         }
-        .user-type-card.selected .radio { border-color: var(--copilot); }
+        .user-type-card.selected .radio { border-color: var(--assistant); }
         .user-type-card.selected .radio::after {
             content: ''; width: 10px; height: 10px;
-            border-radius: 50%; background: var(--copilot);
+            border-radius: 50%; background: var(--assistant);
         }
         .user-type-card-desc { font-size: 13px; color: var(--text-dim); margin-left: 30px; }
 
@@ -245,6 +290,8 @@
 
         /* Responsive */
         @media (min-width: 420px) {
+            .login-btn { width: 38px; height: 38px; }
+            .login-btn .icon { width: 14px; height: 14px; }
             .input-bar-btn { width: 38px; height: 38px; }
             .input-bar-btn .icon { width: 14px; height: 14px; }
         }
@@ -260,33 +307,48 @@
         </defs>
     </svg>
 
-    <!-- STEP 1: Email Input -->
-    <div class="screen active" id="emailScreen">
+    <!-- LOGIN SCREEN (Slider style like technician app) -->
+    <div class="screen active" id="loginScreen">
         <div class="scan-line"></div>
         <div class="auth-container">
             <div class="auth-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
             <h1 class="auth-title">Bienvenue</h1>
             <p class="auth-subtitle">Connectez-vous ou cr&eacute;ez votre compte</p>
-            <div class="input-bar">
-                <div class="input-bar-icon">
-                    <div class="glass-sphere">
-                        <div class="sphere-fog-container">
-                            <div class="sphere-fog"></div>
-                            <div class="sphere-fog-2"></div>
+            <div class="login-bar">
+                <div class="login-icon-slot">
+                    <div class="login-mini" id="loginSphere">
+                        <div class="glass-sphere">
+                            <div class="sphere-fog-container">
+                                <div class="sphere-fog"></div>
+                                <div class="sphere-fog-2"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="login-back" id="loginBack" onclick="prevLoginStep()">
+                        <svg viewBox="0 0 24 24"><use href="#icon-arrow-left"/></svg>
+                    </button>
+                </div>
+                <div class="login-input-container">
+                    <div class="login-input-slider" id="loginSlider">
+                        <div class="login-input-slide">
+                            <input type="email" class="login-input" id="loginEmailInput" placeholder="Quelle est votre adresse email ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
+                        </div>
+                        <div class="login-input-slide">
+                            <input type="password" class="login-input" id="loginPasswordInput" placeholder="Entrez votre mot de passe" onkeypress="if(event.key==='Enter')nextLoginStep()">
                         </div>
                     </div>
                 </div>
-                <input type="email" id="emailInput" placeholder="Quelle est votre adresse email ?" onkeypress="if(event.key==='Enter')checkEmail()">
-                <button type="button" class="input-bar-btn" onclick="checkEmail()">
+                <button type="button" class="login-btn" id="loginBtn" onclick="nextLoginStep()">
                     <span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>
                 </button>
             </div>
-            <div class="status-message" id="emailStatus"></div>
+            <div class="status-message" id="loginStatus"></div>
+            <button class="btn-link" id="forgotPasswordLink" onclick="showPasswordReset()" style="margin-top: 16px; display: none;">Mot de passe oubli&eacute; ?</button>
         </div>
     </div>
 
-    <!-- STEP 2A: Password Login (Existing User) -->
-    <div class="screen" id="passwordScreen">
+    <!-- STEP 2A: Password Login (Existing User) - REMOVED, now using slider -->
+    <div class="screen" id="passwordScreen" style="display:none !important;">
         <div class="scan-line"></div>
         <div class="auth-container">
             <div class="auth-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
@@ -294,7 +356,7 @@
             <p class="auth-subtitle">Entrez votre mot de passe pour continuer</p>
             <div class="email-display">
                 <span class="email-display-text" id="loginEmailDisplay"></span>
-                <button class="email-display-edit" onclick="goToScreen('emailScreen')">Modifier</button>
+                <button class="email-display-edit" onclick="goToScreen('loginScreen')">Modifier</button>
             </div>
             <div class="input-bar">
                 <div class="input-bar-icon">
@@ -339,7 +401,7 @@
                 </div>
             </div>
             <button class="btn btn-primary" id="userTypeBtn" onclick="continueToSignup()" disabled>Continuer</button>
-            <button class="btn btn-secondary" onclick="goToScreen('emailScreen')" style="margin-top: 12px;">Retour</button>
+            <button class="btn btn-secondary" onclick="goToScreen('loginScreen')" style="margin-top: 12px;">Retour</button>
         </div>
     </div>
 
@@ -440,7 +502,7 @@
             <p class="auth-subtitle" style="margin-top: 16px; font-size: 13px;">
                 Apr&egrave;s confirmation, votre demande sera examin&eacute;e par notre &eacute;quipe.
             </p>
-            <button class="btn btn-secondary" onclick="goToScreen('emailScreen')" style="margin-top: 16px; max-width: 200px;">
+            <button class="btn btn-secondary" onclick="goToScreen('loginScreen')" style="margin-top: 16px; max-width: 200px;">
                 Retour &agrave; la connexion
             </button>
         </div>
@@ -461,7 +523,7 @@
                 Notre &eacute;quipe examinera votre demande et vous contactera sous 24h
                 pour finaliser la cr&eacute;ation de votre compte entreprise.
             </p>
-            <button class="btn btn-secondary" onclick="goToScreen('emailScreen')" style="margin-top: 16px; max-width: 200px;">
+            <button class="btn btn-secondary" onclick="goToScreen('loginScreen')" style="margin-top: 16px; max-width: 200px;">
                 Retour &agrave; la connexion
             </button>
         </div>
@@ -507,7 +569,7 @@
                 </button>
             </div>
             <div class="status-message" id="resetStatus"></div>
-            <button class="btn btn-secondary" onclick="goToScreen('emailScreen')" style="margin-top: 24px;">Retour</button>
+            <button class="btn btn-secondary" onclick="goToScreen('loginScreen')" style="margin-top: 24px;">Retour</button>
         </div>
     </div>
 
@@ -522,6 +584,7 @@
         let currentEmail = '';
         let selectedUserType = null;
         let existingUserData = null;
+        let loginStep = 0; // 0 = email, 1 = password
 
         // Initialize Supabase
         function initSupabase() {
@@ -549,6 +612,14 @@
             document.getElementById(screenId).classList.add('active');
             // Clear status messages
             document.querySelectorAll('.status-message').forEach(s => s.textContent = '');
+
+            // Reset login slider if returning to login screen
+            if (screenId === 'loginScreen') {
+                loginStep = 0;
+                updateLoginUI();
+                document.getElementById('loginEmailInput').value = '';
+                document.getElementById('loginPasswordInput').value = '';
+            }
         }
 
         function showStatus(elementId, message, type = 'error') {
@@ -560,62 +631,154 @@
         }
 
         // ═══════════════════════════════════════════════════════════════
-        // STEP 1: CHECK EMAIL
+        // LOGIN SLIDER (like technician app)
         // ═══════════════════════════════════════════════════════════════
-        async function checkEmail() {
-            const email = document.getElementById('emailInput').value.trim().toLowerCase();
+        function updateLoginUI() {
+            const slider = document.getElementById('loginSlider');
+            const sphere = document.getElementById('loginSphere');
+            const backBtn = document.getElementById('loginBack');
+            const forgotLink = document.getElementById('forgotPasswordLink');
 
-            if (!email || !email.includes('@')) {
-                showStatus('emailStatus', 'Veuillez entrer une adresse email valide', 'error');
-                return;
-            }
+            slider.style.transform = `translateX(-${loginStep * 100}%)`;
 
-            currentEmail = email;
-            showStatus('emailStatus', 'Verification...', 'info');
-
-            try {
-                // Check if email exists in users table
-                const { data: existingUser, error } = await sb
-                    .from('users')
-                    .select('id, role, status, first_name')
-                    .eq('email', email)
-                    .maybeSingle();
-
-                if (error) {
-                    console.error('Check email error:', error);
-                    showStatus('emailStatus', 'Erreur de connexion. Reessayez.', 'error');
-                    return;
-                }
-
-                if (existingUser) {
-                    // User exists - go to password login
-                    existingUserData = existingUser;
-                    document.getElementById('loginEmailDisplay').textContent = email;
-                    document.getElementById('passwordInput').value = '';
-                    goToScreen('passwordScreen');
-                } else {
-                    // New user - go to user type selection
-                    existingUserData = null;
-                    goToScreen('userTypeScreen');
-                }
-            } catch (err) {
-                console.error('Check email exception:', err);
-                showStatus('emailStatus', 'Erreur de connexion. Reessayez.', 'error');
+            if (loginStep === 0) {
+                sphere.style.display = 'flex';
+                backBtn.style.display = 'none';
+                if (forgotLink) forgotLink.style.display = 'none';
+            } else {
+                sphere.style.display = 'none';
+                backBtn.style.display = 'flex';
+                if (forgotLink) forgotLink.style.display = 'block';
+                document.getElementById('loginPasswordInput').focus();
             }
         }
 
-        // ═══════════════════════════════════════════════════════════════
-        // STEP 2A: LOGIN (EXISTING USER)
-        // ═══════════════════════════════════════════════════════════════
+        function prevLoginStep() {
+            if (loginStep > 0) {
+                loginStep--;
+                updateLoginUI();
+                showStatus('loginStatus', '', 'info');
+            }
+        }
+
+        async function nextLoginStep() {
+            const btn = document.getElementById('loginBtn');
+
+            if (loginStep === 0) {
+                // Step 0: Check email
+                const email = document.getElementById('loginEmailInput').value.trim().toLowerCase();
+                if (!email || !email.includes('@')) {
+                    showStatus('loginStatus', 'Veuillez entrer un email valide', 'error');
+                    return;
+                }
+
+                currentEmail = email;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
+
+                try {
+                    // Check if email exists in users table
+                    const { data: existingUser, error } = await sb
+                        .from('users')
+                        .select('id, role, status, first_name')
+                        .eq('email', email)
+                        .maybeSingle();
+
+                    if (error) {
+                        console.error('Check email error:', error);
+                        showStatus('loginStatus', 'Erreur de connexion. Reessayez.', 'error');
+                        return;
+                    }
+
+                    if (existingUser) {
+                        // User exists - slide to password
+                        existingUserData = existingUser;
+                        const name = existingUser.first_name || '';
+                        if (name) {
+                            showStatus('loginStatus', 'Bienvenue ' + name + ' !', 'success');
+                        } else {
+                            showStatus('loginStatus', 'Bienvenue !', 'success');
+                        }
+                        loginStep = 1;
+                        updateLoginUI();
+                    } else {
+                        // New user - go to user type selection
+                        existingUserData = null;
+                        goToScreen('userTypeScreen');
+                    }
+                } catch (err) {
+                    console.error('Check email exception:', err);
+                    showStatus('loginStatus', 'Erreur de connexion. Reessayez.', 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+                }
+
+            } else if (loginStep === 1) {
+                // Step 1: Login with password
+                const password = document.getElementById('loginPasswordInput').value;
+                if (!password) {
+                    showStatus('loginStatus', 'Veuillez entrer votre mot de passe', 'error');
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
+                showStatus('loginStatus', 'Connexion...', 'info');
+
+                try {
+                    const { data, error } = await sb.auth.signInWithPassword({
+                        email: currentEmail,
+                        password: password
+                    });
+
+                    if (error) {
+                        showStatus('loginStatus', 'Mot de passe incorrect', 'error');
+                        return;
+                    }
+
+                    // Get user profile to check role and status
+                    const { data: profile, error: profileError } = await sb
+                        .from('users')
+                        .select('*')
+                        .eq('email', currentEmail)
+                        .maybeSingle();
+
+                    if (profileError || !profile) {
+                        showStatus('loginStatus', 'Profil non trouve', 'error');
+                        return;
+                    }
+
+                    // Check if account is approved
+                    if (profile.status === 'pending') {
+                        document.getElementById('pendingEmail').textContent = currentEmail;
+                        goToScreen('pendingScreen');
+                        return;
+                    }
+
+                    // Redirect based on role
+                    redirectByRole(profile.role);
+
+                } catch (err) {
+                    console.error('Login exception:', err);
+                    showStatus('loginStatus', 'Erreur de connexion. Reessayez.', 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+                }
+            }
+        }
+
+        // Legacy function for compatibility
         async function login() {
-            const password = document.getElementById('passwordInput').value;
+            const password = document.getElementById('loginPasswordInput').value;
 
             if (!password) {
-                showStatus('passwordStatus', 'Veuillez entrer votre mot de passe', 'error');
+                showStatus('loginStatus', 'Veuillez entrer votre mot de passe', 'error');
                 return;
             }
 
-            showStatus('passwordStatus', 'Connexion...', 'info');
+            showStatus('loginStatus', 'Connexion...', 'info');
 
             try {
                 const { data, error } = await sb.auth.signInWithPassword({
@@ -935,7 +1098,7 @@
         async function logout() {
             await sb.auth.signOut();
             localStorage.clear();
-            goToScreen('emailScreen');
+            goToScreen('loginScreen');
         }
 
         // ═══════════════════════════════════════════════════════════════
