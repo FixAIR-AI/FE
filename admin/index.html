@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FixAIR Manager</title>
+    <title>FixAIR Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -661,7 +661,7 @@
         <div class="scan-line"></div>
         <div class="login-container">
             <div class="login-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
-            <h1 class="login-title">FixAIR Manager</h1>
+            <h1 class="login-title">FixAIR Admin</h1>
             <p class="login-sub">Tableau de bord pour managers HVAC</p>
             <div class="login-bar">
                 <div class="login-icon-slot">
@@ -1008,7 +1008,7 @@
         
         let sb = null;
         let currentUserId = null;
-        let currentManagerProfile = null;
+        let currentAdminProfile = null;
         let realtimeSubscriptions = [];
 
         // Live data from database
@@ -1148,9 +1148,9 @@
                         loginStep = 1;
                         updateLoginUI();
                     } else {
-                        // Manager app does not allow new signups - managers are created by admins
+                        // Admin app does not allow new signups
                         isNewUser = true;
-                        setLoginStatus('Compte non trouve. Les comptes manager sont crees sur invitation uniquement.', 'error', true);
+                        setLoginStatus('Compte non trouve. Les comptes admin sont crees sur invitation uniquement.', 'error', true);
                         // Don't advance to next step
                     }
 
@@ -1173,7 +1173,7 @@
                 }
 
                 if (isNewUser) {
-                    // Manager app does not allow new signups - this should not be reached
+                    // Admin app does not allow new signups - this should not be reached
                     setLoginStatus('Les inscriptions ne sont pas autorisees sur cette application.', 'error');
                     return;
                 } else {
@@ -1200,7 +1200,7 @@
                             const profile = await loadUserProfile(data.user.id);
 
                             if (profile) {
-                                currentManagerProfile = profile;
+                                currentAdminProfile = profile;
                                 currentUserId = profile.id;
 
                                 // Check approval status
@@ -1357,9 +1357,44 @@
             document.getElementById('pendingScreen').classList.add('active');
         }
 
-        function showAccessDeniedScreen(email) {
+        function showAccessDeniedScreen(email, role) {
             clearLoginStatus();
-            document.getElementById('accessDeniedEmail').textContent = email;
+
+            // Determine redirect URL based on role
+            let redirectUrl = 'https://go.fixair.ai';
+            let appName = 'Technicien';
+
+            if (role === 'manager') {
+                redirectUrl = 'https://go.fixair.ai/manager';
+                appName = 'Manager';
+            } else if (role === 'technician') {
+                redirectUrl = 'https://go.fixair.ai';
+                appName = 'Technicien';
+            }
+
+            // Update the access denied screen content dynamically
+            const accessDeniedScreen = document.getElementById('accessDeniedScreen');
+            const container = accessDeniedScreen.querySelector('.pending-container');
+            if (container) {
+                container.innerHTML = `
+                    <div class="pending-logo">
+                        <svg viewBox="0 0 235 48" style="height: 40px; color: var(--copilot);"><use href="#icon-fixair-logo"/></svg>
+                    </div>
+                    <h1 class="pending-title">Acces reserve</h1>
+                    <p class="pending-subtitle">
+                        Cette application est reservee aux administrateurs.
+                        En tant que ${role}, vous serez redirige vers l'application ${appName}.
+                    </p>
+                    <div class="pending-email">${email}</div>
+                    <a href="${redirectUrl}" style="display:inline-block;background:var(--copilot);color:white;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:600;margin-top:16px;">
+                        Aller a l'app ${appName}
+                    </a>
+                    <button class="pending-logout" onclick="logout()" style="margin-top:8px;">
+                        Se deconnecter
+                    </button>
+                `;
+            }
+
             document.getElementById('loginScreen').classList.remove('active');
             document.getElementById('mainApp').classList.remove('active');
             document.getElementById('emailConfirmScreen').classList.remove('active');
@@ -1414,7 +1449,7 @@
             localStorage.removeItem('supabase.auth.token');
             supabaseUser = null;
             currentUserId = null;
-            currentManagerProfile = null;
+            currentAdminProfile = null;
             isPasswordRecovery = false;
             clearLoginStatus();
 
@@ -1535,7 +1570,7 @@
             cleanupSubscriptions();
             supabaseUser = null;
             currentUserId = null;
-            currentManagerProfile = null;
+            currentAdminProfile = null;
             loginStep = 0;
             isNewUser = false;
             isPasswordRecovery = false;
@@ -1618,7 +1653,7 @@
             const profile = await loadUserProfile(user.id);
 
             if (profile) {
-                currentManagerProfile = profile;
+                currentAdminProfile = profile;
                 currentUserId = profile.id;
 
                 // Check approval status
@@ -1627,9 +1662,9 @@
                     return;
                 }
 
-                // Check role - only manager or admin can access
-                if (profile.role && !['manager', 'admin', 'owner'].includes(profile.role)) {
-                    showAccessDeniedScreen(profile.email);
+                // Check role - only admin can access Admin App
+                if (profile.role && !['admin', 'owner'].includes(profile.role)) {
+                    showAccessDeniedScreen(profile.email, profile.role);
                     return;
                 }
 
@@ -1661,11 +1696,11 @@
                 }
 
                 currentUserId = profile.id;
-                currentManagerProfile = profile;
+                currentAdminProfile = profile;
 
-                // Check if user is a manager
-                if (profile.role && !['manager', 'admin', 'owner'].includes(profile.role)) {
-                    console.log('User role is:', profile.role, '- not a manager');
+                // Check if user is an admin
+                if (profile.role && !['admin', 'owner'].includes(profile.role)) {
+                    console.log('User role is:', profile.role, '- not an admin');
                     return null;
                 }
 
@@ -1883,7 +1918,7 @@
         // DATA LOADING - AVAILABILITY SHARES (PENDING)
         // ═══════════════════════════════════════════════════════════════
         async function loadPendingShares() {
-            if (!currentManagerProfile?.email) return;
+            if (!currentAdminProfile?.email) return;
             
             try {
                 const { data: shares, error } = await sb
@@ -1892,7 +1927,7 @@
                         *,
                         technician:users!technician_id(id, first_name, last_name, email, avatar_url)
                     `)
-                    .eq('recipient_email', currentManagerProfile.email)
+                    .eq('recipient_email', currentAdminProfile.email)
                     .eq('status', 'pending');
                 
                 if (error) throw error;
@@ -2048,14 +2083,14 @@
             realtimeSubscriptions.push(messageSub);
             
             // Subscribe to new availability shares (pending shares for me)
-            if (currentManagerProfile?.email) {
+            if (currentAdminProfile?.email) {
                 const shareSub = sb
                     .channel('availability-shares')
                     .on('postgres_changes', {
                         event: 'INSERT',
                         schema: 'public',
                         table: 'availability_shares',
-                        filter: `recipient_email=eq.${currentManagerProfile.email}`
+                        filter: `recipient_email=eq.${currentAdminProfile.email}`
                     }, (payload) => {
                         console.log('New availability share:', payload);
                         loadPendingShares();
@@ -2372,7 +2407,7 @@
         }
 
         async function initManagerApp() {
-            console.log('🚀 Initializing FixAIR Manager V16...');
+            console.log('🚀 Initializing FixAIR Admin V16...');
 
             // Initialize Supabase
             if (!initSupabase()) {

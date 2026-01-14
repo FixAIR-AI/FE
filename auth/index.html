@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>FixAIR - Connexion</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --copilot: #FF6B35;
+            --copilot-glow: rgba(255, 107, 53, 0.4);
+            --copilot-bg: rgba(255, 107, 53, 0.08);
+            --copilot-border: rgba(255, 107, 53, 0.2);
+            --assistant: #22c55e;
+            --assistant-glow: rgba(34, 197, 94, 0.4);
+            --assistant-bg: rgba(34, 197, 94, 0.08);
+            --assistant-border: rgba(34, 197, 94, 0.2);
+            --bg: #0D1117;
+            --bg-secondary: #161b22;
+            --card: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.06);
+            --text: rgba(255, 255, 255, 0.9);
+            --text-dim: rgba(255, 255, 255, 0.35);
+            --grid-color: rgba(255,255,255,0.015);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            min-height: 100dvh;
+            overflow-x: hidden;
+        }
+
+        /* Firefox scrollbar */
+        * { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) transparent; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+
+        .svg-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+        .icon { display: inline-flex; align-items: center; justify-content: center; }
+        .icon svg { width: 100%; height: 100%; stroke: currentColor; stroke-width: 1.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+        /* Screen */
+        .screen {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            display: none; flex-direction: column;
+            background: var(--bg);
+            background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 32px 32px;
+            z-index: 1;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+            overflow-y: auto;
+        }
+        .screen.active { display: flex; }
+
+        /* Scan line animation */
+        .scan-line {
+            position: fixed; top: 0; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--copilot), transparent);
+            box-shadow: 0 0 20px var(--copilot-glow);
+            animation: scanDown 2s ease-out forwards;
+        }
+        @keyframes scanDown { to { top: 50%; opacity: 0; } }
+        @keyframes fadeUp { to { opacity: 1; } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Auth Container */
+        .auth-container {
+            width: 100%; max-width: 400px;
+            display: flex; flex-direction: column; align-items: center;
+            opacity: 0; animation: fadeUp 0.5s ease 0.5s forwards;
+        }
+
+        /* Logo */
+        .auth-logo { width: 160px; height: auto; margin-bottom: 24px; color: var(--copilot); }
+        .auth-logo svg { width: 100%; height: auto; }
+
+        /* Title */
+        .auth-title { font-size: 24px; font-weight: 600; margin-bottom: 8px; color: var(--text); text-align: center; }
+        .auth-subtitle { font-size: 14px; color: var(--text-dim); margin-bottom: 32px; text-align: center; line-height: 1.5; }
+
+        /* Glass Sphere */
+        .glass-sphere { width: 26px; height: 26px; border-radius: 50%; position: relative; overflow: hidden; animation: glowPulse 8s ease-in-out infinite; }
+        @keyframes glowPulse {
+            0%, 100% { box-shadow: 0 0 14px rgba(255,107,53,0.7), 0 0 28px rgba(255,107,53,0.3); }
+            25% { box-shadow: 0 0 14px rgba(239,68,68,0.7), 0 0 28px rgba(239,68,68,0.3); }
+            50% { box-shadow: 0 0 14px rgba(59,130,246,0.7), 0 0 28px rgba(59,130,246,0.3); }
+            75% { box-shadow: 0 0 14px rgba(234,179,8,0.7), 0 0 28px rgba(234,179,8,0.3); }
+        }
+        .glass-sphere::before { content: ''; position: absolute; top: 2px; left: 4px; width: 5px; height: 4px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,0.5), transparent 70%); z-index: 10; }
+        .sphere-fog-container { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; background: rgba(20,24,32,0.3); }
+        .sphere-fog { position: absolute; inset: -50%; border-radius: 50%; background: radial-gradient(circle at 30% 40%, currentColor, transparent 50%), radial-gradient(circle at 70% 60%, currentColor, transparent 40%); filter: blur(2px); animation: fogSwirl 6s ease-in-out infinite, fogColor 8s ease-in-out infinite; opacity: 0.9; }
+        @keyframes fogSwirl { 0% { transform: rotate(0deg) translate(0, 0); } 25% { transform: rotate(90deg) translate(2px, -2px); } 50% { transform: rotate(180deg) translate(0, 0); } 75% { transform: rotate(270deg) translate(-2px, 2px); } 100% { transform: rotate(360deg) translate(0, 0); } }
+        @keyframes fogColor { 0%, 100% { color: #FF6B35; } 25% { color: #ef4444; } 50% { color: #3B82F6; } 75% { color: #eab308; } }
+        .sphere-fog-2 { position: absolute; inset: -30%; border-radius: 50%; background: radial-gradient(circle at 60% 30%, currentColor, transparent 45%); filter: blur(2px); animation: fogSwirl2 5s ease-in-out infinite reverse, fogColor2 8s ease-in-out infinite; opacity: 0.7; }
+        @keyframes fogSwirl2 { 0% { transform: rotate(0deg) scale(0.9); } 50% { transform: rotate(180deg) scale(1.1); } 100% { transform: rotate(360deg) scale(0.9); } }
+        @keyframes fogColor2 { 0%, 100% { color: #3B82F6; } 25% { color: #eab308; } 50% { color: #FF6B35; } 75% { color: #ef4444; } }
+
+        /* Input Bar (pill style) */
+        .input-bar {
+            display: flex; align-items: center; gap: 8px;
+            padding: 5px 5px 5px 12px;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 40px; width: 100%;
+        }
+        .input-bar-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .input-bar input {
+            flex: 1; padding: 8px; background: transparent; border: none;
+            color: white; font-size: 14px; outline: none; caret-color: white;
+        }
+        .input-bar input::placeholder { color: rgba(255,255,255,0.25); }
+        .input-bar input:-webkit-autofill,
+        .input-bar input:-webkit-autofill:hover,
+        .input-bar input:-webkit-autofill:focus,
+        .input-bar input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+            -webkit-text-fill-color: white !important;
+            background-color: transparent !important;
+            transition: background-color 9999s ease-out 9999s !important;
+        }
+        .input-bar-btn {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: linear-gradient(135deg, #FF6B35, #E55A2B);
+            border: none; color: white; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .input-bar-btn .icon { width: 12px; height: 12px; }
+        .input-bar-btn .icon svg { width: 100%; height: 100%; }
+        .input-bar-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Form Inputs */
+        .form-group { width: 100%; margin-bottom: 16px; }
+        .form-label { display: block; font-size: 12px; font-weight: 500; color: var(--text-dim); margin-bottom: 6px; }
+        .form-input {
+            width: 100%; padding: 14px 16px;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 12px; color: var(--text); font-size: 14px;
+            outline: none; transition: all 0.2s;
+        }
+        .form-input:focus { border-color: var(--copilot); box-shadow: 0 0 0 3px rgba(255,107,53,0.1); }
+        .form-input::placeholder { color: var(--text-dim); }
+        .form-input.readonly { background: rgba(255,255,255,0.02); color: var(--text-dim); cursor: not-allowed; }
+        .form-input:-webkit-autofill,
+        .form-input:-webkit-autofill:hover,
+        .form-input:-webkit-autofill:focus {
+            -webkit-box-shadow: 0 0 0 1000px var(--bg-secondary) inset !important;
+            -webkit-text-fill-color: var(--text) !important;
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%; padding: 14px 24px;
+            border-radius: 12px; font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #FF6B35, #E55A2B);
+            border: none; color: white;
+        }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--border); color: var(--text-dim);
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+        .btn-link {
+            background: none; border: none; padding: 8px;
+            color: var(--copilot); font-size: 13px; cursor: pointer;
+            text-decoration: underline;
+        }
+        .btn-link:hover { opacity: 0.8; }
+
+        /* User Type Cards */
+        .user-type-cards { display: flex; flex-direction: column; gap: 12px; width: 100%; margin-bottom: 24px; }
+        .user-type-card {
+            padding: 20px; background: var(--card); border: 2px solid var(--border);
+            border-radius: 16px; cursor: pointer; transition: all 0.2s;
+            text-align: left;
+        }
+        .user-type-card:hover { border-color: rgba(255,255,255,0.15); }
+        .user-type-card.selected { border-color: var(--copilot); background: var(--copilot-bg); }
+        .user-type-card-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 10px; }
+        .user-type-card-title .radio {
+            width: 20px; height: 20px; border-radius: 50%;
+            border: 2px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .user-type-card.selected .radio { border-color: var(--copilot); }
+        .user-type-card.selected .radio::after {
+            content: ''; width: 10px; height: 10px;
+            border-radius: 50%; background: var(--copilot);
+        }
+        .user-type-card-desc { font-size: 13px; color: var(--text-dim); margin-left: 30px; }
+
+        /* Status Messages */
+        .status-message {
+            min-height: 24px; margin-top: 16px; text-align: center;
+            font-size: 13px; font-weight: 500; transition: all 0.3s ease;
+        }
+        .status-message:empty { display: none; }
+        .status-message.success { color: #22c55e; }
+        .status-message.error { color: #ef4444; }
+        .status-message.info { color: var(--text-dim); }
+
+        /* Email Display */
+        .email-display {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 16px; background: var(--card);
+            border: 1px solid var(--border); border-radius: 10px;
+            margin-bottom: 20px; width: 100%;
+        }
+        .email-display-text { flex: 1; font-size: 14px; color: var(--text); }
+        .email-display-edit {
+            background: none; border: none; color: var(--copilot);
+            font-size: 12px; cursor: pointer; padding: 4px 8px;
+        }
+        .email-display-edit:hover { text-decoration: underline; }
+
+        /* Pending/Confirmation Screens */
+        .pending-container {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; gap: 20px; padding: 40px; text-align: center;
+        }
+        .pending-icon {
+            width: 80px; height: 80px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--copilot-bg), rgba(255,107,53,0.05));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 40px;
+        }
+        .pending-email {
+            font-size: 14px; color: var(--copilot); font-weight: 500;
+            padding: 10px 20px; background: var(--copilot-bg); border-radius: 10px;
+        }
+
+        /* Responsive */
+        @media (min-width: 420px) {
+            .input-bar-btn { width: 38px; height: 38px; }
+            .input-bar-btn .icon { width: 14px; height: 14px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- SVG Definitions -->
+    <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <symbol id="icon-fixair-logo" viewBox="0 0 235 48"><path d="M35.1986 6.4H17.4706C15.4226 6.4 13.5666 6.912 11.9026 7.936C10.2386 8.96 8.89463 10.3253 7.87063 12.032C6.88929 13.696 6.39863 15.552 6.39863 17.6V48H-0.00137472V16C-0.00137472 13.7387 0.467959 11.648 1.40663 9.728C2.34529 7.76533 3.62529 6.08 5.24663 4.672C6.91063 3.22133 8.78796 2.09067 10.8786 1.28C12.9693 0.426664 15.1666 -3.8147e-06 17.4706 -3.8147e-06H35.1986V6.4ZM48.8306 4.8C48.8306 6.12266 48.3613 7.25333 47.4226 8.192C46.484 9.13066 45.3533 9.6 44.0306 9.6C42.708 9.6 41.5773 9.13066 40.6386 8.192C39.7 7.25333 39.2306 6.12266 39.2306 4.8C39.2306 3.47733 39.7 2.34666 40.6386 1.408C41.5773 0.46933 42.708 -3.8147e-06 44.0306 -3.8147e-06C45.3533 -3.8147e-06 46.484 0.46933 47.4226 1.408C48.3613 2.34666 48.8306 3.47733 48.8306 4.8ZM47.2306 48H40.8306V22.4H9.59863V16H47.2306V48ZM97.7161 48H88.5641L74.8681 34.752L61.4281 48H52.2761L70.4521 30.464L52.2761 12.8H61.4281L97.7161 48ZM97.7161 12.8L82.4841 27.648L77.8761 23.552L88.5641 12.8H97.7161Z" fill="currentColor"/><path d="M154.461 48H148.061V35.2H112.285V28.8H148.061V9.6H125.085C122.183 9.6 119.517 10.3253 117.085 11.776C114.653 13.184 112.711 15.104 111.261 17.536C109.853 19.968 109.149 22.656 109.149 25.6V48H102.749V25.6C102.749 22.528 103.325 19.648 104.477 16.96C105.629 14.2293 107.229 11.84 109.277 9.792C111.325 7.70133 113.693 6.08 116.381 4.928C119.111 3.776 122.013 3.2 125.085 3.2H154.461V48ZM171.604 48H165.204V3.2H171.604V48ZM234.041 48H225.401L211.961 35.2H192.313V28.864H218.041C219.833 28.864 221.454 28.4373 222.905 27.584C224.356 26.688 225.508 25.5147 226.361 24.064C227.214 22.5707 227.641 20.9493 227.641 19.2C227.641 17.408 227.214 15.7867 226.361 14.336C225.508 12.8853 224.356 11.7333 222.905 10.88C221.454 10.0267 219.833 9.6 218.041 9.6H188.729V48H182.329V3.2H218.041C220.985 3.2 223.673 3.92533 226.105 5.376C228.537 6.784 230.457 8.704 231.865 11.136C233.316 13.568 234.041 16.256 234.041 19.2C234.041 21.8453 233.444 24.2987 232.249 26.56C231.097 28.8213 229.497 30.6987 227.449 32.192C225.444 33.6427 223.161 34.5813 220.601 35.008L234.041 48Z" fill="currentColor"/></symbol>
+            <symbol id="icon-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
+            <symbol id="icon-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
+        </defs>
+    </svg>
+
+    <!-- STEP 1: Email Input -->
+    <div class="screen active" id="emailScreen">
+        <div class="scan-line"></div>
+        <div class="auth-container">
+            <div class="auth-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
+            <h1 class="auth-title">Bienvenue</h1>
+            <p class="auth-subtitle">Connectez-vous ou cr&eacute;ez votre compte</p>
+            <div class="input-bar">
+                <div class="input-bar-icon">
+                    <div class="glass-sphere">
+                        <div class="sphere-fog-container">
+                            <div class="sphere-fog"></div>
+                            <div class="sphere-fog-2"></div>
+                        </div>
+                    </div>
+                </div>
+                <input type="email" id="emailInput" placeholder="Quelle est votre adresse email ?" onkeypress="if(event.key==='Enter')checkEmail()">
+                <button type="button" class="input-bar-btn" onclick="checkEmail()">
+                    <span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>
+                </button>
+            </div>
+            <div class="status-message" id="emailStatus"></div>
+        </div>
+    </div>
+
+    <!-- STEP 2A: Password Login (Existing User) -->
+    <div class="screen" id="passwordScreen">
+        <div class="scan-line"></div>
+        <div class="auth-container">
+            <div class="auth-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
+            <h1 class="auth-title">Bon retour !</h1>
+            <p class="auth-subtitle">Entrez votre mot de passe pour continuer</p>
+            <div class="email-display">
+                <span class="email-display-text" id="loginEmailDisplay"></span>
+                <button class="email-display-edit" onclick="goToScreen('emailScreen')">Modifier</button>
+            </div>
+            <div class="input-bar">
+                <div class="input-bar-icon">
+                    <div class="glass-sphere">
+                        <div class="sphere-fog-container">
+                            <div class="sphere-fog"></div>
+                            <div class="sphere-fog-2"></div>
+                        </div>
+                    </div>
+                </div>
+                <input type="password" id="passwordInput" placeholder="Votre mot de passe" onkeypress="if(event.key==='Enter')login()">
+                <button type="button" class="input-bar-btn" onclick="login()">
+                    <span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>
+                </button>
+            </div>
+            <div class="status-message" id="passwordStatus"></div>
+            <button class="btn-link" onclick="showPasswordReset()" style="margin-top: 16px;">Mot de passe oubli&eacute; ?</button>
+        </div>
+    </div>
+
+    <!-- STEP 2B: User Type Selection (New User) -->
+    <div class="screen" id="userTypeScreen">
+        <div class="scan-line"></div>
+        <div class="auth-container">
+            <div class="auth-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
+            <h1 class="auth-title">Qui &ecirc;tes-vous ?</h1>
+            <p class="auth-subtitle">S&eacute;lectionnez votre profil pour cr&eacute;er votre compte</p>
+            <div class="user-type-cards">
+                <div class="user-type-card" id="cardTechnician" onclick="selectUserType('technician')">
+                    <div class="user-type-card-title">
+                        <div class="radio"></div>
+                        Technicien ind&eacute;pendant
+                    </div>
+                    <div class="user-type-card-desc">Je travaille seul ou je suis freelance</div>
+                </div>
+                <div class="user-type-card" id="cardEnterprise" onclick="selectUserType('enterprise')">
+                    <div class="user-type-card-title">
+                        <div class="radio"></div>
+                        Entreprise
+                    </div>
+                    <div class="user-type-card-desc">Je g&egrave;re une &eacute;quipe de techniciens</div>
+                </div>
+            </div>
+            <button class="btn btn-primary" id="userTypeBtn" onclick="continueToSignup()" disabled>Continuer</button>
+            <button class="btn btn-secondary" onclick="goToScreen('emailScreen')" style="margin-top: 12px;">Retour</button>
+        </div>
+    </div>
+
+    <!-- STEP 3A: Technician Signup Form -->
+    <div class="screen" id="technicianSignupScreen">
+        <div class="scan-line"></div>
+        <div class="auth-container" style="max-width: 420px;">
+            <div class="auth-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
+            <h1 class="auth-title">Cr&eacute;er votre compte technicien</h1>
+            <p class="auth-subtitle">Remplissez les informations ci-dessous</p>
+
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input readonly" id="techEmailInput" readonly>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Mot de passe</label>
+                <input type="password" class="form-input" id="techPasswordInput" placeholder="Minimum 6 caract&egrave;res">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Confirmer le mot de passe</label>
+                <input type="password" class="form-input" id="techPasswordConfirmInput" placeholder="Confirmez votre mot de passe">
+            </div>
+            <div class="form-group">
+                <label class="form-label">T&eacute;l&eacute;phone</label>
+                <input type="tel" class="form-input" id="techPhoneInput" placeholder="06 12 34 56 78">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Pr&eacute;nom</label>
+                <input type="text" class="form-input" id="techFirstNameInput" placeholder="Votre pr&eacute;nom">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Nom</label>
+                <input type="text" class="form-input" id="techLastNameInput" placeholder="Votre nom">
+            </div>
+
+            <div class="status-message" id="techSignupStatus"></div>
+            <button class="btn btn-primary" onclick="signupTechnician()" style="margin-top: 8px;">Cr&eacute;er mon compte</button>
+            <button class="btn btn-secondary" onclick="goToScreen('userTypeScreen')" style="margin-top: 12px;">Retour</button>
+        </div>
+    </div>
+
+    <!-- STEP 3B: Enterprise Signup Form -->
+    <div class="screen" id="enterpriseSignupScreen">
+        <div class="scan-line"></div>
+        <div class="auth-container" style="max-width: 420px;">
+            <div class="auth-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
+            <h1 class="auth-title">Cr&eacute;er votre compte entreprise</h1>
+            <p class="auth-subtitle">Remplissez les informations ci-dessous</p>
+
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input readonly" id="entEmailInput" readonly>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Mot de passe</label>
+                <input type="password" class="form-input" id="entPasswordInput" placeholder="Minimum 6 caract&egrave;res">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Confirmer le mot de passe</label>
+                <input type="password" class="form-input" id="entPasswordConfirmInput" placeholder="Confirmez votre mot de passe">
+            </div>
+            <div class="form-group">
+                <label class="form-label">T&eacute;l&eacute;phone</label>
+                <input type="tel" class="form-input" id="entPhoneInput" placeholder="06 12 34 56 78">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Pr&eacute;nom</label>
+                <input type="text" class="form-input" id="entFirstNameInput" placeholder="Votre pr&eacute;nom">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Nom</label>
+                <input type="text" class="form-input" id="entLastNameInput" placeholder="Votre nom">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Nom de l'entreprise</label>
+                <input type="text" class="form-input" id="entCompanyInput" placeholder="Votre entreprise">
+            </div>
+
+            <div class="status-message" id="entSignupStatus"></div>
+            <button class="btn btn-primary" onclick="signupEnterprise()" style="margin-top: 8px;">Cr&eacute;er mon compte</button>
+            <button class="btn btn-secondary" onclick="goToScreen('userTypeScreen')" style="margin-top: 12px;">Retour</button>
+        </div>
+    </div>
+
+    <!-- Email Confirmation Screen (Technician) -->
+    <div class="screen" id="techConfirmScreen">
+        <div class="scan-line"></div>
+        <div class="pending-container">
+            <div class="auth-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
+            <div class="pending-icon">&#9993;</div>
+            <h1 class="auth-title">V&eacute;rifiez votre email</h1>
+            <p class="auth-subtitle">
+                Nous avons envoy&eacute; un email de confirmation &agrave; votre adresse.
+                Cliquez sur le lien pour activer votre compte.
+            </p>
+            <div class="pending-email" id="techConfirmEmail"></div>
+            <p class="auth-subtitle" style="margin-top: 16px; font-size: 13px;">
+                Apr&egrave;s confirmation, votre demande sera examin&eacute;e par notre &eacute;quipe.
+            </p>
+            <button class="btn btn-secondary" onclick="goToScreen('emailScreen')" style="margin-top: 16px; max-width: 200px;">
+                Retour &agrave; la connexion
+            </button>
+        </div>
+    </div>
+
+    <!-- Email Confirmation Screen (Enterprise) -->
+    <div class="screen" id="entConfirmScreen">
+        <div class="scan-line"></div>
+        <div class="pending-container">
+            <div class="auth-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
+            <div class="pending-icon">&#9993;</div>
+            <h1 class="auth-title">Demande enregistr&eacute;e</h1>
+            <p class="auth-subtitle">
+                Nous avons envoy&eacute; un email de confirmation &agrave; votre adresse.
+            </p>
+            <div class="pending-email" id="entConfirmEmail"></div>
+            <p class="auth-subtitle" style="margin-top: 16px; font-size: 13px;">
+                Notre &eacute;quipe examinera votre demande et vous contactera sous 24h
+                pour finaliser la cr&eacute;ation de votre compte entreprise.
+            </p>
+            <button class="btn btn-secondary" onclick="goToScreen('emailScreen')" style="margin-top: 16px; max-width: 200px;">
+                Retour &agrave; la connexion
+            </button>
+        </div>
+    </div>
+
+    <!-- Pending Approval Screen -->
+    <div class="screen" id="pendingScreen">
+        <div class="scan-line"></div>
+        <div class="pending-container">
+            <div class="auth-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
+            <div class="pending-icon">&#9203;</div>
+            <h1 class="auth-title">Demande en attente</h1>
+            <p class="auth-subtitle">
+                Votre compte est en attente d'approbation.
+                Vous recevrez un email d&egrave;s que votre acc&egrave;s sera activ&eacute;.
+            </p>
+            <div class="pending-email" id="pendingEmail"></div>
+            <button class="btn btn-secondary" onclick="logout()" style="margin-top: 24px; max-width: 200px;">
+                Se d&eacute;connecter
+            </button>
+        </div>
+    </div>
+
+    <!-- Password Reset Screen -->
+    <div class="screen" id="resetScreen">
+        <div class="scan-line"></div>
+        <div class="auth-container">
+            <div class="auth-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
+            <h1 class="auth-title">R&eacute;initialiser le mot de passe</h1>
+            <p class="auth-subtitle">Entrez votre email pour recevoir un lien de r&eacute;initialisation</p>
+            <div class="input-bar">
+                <div class="input-bar-icon">
+                    <div class="glass-sphere">
+                        <div class="sphere-fog-container">
+                            <div class="sphere-fog"></div>
+                            <div class="sphere-fog-2"></div>
+                        </div>
+                    </div>
+                </div>
+                <input type="email" id="resetEmailInput" placeholder="Votre adresse email" onkeypress="if(event.key==='Enter')sendResetEmail()">
+                <button type="button" class="input-bar-btn" onclick="sendResetEmail()">
+                    <span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>
+                </button>
+            </div>
+            <div class="status-message" id="resetStatus"></div>
+            <button class="btn btn-secondary" onclick="goToScreen('emailScreen')" style="margin-top: 24px;">Retour</button>
+        </div>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // SUPABASE CONFIGURATION
+        // ═══════════════════════════════════════════════════════════════
+        const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTcyMTksImV4cCI6MjA4MTgzMzIxOX0.8ryQm1tsdx5ox3aFJiiflmwuEGGxxH_PlobGxXMgFuQ';
+
+        let supabase = null;
+        let currentEmail = '';
+        let selectedUserType = null;
+        let existingUserData = null;
+
+        // Initialize Supabase
+        function initSupabase() {
+            try {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                    auth: {
+                        persistSession: true,
+                        autoRefreshToken: true,
+                        detectSessionInUrl: true
+                    }
+                });
+                console.log('Supabase initialized');
+                return true;
+            } catch (err) {
+                console.error('Supabase init error:', err);
+                return false;
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // SCREEN NAVIGATION
+        // ═══════════════════════════════════════════════════════════════
+        function goToScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            // Clear status messages
+            document.querySelectorAll('.status-message').forEach(s => s.textContent = '');
+        }
+
+        function showStatus(elementId, message, type = 'error') {
+            const el = document.getElementById(elementId);
+            if (el) {
+                el.textContent = message;
+                el.className = 'status-message ' + type;
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // STEP 1: CHECK EMAIL
+        // ═══════════════════════════════════════════════════════════════
+        async function checkEmail() {
+            const email = document.getElementById('emailInput').value.trim().toLowerCase();
+
+            if (!email || !email.includes('@')) {
+                showStatus('emailStatus', 'Veuillez entrer une adresse email valide', 'error');
+                return;
+            }
+
+            currentEmail = email;
+            showStatus('emailStatus', 'Verification...', 'info');
+
+            try {
+                // Check if email exists in users table
+                const { data: existingUser, error } = await supabase
+                    .from('users')
+                    .select('id, role, status, first_name')
+                    .eq('email', email)
+                    .maybeSingle();
+
+                if (error) {
+                    console.error('Check email error:', error);
+                    showStatus('emailStatus', 'Erreur de connexion. Reessayez.', 'error');
+                    return;
+                }
+
+                if (existingUser) {
+                    // User exists - go to password login
+                    existingUserData = existingUser;
+                    document.getElementById('loginEmailDisplay').textContent = email;
+                    document.getElementById('passwordInput').value = '';
+                    goToScreen('passwordScreen');
+                } else {
+                    // New user - go to user type selection
+                    existingUserData = null;
+                    goToScreen('userTypeScreen');
+                }
+            } catch (err) {
+                console.error('Check email exception:', err);
+                showStatus('emailStatus', 'Erreur de connexion. Reessayez.', 'error');
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // STEP 2A: LOGIN (EXISTING USER)
+        // ═══════════════════════════════════════════════════════════════
+        async function login() {
+            const password = document.getElementById('passwordInput').value;
+
+            if (!password) {
+                showStatus('passwordStatus', 'Veuillez entrer votre mot de passe', 'error');
+                return;
+            }
+
+            showStatus('passwordStatus', 'Connexion...', 'info');
+
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: currentEmail,
+                    password: password
+                });
+
+                if (error) {
+                    showStatus('passwordStatus', 'Email ou mot de passe incorrect', 'error');
+                    return;
+                }
+
+                // Get user profile to check role and status
+                const { data: profile, error: profileError } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('email', currentEmail)
+                    .maybeSingle();
+
+                if (profileError || !profile) {
+                    showStatus('passwordStatus', 'Profil non trouve', 'error');
+                    return;
+                }
+
+                // Check if account is approved
+                if (profile.status === 'pending') {
+                    document.getElementById('pendingEmail').textContent = currentEmail;
+                    goToScreen('pendingScreen');
+                    return;
+                }
+
+                // Redirect based on role
+                redirectByRole(profile.role);
+
+            } catch (err) {
+                console.error('Login exception:', err);
+                showStatus('passwordStatus', 'Erreur de connexion. Reessayez.', 'error');
+            }
+        }
+
+        function redirectByRole(role) {
+            switch (role) {
+                case 'technician':
+                    window.location.href = 'https://go.fixair.ai';
+                    break;
+                case 'manager':
+                    window.location.href = 'https://go.fixair.ai/manager';
+                    break;
+                case 'admin':
+                    window.location.href = 'https://go.fixair.ai/admin';
+                    break;
+                default:
+                    window.location.href = 'https://go.fixair.ai';
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // STEP 2B: USER TYPE SELECTION
+        // ═══════════════════════════════════════════════════════════════
+        function selectUserType(type) {
+            selectedUserType = type;
+
+            // Update card selection UI
+            document.getElementById('cardTechnician').classList.toggle('selected', type === 'technician');
+            document.getElementById('cardEnterprise').classList.toggle('selected', type === 'enterprise');
+
+            // Enable continue button
+            document.getElementById('userTypeBtn').disabled = false;
+        }
+
+        function continueToSignup() {
+            if (!selectedUserType) return;
+
+            if (selectedUserType === 'technician') {
+                document.getElementById('techEmailInput').value = currentEmail;
+                goToScreen('technicianSignupScreen');
+            } else {
+                document.getElementById('entEmailInput').value = currentEmail;
+                goToScreen('enterpriseSignupScreen');
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // STEP 3A: TECHNICIAN SIGNUP
+        // ═══════════════════════════════════════════════════════════════
+        async function signupTechnician() {
+            const email = currentEmail;
+            const password = document.getElementById('techPasswordInput').value;
+            const passwordConfirm = document.getElementById('techPasswordConfirmInput').value;
+            const phone = document.getElementById('techPhoneInput').value.trim();
+            const firstName = document.getElementById('techFirstNameInput').value.trim();
+            const lastName = document.getElementById('techLastNameInput').value.trim();
+
+            // Validation
+            if (!password || password.length < 6) {
+                showStatus('techSignupStatus', 'Le mot de passe doit contenir au moins 6 caracteres', 'error');
+                return;
+            }
+            if (password !== passwordConfirm) {
+                showStatus('techSignupStatus', 'Les mots de passe ne correspondent pas', 'error');
+                return;
+            }
+            if (!isValidPhoneNumber(phone)) {
+                showStatus('techSignupStatus', 'Numero de telephone invalide', 'error');
+                return;
+            }
+            if (!firstName || !lastName) {
+                showStatus('techSignupStatus', 'Prenom et nom requis', 'error');
+                return;
+            }
+
+            showStatus('techSignupStatus', 'Creation du compte...', 'info');
+
+            try {
+                // Create auth user
+                const { data: authData, error: authError } = await supabase.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        emailRedirectTo: 'https://go.fixair.ai',
+                        data: {
+                            first_name: firstName,
+                            last_name: lastName,
+                            phone: phone
+                        }
+                    }
+                });
+
+                if (authError) {
+                    showStatus('techSignupStatus', authError.message, 'error');
+                    return;
+                }
+
+                // Create user profile in users table
+                const { error: profileError } = await supabase
+                    .from('users')
+                    .insert({
+                        auth_id: authData.user?.id || null,
+                        email: email,
+                        first_name: firstName,
+                        last_name: lastName,
+                        phone: phone,
+                        role: 'technician',
+                        member_type: 'standalone',
+                        status: 'pending',
+                        live_status: 'offline'
+                    });
+
+                if (profileError) {
+                    console.error('Profile creation error:', profileError);
+                    // Don't show error to user, auth account was created
+                }
+
+                // Show confirmation screen
+                document.getElementById('techConfirmEmail').textContent = email;
+                goToScreen('techConfirmScreen');
+
+            } catch (err) {
+                console.error('Signup exception:', err);
+                showStatus('techSignupStatus', 'Erreur lors de la creation. Reessayez.', 'error');
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // STEP 3B: ENTERPRISE SIGNUP
+        // ═══════════════════════════════════════════════════════════════
+        async function signupEnterprise() {
+            const email = currentEmail;
+            const password = document.getElementById('entPasswordInput').value;
+            const passwordConfirm = document.getElementById('entPasswordConfirmInput').value;
+            const phone = document.getElementById('entPhoneInput').value.trim();
+            const firstName = document.getElementById('entFirstNameInput').value.trim();
+            const lastName = document.getElementById('entLastNameInput').value.trim();
+            const companyName = document.getElementById('entCompanyInput').value.trim();
+
+            // Validation
+            if (!password || password.length < 6) {
+                showStatus('entSignupStatus', 'Le mot de passe doit contenir au moins 6 caracteres', 'error');
+                return;
+            }
+            if (password !== passwordConfirm) {
+                showStatus('entSignupStatus', 'Les mots de passe ne correspondent pas', 'error');
+                return;
+            }
+            if (!isValidPhoneNumber(phone)) {
+                showStatus('entSignupStatus', 'Numero de telephone invalide', 'error');
+                return;
+            }
+            if (!firstName || !lastName) {
+                showStatus('entSignupStatus', 'Prenom et nom requis', 'error');
+                return;
+            }
+            if (!companyName) {
+                showStatus('entSignupStatus', 'Nom de l\'entreprise requis', 'error');
+                return;
+            }
+
+            showStatus('entSignupStatus', 'Creation du compte...', 'info');
+
+            try {
+                // Create auth user
+                const { data: authData, error: authError } = await supabase.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        emailRedirectTo: 'https://go.fixair.ai/admin',
+                        data: {
+                            first_name: firstName,
+                            last_name: lastName,
+                            phone: phone,
+                            company_name: companyName
+                        }
+                    }
+                });
+
+                if (authError) {
+                    showStatus('entSignupStatus', authError.message, 'error');
+                    return;
+                }
+
+                // Create user profile as ADMIN
+                const { error: profileError } = await supabase
+                    .from('users')
+                    .insert({
+                        auth_id: authData.user?.id || null,
+                        email: email,
+                        first_name: firstName,
+                        last_name: lastName,
+                        phone: phone,
+                        company_name: companyName,
+                        role: 'admin',
+                        member_type: 'standalone',
+                        status: 'pending',
+                        live_status: 'offline'
+                    });
+
+                if (profileError) {
+                    console.error('Profile creation error:', profileError);
+                }
+
+                // Show confirmation screen
+                document.getElementById('entConfirmEmail').textContent = email;
+                goToScreen('entConfirmScreen');
+
+            } catch (err) {
+                console.error('Signup exception:', err);
+                showStatus('entSignupStatus', 'Erreur lors de la creation. Reessayez.', 'error');
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // PASSWORD RESET
+        // ═══════════════════════════════════════════════════════════════
+        function showPasswordReset() {
+            document.getElementById('resetEmailInput').value = currentEmail;
+            goToScreen('resetScreen');
+        }
+
+        async function sendResetEmail() {
+            const email = document.getElementById('resetEmailInput').value.trim().toLowerCase();
+
+            if (!email || !email.includes('@')) {
+                showStatus('resetStatus', 'Veuillez entrer une adresse email valide', 'error');
+                return;
+            }
+
+            showStatus('resetStatus', 'Envoi en cours...', 'info');
+
+            try {
+                // Get user role to determine redirect URL
+                const { data: user } = await supabase
+                    .from('users')
+                    .select('role')
+                    .eq('email', email)
+                    .maybeSingle();
+
+                let redirectUrl = 'https://go.fixair.ai';
+                if (user) {
+                    switch (user.role) {
+                        case 'manager':
+                            redirectUrl = 'https://go.fixair.ai/manager';
+                            break;
+                        case 'admin':
+                            redirectUrl = 'https://go.fixair.ai/admin';
+                            break;
+                    }
+                }
+
+                const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                    redirectTo: redirectUrl
+                });
+
+                if (error) {
+                    showStatus('resetStatus', error.message, 'error');
+                    return;
+                }
+
+                showStatus('resetStatus', 'Si un compte existe avec cet email, vous recevrez un lien de reinitialisation.', 'success');
+
+            } catch (err) {
+                console.error('Reset password exception:', err);
+                showStatus('resetStatus', 'Erreur. Reessayez.', 'error');
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // HELPERS
+        // ═══════════════════════════════════════════════════════════════
+        function isValidPhoneNumber(phone) {
+            const cleaned = phone.replace(/\s/g, '');
+            return /^(\+33|0)[1-9][0-9]{8}$/.test(cleaned);
+        }
+
+        async function logout() {
+            await supabase.auth.signOut();
+            localStorage.clear();
+            goToScreen('emailScreen');
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // INITIALIZATION
+        // ═══════════════════════════════════════════════════════════════
+        async function init() {
+            console.log('Initializing FixAIR Auth...');
+
+            if (!initSupabase()) {
+                console.error('Failed to initialize Supabase');
+                return;
+            }
+
+            // Check if user is already logged in
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+
+                if (session) {
+                    // User is logged in - check their profile and redirect
+                    const { data: profile } = await supabase
+                        .from('users')
+                        .select('role, status, email')
+                        .eq('email', session.user.email)
+                        .maybeSingle();
+
+                    if (profile) {
+                        if (profile.status === 'pending') {
+                            document.getElementById('pendingEmail').textContent = profile.email;
+                            goToScreen('pendingScreen');
+                        } else {
+                            redirectByRole(profile.role);
+                        }
+                        return;
+                    }
+                }
+            } catch (err) {
+                console.error('Session check error:', err);
+            }
+
+            console.log('FixAIR Auth ready');
+        }
+
+        // Start when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>
