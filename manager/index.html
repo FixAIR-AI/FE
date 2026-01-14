@@ -51,6 +51,96 @@
         /* ═══ SVG DEFS ═══ */
         .svg-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
 
+        /* ═══ AUTH SCREENS ═══ */
+        .screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: none; flex-direction: column; background: var(--bg); background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px); background-size: 32px 32px; z-index: 1; }
+        .screen.active { display: flex; }
+        .main-app { height: 100%; }
+
+        /* LOGIN SCREEN */
+        .login-screen { justify-content: center; align-items: center; padding: 24px; }
+        .login-container { width: 100%; max-width: 380px; display: flex; flex-direction: column; align-items: center; }
+        .scan-line { position: fixed; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, var(--copilot), transparent); box-shadow: 0 0 20px var(--copilot-glow); animation: scanDown 2s ease-out forwards; }
+        @keyframes scanDown { to { top: 50%; opacity: 0; } }
+        .login-title { font-size: 22px; font-weight: 300; margin-bottom: 4px; color: rgba(255,255,255,0.9); }
+        .login-sub { font-size: 12px; color: var(--text-dim); margin-bottom: 32px; }
+        .login-logo { width: 160px; height: auto; margin-bottom: 24px; color: var(--copilot); }
+        .login-logo svg { width: 100%; height: auto; }
+        .login-bar { display: flex; align-items: center; gap: 8px; padding: 5px 5px 5px 8px; background: var(--card); border: 1px solid var(--border); border-radius: 40px; width: 100%; opacity: 0; animation: fadeUp 0.5s ease 1.5s forwards; }
+        @keyframes fadeUp { to { opacity: 1; } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .login-mini { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; position: relative; }
+        .glass-sphere { width: 26px; height: 26px; border-radius: 50%; position: relative; overflow: hidden; animation: glowPulse 8s ease-in-out infinite; }
+        @keyframes glowPulse {
+            0%, 100% { box-shadow: 0 0 14px rgba(255,107,53,0.7), 0 0 28px rgba(255,107,53,0.3); }
+            25% { box-shadow: 0 0 14px rgba(239,68,68,0.7), 0 0 28px rgba(239,68,68,0.3); }
+            50% { box-shadow: 0 0 14px rgba(59,130,246,0.7), 0 0 28px rgba(59,130,246,0.3); }
+            75% { box-shadow: 0 0 14px rgba(234,179,8,0.7), 0 0 28px rgba(234,179,8,0.3); }
+        }
+        .glass-sphere::before { content: ''; position: absolute; top: 2px; left: 4px; width: 5px; height: 4px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,0.5), transparent 70%); z-index: 10; }
+        .sphere-fog-container { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; background: rgba(20,24,32,0.3); }
+        .sphere-fog { position: absolute; inset: -50%; border-radius: 50%; background: radial-gradient(circle at 30% 40%, currentColor, transparent 50%), radial-gradient(circle at 70% 60%, currentColor, transparent 40%); filter: blur(2px); animation: fogSwirl 6s ease-in-out infinite, fogColor 8s ease-in-out infinite; opacity: 0.9; }
+        @keyframes fogSwirl { 0% { transform: rotate(0deg) translate(0, 0); } 25% { transform: rotate(90deg) translate(2px, -2px); } 50% { transform: rotate(180deg) translate(0, 0); } 75% { transform: rotate(270deg) translate(-2px, 2px); } 100% { transform: rotate(360deg) translate(0, 0); } }
+        @keyframes fogColor { 0%, 100% { color: #FF6B35; } 25% { color: #ef4444; } 50% { color: #3B82F6; } 75% { color: #eab308; } }
+        .sphere-fog-2 { position: absolute; inset: -30%; border-radius: 50%; background: radial-gradient(circle at 60% 30%, currentColor, transparent 45%); filter: blur(2px); animation: fogSwirl2 5s ease-in-out infinite reverse, fogColor2 8s ease-in-out infinite; opacity: 0.7; }
+        @keyframes fogSwirl2 { 0% { transform: rotate(0deg) scale(0.9); } 50% { transform: rotate(180deg) scale(1.1); } 100% { transform: rotate(360deg) scale(0.9); } }
+        @keyframes fogColor2 { 0%, 100% { color: #3B82F6; } 25% { color: #eab308; } 50% { color: #FF6B35; } 75% { color: #ef4444; } }
+        .login-icon-slot { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; }
+        .login-back { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.05); border: none; color: var(--text-dim); cursor: pointer; display: none; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
+        .login-back:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+        .login-back svg { width: 16px; height: 16px; stroke: currentColor; fill: none; }
+        .login-input-container { flex: 1; position: relative; height: 32px; overflow: hidden; }
+        .login-input-slider { display: flex; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); height: 100%; }
+        .login-input-slide { min-width: 100%; display: flex; align-items: center; }
+        .login-input { flex: 1; padding: 8px; background: transparent; border: none; color: white; font-size: 13px; outline: none; caret-color: white; }
+        .login-input::placeholder { color: rgba(255,255,255,0.25); }
+        .login-input:-webkit-autofill,
+        .login-input:-webkit-autofill:hover,
+        .login-input:-webkit-autofill:focus,
+        .login-input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+            -webkit-text-fill-color: white !important;
+            background-color: transparent !important;
+            background: transparent !important;
+            transition: background-color 9999s ease-out 9999s !important;
+            caret-color: white !important;
+        }
+        .login-btn { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #FF6B35, #E55A2B); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .login-btn .icon { width: 12px; height: 12px; }
+        .login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* LOGIN STATUS MESSAGES */
+        .login-status {
+            min-height: 24px;
+            margin-top: 16px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .login-status:empty { display: none; }
+        .login-status.success { color: #22c55e; }
+        .login-status.error { color: #ef4444; }
+        .login-status.info { color: rgba(255,255,255,0.7); }
+        .login-status a {
+            color: inherit;
+            text-decoration: underline;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        .login-status a:hover { opacity: 0.8; }
+
+        /* PENDING & CONFIRMATION SCREENS */
+        .pending-screen { display: none; }
+        .pending-screen.active { display: flex; }
+        .pending-container { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 40px; text-align: center; }
+        .pending-logo { margin-bottom: 8px; }
+        .pending-logo svg { height: 40px; width: auto; }
+        .pending-title { font-size: 24px; font-weight: 700; color: var(--text); }
+        .pending-subtitle { font-size: 14px; color: var(--text-dim); max-width: 300px; line-height: 1.5; }
+        .pending-email { font-size: 13px; color: var(--copilot); font-weight: 500; padding: 8px 16px; background: rgba(255,107,53,0.1); border-radius: 8px; }
+        .pending-logout { margin-top: 16px; padding: 10px 24px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--text-dim); font-size: 13px; cursor: pointer; transition: all 0.2s; }
+        .pending-logout:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+
         /* ═══ HOME LAYOUT ═══ */
         .home-wrapper { display: flex; min-height: 100vh; min-height: 100dvh; }
         .home-main { flex: 1; display: flex; flex-direction: column; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); min-width: 0; }
@@ -553,9 +643,135 @@
             <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></symbol>
             <symbol id="icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></symbol>
             <symbol id="icon-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></symbol>
+            <symbol id="icon-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
+            <symbol id="icon-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
         </defs>
     </svg>
 
+    <!-- LOGIN SCREEN -->
+    <div class="screen login-screen active" id="loginScreen">
+        <div class="scan-line"></div>
+        <div class="login-container">
+            <div class="login-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
+            <h1 class="login-title">FixAIR Manager</h1>
+            <p class="login-sub">Tableau de bord pour managers HVAC</p>
+            <div class="login-bar">
+                <div class="login-icon-slot">
+                    <div class="login-mini" id="loginSphere"><div class="glass-sphere"><div class="sphere-fog-container"><div class="sphere-fog"></div><div class="sphere-fog-2"></div></div></div></div>
+                    <button type="button" class="login-back" id="loginBack" onclick="prevLoginStep()"><svg viewBox="0 0 24 24"><use href="#icon-arrow-left"/></svg></button>
+                </div>
+                <div class="login-input-container">
+                    <div class="login-input-slider" id="loginSlider">
+                        <div class="login-input-slide">
+                            <input type="email" class="login-input" id="loginEmailInput" placeholder="Quelle est votre adresse email ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
+                        </div>
+                        <div class="login-input-slide">
+                            <input type="password" class="login-input" id="loginPasswordInput" placeholder="Quel est votre mot de passe ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
+                        </div>
+                        <div class="login-input-slide">
+                            <input type="tel" class="login-input" id="loginPhoneInput" placeholder="Quel est votre numéro de téléphone ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
+                        </div>
+                        <div class="login-input-slide">
+                            <input type="text" class="login-input" id="loginNameInput" placeholder="Quel est votre prénom ?" onkeypress="if(event.key==='Enter')completeSignup()">
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="login-btn" id="loginBtn" onclick="nextLoginStep()"><span class="icon"><svg><use href="#icon-arrow-right"/></svg></span></button>
+            </div>
+            <div class="login-status" id="loginStatus"></div>
+        </div>
+    </div>
+
+    <!-- EMAIL CONFIRMATION SCREEN -->
+    <div class="screen pending-screen" id="emailConfirmScreen">
+        <div class="scan-line"></div>
+        <div class="pending-container">
+            <div class="pending-logo">
+                <svg viewBox="0 0 235 48" style="height: 40px; color: var(--copilot);"><use href="#icon-fixair-logo"/></svg>
+            </div>
+            <h1 class="pending-title">Vérifiez votre email</h1>
+            <p class="pending-subtitle">
+                Un email de confirmation a été envoyé à votre adresse (vérifiez vos spams). Cliquez sur le lien pour activer votre compte.
+            </p>
+            <div class="pending-email" id="confirmEmail"></div>
+            <button class="pending-logout" onclick="resendConfirmation()" style="margin-top: 8px; border-color: var(--copilot); color: var(--copilot);">
+                Renvoyer l'email
+            </button>
+            <button class="pending-logout" onclick="backToLogin()">
+                Retour à la connexion
+            </button>
+        </div>
+    </div>
+
+    <!-- PENDING APPROVAL SCREEN -->
+    <div class="screen pending-screen" id="pendingScreen">
+        <div class="scan-line"></div>
+        <div class="pending-container">
+            <div class="pending-logo">
+                <svg viewBox="0 0 235 48" style="height: 40px; color: var(--copilot);"><use href="#icon-fixair-logo"/></svg>
+            </div>
+            <h1 class="pending-title">Demande en attente</h1>
+            <p class="pending-subtitle">
+                Votre email a été confirmé ! Un administrateur va valider votre accès dans les plus brefs délais.
+            </p>
+            <div class="pending-email" id="pendingEmail"></div>
+            <button class="pending-logout" onclick="logoutFromPending()">
+                Se déconnecter
+            </button>
+        </div>
+    </div>
+
+    <!-- ACCESS DENIED SCREEN (for technicians trying to access manager) -->
+    <div class="screen pending-screen" id="accessDeniedScreen">
+        <div class="scan-line"></div>
+        <div class="pending-container">
+            <div class="pending-logo">
+                <svg viewBox="0 0 235 48" style="height: 40px; color: var(--copilot);"><use href="#icon-fixair-logo"/></svg>
+            </div>
+            <h1 class="pending-title">Accès réservé</h1>
+            <p class="pending-subtitle">
+                Cette application est réservée aux managers et administrateurs. En tant que technicien, vous serez redirigé vers l'application Technicien.
+            </p>
+            <div class="pending-email" id="accessDeniedEmail"></div>
+            <button class="pending-logout" onclick="redirectToTechnicianApp()" style="margin-top: 8px; background: var(--copilot); color: white; border: none;">
+                Aller à l'app Technicien
+            </button>
+            <button class="pending-logout" onclick="logoutFromPending()">
+                Se déconnecter
+            </button>
+        </div>
+    </div>
+
+    <!-- PASSWORD RESET SCREEN -->
+    <div class="screen pending-screen" id="passwordResetScreen">
+        <div class="scan-line"></div>
+        <div class="pending-container">
+            <div class="pending-logo">
+                <svg viewBox="0 0 235 48" style="height: 40px; color: var(--copilot);"><use href="#icon-fixair-logo"/></svg>
+            </div>
+            <h1 class="pending-title">Nouveau mot de passe</h1>
+            <p class="pending-subtitle">
+                Créez un nouveau mot de passe pour votre compte.
+            </p>
+            <div style="width: 100%; max-width: 300px; margin: 20px auto;">
+                <input type="password" id="newPasswordInput" placeholder="Nouveau mot de passe (min 6 caractères)"
+                    style="width: 100%; padding: 12px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; margin-bottom: 12px;">
+                <input type="password" id="confirmPasswordInput" placeholder="Confirmer le mot de passe"
+                    style="width: 100%; padding: 12px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; margin-bottom: 12px;">
+                <div id="passwordResetStatus" style="margin-bottom: 12px; padding: 8px; border-radius: 6px; font-size: 13px; display: none;"></div>
+                <button onclick="setNewPassword()"
+                    style="width: 100%; padding: 12px 16px; background: var(--copilot); border: none; border-radius: 8px; color: #000; font-size: 14px; font-weight: 600; cursor: pointer;">
+                    Mettre à jour le mot de passe
+                </button>
+            </div>
+            <button class="pending-logout" onclick="cancelPasswordReset()" style="margin-top: 8px;">
+                Annuler
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN APP WRAPPER (hidden until authenticated) -->
+    <div class="screen main-app" id="mainApp">
     <!-- HOME -->
     <div class="home-wrapper" id="homeWrapper">
         <div class="home-main">
@@ -567,7 +783,7 @@
                             <div class="header-logo-svg"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
                             <span class="header-date">• Lundi 30 Déc</span>
                         </div>
-                        <div class="header-avatar">MA</div>
+                        <div class="header-avatar" onclick="logout()" title="Se déconnecter" style="cursor:pointer;">MA</div>
                     </header>
 
                     <div class="hero">
@@ -764,6 +980,7 @@
     <!-- Hidden file inputs -->
     <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden-input" onchange="handleFileSelect(event, 'camera')">
     <input type="file" id="fileInput" accept="image/*,.pdf,.doc,.docx" class="hidden-input" onchange="handleFileSelect(event, 'file')">
+    </div><!-- End main-app -->
 
     <!-- Image Viewer -->
     <div class="image-viewer" id="imageViewer" onclick="closeImageViewer()">
@@ -785,15 +1002,56 @@
         let currentUserId = null;
         let currentManagerProfile = null;
         let realtimeSubscriptions = [];
-        
+
         // Live data from database
         let liveTeamData = {};
         let liveProjectData = {};
         let livePendingShares = [];
-        
+
+        // Auth state
+        let loginStep = 0;
+        let isNewUser = false;
+        let existingUserName = '';
+        let isPasswordRecovery = false;
+        let supabaseUser = null;
+
+        // Parse URL hash for auth tokens
+        function parseHashParams(hash) {
+            if (!hash || hash.length < 2) return {};
+            const params = {};
+            const hashContent = hash.substring(1);
+            const pairs = hashContent.split('&');
+            for (const pair of pairs) {
+                const [key, value] = pair.split('=');
+                if (key && value) {
+                    params[decodeURIComponent(key)] = decodeURIComponent(value);
+                }
+            }
+            return params;
+        }
+
+        const initialHash = window.location.hash;
+        const hashParams = parseHashParams(initialHash);
+        const hasAccessToken = !!hashParams.access_token;
+        const hasRefreshToken = !!hashParams.refresh_token;
+        const tokenType = hashParams.type;
+        const isRecoveryLink = tokenType === 'recovery';
+
+        // Clean URL hash
+        if (initialHash) {
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+
         function initSupabase() {
             try {
-                sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                    auth: {
+                        persistSession: false,
+                        autoRefreshToken: false,
+                        detectSessionInUrl: false,
+                        flowType: 'implicit'
+                    }
+                });
                 console.log('✅ Supabase initialized');
                 return true;
             } catch (err) {
@@ -803,8 +1061,587 @@
         }
 
         // ═══════════════════════════════════════════════════════════════
-        // AUTHENTICATION
+        // AUTHENTICATION - LOGIN FLOW (Same as Technician App)
         // ═══════════════════════════════════════════════════════════════
+
+        function setLoginStatus(message, type = 'info', showReset = false) {
+            const statusEl = document.getElementById('loginStatus');
+            if (!statusEl) return;
+            statusEl.className = 'login-status ' + type;
+            if (showReset) {
+                statusEl.innerHTML = message + ' <a onclick="resetPassword()">Réinitialiser</a>';
+            } else {
+                statusEl.textContent = message;
+            }
+        }
+
+        function clearLoginStatus() {
+            const statusEl = document.getElementById('loginStatus');
+            if (statusEl) {
+                statusEl.textContent = '';
+                statusEl.className = 'login-status';
+            }
+        }
+
+        async function resetPassword() {
+            const email = document.getElementById('loginEmailInput').value.trim();
+            if (!email.includes('@')) {
+                setLoginStatus('Entrez votre email d\'abord', 'error');
+                return;
+            }
+            try {
+                const redirectUrl = window.location.origin + window.location.pathname;
+                const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl });
+                if (error) {
+                    setLoginStatus('Erreur: ' + error.message, 'error');
+                } else {
+                    setLoginStatus('Email de réinitialisation envoyé ! Vérifiez votre boîte mail (et spam).', 'success');
+                }
+            } catch (err) {
+                setLoginStatus('Erreur lors de l\'envoi', 'error');
+            }
+        }
+
+        async function nextLoginStep() {
+            const btn = document.getElementById('loginBtn');
+
+            if (loginStep === 0) {
+                // Step 0: Check email
+                const email = document.getElementById('loginEmailInput').value.trim();
+                if (!email.includes('@')) {
+                    setLoginStatus('Veuillez entrer un email valide', 'error');
+                    return;
+                }
+
+                clearLoginStatus();
+                btn.disabled = true;
+                btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
+
+                try {
+                    // Check if user exists in public.users
+                    const { data: publicUser } = await sb
+                        .from('users')
+                        .select('id, first_name, status, role')
+                        .eq('email', email)
+                        .maybeSingle();
+
+                    if (publicUser && publicUser.id) {
+                        isNewUser = false;
+                        existingUserName = publicUser.first_name || '';
+                    } else {
+                        isNewUser = true;
+                    }
+
+                    const pwdInput = document.getElementById('loginPasswordInput');
+                    if (isNewUser) {
+                        pwdInput.placeholder = 'Créez votre mot de passe';
+                        setLoginStatus('Nouveau compte ! Choisissez un mot de passe', 'success');
+                    } else {
+                        pwdInput.placeholder = 'Entrez votre mot de passe';
+                        if (existingUserName) {
+                            setLoginStatus('Bienvenue ' + existingUserName + ' ! Entrez votre mot de passe', 'info');
+                        } else {
+                            setLoginStatus('Bienvenue ! Entrez votre mot de passe', 'info');
+                        }
+                    }
+
+                    loginStep = 1;
+                    updateLoginUI();
+
+                } catch (error) {
+                    console.error('Check email error:', error);
+                    setLoginStatus('Nouveau compte ! Choisissez un mot de passe', 'success');
+                    isNewUser = true;
+                    loginStep = 1;
+                    updateLoginUI();
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+                }
+
+            } else if (loginStep === 1) {
+                // Step 1: Password
+                const email = document.getElementById('loginEmailInput').value.trim();
+                const password = document.getElementById('loginPasswordInput').value;
+
+                if (password.length < 6) {
+                    setLoginStatus('Mot de passe: 6 caractères minimum', 'error');
+                    return;
+                }
+
+                if (isNewUser) {
+                    // New user: go to phone step
+                    clearLoginStatus();
+                    setLoginStatus('Entrez votre numéro de téléphone', 'info');
+                    loginStep = 2;
+                    updateLoginUI();
+                } else {
+                    // Existing user: try login
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
+
+                    try {
+                        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+                        if (error) {
+                            setLoginStatus('Mot de passe incorrect', 'error', true);
+                        } else {
+                            clearLoginStatus();
+                            supabaseUser = data.user;
+
+                            // Persist session
+                            localStorage.setItem('supabase.auth.token', JSON.stringify({
+                                currentSession: data.session,
+                                expiresAt: data.session.expires_at
+                            }));
+
+                            // Load user profile and check role
+                            const profile = await loadUserProfile(data.user.id);
+
+                            if (profile) {
+                                currentManagerProfile = profile;
+                                currentUserId = profile.id;
+
+                                // Check approval status
+                                if (profile.status !== 'approved' && profile.status !== 'active') {
+                                    showPendingScreen(profile.email);
+                                    return;
+                                }
+
+                                // Check role - only manager or admin can access
+                                if (profile.role && !['manager', 'admin', 'owner'].includes(profile.role)) {
+                                    showAccessDeniedScreen(profile.email);
+                                    return;
+                                }
+
+                                // Success - show main app
+                                toast('Bienvenue ' + (profile.first_name || 'Manager') + ' !');
+                                showMainApp();
+                            } else {
+                                setLoginStatus('Erreur: profil non trouvé', 'error');
+                            }
+                        }
+                    } catch (error) {
+                        setLoginStatus('Erreur de connexion au serveur', 'error');
+                        console.error('Login error:', error);
+                    } finally {
+                        btn.disabled = false;
+                        btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+                    }
+                }
+            } else if (loginStep === 2) {
+                // Step 2: Phone number
+                const phone = document.getElementById('loginPhoneInput').value.trim();
+                if (!phone || phone.length < 8) {
+                    setLoginStatus('Veuillez entrer un numéro de téléphone valide', 'error');
+                    return;
+                }
+
+                clearLoginStatus();
+                setLoginStatus('Comment vous appelez-vous ?', 'info');
+                loginStep = 3;
+                document.getElementById('loginBtn').innerHTML = '<span class="icon"><svg><use href="#icon-check"/></svg></span>';
+                document.getElementById('loginBtn').onclick = completeSignup;
+                updateLoginUI();
+            }
+        }
+
+        function updateLoginUI() {
+            document.getElementById('loginSlider').style.transform = `translateX(-${loginStep * 100}%)`;
+            document.getElementById('loginSphere').style.display = loginStep === 0 ? 'flex' : 'none';
+            document.getElementById('loginBack').style.display = loginStep === 0 ? 'none' : 'flex';
+        }
+
+        function prevLoginStep() {
+            if (loginStep > 0) {
+                loginStep--;
+                clearLoginStatus();
+                updateLoginUI();
+                if (loginStep < 3) {
+                    document.getElementById('loginBtn').innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+                    document.getElementById('loginBtn').onclick = nextLoginStep;
+                }
+            }
+        }
+
+        async function completeSignup() {
+            const name = document.getElementById('loginNameInput').value.trim();
+            if (!name) { setLoginStatus('Entrez votre prénom', 'error'); return; }
+
+            const email = document.getElementById('loginEmailInput').value.trim();
+            const password = document.getElementById('loginPasswordInput').value;
+            const phone = document.getElementById('loginPhoneInput').value.trim();
+
+            const btn = document.getElementById('loginBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-check"/></svg></span>';
+
+            try {
+                const { data, error } = await sb.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: { first_name: name, phone: phone }
+                    }
+                });
+
+                if (error) {
+                    const errMsg = error.message.toLowerCase();
+                    if (errMsg.includes('already registered') || errMsg.includes('already exists')) {
+                        setLoginStatus('Ce compte existe déjà. Essayez de vous connecter.', 'error', true);
+                        isNewUser = false;
+                        loginStep = 0;
+                        updateLoginUI();
+                    } else {
+                        setLoginStatus(error.message || 'Erreur lors de la création du compte', 'error');
+                    }
+                    return;
+                }
+
+                if (data.user && !data.user.email_confirmed_at) {
+                    showEmailConfirmScreen(email);
+                    toast('Vérifiez votre email !');
+                } else if (data.user) {
+                    supabaseUser = data.user;
+                    showPendingScreen(email);
+                    toast('Compte créé !');
+                }
+
+            } catch (error) {
+                setLoginStatus('Erreur de connexion', 'error');
+                console.error('Register error:', error);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="icon"><svg><use href="#icon-check"/></svg></span>';
+            }
+        }
+
+        async function loadUserProfile(authId) {
+            try {
+                const { data, error } = await sb
+                    .from('users')
+                    .select('*')
+                    .eq('id', authId)
+                    .maybeSingle();
+
+                if (error) {
+                    console.error('Error loading user profile:', error);
+                    return null;
+                }
+                return data;
+            } catch (err) {
+                console.error('Exception loading user profile:', err);
+                return null;
+            }
+        }
+
+        // Screen helper functions
+        function showEmailConfirmScreen(email) {
+            clearLoginStatus();
+            document.getElementById('confirmEmail').textContent = email;
+            document.getElementById('loginScreen').classList.remove('active');
+            document.getElementById('mainApp').classList.remove('active');
+            document.getElementById('pendingScreen').classList.remove('active');
+            document.getElementById('accessDeniedScreen').classList.remove('active');
+            document.getElementById('emailConfirmScreen').classList.add('active');
+        }
+
+        function showPendingScreen(email) {
+            clearLoginStatus();
+            document.getElementById('pendingEmail').textContent = email;
+            document.getElementById('loginScreen').classList.remove('active');
+            document.getElementById('mainApp').classList.remove('active');
+            document.getElementById('emailConfirmScreen').classList.remove('active');
+            document.getElementById('accessDeniedScreen').classList.remove('active');
+            document.getElementById('pendingScreen').classList.add('active');
+        }
+
+        function showAccessDeniedScreen(email) {
+            clearLoginStatus();
+            document.getElementById('accessDeniedEmail').textContent = email;
+            document.getElementById('loginScreen').classList.remove('active');
+            document.getElementById('mainApp').classList.remove('active');
+            document.getElementById('emailConfirmScreen').classList.remove('active');
+            document.getElementById('pendingScreen').classList.remove('active');
+            document.getElementById('accessDeniedScreen').classList.add('active');
+        }
+
+        function showPasswordResetScreen() {
+            document.getElementById('loginScreen').classList.remove('active');
+            document.getElementById('pendingScreen').classList.remove('active');
+            document.getElementById('emailConfirmScreen').classList.remove('active');
+            document.getElementById('mainApp').classList.remove('active');
+            document.getElementById('accessDeniedScreen').classList.remove('active');
+            document.getElementById('passwordResetScreen').classList.add('active');
+        }
+
+        function redirectToTechnicianApp() {
+            window.location.href = '/';
+        }
+
+        async function resendConfirmation() {
+            const email = document.getElementById('confirmEmail').textContent;
+            try {
+                const { error } = await sb.auth.resend({ type: 'signup', email: email });
+                if (error) {
+                    toast('Erreur: ' + error.message);
+                } else {
+                    toast('Email renvoyé !');
+                }
+            } catch (err) {
+                toast('Erreur lors de l\'envoi');
+            }
+        }
+
+        function backToLogin() {
+            clearLoginStatus();
+            document.getElementById('emailConfirmScreen').classList.remove('active');
+            document.getElementById('pendingScreen').classList.remove('active');
+            document.getElementById('accessDeniedScreen').classList.remove('active');
+            document.getElementById('loginScreen').classList.add('active');
+
+            loginStep = 0;
+            document.getElementById('loginEmailInput').value = '';
+            document.getElementById('loginPasswordInput').value = '';
+            document.getElementById('loginPhoneInput').value = '';
+            document.getElementById('loginNameInput').value = '';
+            updateLoginUI();
+        }
+
+        async function logoutFromPending() {
+            await sb.auth.signOut();
+            localStorage.removeItem('supabase.auth.token');
+            supabaseUser = null;
+            currentUserId = null;
+            currentManagerProfile = null;
+            isPasswordRecovery = false;
+            clearLoginStatus();
+
+            document.getElementById('pendingScreen').classList.remove('active');
+            document.getElementById('emailConfirmScreen').classList.remove('active');
+            document.getElementById('accessDeniedScreen').classList.remove('active');
+            document.getElementById('mainApp').classList.remove('active');
+            document.getElementById('loginScreen').classList.add('active');
+
+            loginStep = 0;
+            document.getElementById('loginEmailInput').value = '';
+            document.getElementById('loginPasswordInput').value = '';
+            document.getElementById('loginPhoneInput').value = '';
+            document.getElementById('loginNameInput').value = '';
+            document.getElementById('loginSlider').style.transform = 'translateX(0)';
+            document.getElementById('loginSphere').style.display = 'flex';
+            document.getElementById('loginBack').style.display = 'none';
+            document.getElementById('loginBtn').innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+            document.getElementById('loginBtn').onclick = nextLoginStep;
+
+            toast('Déconnecté');
+        }
+
+        async function setNewPassword() {
+            const newPass = document.getElementById('newPasswordInput').value;
+            const confirmPass = document.getElementById('confirmPasswordInput').value;
+            const statusEl = document.getElementById('passwordResetStatus');
+
+            if (!newPass || newPass.length < 6) {
+                statusEl.style.display = 'block';
+                statusEl.style.background = 'rgba(239,68,68,0.2)';
+                statusEl.style.border = '1px solid rgba(239,68,68,0.5)';
+                statusEl.style.color = '#ef4444';
+                statusEl.textContent = 'Le mot de passe doit contenir au moins 6 caractères';
+                return;
+            }
+
+            if (newPass !== confirmPass) {
+                statusEl.style.display = 'block';
+                statusEl.style.background = 'rgba(239,68,68,0.2)';
+                statusEl.style.border = '1px solid rgba(239,68,68,0.5)';
+                statusEl.style.color = '#ef4444';
+                statusEl.textContent = 'Les mots de passe ne correspondent pas';
+                return;
+            }
+
+            statusEl.style.display = 'block';
+            statusEl.style.background = 'rgba(59,130,246,0.2)';
+            statusEl.style.border = '1px solid rgba(59,130,246,0.5)';
+            statusEl.style.color = '#3b82f6';
+            statusEl.textContent = 'Mise à jour en cours...';
+
+            try {
+                const { error } = await sb.auth.updateUser({ password: newPass });
+
+                if (error) {
+                    statusEl.style.background = 'rgba(239,68,68,0.2)';
+                    statusEl.style.border = '1px solid rgba(239,68,68,0.5)';
+                    statusEl.style.color = '#ef4444';
+                    statusEl.textContent = 'Erreur: ' + error.message;
+                    return;
+                }
+
+                statusEl.style.background = 'rgba(16,185,129,0.2)';
+                statusEl.style.border = '1px solid rgba(16,185,129,0.5)';
+                statusEl.style.color = '#10b981';
+                statusEl.textContent = 'Mot de passe mis à jour avec succès !';
+
+                isPasswordRecovery = false;
+                document.getElementById('newPasswordInput').value = '';
+                document.getElementById('confirmPasswordInput').value = '';
+
+                localStorage.removeItem('supabase.auth.token');
+                await sb.auth.signOut();
+
+                setTimeout(() => {
+                    document.getElementById('passwordResetScreen').classList.remove('active');
+                    document.getElementById('loginScreen').classList.add('active');
+                    statusEl.style.display = 'none';
+                    toast('Connectez-vous avec votre nouveau mot de passe');
+                }, 2000);
+
+            } catch (err) {
+                statusEl.style.background = 'rgba(239,68,68,0.2)';
+                statusEl.style.border = '1px solid rgba(239,68,68,0.5)';
+                statusEl.style.color = '#ef4444';
+                statusEl.textContent = 'Erreur lors de la mise à jour';
+            }
+        }
+
+        function cancelPasswordReset() {
+            isPasswordRecovery = false;
+            localStorage.removeItem('supabase.auth.token');
+            sb.auth.signOut();
+
+            document.getElementById('passwordResetScreen').classList.remove('active');
+            document.getElementById('loginScreen').classList.add('active');
+
+            document.getElementById('newPasswordInput').value = '';
+            document.getElementById('confirmPasswordInput').value = '';
+            document.getElementById('passwordResetStatus').style.display = 'none';
+        }
+
+        function showMainApp() {
+            document.getElementById('loginScreen').classList.remove('active');
+            document.getElementById('emailConfirmScreen').classList.remove('active');
+            document.getElementById('pendingScreen').classList.remove('active');
+            document.getElementById('accessDeniedScreen').classList.remove('active');
+            document.getElementById('passwordResetScreen').classList.remove('active');
+            document.getElementById('mainApp').classList.add('active');
+
+            loadAllData();
+        }
+
+        async function logout() {
+            await sb.auth.signOut();
+            localStorage.removeItem('supabase.auth.token');
+            cleanupSubscriptions();
+            supabaseUser = null;
+            currentUserId = null;
+            currentManagerProfile = null;
+            loginStep = 0;
+            isNewUser = false;
+            isPasswordRecovery = false;
+            clearLoginStatus();
+
+            document.getElementById('loginEmailInput').value = '';
+            document.getElementById('loginPasswordInput').value = '';
+            document.getElementById('loginPhoneInput').value = '';
+            document.getElementById('loginNameInput').value = '';
+            document.getElementById('loginSlider').style.transform = 'translateX(0)';
+            document.getElementById('loginSphere').style.display = 'flex';
+            document.getElementById('loginBack').style.display = 'none';
+            document.getElementById('loginBtn').innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+            document.getElementById('loginBtn').onclick = nextLoginStep;
+
+            document.getElementById('mainApp').classList.remove('active');
+            document.getElementById('loginScreen').classList.add('active');
+
+            toast('Déconnecté');
+        }
+
+        // Initialize auth on page load
+        async function initAuth() {
+            if (hasAccessToken && hasRefreshToken) {
+                if (isRecoveryLink) {
+                    isPasswordRecovery = true;
+                }
+
+                try {
+                    const { data, error } = await sb.auth.setSession({
+                        access_token: hashParams.access_token,
+                        refresh_token: hashParams.refresh_token
+                    });
+
+                    if (error) {
+                        isPasswordRecovery = false;
+                        return;
+                    }
+
+                    if (data.session) {
+                        localStorage.setItem('supabase.auth.token', JSON.stringify({
+                            currentSession: data.session,
+                            expiresAt: data.session.expires_at
+                        }));
+                    }
+
+                    if (isRecoveryLink) {
+                        showPasswordResetScreen();
+                    } else if (data.session && data.session.user) {
+                        await handleAuthenticatedUser(data.session.user);
+                    }
+                } catch (err) {
+                    isPasswordRecovery = false;
+                }
+            } else {
+                // Check for existing session in localStorage
+                try {
+                    const stored = localStorage.getItem('supabase.auth.token');
+                    if (stored) {
+                        const parsed = JSON.parse(stored);
+                        if (parsed.currentSession) {
+                            const { data, error } = await sb.auth.setSession({
+                                access_token: parsed.currentSession.access_token,
+                                refresh_token: parsed.currentSession.refresh_token
+                            });
+                            if (!error && data.session) {
+                                await handleAuthenticatedUser(data.session.user);
+                                return;
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.log('No valid stored session');
+                }
+            }
+        }
+
+        async function handleAuthenticatedUser(user) {
+            supabaseUser = user;
+
+            // Load user profile
+            const profile = await loadUserProfile(user.id);
+
+            if (profile) {
+                currentManagerProfile = profile;
+                currentUserId = profile.id;
+
+                // Check approval status
+                if (profile.status !== 'approved' && profile.status !== 'active') {
+                    showPendingScreen(profile.email);
+                    return;
+                }
+
+                // Check role - only manager or admin can access
+                if (profile.role && !['manager', 'admin', 'owner'].includes(profile.role)) {
+                    showAccessDeniedScreen(profile.email);
+                    return;
+                }
+
+                // Success - show main app
+                showMainApp();
+            } else {
+                showPendingScreen(user.email);
+            }
+        }
+
+        // Legacy functions for compatibility
         async function checkManagerAuth() {
             try {
                 const { data: { session } } = await sb.auth.getSession();
@@ -812,30 +1649,28 @@
                     console.log('No session - showing login');
                     return null;
                 }
-                
-                // Get user profile by auth_id (not by id!)
+
                 const { data: profile } = await sb
                     .from('users')
                     .select('*')
-                    .eq('auth_id', session.user.id)
+                    .eq('id', session.user.id)
                     .maybeSingle();
-                
+
                 if (!profile) {
-                    console.log('No profile found for auth_id:', session.user.id);
+                    console.log('No profile found');
                     return null;
                 }
-                
-                currentUserId = profile.id; // Use users.id, not auth.uid
+
+                currentUserId = profile.id;
                 currentManagerProfile = profile;
-                
-                // Check if user is a manager (by role column)
-                // For now, allow anyone to test
-                if (profile.role && !['manager', 'owner'].includes(profile.role)) {
-                    console.log('User role is:', profile.role, '- allowing for demo');
+
+                // Check if user is a manager
+                if (profile.role && !['manager', 'admin', 'owner'].includes(profile.role)) {
+                    console.log('User role is:', profile.role, '- not a manager');
+                    return null;
                 }
-                
-                console.log('✅ Manager authenticated:', profile.email, 'User ID:', currentUserId);
-                
+
+                console.log('✅ Manager authenticated:', profile.email);
                 return profile;
             } catch (err) {
                 console.error('Auth check error:', err);
@@ -843,33 +1678,8 @@
             }
         }
 
-        async function managerLogin(email, password) {
-            try {
-                const { data, error } = await sb.auth.signInWithPassword({
-                    email, password
-                });
-                if (error) throw error;
-                
-                const manager = await checkManagerAuth();
-                if (manager) {
-                    hideLoginModal();
-                    await loadAllData();
-                    toast('✅ Connecté en tant que ' + manager.email);
-                } else {
-                    toast('❌ Vous n\'êtes pas manager');
-                }
-            } catch (err) {
-                toast('❌ Erreur: ' + err.message);
-            }
-        }
-
         async function managerLogout() {
-            await sb.auth.signOut();
-            cleanupSubscriptions();
-            currentUserId = null;
-            currentManagerProfile = null;
-            showLoginModal();
-            toast('Déconnecté');
+            await logout();
         }
 
         // ═══════════════════════════════════════════════════════════════
@@ -1552,43 +2362,6 @@
         }
 
         // ═══════════════════════════════════════════════════════════════
-        // LOGIN MODAL
-        // ═══════════════════════════════════════════════════════════════
-        function showLoginModal() {
-            let modal = document.getElementById('loginModal');
-            if (!modal) {
-                modal = document.createElement('div');
-                modal.id = 'loginModal';
-                modal.className = 'login-modal';
-                modal.innerHTML = `
-                    <div class="login-modal-content">
-                        <div class="login-logo">FixAIR Manager</div>
-                        <input type="email" id="loginEmail" placeholder="Email" class="login-input">
-                        <input type="password" id="loginPassword" placeholder="Mot de passe" class="login-input">
-                        <button onclick="handleLogin()" class="login-btn">Connexion</button>
-                    </div>
-                `;
-                document.body.appendChild(modal);
-            }
-            modal.style.display = 'flex';
-        }
-
-        function hideLoginModal() {
-            const modal = document.getElementById('loginModal');
-            if (modal) modal.style.display = 'none';
-        }
-
-        function handleLogin() {
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            if (email && password) {
-                managerLogin(email, password);
-            } else {
-                toast('Veuillez remplir tous les champs');
-            }
-        }
-
-        // ═══════════════════════════════════════════════════════════════
         // MAIN INITIALIZATION
         // ═══════════════════════════════════════════════════════════════
         async function loadAllData() {
@@ -1600,27 +2373,18 @@
         }
 
         async function initManagerApp() {
-            console.log('🚀 Initializing FixAIR Manager V15...');
-            
+            console.log('🚀 Initializing FixAIR Manager V16...');
+
             // Initialize Supabase
             if (!initSupabase()) {
                 console.error('Failed to init Supabase');
-                // Fall back to mock data
                 return;
             }
-            
-            // Check authentication
-            const manager = await checkManagerAuth();
-            if (!manager) {
-                console.log('Not authenticated - using mock data for demo');
-                // Continue with mock data for demo
-                return;
-            }
-            
-            // Load real data
-            await loadAllData();
-            
-            console.log('✅ Manager App V15 initialized with live data');
+
+            // Initialize auth - this will handle showing login or main app
+            await initAuth();
+
+            console.log('✅ Manager App V16 initialized');
         }
 
         // Run init on DOM ready
