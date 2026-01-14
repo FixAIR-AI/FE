@@ -575,7 +575,7 @@
 
             try {
                 // Check if email exists in users table
-                const { data: existingUser, error } = await supabase
+                const { data: existingUser, error } = await sb
                     .from('users')
                     .select('id, role, status, first_name')
                     .eq('email', email)
@@ -629,7 +629,7 @@
                 }
 
                 // Get user profile to check role and status
-                const { data: profile, error: profileError } = await supabase
+                const { data: profile, error: profileError } = await sb
                     .from('users')
                     .select('*')
                     .eq('email', currentEmail)
@@ -750,7 +750,7 @@
                 }
 
                 // Create user profile in users table
-                const { error: profileError } = await supabase
+                const { error: profileError } = await sb
                     .from('users')
                     .insert({
                         auth_id: authData.user?.id || null,
@@ -837,7 +837,7 @@
                 }
 
                 // Create user profile as ADMIN
-                const { error: profileError } = await supabase
+                const { error: profileError } = await sb
                     .from('users')
                     .insert({
                         auth_id: authData.user?.id || null,
@@ -886,7 +886,7 @@
 
             try {
                 // Get user role to determine redirect URL
-                const { data: user } = await supabase
+                const { data: user } = await sb
                     .from('users')
                     .select('role')
                     .eq('email', email)
