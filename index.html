@@ -5855,6 +5855,9 @@
         const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTcyMTksImV4cCI6MjA4MTgzMzIxOX0.8ryQm1tsdx5ox3aFJiiflmwuEGGxxH_PlobGxXMgFuQ';
 
+        // ANTI-LOOP: localStorage flag to detect redirect loops
+        const REDIRECT_FLAG = 'fixair_redirect_in_progress';
+
         let db;
         let supabaseReady = false;
 
@@ -6127,6 +6130,9 @@
 
         // ═══ CHECK SUPABASE AUTH SESSION ON LOAD ═══
         async function initAuth() {
+            // Clear redirect flag - we arrived successfully
+            localStorage.removeItem(REDIRECT_FLAG);
+
             // If we have tokens in URL, manually set the session
             if (hasAccessToken && hasRefreshToken) {
                 // IMPORTANT: Set recovery flag BEFORE setSession to prevent race condition
@@ -6228,7 +6234,7 @@
                 }
                 // No valid session found - redirect to auth page
                 console.log('No valid session found - redirecting to auth');
-                window.location.href = 'https://go.fixair.ai/auth?from=technician';
+                window.location.replace('https://go.fixair.ai/auth');
             }
         }
 
@@ -6406,7 +6412,7 @@
 
                 // Redirect to auth page after brief delay
                 setTimeout(() => {
-                    window.location.href = 'https://go.fixair.ai/auth?from=technician';
+                    window.location.replace('https://go.fixair.ai/auth');
                 }, 1500);
 
             } catch (err) {
@@ -6420,7 +6426,7 @@
 
         // ═══ GO TO LOGIN FROM PASSWORD RESET ═══
         function goToLoginFromPasswordReset() {
-            window.location.href = 'https://go.fixair.ai/auth?from=technician';
+            window.location.replace('https://go.fixair.ai/auth');
         }
 
         // ═══ CANCEL PASSWORD RESET ═══
@@ -6428,7 +6434,7 @@
             isPasswordRecovery = false;
             localStorage.removeItem('supabase.auth.token');
             db.auth.signOut();
-            window.location.href = 'https://go.fixair.ai/auth?from=technician';
+            window.location.replace('https://go.fixair.ai/auth');
         }
 
         // LOGIN STEPS
@@ -6719,13 +6725,14 @@
         }
 
         function backToLogin() {
-            window.location.href = 'https://go.fixair.ai/auth?from=technician';
+            window.location.replace('https://go.fixair.ai/auth');
         }
 
         async function logoutFromPending() {
             await db.auth.signOut();
             localStorage.removeItem('supabase.auth.token');
-            window.location.href = 'https://go.fixair.ai/auth?logout=true';
+            localStorage.removeItem(REDIRECT_FLAG);
+            window.location.replace('https://go.fixair.ai/auth?logout=true');
         }
 
         async function doLogin() {
@@ -6741,7 +6748,8 @@
         async function logout() {
             await db.auth.signOut();
             localStorage.removeItem('supabase.auth.token');
-            window.location.href = 'https://go.fixair.ai/auth?logout=true';
+            localStorage.removeItem(REDIRECT_FLAG);
+            window.location.replace('https://go.fixair.ai/auth?logout=true');
         }
 
         // PROFILE
