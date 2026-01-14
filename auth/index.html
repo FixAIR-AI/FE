@@ -749,10 +749,10 @@
                     return;
                 }
 
-                // Create user profile in users table
+                // Create user profile in users table (upsert to handle trigger-created rows)
                 const { error: profileError } = await sb
                     .from('users')
-                    .insert({
+                    .upsert({
                         auth_id: authData.user?.id || null,
                         email: email,
                         first_name: firstName,
@@ -762,11 +762,12 @@
                         member_type: 'standalone',
                         status: 'pending',
                         live_status: 'offline'
-                    });
+                    }, { onConflict: 'email' });
 
                 if (profileError) {
                     console.error('Profile creation error:', profileError);
-                    // Don't show error to user, auth account was created
+                    showStatus('techSignupStatus', 'Erreur: ' + profileError.message, 'error');
+                    return;
                 }
 
                 // Show confirmation screen
@@ -836,10 +837,10 @@
                     return;
                 }
 
-                // Create user profile as ADMIN
+                // Create user profile as ADMIN (upsert to handle trigger-created rows)
                 const { error: profileError } = await sb
                     .from('users')
-                    .insert({
+                    .upsert({
                         auth_id: authData.user?.id || null,
                         email: email,
                         first_name: firstName,
@@ -850,10 +851,12 @@
                         member_type: 'standalone',
                         status: 'pending',
                         live_status: 'offline'
-                    });
+                    }, { onConflict: 'email' });
 
                 if (profileError) {
                     console.error('Profile creation error:', profileError);
+                    showStatus('entSignupStatus', 'Erreur: ' + profileError.message, 'error');
+                    return;
                 }
 
                 // Show confirmation screen
