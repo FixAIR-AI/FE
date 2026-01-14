@@ -535,9 +535,9 @@
         <div class="scan-line"></div>
         <div class="pending-container">
             <div class="auth-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
-            <div class="pending-icon">&#9203;</div>
-            <h1 class="auth-title">Demande en attente</h1>
-            <p class="auth-subtitle">
+            <div class="pending-icon" id="pendingIcon">&#9203;</div>
+            <h1 class="auth-title" id="pendingTitle">Demande en attente</h1>
+            <p class="auth-subtitle" id="pendingSubtitle">
                 Votre compte est en attente d'approbation.
                 Vous recevrez un email d&egrave;s que votre acc&egrave;s sera activ&eacute;.
             </p>
@@ -753,8 +753,7 @@
 
                     // Check if account is approved
                     if (profile.status === 'pending') {
-                        document.getElementById('pendingEmail').textContent = currentEmail;
-                        goToScreen('pendingScreen');
+                        showPendingScreenWithRole(profile);
                         return;
                     }
 
@@ -807,8 +806,7 @@
 
                 // Check if account is approved
                 if (profile.status === 'pending') {
-                    document.getElementById('pendingEmail').textContent = currentEmail;
-                    goToScreen('pendingScreen');
+                    showPendingScreenWithRole(profile);
                     return;
                 }
 
@@ -819,6 +817,24 @@
                 console.error('Login exception:', err);
                 showStatus('passwordStatus', 'Erreur de connexion. Reessayez.', 'error');
             }
+        }
+
+        function showPendingScreenWithRole(profile) {
+            const isAdmin = profile.role === 'admin';
+
+            document.getElementById('pendingEmail').textContent = profile.email || currentEmail;
+
+            if (isAdmin) {
+                document.getElementById('pendingIcon').innerHTML = '&#128188;'; // Briefcase
+                document.getElementById('pendingTitle').textContent = "Demande en cours d'examen";
+                document.getElementById('pendingSubtitle').textContent = "Votre demande de compte entreprise est en cours d'examen. Notre équipe vous contactera sous 24h.";
+            } else {
+                document.getElementById('pendingIcon').innerHTML = '&#9203;'; // Hourglass
+                document.getElementById('pendingTitle').textContent = 'Demande en attente';
+                document.getElementById('pendingSubtitle').textContent = "Votre compte est en attente d'approbation. Vous recevrez un email dès que votre accès sera activé.";
+            }
+
+            goToScreen('pendingScreen');
         }
 
         function redirectByRole(role) {
@@ -1128,8 +1144,7 @@
 
                     if (profile) {
                         if (profile.status === 'pending') {
-                            document.getElementById('pendingEmail').textContent = profile.email;
-                            goToScreen('pendingScreen');
+                            showPendingScreenWithRole(profile);
                         } else {
                             redirectByRole(profile.role);
                         }
