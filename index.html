@@ -5922,13 +5922,13 @@
         }
         
         // Safe query wrapper that handles AbortError with timeout
-        async function safeQuery(queryFn, retries = 3, timeoutMs = 5000) {
+        async function safeQuery(queryFn, retries = 2, timeoutMs = 3000) {
             await waitForSupabase();
-            
+
             for (let attempt = 0; attempt < retries; attempt++) {
                 try {
                     // Add timeout to prevent infinite hang
-                    const timeoutPromise = new Promise((_, reject) => 
+                    const timeoutPromise = new Promise((_, reject) =>
                         setTimeout(() => reject(new Error('Query timeout')), timeoutMs)
                     );
                     
@@ -6008,15 +6008,23 @@
         }
 
         // ═══ GET CURRENT USER FROM PUBLIC.USERS TABLE ═══
-        async function loadUserProfile(authId) {
+        async function loadUserProfile(userOrEmail) {
             try {
-                const { data, error } = await safeQuery(() => 
-                    db.from('users')
-                      .select('*')
-                      .eq('id', authId)
-                      .single()
-                );
-                
+                // Get email - either passed directly or from user object
+                const email = typeof userOrEmail === 'string' ? userOrEmail : userOrEmail?.email;
+
+                if (!email) {
+                    console.error('No email provided for profile lookup');
+                    return null;
+                }
+
+                // Query by email (most reliable - always matches)
+                const { data, error } = await db
+                    .from('users')
+                    .select('*')
+                    .eq('email', email)
+                    .maybeSingle();
+
                 if (error) {
                     console.error('Error loading user profile:', error);
                     return null;
@@ -6036,8 +6044,8 @@
 
             supabaseUser = user;
 
-            // Load user profile from public.users
-            let profile = await loadUserProfile(user.id);
+            // Load user profile from public.users (by email)
+            let profile = await loadUserProfile(user.email);
 
             if (profile) {
                 // Sync missing user data from auth metadata to public.users
@@ -6562,9 +6570,9 @@
                         } else {
                             clearLoginStatus();
                             supabaseUser = data.user;
-                            
-                            // Load user profile
-                            const profile = await loadUserProfile(data.user.id);
+
+                            // Load user profile (by email)
+                            const profile = await loadUserProfile(data.user.email);
                             
                             if (profile) {
                                 currentUser = profile;
@@ -7778,7 +7786,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             try {
                 const { data: { session } } = await db.auth.getSession();
                 if (session && session.user) {
-                    const profile = await loadUserProfile(session.user.id);
+                    const profile = await loadUserProfile(session.user.email);
                     if (profile) {
                         currentUser = profile;
                         currentUserId = profile.id;
