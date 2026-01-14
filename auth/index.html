@@ -515,7 +515,7 @@
         // ═══════════════════════════════════════════════════════════════
         // SUPABASE CONFIGURATION
         // ═══════════════════════════════════════════════════════════════
-        const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.sb.co';
+        const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTcyMTksImV4cCI6MjA4MTgzMzIxOX0.8ryQm1tsdx5ox3aFJiiflmwuEGGxxH_PlobGxXMgFuQ';
 
         let sb = null;
@@ -526,7 +526,7 @@
         // Initialize Supabase
         function initSupabase() {
             try {
-                sb = window.sb.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
                     auth: {
                         persistSession: true,
                         autoRefreshToken: true,
@@ -952,7 +952,7 @@
 
                 if (session) {
                     // User is logged in - check their profile and redirect
-                    const { data: profile } = await supabase
+                    const { data: profile } = await sb
                         .from('users')
                         .select('role, status, email')
                         .eq('email', session.user.email)
