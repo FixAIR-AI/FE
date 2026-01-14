@@ -1159,8 +1159,8 @@
                                 expiresAt: data.session.expires_at
                             }));
 
-                            // Load user profile and check role
-                            const profile = await loadUserProfile(data.user.id);
+                            // Load user profile and check role (by email)
+                            const profile = await loadUserProfile(data.user.email);
 
                             if (profile) {
                                 currentManagerProfile = profile;
@@ -1280,12 +1280,13 @@
             }
         }
 
-        async function loadUserProfile(authId) {
+        async function loadUserProfile(email) {
             try {
+                // Query by email (most reliable)
                 const { data, error } = await sb
                     .from('users')
                     .select('*')
-                    .eq('id', authId)
+                    .eq('email', email)
                     .maybeSingle();
 
                 if (error) {
@@ -1624,8 +1625,8 @@
         async function handleAuthenticatedUser(user) {
             supabaseUser = user;
 
-            // Load user profile
-            const profile = await loadUserProfile(user.id);
+            // Load user profile (by email)
+            const profile = await loadUserProfile(user.email);
 
             if (profile) {
                 currentManagerProfile = profile;
