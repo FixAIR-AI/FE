@@ -1624,8 +1624,27 @@
                 console.log('Session check error:', err);
             }
 
-            // No valid session - redirect to auth page
-            console.log('No valid session found - redirecting to auth');
+            // No valid session found
+            console.log('No valid session found');
+
+            // Check if we just came from auth (has timestamp param) - prevent loop
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('t')) {
+                // We have timestamp - came from auth but session failed
+                // Show error instead of redirecting again (stops loop)
+                document.body.innerHTML = `
+                    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0D1117;font-family:sans-serif;">
+                        <div style="text-align:center;color:white;">
+                            <h1 style="color:#FF6B35;">❌ Erreur de session</h1>
+                            <p>Impossible de charger votre session.</p>
+                            <a href="https://go.fixair.ai/auth?logout=true" style="color:#FF6B35;">Retour à la connexion</a>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // No timestamp = fresh visit, redirect to auth
             window.location.replace('https://go.fixair.ai/auth');
         }
 
