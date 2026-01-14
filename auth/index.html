@@ -515,10 +515,10 @@
         // ═══════════════════════════════════════════════════════════════
         // SUPABASE CONFIGURATION
         // ═══════════════════════════════════════════════════════════════
-        const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.supabase.co';
+        const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.sb.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTcyMTksImV4cCI6MjA4MTgzMzIxOX0.8ryQm1tsdx5ox3aFJiiflmwuEGGxxH_PlobGxXMgFuQ';
 
-        let supabase = null;
+        let sb = null;
         let currentEmail = '';
         let selectedUserType = null;
         let existingUserData = null;
@@ -526,7 +526,7 @@
         // Initialize Supabase
         function initSupabase() {
             try {
-                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                sb = window.sb.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
                     auth: {
                         persistSession: true,
                         autoRefreshToken: true,
@@ -618,7 +618,7 @@
             showStatus('passwordStatus', 'Connexion...', 'info');
 
             try {
-                const { data, error } = await supabase.auth.signInWithPassword({
+                const { data, error } = await sb.auth.signInWithPassword({
                     email: currentEmail,
                     password: password
                 });
@@ -731,7 +731,7 @@
 
             try {
                 // Create auth user
-                const { data: authData, error: authError } = await supabase.auth.signUp({
+                const { data: authData, error: authError } = await sb.auth.signUp({
                     email: email,
                     password: password,
                     options: {
@@ -817,7 +817,7 @@
 
             try {
                 // Create auth user
-                const { data: authData, error: authError } = await supabase.auth.signUp({
+                const { data: authData, error: authError } = await sb.auth.signUp({
                     email: email,
                     password: password,
                     options: {
@@ -904,7 +904,7 @@
                     }
                 }
 
-                const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                const { error } = await sb.auth.resetPasswordForEmail(email, {
                     redirectTo: redirectUrl
                 });
 
@@ -930,7 +930,7 @@
         }
 
         async function logout() {
-            await supabase.auth.signOut();
+            await sb.auth.signOut();
             localStorage.clear();
             goToScreen('emailScreen');
         }
@@ -948,7 +948,7 @@
 
             // Check if user is already logged in
             try {
-                const { data: { session } } = await supabase.auth.getSession();
+                const { data: { session } } = await sb.auth.getSession();
 
                 if (session) {
                     // User is logged in - check their profile and redirect
