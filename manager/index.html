@@ -104,8 +104,10 @@
             transition: background-color 9999s ease-out 9999s !important;
             caret-color: white !important;
         }
-        .login-btn { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #FF6B35, #E55A2B); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .icon { display: inline-flex; align-items: center; justify-content: center; }
+        .login-btn { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #FF6B35, #E55A2B); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .login-btn .icon { width: 12px; height: 12px; }
+        .login-btn .icon svg { width: 100%; height: 100%; }
         .login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         /* LOGIN STATUS MESSAGES */
@@ -629,6 +631,12 @@
 
         /* ═══ PENDING SHARES BADGE ═══ */
         .pending-shares-badge { position: absolute; top: -4px; right: -4px; width: 18px; height: 18px; border-radius: 50%; background: #a78bfa; color: white; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+
+        /* ═══ RESPONSIVE - LARGER SCREENS ═══ */
+        @media (min-width: 420px) {
+            .login-btn { width: 38px; height: 38px; }
+            .login-btn .icon { width: 14px; height: 14px; }
+        }
     </style>
 </head>
 <body>
@@ -995,8 +1003,8 @@
         // ═══════════════════════════════════════════════════════════════
         // SUPABASE CONFIGURATION
         // ═══════════════════════════════════════════════════════════════
-        const SUPABASE_URL = 'https://qflwxpgcdvvjhxgqaleb.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmbHd4cGdjZHZ2amh4Z3FhbGViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzM2NzMwNDAsImV4cCI6MjA0OTI0OTA0MH0.sTjkf_yOBwHgnffoLwFqIL5K0JGtlWgzQYpEMKDwrVk';
+        const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTcyMTksImV4cCI6MjA4MTgzMzIxOX0.8ryQm1tsdx5ox3aFJiiflmwuEGGxxH_PlobGxXMgFuQ';
         
         let sb = null;
         let currentUserId = null;
