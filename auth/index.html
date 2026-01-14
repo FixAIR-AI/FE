@@ -1130,6 +1130,20 @@
                 return;
             }
 
+            // Anti-loop protection: check URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const fromLogout = urlParams.get('logout') === 'true';
+            const fromApp = urlParams.get('from'); // technician, manager, admin
+
+            // If user explicitly logged out, don't auto-redirect
+            if (fromLogout) {
+                console.log('User logged out - showing login form');
+                // Clear any stale session
+                await sb.auth.signOut();
+                console.log('FixAIR Auth ready');
+                return;
+            }
+
             // Check if user is already logged in
             try {
                 const { data: { session } } = await sb.auth.getSession();
@@ -1145,9 +1159,21 @@
                     if (profile) {
                         if (profile.status === 'pending') {
                             showPendingScreenWithRole(profile);
-                        } else {
-                            redirectByRole(profile.role);
+                            return;
                         }
+
+                        // Anti-loop: check if we'd redirect back to the same app that sent us here
+                        const targetApp = getTargetAppForRole(profile.role);
+                        if (fromApp && fromApp === targetApp) {
+                            // Loop detected! User came from app they'd be sent back to
+                            console.log('Loop detected - clearing session');
+                            await sb.auth.signOut();
+                            console.log('FixAIR Auth ready');
+                            return;
+                        }
+
+                        // Safe to redirect
+                        redirectByRole(profile.role);
                         return;
                     }
                 }
@@ -1156,6 +1182,17 @@
             }
 
             console.log('FixAIR Auth ready');
+        }
+
+        // Helper function to determine target app for a role
+        function getTargetAppForRole(role) {
+            switch (role) {
+                case 'technician': return 'technician';
+                case 'manager': return 'manager';
+                case 'admin':
+                case 'owner': return 'admin';
+                default: return 'technician';
+            }
         }
 
         // Start when DOM is ready
