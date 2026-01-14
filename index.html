@@ -4810,58 +4810,19 @@
         </defs>
     </svg>
 
-    <!-- LOGIN -->
-    <div class="screen login-screen active" id="loginScreen">
-        <div class="scan-line"></div>
-        <div class="login-container">
-            <div class="login-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
-            <h1 class="login-title">Bienvenue</h1>
-            <p class="login-sub">Assistant IA pour techniciens HVAC</p>
-            <div class="login-bar">
-                <div class="login-icon-slot">
-                    <div class="login-mini" id="loginSphere"><div class="glass-sphere"><div class="sphere-fog-container"><div class="sphere-fog"></div><div class="sphere-fog-2"></div></div></div></div>
-                    <button type="button" class="login-back" id="loginBack" onclick="prevLoginStep()"><svg viewBox="0 0 24 24"><use href="#icon-arrow-left"/></svg></button>
-                </div>
-                <div class="login-input-container">
-                    <div class="login-input-slider" id="loginSlider">
-                        <div class="login-input-slide">
-                            <input type="email" class="login-input" id="loginEmail" placeholder="Quelle est votre adresse email ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
-                        </div>
-                        <div class="login-input-slide">
-                            <input type="password" class="login-input" id="loginPassword" placeholder="Quel est votre mot de passe ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
-                        </div>
-                        <div class="login-input-slide">
-                            <input type="tel" class="login-input" id="loginPhone" placeholder="Quel est votre numéro de téléphone ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
-                        </div>
-                        <div class="login-input-slide">
-                            <input type="text" class="login-input" id="loginName" placeholder="Quel est votre prénom ?" onkeypress="if(event.key==='Enter')completeLogin()">
-                        </div>
-                    </div>
-                </div>
-                <button type="button" class="login-btn" id="loginBtn" onclick="nextLoginStep()"><span class="icon"><svg><use href="#icon-arrow-right"/></svg></span></button>
+    <!-- LOADING SCREEN -->
+    <div class="screen active" id="loadingScreen" style="justify-content: center; align-items: center;">
+        <div style="text-align: center;">
+            <div class="login-logo" style="margin: 0 auto 24px;">
+                <svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg>
             </div>
-            <div class="login-status" id="loginStatus"></div>
-        </div>
-    </div>
-
-    <!-- EMAIL CONFIRMATION SCREEN -->
-    <div class="screen pending-screen" id="emailConfirmScreen">
-        <div class="scan-line"></div>
-        <div class="pending-container">
-            <div class="pending-logo">
-                <svg viewBox="0 0 235 48" style="height: 40px; color: var(--copilot);"><use href="#icon-fixair-logo"/></svg>
+            <div class="glass-sphere" style="margin: 0 auto 16px;">
+                <div class="sphere-fog-container">
+                    <div class="sphere-fog"></div>
+                    <div class="sphere-fog-2"></div>
+                </div>
             </div>
-            <h1 class="pending-title">Vérifiez votre email</h1>
-            <p class="pending-subtitle">
-                Un email de confirmation a été envoyé à votre adresse (vérifiez vos spams). Cliquez sur le lien pour activer votre compte.
-            </p>
-            <div class="pending-email" id="confirmEmail"></div>
-            <button class="pending-logout" onclick="resendConfirmation()" style="margin-top: 8px; border-color: var(--copilot); color: var(--copilot);">
-                Renvoyer l'email
-            </button>
-            <button class="pending-logout" onclick="backToLogin()">
-                Retour à la connexion
-            </button>
+            <div style="color: rgba(255,255,255,0.5); font-size: 14px;">Chargement...</div>
         </div>
     </div>
 
@@ -6143,7 +6104,7 @@
                     }
                 }
 
-                document.getElementById('loginScreen').classList.remove('active');
+                document.getElementById('loadingScreen').classList.remove('active');
                 document.getElementById('passwordResetScreen')?.classList.remove('active');
                 document.getElementById('mainApp').classList.add('active');
 
@@ -6158,9 +6119,8 @@
 
         // ═══ HELPER: Show password reset screen ═══
         function showPasswordResetScreen() {
-            document.getElementById('loginScreen').classList.remove('active');
+            document.getElementById('loadingScreen').classList.remove('active');
             document.getElementById('pendingScreen')?.classList.remove('active');
-            document.getElementById('emailConfirmScreen')?.classList.remove('active');
             document.getElementById('mainApp').classList.remove('active');
             document.getElementById('passwordResetScreen').classList.add('active');
         }
@@ -6266,8 +6226,9 @@
                 } catch (err) {
                     // Error restoring session
                 }
-                // No valid session found
-                isReady = true;
+                // No valid session found - redirect to auth page
+                console.log('No valid session found - redirecting to auth');
+                window.location.href = 'https://go.fixair.ai/auth';
             }
         }
 
@@ -6437,31 +6398,16 @@
                 statusEl.style.background = 'rgba(16,185,129,0.2)';
                 statusEl.style.border = '1px solid rgba(16,185,129,0.5)';
                 statusEl.style.color = '#10b981';
-                statusEl.textContent = 'Mot de passe mis à jour avec succès !';
+                statusEl.textContent = 'Mot de passe mis à jour ! Redirection...';
 
-                // Reset the recovery flag
                 isPasswordRecovery = false;
-
-                // Clear the input fields
-                document.getElementById('newPasswordInput').value = '';
-                document.getElementById('confirmPasswordInput').value = '';
-
-                // Sign out to force fresh login with new password
                 localStorage.removeItem('supabase.auth.token');
                 await db.auth.signOut();
 
-                // Change the update button to a "Se connecter" button
-                const updateBtn = document.querySelector('#passwordResetScreen button[onclick="setNewPassword()"]');
-                if (updateBtn) {
-                    updateBtn.textContent = 'Se connecter';
-                    updateBtn.onclick = goToLoginFromPasswordReset;
-                }
-
-                // Hide the cancel button
-                const cancelBtn = document.querySelector('#passwordResetScreen button[onclick="cancelPasswordReset()"]');
-                if (cancelBtn) {
-                    cancelBtn.style.display = 'none';
-                }
+                // Redirect to auth page after brief delay
+                setTimeout(() => {
+                    window.location.href = 'https://go.fixair.ai/auth';
+                }, 1500);
 
             } catch (err) {
                 console.error('❌ Password update exception:', err);
@@ -6474,23 +6420,7 @@
 
         // ═══ GO TO LOGIN FROM PASSWORD RESET ═══
         function goToLoginFromPasswordReset() {
-            document.getElementById('passwordResetScreen').classList.remove('active');
-            document.getElementById('loginScreen').classList.add('active');
-
-            // Reset the password reset screen for next use
-            const statusEl = document.getElementById('passwordResetStatus');
-            statusEl.style.display = 'none';
-
-            const updateBtn = document.querySelector('#passwordResetScreen button[onclick="goToLoginFromPasswordReset()"]');
-            if (updateBtn) {
-                updateBtn.textContent = 'Mettre à jour le mot de passe';
-                updateBtn.onclick = setNewPassword;
-            }
-
-            const cancelBtn = document.querySelector('#passwordResetScreen button[onclick="cancelPasswordReset()"]');
-            if (cancelBtn) {
-                cancelBtn.style.display = '';
-            }
+            window.location.href = 'https://go.fixair.ai/auth';
         }
 
         // ═══ CANCEL PASSWORD RESET ═══
@@ -6498,18 +6428,7 @@
             isPasswordRecovery = false;
             localStorage.removeItem('supabase.auth.token');
             db.auth.signOut();
-
-            // Hide password reset screen and show login
-            document.getElementById('passwordResetScreen').classList.remove('active');
-            document.getElementById('pendingScreen').classList.remove('active');
-            document.getElementById('emailConfirmScreen').classList.remove('active');
-            document.getElementById('mainApp').classList.remove('active');
-            document.getElementById('loginScreen').classList.add('active');
-
-            // Clear inputs
-            document.getElementById('newPasswordInput').value = '';
-            document.getElementById('confirmPasswordInput').value = '';
-            document.getElementById('passwordResetStatus').style.display = 'none';
+            window.location.href = 'https://go.fixair.ai/auth';
         }
 
         // LOGIN STEPS
@@ -6775,21 +6694,10 @@
         }
 
         // ═══ SCREEN HELPER FUNCTIONS ═══
-        function showEmailConfirmScreen(email) {
-            clearLoginStatus();
-            document.getElementById('confirmEmail').textContent = email;
-            document.getElementById('loginScreen').classList.remove('active');
-            document.getElementById('mainApp').classList.remove('active');
-            document.getElementById('pendingScreen').classList.remove('active');
-            document.getElementById('emailConfirmScreen').classList.add('active');
-        }
-
         function showPendingScreen(email) {
-            clearLoginStatus();
             document.getElementById('pendingEmail').textContent = email;
-            document.getElementById('loginScreen').classList.remove('active');
+            document.getElementById('loadingScreen').classList.remove('active');
             document.getElementById('mainApp').classList.remove('active');
-            document.getElementById('emailConfirmScreen').classList.remove('active');
             document.getElementById('pendingScreen').classList.add('active');
         }
 
@@ -6811,49 +6719,17 @@
         }
 
         function backToLogin() {
-            clearLoginStatus();
-            document.getElementById('emailConfirmScreen').classList.remove('active');
-            document.getElementById('pendingScreen').classList.remove('active');
-            document.getElementById('loginScreen').classList.add('active');
-            
-            loginStep = 0;
-            document.getElementById('loginEmail').value = '';
-            document.getElementById('loginPassword').value = '';
-            document.getElementById('loginPhone').value = '';
-            document.getElementById('loginName').value = '';
-            updateLoginUI();
+            window.location.href = 'https://go.fixair.ai/auth';
         }
 
         async function logoutFromPending() {
             await db.auth.signOut();
-            localStorage.removeItem('supabase.auth.token');  // Clear manual session storage
-            supabaseUser = null;
-            currentUser = null;
-            isPasswordRecovery = false;
-            localStorage.removeItem('fixair_onboarding_done');
-            clearLoginStatus();
-            
-            document.getElementById('pendingScreen').classList.remove('active');
-            document.getElementById('emailConfirmScreen').classList.remove('active');
-            document.getElementById('loginScreen').classList.add('active');
-            
-            loginStep = 0;
-            document.getElementById('loginEmail').value = '';
-            document.getElementById('loginPassword').value = '';
-            document.getElementById('loginPhone').value = '';
-            document.getElementById('loginName').value = '';
-            document.getElementById('loginSlider').style.transform = 'translateX(0)';
-            document.getElementById('loginSphere').style.display = 'flex';
-            document.getElementById('loginBack').style.display = 'none';
-            document.getElementById('loginBtn').innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
-            document.getElementById('loginBtn').onclick = nextLoginStep;
-            
-            toast('Déconnecté');
+            localStorage.removeItem('supabase.auth.token');
+            window.location.href = 'https://go.fixair.ai/auth';
         }
 
         async function doLogin() {
-            document.getElementById('loginScreen').classList.remove('active');
-            document.getElementById('emailConfirmScreen').classList.remove('active');
+            document.getElementById('loadingScreen').classList.remove('active');
             document.getElementById('pendingScreen').classList.remove('active');
             document.getElementById('mainApp').classList.add('active');
 
@@ -6864,34 +6740,8 @@
 
         async function logout() {
             await db.auth.signOut();
-            localStorage.removeItem('supabase.auth.token');  // Clear manual session storage
-            supabaseUser = null;
-            currentUser = null;
-            isPasswordRecovery = false;
-            loginStep = 0;
-            isNewUser = false;
-            onboardingComplete = false;
-            localStorage.removeItem('fixair_onboarding_done');
-            clearLoginStatus();
-            
-            document.getElementById('profileView').classList.remove('active');
-            document.querySelector('.onboarding-section').classList.remove('hidden');
-            document.getElementById('homepageContent').classList.remove('active');
-            
-            document.getElementById('loginEmail').value = '';
-            document.getElementById('loginPassword').value = '';
-            document.getElementById('loginPhone').value = '';
-            document.getElementById('loginName').value = '';
-            document.getElementById('loginSlider').style.transform = 'translateX(0)';
-            document.getElementById('loginSphere').style.display = 'flex';
-            document.getElementById('loginBack').style.display = 'none';
-            document.getElementById('loginBtn').innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
-            document.getElementById('loginBtn').onclick = nextLoginStep;
-            
-            document.getElementById('mainApp').classList.remove('active');
-            document.getElementById('loginScreen').classList.add('active');
-            
-            toast('Déconnecté');
+            localStorage.removeItem('supabase.auth.token');
+            window.location.href = 'https://go.fixair.ai/auth';
         }
 
         // PROFILE
