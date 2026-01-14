@@ -6228,7 +6228,7 @@
                 }
                 // No valid session found - redirect to auth page
                 console.log('No valid session found - redirecting to auth');
-                window.location.href = 'https://go.fixair.ai/auth';
+                window.location.href = 'https://go.fixair.ai/auth?from=technician';
             }
         }
 
@@ -6406,7 +6406,7 @@
 
                 // Redirect to auth page after brief delay
                 setTimeout(() => {
-                    window.location.href = 'https://go.fixair.ai/auth';
+                    window.location.href = 'https://go.fixair.ai/auth?from=technician';
                 }, 1500);
 
             } catch (err) {
@@ -6420,7 +6420,7 @@
 
         // ═══ GO TO LOGIN FROM PASSWORD RESET ═══
         function goToLoginFromPasswordReset() {
-            window.location.href = 'https://go.fixair.ai/auth';
+            window.location.href = 'https://go.fixair.ai/auth?from=technician';
         }
 
         // ═══ CANCEL PASSWORD RESET ═══
@@ -6428,7 +6428,7 @@
             isPasswordRecovery = false;
             localStorage.removeItem('supabase.auth.token');
             db.auth.signOut();
-            window.location.href = 'https://go.fixair.ai/auth';
+            window.location.href = 'https://go.fixair.ai/auth?from=technician';
         }
 
         // LOGIN STEPS
@@ -6719,13 +6719,13 @@
         }
 
         function backToLogin() {
-            window.location.href = 'https://go.fixair.ai/auth';
+            window.location.href = 'https://go.fixair.ai/auth?from=technician';
         }
 
         async function logoutFromPending() {
             await db.auth.signOut();
             localStorage.removeItem('supabase.auth.token');
-            window.location.href = 'https://go.fixair.ai/auth';
+            window.location.href = 'https://go.fixair.ai/auth?logout=true';
         }
 
         async function doLogin() {
@@ -6741,7 +6741,7 @@
         async function logout() {
             await db.auth.signOut();
             localStorage.removeItem('supabase.auth.token');
-            window.location.href = 'https://go.fixair.ai/auth';
+            window.location.href = 'https://go.fixair.ai/auth?logout=true';
         }
 
         // PROFILE

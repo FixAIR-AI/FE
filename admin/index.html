@@ -1371,13 +1371,13 @@
         }
 
         function backToLogin() {
-            window.location.href = 'https://go.fixair.ai/auth';
+            window.location.href = 'https://go.fixair.ai/auth?from=admin';
         }
 
         async function logoutFromPending() {
             await sb.auth.signOut();
             localStorage.removeItem('supabase.auth.token');
-            window.location.href = 'https://go.fixair.ai/auth';
+            window.location.href = 'https://go.fixair.ai/auth?logout=true';
         }
 
         async function setNewPassword() {
@@ -1431,7 +1431,7 @@
 
                 // Redirect to auth page after brief delay
                 setTimeout(() => {
-                    window.location.href = 'https://go.fixair.ai/auth';
+                    window.location.href = 'https://go.fixair.ai/auth?from=admin';
                 }, 1500);
 
             } catch (err) {
@@ -1446,7 +1446,7 @@
             isPasswordRecovery = false;
             localStorage.removeItem('supabase.auth.token');
             sb.auth.signOut();
-            window.location.href = 'https://go.fixair.ai/auth';
+            window.location.href = 'https://go.fixair.ai/auth?from=admin';
         }
 
         function showMainApp() {
@@ -1544,7 +1544,7 @@
             await sb.auth.signOut();
             localStorage.removeItem('supabase.auth.token');
             cleanupSubscriptions();
-            window.location.href = 'https://go.fixair.ai/auth';
+            window.location.href = 'https://go.fixair.ai/auth?logout=true';
         }
 
         // Initialize auth on page load
@@ -1563,7 +1563,7 @@
 
                     if (error) {
                         isPasswordRecovery = false;
-                        window.location.href = 'https://go.fixair.ai/auth';
+                        window.location.href = 'https://go.fixair.ai/auth?from=admin';
                         return;
                     }
 
@@ -1583,7 +1583,7 @@
                     }
                 } catch (err) {
                     isPasswordRecovery = false;
-                    window.location.href = 'https://go.fixair.ai/auth';
+                    window.location.href = 'https://go.fixair.ai/auth?from=admin';
                     return;
                 }
             }
@@ -1618,7 +1618,7 @@
 
             // No valid session - redirect to auth page
             console.log('No valid session found - redirecting to auth');
-            window.location.href = 'https://go.fixair.ai/auth';
+            window.location.href = 'https://go.fixair.ai/auth?from=admin';
         }
 
         async function handleAuthenticatedUser(user) {
