@@ -1136,32 +1136,27 @@
                     if (publicUser && publicUser.id) {
                         isNewUser = false;
                         existingUserName = publicUser.first_name || '';
-                    } else {
-                        isNewUser = true;
-                    }
 
-                    const pwdInput = document.getElementById('loginPasswordInput');
-                    if (isNewUser) {
-                        pwdInput.placeholder = 'Créez votre mot de passe';
-                        setLoginStatus('Nouveau compte ! Choisissez un mot de passe', 'success');
-                    } else {
+                        const pwdInput = document.getElementById('loginPasswordInput');
                         pwdInput.placeholder = 'Entrez votre mot de passe';
                         if (existingUserName) {
                             setLoginStatus('Bienvenue ' + existingUserName + ' ! Entrez votre mot de passe', 'info');
                         } else {
                             setLoginStatus('Bienvenue ! Entrez votre mot de passe', 'info');
                         }
-                    }
 
-                    loginStep = 1;
-                    updateLoginUI();
+                        loginStep = 1;
+                        updateLoginUI();
+                    } else {
+                        // Manager app does not allow new signups - managers are created by admins
+                        isNewUser = true;
+                        setLoginStatus('Compte non trouve. Les comptes manager sont crees sur invitation uniquement.', 'error', true);
+                        // Don't advance to next step
+                    }
 
                 } catch (error) {
                     console.error('Check email error:', error);
-                    setLoginStatus('Nouveau compte ! Choisissez un mot de passe', 'success');
-                    isNewUser = true;
-                    loginStep = 1;
-                    updateLoginUI();
+                    setLoginStatus('Erreur de connexion. Reessayez.', 'error');
                 } finally {
                     btn.disabled = false;
                     btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
@@ -1178,11 +1173,9 @@
                 }
 
                 if (isNewUser) {
-                    // New user: go to phone step
-                    clearLoginStatus();
-                    setLoginStatus('Entrez votre numéro de téléphone', 'info');
-                    loginStep = 2;
-                    updateLoginUI();
+                    // Manager app does not allow new signups - this should not be reached
+                    setLoginStatus('Les inscriptions ne sont pas autorisees sur cette application.', 'error');
+                    return;
                 } else {
                     // Existing user: try login
                     btn.disabled = true;
@@ -1558,10 +1551,8 @@
             document.getElementById('loginBtn').innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
             document.getElementById('loginBtn').onclick = nextLoginStep;
 
-            document.getElementById('mainApp').classList.remove('active');
-            document.getElementById('loginScreen').classList.add('active');
-
-            toast('Déconnecté');
+            // Redirect to auth page
+            window.location.href = 'https://go.fixair.ai/auth';
         }
 
         // Initialize auth on page load
