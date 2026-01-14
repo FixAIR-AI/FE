@@ -5897,10 +5897,9 @@
             // We handle URL tokens manually in initAuth()
             db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
                 auth: {
-                    persistSession: false,     // Disabled - we handle manually to avoid lock issues
-                    autoRefreshToken: false,   // Disabled - we handle manually
-                    detectSessionInUrl: false, // Disabled - we parse tokens manually above
-                    flowType: 'implicit'
+                    persistSession: true,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: true
                 }
             });
 
