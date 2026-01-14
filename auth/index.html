@@ -845,19 +845,21 @@
             // Set flag BEFORE redirecting to detect loops
             localStorage.setItem(REDIRECT_FLAG, Date.now().toString());
 
+            // Add timestamp to URL to detect if we just came from auth
+            const timestamp = Date.now();
             let url;
             switch (role) {
                 case 'technician':
-                    url = 'https://go.fixair.ai';
+                    url = `https://go.fixair.ai?t=${timestamp}`;
                     break;
                 case 'manager':
-                    url = 'https://go.fixair.ai/manager';
+                    url = `https://go.fixair.ai/manager?t=${timestamp}`;
                     break;
                 case 'admin':
-                    url = 'https://go.fixair.ai/admin';
+                    url = `https://go.fixair.ai/admin?t=${timestamp}`;
                     break;
                 default:
-                    url = 'https://go.fixair.ai';
+                    url = `https://go.fixair.ai?t=${timestamp}`;
             }
 
             console.log('Redirecting to:', url);
@@ -1182,16 +1184,19 @@
                     return;
                 }
 
-                // User is logged in - check their profile
+                // User is logged in - get email from session
+                const email = session.user.email;
+
+                // Query profile by EMAIL (more reliable than auth_id)
                 const { data: profile } = await sb
                     .from('users')
                     .select('role, status, first_name')
-                    .eq('auth_id', session.user.id)
+                    .eq('email', email)
                     .maybeSingle();
 
                 if (!profile) {
                     // No profile - sign out and show login
-                    console.log('No profile found - clearing session');
+                    console.log('No profile found for email:', email);
                     await sb.auth.signOut();
                     showLoginForm();
                     return;
