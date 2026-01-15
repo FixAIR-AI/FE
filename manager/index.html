@@ -792,13 +792,7 @@
                             <input type="email" class="login-input" id="loginEmailInput" placeholder="Quelle est votre adresse email ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
                         </div>
                         <div class="login-input-slide">
-                            <input type="password" class="login-input" id="loginPasswordInput" placeholder="Quel est votre mot de passe ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
-                        </div>
-                        <div class="login-input-slide">
-                            <input type="tel" class="login-input" id="loginPhoneInput" placeholder="Quel est votre numéro de téléphone ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
-                        </div>
-                        <div class="login-input-slide">
-                            <input type="text" class="login-input" id="loginNameInput" placeholder="Quel est votre prénom ?" onkeypress="if(event.key==='Enter')completeSignup()">
+                            <input type="password" class="login-input" id="loginPasswordInput" placeholder="Entrez votre mot de passe" onkeypress="if(event.key==='Enter')nextLoginStep()">
                         </div>
                     </div>
                 </div>
@@ -1188,10 +1182,11 @@
             try {
                 sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
                     auth: {
-                        persistSession: false,
-                        autoRefreshToken: false,
+                        lock: false,           // CRITICAL: Disable lock to prevent AbortError
+                        persistSession: true,  // Enable session persistence
+                        autoRefreshToken: true,
                         detectSessionInUrl: false,
-                        flowType: 'implicit'
+                        storageKey: 'fixair-auth'
                     }
                 });
                 console.log('✅ Supabase initialized');
@@ -1268,24 +1263,35 @@
                         .maybeSingle();
 
                     if (publicUser && publicUser.id) {
+                        // User exists - check role
+                        if (publicUser.role && !['manager', 'admin', 'owner'].includes(publicUser.role)) {
+                            // Wrong role - redirect to appropriate app
+                            if (publicUser.role === 'technician') {
+                                setLoginStatus('Ce compte est un compte technicien. Redirection...', 'info');
+                                setTimeout(() => { window.location.replace('https://go.fixair.ai'); }, 1500);
+                            } else {
+                                setLoginStatus('Ce compte n\'est pas un compte manager', 'error');
+                            }
+                            return;
+                        }
+
                         isNewUser = false;
                         existingUserName = publicUser.first_name || '';
 
-                        const pwdInput = document.getElementById('loginPasswordInput');
-                        pwdInput.placeholder = 'Entrez votre mot de passe';
                         if (existingUserName) {
-                            setLoginStatus('Bienvenue ' + existingUserName + ' ! Entrez votre mot de passe', 'info');
+                            setLoginStatus('Bienvenue ' + existingUserName + ' !', 'success');
                         } else {
-                            setLoginStatus('Bienvenue ! Entrez votre mot de passe', 'info');
+                            setLoginStatus('Bienvenue !', 'success');
                         }
 
                         loginStep = 1;
                         updateLoginUI();
                     } else {
-                        // Manager app does not allow new signups - managers are created by admins
-                        isNewUser = true;
-                        setLoginStatus('Compte non trouve. Les comptes manager sont crees sur invitation uniquement.', 'error', true);
-                        // Don't advance to next step
+                        // User doesn't exist - redirect to /auth for signup
+                        setLoginStatus('Redirection vers la page d\'inscription...', 'info');
+                        setTimeout(() => {
+                            window.location.href = 'https://go.fixair.ai/auth?email=' + encodeURIComponent(email) + '&from=manager';
+                        }, 1000);
                     }
 
                 } catch (error) {
@@ -1297,87 +1303,62 @@
                 }
 
             } else if (loginStep === 1) {
-                // Step 1: Password
+                // Step 1: Password - login existing user
                 const email = document.getElementById('loginEmailInput').value.trim();
                 const password = document.getElementById('loginPasswordInput').value;
 
-                if (password.length < 6) {
-                    setLoginStatus('Mot de passe: 6 caractères minimum', 'error');
+                if (!password) {
+                    setLoginStatus('Veuillez entrer votre mot de passe', 'error');
                     return;
                 }
 
-                if (isNewUser) {
-                    // Manager app does not allow new signups - this should not be reached
-                    setLoginStatus('Les inscriptions ne sont pas autorisees sur cette application.', 'error');
-                    return;
-                } else {
-                    // Existing user: try login
-                    btn.disabled = true;
-                    btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
+                btn.disabled = true;
+                btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
+                setLoginStatus('Connexion...', 'info');
 
-                    try {
-                        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+                try {
+                    const { data, error } = await sb.auth.signInWithPassword({ email, password });
 
-                        if (error) {
-                            setLoginStatus('Mot de passe incorrect', 'error', true);
-                        } else {
-                            clearLoginStatus();
-                            supabaseUser = data.user;
-
-                            // Persist session
-                            localStorage.setItem('supabase.auth.token', JSON.stringify({
-                                currentSession: data.session,
-                                expiresAt: data.session.expires_at
-                            }));
-
-                            // Load user profile and check role
-                            const profile = await loadUserProfile(data.user.id);
-
-                            if (profile) {
-                                currentManagerProfile = profile;
-                                currentUserId = profile.id;
-
-                                // Check approval status
-                                if (profile.status !== 'approved' && profile.status !== 'active') {
-                                    showPendingScreen(profile.email);
-                                    return;
-                                }
-
-                                // Check role - only manager or admin can access
-                                if (profile.role && !['manager', 'admin', 'owner'].includes(profile.role)) {
-                                    showAccessDeniedScreen(profile.email);
-                                    return;
-                                }
-
-                                // Success - show main app
-                                toast('Bienvenue ' + (profile.first_name || 'Manager') + ' !');
-                                showMainApp();
-                            } else {
-                                setLoginStatus('Erreur: profil non trouvé', 'error');
-                            }
-                        }
-                    } catch (error) {
-                        setLoginStatus('Erreur de connexion au serveur', 'error');
-                        console.error('Login error:', error);
-                    } finally {
-                        btn.disabled = false;
-                        btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+                    if (error) {
+                        setLoginStatus('Mot de passe incorrect', 'error', true);
+                        return;
                     }
-                }
-            } else if (loginStep === 2) {
-                // Step 2: Phone number
-                const phone = document.getElementById('loginPhoneInput').value.trim();
-                if (!phone || phone.length < 8) {
-                    setLoginStatus('Veuillez entrer un numéro de téléphone valide', 'error');
-                    return;
-                }
 
-                clearLoginStatus();
-                setLoginStatus('Comment vous appelez-vous ?', 'info');
-                loginStep = 3;
-                document.getElementById('loginBtn').innerHTML = '<span class="icon"><svg><use href="#icon-check"/></svg></span>';
-                document.getElementById('loginBtn').onclick = completeSignup;
-                updateLoginUI();
+                    clearLoginStatus();
+                    supabaseUser = data.user;
+
+                    // Load user profile and check role
+                    const profile = await loadUserProfile(data.user.id);
+
+                    if (profile) {
+                        currentManagerProfile = profile;
+                        currentUserId = profile.id;
+
+                        // Check approval status
+                        if (profile.status !== 'approved' && profile.status !== 'active') {
+                            showPendingScreen(profile.email);
+                            return;
+                        }
+
+                        // Check role - only manager or admin can access
+                        if (profile.role && !['manager', 'admin', 'owner'].includes(profile.role)) {
+                            showAccessDeniedScreen(profile.email);
+                            return;
+                        }
+
+                        // Success - show main app
+                        toast('Bienvenue ' + (profile.first_name || 'Manager') + ' !');
+                        showMainApp();
+                    } else {
+                        setLoginStatus('Erreur: profil non trouvé', 'error');
+                    }
+                } catch (error) {
+                    setLoginStatus('Erreur de connexion au serveur', 'error');
+                    console.error('Login error:', error);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+                }
             }
         }
 
@@ -1392,62 +1373,6 @@
                 loginStep--;
                 clearLoginStatus();
                 updateLoginUI();
-                if (loginStep < 3) {
-                    document.getElementById('loginBtn').innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
-                    document.getElementById('loginBtn').onclick = nextLoginStep;
-                }
-            }
-        }
-
-        async function completeSignup() {
-            const name = document.getElementById('loginNameInput').value.trim();
-            if (!name) { setLoginStatus('Entrez votre prénom', 'error'); return; }
-
-            const email = document.getElementById('loginEmailInput').value.trim();
-            const password = document.getElementById('loginPasswordInput').value;
-            const phone = document.getElementById('loginPhoneInput').value.trim();
-
-            const btn = document.getElementById('loginBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-check"/></svg></span>';
-
-            try {
-                const { data, error } = await sb.auth.signUp({
-                    email,
-                    password,
-                    options: {
-                        data: { first_name: name, phone: phone }
-                    }
-                });
-
-                if (error) {
-                    const errMsg = error.message.toLowerCase();
-                    if (errMsg.includes('already registered') || errMsg.includes('already exists')) {
-                        setLoginStatus('Ce compte existe déjà. Essayez de vous connecter.', 'error', true);
-                        isNewUser = false;
-                        loginStep = 0;
-                        updateLoginUI();
-                    } else {
-                        setLoginStatus(error.message || 'Erreur lors de la création du compte', 'error');
-                    }
-                    return;
-                }
-
-                if (data.user && !data.user.email_confirmed_at) {
-                    showEmailConfirmScreen(email);
-                    toast('Vérifiez votre email !');
-                } else if (data.user) {
-                    supabaseUser = data.user;
-                    showPendingScreen(email);
-                    toast('Compte créé !');
-                }
-
-            } catch (error) {
-                setLoginStatus('Erreur de connexion', 'error');
-                console.error('Register error:', error);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<span class="icon"><svg><use href="#icon-check"/></svg></span>';
             }
         }
 

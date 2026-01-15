@@ -591,9 +591,11 @@
             try {
                 sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
                     auth: {
+                        lock: false,           // CRITICAL: Disable lock to prevent AbortError
                         persistSession: true,
                         autoRefreshToken: true,
-                        detectSessionInUrl: true
+                        detectSessionInUrl: false,
+                        storageKey: 'fixair-auth'
                     }
                 });
                 console.log('Supabase initialized');
@@ -1112,6 +1114,15 @@
                 return;
             }
 
+            // Check URL parameters (redirected from /manager, /admin, /technician)
+            const urlParams = new URLSearchParams(window.location.search);
+            const emailParam = urlParams.get('email');
+            const fromParam = urlParams.get('from');
+
+            if (emailParam) {
+                console.log('Email param received:', emailParam, 'from:', fromParam);
+            }
+
             // Check if user is already logged in
             try {
                 const { data: { session } } = await sb.auth.getSession();
@@ -1136,6 +1147,16 @@
                 }
             } catch (err) {
                 console.error('Session check error:', err);
+            }
+
+            // If email parameter provided, pre-fill and go to user type selection
+            if (emailParam) {
+                const emailInput = document.getElementById('loginEmailInput');
+                if (emailInput) {
+                    emailInput.value = emailParam;
+                }
+                // Go directly to user type selection screen
+                goToScreen('userTypeScreen');
             }
 
             console.log('FixAIR Auth ready');
