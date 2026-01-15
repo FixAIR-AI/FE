@@ -581,34 +581,46 @@
         const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTcyMTksImV4cCI6MjA4MTgzMzIxOX0.8ryQm1tsdx5ox3aFJiiflmwuEGGxxH_PlobGxXMgFuQ';
 
-        let sb = null;
+        // ANTI-LOOP: localStorage flag to detect redirect loops
+        const REDIRECT_FLAG = 'fixair_redirect_in_progress';
+        const REDIRECT_TIMEOUT = 5000; // 5 seconds
+
+        // Create Supabase client ONCE at top level
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: false, // Disable to prevent AbortError
+                storageKey: 'fixair-auth',
+                storage: window.localStorage
+            }
+        });
+        console.log('Supabase initialized');
+
         let currentEmail = '';
         let selectedUserType = null;
         let existingUserData = null;
         let loginStep = 0; // 0 = email, 1 = password
 
-        // ANTI-LOOP: localStorage flag to detect redirect loops
-        const REDIRECT_FLAG = 'fixair_redirect_in_progress';
-        const REDIRECT_TIMEOUT = 5000; // 5 seconds
-
-        // Initialize Supabase with robust error handling
-        function initSupabase() {
-            try {
-                sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-                    auth: {
-                        persistSession: true,
-                        autoRefreshToken: true,
-                        detectSessionInUrl: true,
-                        storageKey: 'fixair-auth',
-                        storage: window.localStorage
+        // Safe getSession with retry for AbortError
+        async function safeGetSession(retries = 3) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const result = await sb.auth.getSession();
+                    if (result.error?.message?.includes('AbortError')) {
+                        await new Promise(r => setTimeout(r, 200 * (i + 1)));
+                        continue;
                     }
-                });
-                console.log('Supabase initialized');
-                return true;
-            } catch (err) {
-                console.error('Supabase init error:', err);
-                return false;
+                    return result;
+                } catch (err) {
+                    if (err.message?.includes('AbortError') && i < retries - 1) {
+                        await new Promise(r => setTimeout(r, 200 * (i + 1)));
+                        continue;
+                    }
+                    return { data: { session: null }, error: err };
+                }
             }
+            return { data: { session: null }, error: { message: 'Failed after retries' } };
         }
 
         // ═══════════════════════════════════════════════════════════════
@@ -1140,11 +1152,6 @@
         async function init() {
             console.log('Initializing FixAIR Auth...');
 
-            if (!initSupabase()) {
-                console.error('Failed to initialize Supabase');
-                return;
-            }
-
             // Check URL params
             const urlParams = new URLSearchParams(window.location.search);
             const fromLogout = urlParams.get('logout') === 'true';
@@ -1153,7 +1160,7 @@
             if (fromLogout) {
                 console.log('User logged out - clearing session and showing login');
                 localStorage.removeItem(REDIRECT_FLAG);
-                await sb.auth.signOut();
+                try { await sb.auth.signOut(); } catch(e) {}
                 showLoginForm();
                 return;
             }
@@ -1168,7 +1175,7 @@
                 if (now - redirectTime < REDIRECT_TIMEOUT) {
                     console.log('Redirect loop detected - clearing session and showing login');
                     localStorage.removeItem(REDIRECT_FLAG);
-                    await sb.auth.signOut();
+                    try { await sb.auth.signOut(); } catch(e) {}
                     showLoginForm();
                     return;
                 }
@@ -1177,11 +1184,11 @@
                 localStorage.removeItem(REDIRECT_FLAG);
             }
 
-            // Check if user is already logged in
+            // Check if user is already logged in using safe retry
             try {
-                const { data: { session } } = await sb.auth.getSession();
+                const { data: { session }, error } = await safeGetSession();
 
-                if (!session) {
+                if (error || !session) {
                     showLoginForm();
                     return;
                 }
@@ -1199,7 +1206,7 @@
                 if (!profile) {
                     // No profile - sign out and show login
                     console.log('No profile found for email:', email);
-                    await sb.auth.signOut();
+                    try { await sb.auth.signOut(); } catch(e) {}
                     showLoginForm();
                     return;
                 }
