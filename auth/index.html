@@ -256,9 +256,7 @@
         .status-message:empty { display: none; }
         .status-message.success { color: #22c55e; }
         .status-message.error { color: #ef4444; }
-        .status-message.info { color: rgba(255,255,255,0.7); }
-        .status-message a { color: inherit; text-decoration: underline; cursor: pointer; margin-left: 8px; }
-        .status-message a:hover { opacity: 0.8; }
+        .status-message.info { color: var(--text-dim); }
 
         /* Email Display */
         .email-display {
@@ -345,6 +343,7 @@
                 </button>
             </div>
             <div class="status-message" id="loginStatus"></div>
+            <button class="btn-link" id="forgotPasswordLink" onclick="showPasswordReset()" style="margin-top: 16px; display: none;">Mot de passe oubli&eacute; ?</button>
         </div>
     </div>
 
@@ -496,7 +495,7 @@
             <div class="pending-icon">&#9993;</div>
             <h1 class="auth-title">V&eacute;rifiez votre email</h1>
             <p class="auth-subtitle">
-                Un email de confirmation a &eacute;t&eacute; envoy&eacute; &agrave; votre adresse (v&eacute;rifiez vos spams).
+                Nous avons envoy&eacute; un email de confirmation &agrave; votre adresse.
                 Cliquez sur le lien pour activer votre compte.
             </p>
             <div class="pending-email" id="techConfirmEmail"></div>
@@ -517,7 +516,7 @@
             <div class="pending-icon">&#9993;</div>
             <h1 class="auth-title">Demande enregistr&eacute;e</h1>
             <p class="auth-subtitle">
-                Un email de confirmation a &eacute;t&eacute; envoy&eacute; &agrave; votre adresse (v&eacute;rifiez vos spams).
+                Nous avons envoy&eacute; un email de confirmation &agrave; votre adresse.
             </p>
             <div class="pending-email" id="entConfirmEmail"></div>
             <p class="auth-subtitle" style="margin-top: 16px; font-size: 13px;">
@@ -535,9 +534,9 @@
         <div class="scan-line"></div>
         <div class="pending-container">
             <div class="auth-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
-            <div class="pending-icon" id="pendingIcon">&#9203;</div>
-            <h1 class="auth-title" id="pendingTitle">Demande en attente</h1>
-            <p class="auth-subtitle" id="pendingSubtitle">
+            <div class="pending-icon">&#9203;</div>
+            <h1 class="auth-title">Demande en attente</h1>
+            <p class="auth-subtitle">
                 Votre compte est en attente d'approbation.
                 Vous recevrez un email d&egrave;s que votre acc&egrave;s sera activ&eacute;.
             </p>
@@ -581,23 +580,29 @@
         const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTcyMTksImV4cCI6MjA4MTgzMzIxOX0.8ryQm1tsdx5ox3aFJiiflmwuEGGxxH_PlobGxXMgFuQ';
 
-        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-            auth: {
-                lock: false,
-                autoRefreshToken: true,
-                persistSession: true,
-                detectSessionInUrl: false
-            }
-        });
-
-        // ANTI-LOOP: localStorage flag to detect redirect loops
-        const REDIRECT_FLAG = 'fixair_redirect_in_progress';
-        const REDIRECT_TIMEOUT = 5000; // 5 seconds
-
+        let sb = null;
         let currentEmail = '';
         let selectedUserType = null;
         let existingUserData = null;
         let loginStep = 0; // 0 = email, 1 = password
+
+        // Initialize Supabase
+        function initSupabase() {
+            try {
+                sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                    auth: {
+                        persistSession: true,
+                        autoRefreshToken: true,
+                        detectSessionInUrl: true
+                    }
+                });
+                console.log('Supabase initialized');
+                return true;
+            } catch (err) {
+                console.error('Supabase init error:', err);
+                return false;
+            }
+        }
 
         // ═══════════════════════════════════════════════════════════════
         // SCREEN NAVIGATION
@@ -617,15 +622,11 @@
             }
         }
 
-        function showStatus(elementId, message, type = 'error', showReset = false) {
+        function showStatus(elementId, message, type = 'error') {
             const el = document.getElementById(elementId);
             if (el) {
+                el.textContent = message;
                 el.className = 'status-message ' + type;
-                if (showReset) {
-                    el.innerHTML = message + ' <a onclick="showPasswordReset()">Réinitialiser</a>';
-                } else {
-                    el.textContent = message;
-                }
             }
         }
 
@@ -636,15 +637,18 @@
             const slider = document.getElementById('loginSlider');
             const sphere = document.getElementById('loginSphere');
             const backBtn = document.getElementById('loginBack');
+            const forgotLink = document.getElementById('forgotPasswordLink');
 
             slider.style.transform = `translateX(-${loginStep * 100}%)`;
 
             if (loginStep === 0) {
                 sphere.style.display = 'flex';
                 backBtn.style.display = 'none';
+                if (forgotLink) forgotLink.style.display = 'none';
             } else {
                 sphere.style.display = 'none';
                 backBtn.style.display = 'flex';
+                if (forgotLink) forgotLink.style.display = 'block';
                 document.getElementById('loginPasswordInput').focus();
             }
         }
@@ -729,7 +733,7 @@
                     });
 
                     if (error) {
-                        showStatus('loginStatus', 'Mot de passe incorrect.', 'error', true);
+                        showStatus('loginStatus', 'Mot de passe incorrect', 'error');
                         return;
                     }
 
@@ -747,7 +751,8 @@
 
                     // Check if account is approved
                     if (profile.status === 'pending') {
-                        showPendingScreenWithRole(profile);
+                        document.getElementById('pendingEmail').textContent = currentEmail;
+                        goToScreen('pendingScreen');
                         return;
                     }
 
@@ -782,7 +787,7 @@
                 });
 
                 if (error) {
-                    showStatus('passwordStatus', 'Mot de passe incorrect.', 'error', true);
+                    showStatus('passwordStatus', 'Email ou mot de passe incorrect', 'error');
                     return;
                 }
 
@@ -800,7 +805,8 @@
 
                 // Check if account is approved
                 if (profile.status === 'pending') {
-                    showPendingScreenWithRole(profile);
+                    document.getElementById('pendingEmail').textContent = currentEmail;
+                    goToScreen('pendingScreen');
                     return;
                 }
 
@@ -813,47 +819,20 @@
             }
         }
 
-        function showPendingScreenWithRole(profile) {
-            const isAdmin = profile.role === 'admin';
-
-            document.getElementById('pendingEmail').textContent = profile.email || currentEmail;
-
-            if (isAdmin) {
-                document.getElementById('pendingIcon').innerHTML = '&#128188;'; // Briefcase
-                document.getElementById('pendingTitle').textContent = "Demande en cours d'examen";
-                document.getElementById('pendingSubtitle').textContent = "Votre demande de compte entreprise est en cours d'examen. Notre équipe vous contactera sous 24h.";
-            } else {
-                document.getElementById('pendingIcon').innerHTML = '&#9203;'; // Hourglass
-                document.getElementById('pendingTitle').textContent = 'Demande en attente';
-                document.getElementById('pendingSubtitle').textContent = "Votre compte est en attente d'approbation. Vous recevrez un email dès que votre accès sera activé.";
-            }
-
-            goToScreen('pendingScreen');
-        }
-
         function redirectByRole(role) {
-            // Set flag BEFORE redirecting to detect loops
-            localStorage.setItem(REDIRECT_FLAG, Date.now().toString());
-
-            // Add timestamp to URL to detect if we just came from auth
-            const timestamp = Date.now();
-            let url;
             switch (role) {
                 case 'technician':
-                    url = `https://go.fixair.ai/technician?t=${timestamp}`;
+                    window.location.href = 'https://go.fixair.ai';
                     break;
                 case 'manager':
-                    url = `https://go.fixair.ai/manager?t=${timestamp}`;
+                    window.location.href = 'https://go.fixair.ai/manager';
                     break;
                 case 'admin':
-                    url = `https://go.fixair.ai/admin?t=${timestamp}`;
+                    window.location.href = 'https://go.fixair.ai/admin';
                     break;
                 default:
-                    url = `https://go.fixair.ai/technician?t=${timestamp}`;
+                    window.location.href = 'https://go.fixair.ai';
             }
-
-            console.log('Redirecting to:', url);
-            window.location.replace(url); // Use replace to not add to history
         }
 
         // ═══════════════════════════════════════════════════════════════
@@ -1100,7 +1079,7 @@
                     return;
                 }
 
-                showStatus('resetStatus', 'Email de réinitialisation envoyé ! Vérifiez votre boîte mail (et spam).', 'success');
+                showStatus('resetStatus', 'Si un compte existe avec cet email, vous recevrez un lien de reinitialisation.', 'success');
 
             } catch (err) {
                 console.error('Reset password exception:', err);
@@ -1123,91 +1102,51 @@
         }
 
         // ═══════════════════════════════════════════════════════════════
-        // INITIALIZATION - SAME PATTERN AS MANAGER APP
+        // INITIALIZATION
         // ═══════════════════════════════════════════════════════════════
-        async function initAuth() {
-            // Check URL params
-            const urlParams = new URLSearchParams(window.location.search);
-            const fromLogout = urlParams.get('logout') === 'true';
+        async function init() {
+            console.log('Initializing FixAIR Auth...');
 
-            // If user just logged out, clear everything and show login
-            if (fromLogout) {
-                console.log('User logged out - clearing session and showing login');
-                localStorage.removeItem(REDIRECT_FLAG);
-                try { await sb.auth.signOut(); } catch(e) {}
-                showLoginForm();
+            if (!initSupabase()) {
+                console.error('Failed to initialize Supabase');
                 return;
             }
 
-            // Check if we're in a redirect loop using localStorage flag
-            const redirectFlag = localStorage.getItem(REDIRECT_FLAG);
-            if (redirectFlag) {
-                const redirectTime = parseInt(redirectFlag);
-                const now = Date.now();
-                if (now - redirectTime < REDIRECT_TIMEOUT) {
-                    console.log('Redirect loop detected - clearing session and showing login');
-                    localStorage.removeItem(REDIRECT_FLAG);
-                    try { await sb.auth.signOut(); } catch(e) {}
-                    showLoginForm();
-                    return;
-                }
-                localStorage.removeItem(REDIRECT_FLAG);
-            }
-
-            // Check for existing session via Supabase SDK - same as manager app
+            // Check if user is already logged in
             try {
-                const { data: { session }, error } = await sb.auth.getSession();
+                const { data: { session } } = await sb.auth.getSession();
 
-                if (session && session.user) {
-                    const email = session.user.email;
-
-                    // Query profile by EMAIL
+                if (session) {
+                    // User is logged in - check their profile and redirect
                     const { data: profile } = await sb
                         .from('users')
-                        .select('role, status, first_name')
-                        .eq('email', email)
+                        .select('role, status, email')
+                        .eq('email', session.user.email)
                         .maybeSingle();
 
-                    if (!profile) {
-                        console.log('No profile found for email:', email);
-                        try { await sb.auth.signOut(); } catch(e) {}
-                        showLoginForm();
+                    if (profile) {
+                        if (profile.status === 'pending') {
+                            document.getElementById('pendingEmail').textContent = profile.email;
+                            goToScreen('pendingScreen');
+                        } else {
+                            redirectByRole(profile.role);
+                        }
                         return;
                     }
-
-                    if (profile.status === 'pending') {
-                        showPendingScreenWithRole(profile);
-                        return;
-                    }
-
-                    // Redirect to correct app
-                    redirectByRole(profile.role);
-                    return;
                 }
             } catch (err) {
-                console.log('Session check error:', err);
+                console.error('Session check error:', err);
             }
 
-            // No session - show login form
-            showLoginForm();
+            console.log('FixAIR Auth ready');
         }
 
-        function showLoginForm() {
-            localStorage.removeItem(REDIRECT_FLAG);
-            console.log('FixAIR Auth ready - showing login form');
+        // Start when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
         }
-
-        // Initialize auth app
-        async function initAuthApp() {
-            console.log('🚀 Initializing FixAIR Auth...');
-            await initAuth();
-            console.log('✅ Auth App initialized');
-        }
-
-        // Run init on DOM ready - SAME PATTERN AS MANAGER APP
-        document.addEventListener('DOMContentLoaded', () => {
-            initAuthApp();
-        });
     </script>
 </body>
 </html>
