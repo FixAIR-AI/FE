@@ -1204,6 +1204,8 @@
                 if (emailInput) {
                     emailInput.value = emailParam;
                 }
+                // Set currentEmail so continueToSignup() can use it
+                currentEmail = emailParam;
                 // Go directly to user type selection screen
                 goToScreen('userTypeScreen');
             }
