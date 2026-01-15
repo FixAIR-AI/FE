@@ -1020,7 +1020,7 @@
                     auth: {
                         persistSession: true,
                         autoRefreshToken: true,
-                        detectSessionInUrl: true,
+                        detectSessionInUrl: false, // Disabled to prevent AbortError
                         storageKey: 'fixair-auth',
                         storage: window.localStorage
                     }
