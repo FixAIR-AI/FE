@@ -576,40 +576,28 @@
 
     <script>
         // ═══════════════════════════════════════════════════════════════
-        // SUPABASE CONFIGURATION - SAME PATTERN AS MANAGER APP
+        // SUPABASE CONFIGURATION
         // ═══════════════════════════════════════════════════════════════
         const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTcyMTksImV4cCI6MjA4MTgzMzIxOX0.8ryQm1tsdx5ox3aFJiiflmwuEGGxxH_PlobGxXMgFuQ';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY0MjA0NzMsImV4cCI6MjA1MTk5NjQ3M30.Wdqd3rGctWzbwBqsW8sS9-rxn7x1-BvhmAfXxfeRAT0';
+
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: {
+                lock: false,
+                autoRefreshToken: true,
+                persistSession: true,
+                detectSessionInUrl: false
+            }
+        });
 
         // ANTI-LOOP: localStorage flag to detect redirect loops
         const REDIRECT_FLAG = 'fixair_redirect_in_progress';
         const REDIRECT_TIMEOUT = 5000; // 5 seconds
 
-        let sb = null;
         let currentEmail = '';
         let selectedUserType = null;
         let existingUserData = null;
         let loginStep = 0; // 0 = email, 1 = password
-
-        // Initialize Supabase - SAME PATTERN AS MANAGER APP
-        function initSupabase() {
-            try {
-                sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-                    auth: {
-                        storageKey: 'fixair-auth',
-                        lock: false,  // CRITICAL: Disable lock to prevent AbortError
-                        autoRefreshToken: true,
-                        persistSession: true,
-                        detectSessionInUrl: false
-                    }
-                });
-                console.log('✅ Supabase initialized');
-                return true;
-            } catch (err) {
-                console.error('❌ Supabase init error:', err);
-                return false;
-            }
-        }
 
         // ═══════════════════════════════════════════════════════════════
         // SCREEN NAVIGATION
@@ -1209,19 +1197,10 @@
             console.log('FixAIR Auth ready - showing login form');
         }
 
-        // Initialize auth app - SAME PATTERN AS MANAGER APP
+        // Initialize auth app
         async function initAuthApp() {
             console.log('🚀 Initializing FixAIR Auth...');
-
-            // Initialize Supabase first
-            if (!initSupabase()) {
-                console.error('Failed to init Supabase');
-                return;
-            }
-
-            // Then check auth
             await initAuth();
-
             console.log('✅ Auth App initialized');
         }
 
