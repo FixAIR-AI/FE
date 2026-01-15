@@ -1020,7 +1020,9 @@
                     auth: {
                         persistSession: true,
                         autoRefreshToken: true,
-                        detectSessionInUrl: true
+                        detectSessionInUrl: true,
+                        storageKey: 'fixair-auth',
+                        storage: window.localStorage
                     }
                 });
                 console.log('✅ Supabase initialized');
@@ -1901,7 +1903,7 @@
                     .from('availability_shares')
                     .select(`
                         *,
-                        technician:users!technician_id(id, first_name, last_name, email, avatar_url)
+                        technician:users!technician_id(id, first_name, last_name, email)
                     `)
                     .eq('recipient_email', currentManagerProfile.email)
                     .eq('status', 'pending');
@@ -2910,24 +2912,29 @@
             const firstName = document.getElementById('inviteFirstName')?.value?.trim();
             const lastName = document.getElementById('inviteLastName')?.value?.trim();
             const phone = document.getElementById('invitePhone')?.value?.trim();
-            
+
             if (!email) {
                 toast('❌ Email requis');
                 return;
             }
-            
-            // Disable button to prevent double-click
-            event.target.disabled = true;
-            event.target.textContent = 'Envoi...';
-            
+
+            // Find and disable button to prevent double-click
+            const btn = document.querySelector('.drawer-btn.orange');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Envoi...';
+            }
+
             const result = await inviteInterneTechnician(email, firstName, lastName, phone);
-            
+
             if (result) {
                 // Show success modal with invitation link
                 showInvitationSuccessModal(result, email);
             } else {
-                event.target.disabled = false;
-                event.target.textContent = 'Inviter';
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = 'Inviter';
+                }
             }
         }
         

@@ -591,14 +591,16 @@
         const REDIRECT_FLAG = 'fixair_redirect_in_progress';
         const REDIRECT_TIMEOUT = 5000; // 5 seconds
 
-        // Initialize Supabase
+        // Initialize Supabase with robust error handling
         function initSupabase() {
             try {
                 sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
                     auth: {
                         persistSession: true,
                         autoRefreshToken: true,
-                        detectSessionInUrl: true
+                        detectSessionInUrl: true,
+                        storageKey: 'fixair-auth',
+                        storage: window.localStorage
                     }
                 });
                 console.log('Supabase initialized');
