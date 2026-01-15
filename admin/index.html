@@ -1365,10 +1365,10 @@
             document.getElementById('loginScreen').classList.add('active');
 
             loginStep = 0;
-            document.getElementById('loginEmailInput').value = '';
-            document.getElementById('loginPasswordInput').value = '';
-            document.getElementById('loginPhoneInput').value = '';
-            document.getElementById('loginNameInput').value = '';
+            const emailInput = document.getElementById('loginEmailInput');
+            const passwordInput = document.getElementById('loginPasswordInput');
+            if (emailInput) emailInput.value = '';
+            if (passwordInput) passwordInput.value = '';
             updateLoginUI();
         }
 
@@ -1388,10 +1388,10 @@
             document.getElementById('loginScreen').classList.add('active');
 
             loginStep = 0;
-            document.getElementById('loginEmailInput').value = '';
-            document.getElementById('loginPasswordInput').value = '';
-            document.getElementById('loginPhoneInput').value = '';
-            document.getElementById('loginNameInput').value = '';
+            const emailInput = document.getElementById('loginEmailInput');
+            const passwordInput = document.getElementById('loginPasswordInput');
+            if (emailInput) emailInput.value = '';
+            if (passwordInput) passwordInput.value = '';
             document.getElementById('loginSlider').style.transform = 'translateX(0)';
             document.getElementById('loginSphere').style.display = 'flex';
             document.getElementById('loginBack').style.display = 'none';
@@ -1504,10 +1504,10 @@
             isPasswordRecovery = false;
             clearLoginStatus();
 
-            document.getElementById('loginEmailInput').value = '';
-            document.getElementById('loginPasswordInput').value = '';
-            document.getElementById('loginPhoneInput').value = '';
-            document.getElementById('loginNameInput').value = '';
+            const emailInput = document.getElementById('loginEmailInput');
+            const passwordInput = document.getElementById('loginPasswordInput');
+            if (emailInput) emailInput.value = '';
+            if (passwordInput) passwordInput.value = '';
             document.getElementById('loginSlider').style.transform = 'translateX(0)';
             document.getElementById('loginSphere').style.display = 'flex';
             document.getElementById('loginBack').style.display = 'none';
