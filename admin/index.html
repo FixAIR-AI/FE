@@ -1927,7 +1927,7 @@
                     .from('availability_shares')
                     .select(`
                         *,
-                        technician:users!technician_id(id, first_name, last_name, email, avatar_url)
+                        technician:users!technician_id(id, first_name, last_name, email)
                     `)
                     .eq('recipient_email', currentAdminProfile.email)
                     .eq('status', 'pending');
