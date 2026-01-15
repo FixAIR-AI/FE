@@ -2160,29 +2160,54 @@
         // ═══════════════════════════════════════════════════════════════
         // INVITE TECHNICIAN (INTERNE)
         // ═══════════════════════════════════════════════════════════════
-        async function inviteInterneTechnician(email, firstName, lastName, phone) {
+        async function inviteInterneTechnician(email, firstName, lastName, phone, retryCount = 0) {
             try {
                 const token = crypto.randomUUID();
-                
-                // Create invitation record
-                const { data: invitation, error: invError } = await sb
-                    .from('invitations')
-                    .insert({
-                        inviter_id: currentUserId,
-                        email: email,
-                        phone: phone,
-                        first_name: firstName,
-                        last_name: lastName,
-                        member_type: 'internal',
-                        role: 'technician',
-                        token: token,
-                        status: 'pending'
-                    })
-                    .select()
-                    .single();
-                
-                if (invError) throw invError;
-                
+
+                // Create invitation record with retry for AbortError
+                let invitation = null;
+                let invError = null;
+
+                for (let attempt = 0; attempt <= 2; attempt++) {
+                    const result = await sb
+                        .from('invitations')
+                        .insert({
+                            inviter_id: currentUserId,
+                            email: email,
+                            phone: phone,
+                            first_name: firstName,
+                            last_name: lastName,
+                            member_type: 'internal',
+                            role: 'technician',
+                            token: token,
+                            status: 'pending'
+                        })
+                        .select()
+                        .single();
+
+                    invitation = result.data;
+                    invError = result.error;
+
+                    // If success or non-AbortError, break
+                    if (!invError || !invError.message?.includes('AbortError')) {
+                        break;
+                    }
+
+                    // Wait before retry
+                    if (attempt < 2) {
+                        console.log(`Retry attempt ${attempt + 1} after AbortError...`);
+                        await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
+                    }
+                }
+
+                if (invError) {
+                    // Check for RLS policy error
+                    if (invError.code === '42501' || invError.message?.includes('policy')) {
+                        throw new Error('Permission refusée. Contactez l\'administrateur pour configurer les droits.');
+                    }
+                    throw invError;
+                }
+
                 // Call Edge Function to send invitation email
                 try {
                     const response = await fetch(`${SUPABASE_URL}/functions/v1/send-invite`, {
@@ -2200,9 +2225,9 @@
                             token: token
                         })
                     });
-                    
+
                     const result = await response.json();
-                    
+
                     if (response.ok) {
                         console.log('✅ Invitation email sent:', result);
                         invitation.emailSent = true;
@@ -2214,12 +2239,12 @@
                     console.warn('⚠️ Edge Function not available:', emailErr.message);
                     invitation.emailSent = false;
                 }
-                
+
                 return invitation;
-                
+
             } catch (err) {
                 console.error('Error inviting technician:', err);
-                toast('❌ Erreur: ' + err.message);
+                toast('❌ Erreur: ' + (err.message || 'Impossible de créer l\'invitation'));
                 return null;
             }
         }
@@ -2938,24 +2963,29 @@
             const firstName = document.getElementById('inviteFirstName')?.value?.trim();
             const lastName = document.getElementById('inviteLastName')?.value?.trim();
             const phone = document.getElementById('invitePhone')?.value?.trim();
-            
+
             if (!email) {
                 toast('❌ Email requis');
                 return;
             }
-            
+
             // Disable button to prevent double-click
-            event.target.disabled = true;
-            event.target.textContent = 'Envoi...';
-            
+            const btn = document.querySelector('.drawer-btn.orange');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Envoi...';
+            }
+
             const result = await inviteInterneTechnician(email, firstName, lastName, phone);
-            
+
             if (result) {
                 // Show success modal with invitation link
                 showInvitationSuccessModal(result, email);
             } else {
-                event.target.disabled = false;
-                event.target.textContent = 'Inviter';
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = 'Inviter';
+                }
             }
         }
         
