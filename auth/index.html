@@ -541,7 +541,10 @@
                 Vous recevrez un email d&egrave;s que votre acc&egrave;s sera activ&eacute;.
             </p>
             <div class="pending-email" id="pendingEmail"></div>
-            <button class="btn btn-secondary" onclick="logout()" style="margin-top: 24px; max-width: 200px;">
+            <button class="btn btn-primary" onclick="checkApprovalStatus()" style="margin-top: 16px; max-width: 200px;" id="checkStatusBtn">
+                V&eacute;rifier le statut
+            </button>
+            <button class="btn btn-secondary" onclick="logout()" style="margin-top: 8px; max-width: 200px;">
                 Se d&eacute;connecter
             </button>
         </div>
@@ -1097,6 +1100,52 @@
             return /^(\+33|0)[1-9][0-9]{8}$/.test(cleaned);
         }
 
+        async function checkApprovalStatus() {
+            const btn = document.getElementById('checkStatusBtn');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Vérification...';
+
+            try {
+                const { data: { user } } = await sb.auth.getUser();
+                if (!user) {
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                    toast('Session expirée, veuillez vous reconnecter');
+                    logout();
+                    return;
+                }
+
+                const { data: profile, error } = await sb
+                    .from('users')
+                    .select('role, status, first_name, email')
+                    .eq('id', user.id)
+                    .maybeSingle();
+
+                if (profile && (profile.status === 'approved' || profile.status === 'active')) {
+                    toast('Accès approuvé ! Redirection...');
+                    // Redirect based on role
+                    const role = profile.role;
+                    if (role === 'admin' || role === 'owner') {
+                        window.location.href = '/admin';
+                    } else if (role === 'manager') {
+                        window.location.href = '/manager';
+                    } else {
+                        window.location.href = '/';
+                    }
+                } else {
+                    toast('Votre compte est toujours en attente de validation');
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                }
+            } catch (err) {
+                console.error('Check status error:', err);
+                toast('Erreur lors de la vérification');
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+
         async function logout() {
             await sb.auth.signOut();
             localStorage.clear();
@@ -1155,6 +1204,8 @@
                 if (emailInput) {
                     emailInput.value = emailParam;
                 }
+                // Set currentEmail so continueToSignup() can use it
+                currentEmail = emailParam;
                 // Go directly to user type selection screen
                 goToScreen('userTypeScreen');
             }

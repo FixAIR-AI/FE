@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <title>FixAIR Manager</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Supabase SDK -->
@@ -809,6 +810,7 @@
             <div class="pending-logo">
                 <svg viewBox="0 0 235 48" style="height: 40px; color: var(--copilot);"><use href="#icon-fixair-logo"/></svg>
             </div>
+            <div class="pending-icon" style="font-size: 48px; margin: 16px 0;">&#9993;</div>
             <h1 class="pending-title">Vérifiez votre email</h1>
             <p class="pending-subtitle">
                 Un email de confirmation a été envoyé à votre adresse (vérifiez vos spams). Cliquez sur le lien pour activer votre compte.
@@ -830,11 +832,15 @@
             <div class="pending-logo">
                 <svg viewBox="0 0 235 48" style="height: 40px; color: var(--copilot);"><use href="#icon-fixair-logo"/></svg>
             </div>
+            <div class="pending-icon" style="font-size: 48px; margin: 16px 0;">&#9203;</div>
             <h1 class="pending-title">Demande en attente</h1>
             <p class="pending-subtitle">
                 Votre email a été confirmé ! Un administrateur va valider votre accès dans les plus brefs délais.
             </p>
             <div class="pending-email" id="pendingEmail"></div>
+            <button class="pending-logout" onclick="checkApprovalStatus()" style="margin-top: 8px; background: var(--copilot); color: white; border: none;" id="checkStatusBtn">
+                Vérifier le statut
+            </button>
             <button class="pending-logout" onclick="logoutFromPending()">
                 Se déconnecter
             </button>
@@ -1439,6 +1445,46 @@
             window.location.href = '/';
         }
 
+        async function checkApprovalStatus() {
+            const btn = document.getElementById('checkStatusBtn');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Vérification...';
+
+            try {
+                const { data: { user } } = await sb.auth.getUser();
+                if (!user) {
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                    toast('Session expirée, veuillez vous reconnecter');
+                    logoutFromPending();
+                    return;
+                }
+
+                const profile = await loadUserProfile(user.id);
+                if (profile && (profile.status === 'approved' || profile.status === 'active')) {
+                    // Check role
+                    if (profile.role && !['manager', 'admin', 'owner'].includes(profile.role)) {
+                        showAccessDeniedScreen(profile.email);
+                        return;
+                    }
+                    currentManagerProfile = profile;
+                    currentUserId = profile.id;
+                    toast('Accès approuvé ! Bienvenue ' + (profile.first_name || 'Manager') + ' !');
+                    showMainApp();
+                } else {
+                    toast('Votre compte est toujours en attente de validation');
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                }
+            } catch (err) {
+                console.error('Check status error:', err);
+                toast('Erreur lors de la vérification');
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+
         async function resendConfirmation() {
             const email = document.getElementById('confirmEmail').textContent;
             try {
@@ -1461,10 +1507,10 @@
             document.getElementById('loginScreen').classList.add('active');
 
             loginStep = 0;
-            document.getElementById('loginEmailInput').value = '';
-            document.getElementById('loginPasswordInput').value = '';
-            document.getElementById('loginPhoneInput').value = '';
-            document.getElementById('loginNameInput').value = '';
+            const emailInput = document.getElementById('loginEmailInput');
+            const passwordInput = document.getElementById('loginPasswordInput');
+            if (emailInput) emailInput.value = '';
+            if (passwordInput) passwordInput.value = '';
             updateLoginUI();
         }
 
@@ -1484,15 +1530,11 @@
             document.getElementById('loginScreen').classList.add('active');
 
             loginStep = 0;
-            document.getElementById('loginEmailInput').value = '';
-            document.getElementById('loginPasswordInput').value = '';
-            document.getElementById('loginPhoneInput').value = '';
-            document.getElementById('loginNameInput').value = '';
-            document.getElementById('loginSlider').style.transform = 'translateX(0)';
-            document.getElementById('loginSphere').style.display = 'flex';
-            document.getElementById('loginBack').style.display = 'none';
-            document.getElementById('loginBtn').innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
-            document.getElementById('loginBtn').onclick = nextLoginStep;
+            const emailInput = document.getElementById('loginEmailInput');
+            const passwordInput = document.getElementById('loginPasswordInput');
+            if (emailInput) emailInput.value = '';
+            if (passwordInput) passwordInput.value = '';
+            updateLoginUI();
 
             toast('Déconnecté');
         }
@@ -1596,19 +1638,14 @@
             currentUserId = null;
             currentManagerProfile = null;
             loginStep = 0;
-            isNewUser = false;
             isPasswordRecovery = false;
             clearLoginStatus();
 
-            document.getElementById('loginEmailInput').value = '';
-            document.getElementById('loginPasswordInput').value = '';
-            document.getElementById('loginPhoneInput').value = '';
-            document.getElementById('loginNameInput').value = '';
-            document.getElementById('loginSlider').style.transform = 'translateX(0)';
-            document.getElementById('loginSphere').style.display = 'flex';
-            document.getElementById('loginBack').style.display = 'none';
-            document.getElementById('loginBtn').innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
-            document.getElementById('loginBtn').onclick = nextLoginStep;
+            const emailInput = document.getElementById('loginEmailInput');
+            const passwordInput = document.getElementById('loginPasswordInput');
+            if (emailInput) emailInput.value = '';
+            if (passwordInput) passwordInput.value = '';
+            updateLoginUI();
 
             // Redirect to auth page
             window.location.href = 'https://go.fixair.ai/auth';
