@@ -656,19 +656,58 @@
         </defs>
     </svg>
 
-    <!-- LOADING SCREEN -->
-    <div class="screen active" id="loadingScreen" style="justify-content: center; align-items: center;">
-        <div style="text-align: center;">
-            <div class="login-logo" style="margin: 0 auto 24px;">
-                <svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg>
-            </div>
-            <div class="glass-sphere" style="margin: 0 auto 16px;">
-                <div class="sphere-fog-container">
-                    <div class="sphere-fog"></div>
-                    <div class="sphere-fog-2"></div>
+    <!-- LOGIN SCREEN -->
+    <div class="screen login-screen active" id="loginScreen">
+        <div class="scan-line"></div>
+        <div class="login-container">
+            <div class="login-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
+            <h1 class="login-title">FixAIR Admin</h1>
+            <p class="login-sub">Tableau de bord pour managers HVAC</p>
+            <div class="login-bar">
+                <div class="login-icon-slot">
+                    <div class="login-mini" id="loginSphere"><div class="glass-sphere"><div class="sphere-fog-container"><div class="sphere-fog"></div><div class="sphere-fog-2"></div></div></div></div>
+                    <button type="button" class="login-back" id="loginBack" onclick="prevLoginStep()"><svg viewBox="0 0 24 24"><use href="#icon-arrow-left"/></svg></button>
                 </div>
+                <div class="login-input-container">
+                    <div class="login-input-slider" id="loginSlider">
+                        <div class="login-input-slide">
+                            <input type="email" class="login-input" id="loginEmailInput" placeholder="Quelle est votre adresse email ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
+                        </div>
+                        <div class="login-input-slide">
+                            <input type="password" class="login-input" id="loginPasswordInput" placeholder="Quel est votre mot de passe ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
+                        </div>
+                        <div class="login-input-slide">
+                            <input type="tel" class="login-input" id="loginPhoneInput" placeholder="Quel est votre numéro de téléphone ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
+                        </div>
+                        <div class="login-input-slide">
+                            <input type="text" class="login-input" id="loginNameInput" placeholder="Quel est votre prénom ?" onkeypress="if(event.key==='Enter')completeSignup()">
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="login-btn" id="loginBtn" onclick="nextLoginStep()"><span class="icon"><svg><use href="#icon-arrow-right"/></svg></span></button>
             </div>
-            <div style="color: rgba(255,255,255,0.5); font-size: 14px;">Chargement...</div>
+            <div class="login-status" id="loginStatus"></div>
+        </div>
+    </div>
+
+    <!-- EMAIL CONFIRMATION SCREEN -->
+    <div class="screen pending-screen" id="emailConfirmScreen">
+        <div class="scan-line"></div>
+        <div class="pending-container">
+            <div class="pending-logo">
+                <svg viewBox="0 0 235 48" style="height: 40px; color: var(--copilot);"><use href="#icon-fixair-logo"/></svg>
+            </div>
+            <h1 class="pending-title">Vérifiez votre email</h1>
+            <p class="pending-subtitle">
+                Un email de confirmation a été envoyé à votre adresse (vérifiez vos spams). Cliquez sur le lien pour activer votre compte.
+            </p>
+            <div class="pending-email" id="confirmEmail"></div>
+            <button class="pending-logout" onclick="resendConfirmation()" style="margin-top: 8px; border-color: var(--copilot); color: var(--copilot);">
+                Renvoyer l'email
+            </button>
+            <button class="pending-logout" onclick="backToLogin()">
+                Retour à la connexion
+            </button>
         </div>
     </div>
 
@@ -752,7 +791,7 @@
                             <div class="header-logo-svg"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
                             <span class="header-date">• Lundi 30 Déc</span>
                         </div>
-                        <div class="header-avatar" id="headerAvatar" onclick="showProfileMenu()" title="Mon profil" style="cursor:pointer;">MA</div>
+                        <div class="header-avatar" onclick="logout()" title="Se déconnecter" style="cursor:pointer;">MA</div>
                     </header>
 
                     <div class="hero">
@@ -966,10 +1005,7 @@
         // ═══════════════════════════════════════════════════════════════
         const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTcyMTksImV4cCI6MjA4MTgzMzIxOX0.8ryQm1tsdx5ox3aFJiiflmwuEGGxxH_PlobGxXMgFuQ';
-
-        // ANTI-LOOP: localStorage flag to detect redirect loops
-        const REDIRECT_FLAG = 'fixair_redirect_in_progress';
-
+        
         let sb = null;
         let currentUserId = null;
         let currentAdminProfile = null;
@@ -1018,11 +1054,10 @@
             try {
                 sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
                     auth: {
-                        storageKey: 'fixair-auth',
-                        lock: false,  // CRITICAL: Disable lock to prevent AbortError
-                        autoRefreshToken: true,
-                        persistSession: true,
-                        detectSessionInUrl: false
+                        persistSession: false,
+                        autoRefreshToken: false,
+                        detectSessionInUrl: false,
+                        flowType: 'implicit'
                     }
                 });
                 console.log('✅ Supabase initialized');
@@ -1161,8 +1196,8 @@
                                 expiresAt: data.session.expires_at
                             }));
 
-                            // Load user profile and check role (by email)
-                            const profile = await loadUserProfile(data.user.email);
+                            // Load user profile and check role
+                            const profile = await loadUserProfile(data.user.id);
 
                             if (profile) {
                                 currentAdminProfile = profile;
@@ -1282,13 +1317,12 @@
             }
         }
 
-        async function loadUserProfile(email) {
+        async function loadUserProfile(authId) {
             try {
-                // Query by email (most reliable)
                 const { data, error } = await sb
                     .from('users')
                     .select('*')
-                    .eq('email', email)
+                    .eq('id', authId)
                     .maybeSingle();
 
                 if (error) {
@@ -1314,14 +1348,18 @@
         }
 
         function showPendingScreen(email) {
+            clearLoginStatus();
             document.getElementById('pendingEmail').textContent = email;
-            document.getElementById('loadingScreen').classList.remove('active');
+            document.getElementById('loginScreen').classList.remove('active');
             document.getElementById('mainApp').classList.remove('active');
+            document.getElementById('emailConfirmScreen').classList.remove('active');
             document.getElementById('accessDeniedScreen').classList.remove('active');
             document.getElementById('pendingScreen').classList.add('active');
         }
 
         function showAccessDeniedScreen(email, role) {
+            clearLoginStatus();
+
             // Determine redirect URL based on role
             let redirectUrl = 'https://go.fixair.ai';
             let appName = 'Technicien';
@@ -1357,15 +1395,17 @@
                 `;
             }
 
-            document.getElementById('loadingScreen').classList.remove('active');
+            document.getElementById('loginScreen').classList.remove('active');
             document.getElementById('mainApp').classList.remove('active');
+            document.getElementById('emailConfirmScreen').classList.remove('active');
             document.getElementById('pendingScreen').classList.remove('active');
             document.getElementById('accessDeniedScreen').classList.add('active');
         }
 
         function showPasswordResetScreen() {
-            document.getElementById('loadingScreen').classList.remove('active');
+            document.getElementById('loginScreen').classList.remove('active');
             document.getElementById('pendingScreen').classList.remove('active');
+            document.getElementById('emailConfirmScreen').classList.remove('active');
             document.getElementById('mainApp').classList.remove('active');
             document.getElementById('accessDeniedScreen').classList.remove('active');
             document.getElementById('passwordResetScreen').classList.add('active');
@@ -1375,15 +1415,62 @@
             window.location.href = '/';
         }
 
+        async function resendConfirmation() {
+            const email = document.getElementById('confirmEmail').textContent;
+            try {
+                const { error } = await sb.auth.resend({ type: 'signup', email: email });
+                if (error) {
+                    toast('Erreur: ' + error.message);
+                } else {
+                    toast('Email renvoyé !');
+                }
+            } catch (err) {
+                toast('Erreur lors de l\'envoi');
+            }
+        }
+
         function backToLogin() {
-            window.location.replace('https://go.fixair.ai/auth');
+            clearLoginStatus();
+            document.getElementById('emailConfirmScreen').classList.remove('active');
+            document.getElementById('pendingScreen').classList.remove('active');
+            document.getElementById('accessDeniedScreen').classList.remove('active');
+            document.getElementById('loginScreen').classList.add('active');
+
+            loginStep = 0;
+            document.getElementById('loginEmailInput').value = '';
+            document.getElementById('loginPasswordInput').value = '';
+            document.getElementById('loginPhoneInput').value = '';
+            document.getElementById('loginNameInput').value = '';
+            updateLoginUI();
         }
 
         async function logoutFromPending() {
             await sb.auth.signOut();
             localStorage.removeItem('supabase.auth.token');
-            localStorage.removeItem(REDIRECT_FLAG);
-            window.location.replace('https://go.fixair.ai/auth?logout=true');
+            supabaseUser = null;
+            currentUserId = null;
+            currentAdminProfile = null;
+            isPasswordRecovery = false;
+            clearLoginStatus();
+
+            document.getElementById('pendingScreen').classList.remove('active');
+            document.getElementById('emailConfirmScreen').classList.remove('active');
+            document.getElementById('accessDeniedScreen').classList.remove('active');
+            document.getElementById('mainApp').classList.remove('active');
+            document.getElementById('loginScreen').classList.add('active');
+
+            loginStep = 0;
+            document.getElementById('loginEmailInput').value = '';
+            document.getElementById('loginPasswordInput').value = '';
+            document.getElementById('loginPhoneInput').value = '';
+            document.getElementById('loginNameInput').value = '';
+            document.getElementById('loginSlider').style.transform = 'translateX(0)';
+            document.getElementById('loginSphere').style.display = 'flex';
+            document.getElementById('loginBack').style.display = 'none';
+            document.getElementById('loginBtn').innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+            document.getElementById('loginBtn').onclick = nextLoginStep;
+
+            toast('Déconnecté');
         }
 
         async function setNewPassword() {
@@ -1429,16 +1516,21 @@
                 statusEl.style.background = 'rgba(16,185,129,0.2)';
                 statusEl.style.border = '1px solid rgba(16,185,129,0.5)';
                 statusEl.style.color = '#10b981';
-                statusEl.textContent = 'Mot de passe mis à jour ! Redirection...';
+                statusEl.textContent = 'Mot de passe mis à jour avec succès !';
 
                 isPasswordRecovery = false;
+                document.getElementById('newPasswordInput').value = '';
+                document.getElementById('confirmPasswordInput').value = '';
+
                 localStorage.removeItem('supabase.auth.token');
                 await sb.auth.signOut();
 
-                // Redirect to auth page after brief delay
                 setTimeout(() => {
-                    window.location.replace('https://go.fixair.ai/auth');
-                }, 1500);
+                    document.getElementById('passwordResetScreen').classList.remove('active');
+                    document.getElementById('loginScreen').classList.add('active');
+                    statusEl.style.display = 'none';
+                    toast('Connectez-vous avec votre nouveau mot de passe');
+                }, 2000);
 
             } catch (err) {
                 statusEl.style.background = 'rgba(239,68,68,0.2)';
@@ -1452,114 +1544,54 @@
             isPasswordRecovery = false;
             localStorage.removeItem('supabase.auth.token');
             sb.auth.signOut();
-            window.location.replace('https://go.fixair.ai/auth');
+
+            document.getElementById('passwordResetScreen').classList.remove('active');
+            document.getElementById('loginScreen').classList.add('active');
+
+            document.getElementById('newPasswordInput').value = '';
+            document.getElementById('confirmPasswordInput').value = '';
+            document.getElementById('passwordResetStatus').style.display = 'none';
         }
 
         function showMainApp() {
-            document.getElementById('loadingScreen').classList.remove('active');
+            document.getElementById('loginScreen').classList.remove('active');
+            document.getElementById('emailConfirmScreen').classList.remove('active');
             document.getElementById('pendingScreen').classList.remove('active');
             document.getElementById('accessDeniedScreen').classList.remove('active');
             document.getElementById('passwordResetScreen').classList.remove('active');
             document.getElementById('mainApp').classList.add('active');
 
-            // Update header avatar with user initials
-            if (currentAdminProfile) {
-                const initials = getInitials(currentAdminProfile.first_name, currentAdminProfile.last_name);
-                document.getElementById('headerAvatar').textContent = initials;
-            }
-
             loadAllData();
-        }
-
-        // ═══════════════════════════════════════════════════════════════
-        // PROFILE MENU
-        // ═══════════════════════════════════════════════════════════════
-        function showProfileMenu() {
-            const profile = currentAdminProfile;
-            if (!profile) return;
-
-            const menuHTML = `
-                <div id="profileOverlay" onclick="closeProfileMenu()" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:998;"></div>
-                <div id="profilePanel" style="position:fixed;top:0;right:0;bottom:0;width:320px;background:#161b22;border-left:1px solid rgba(255,255,255,0.1);z-index:999;padding:24px;overflow-y:auto;animation:slideInProfile 0.3s ease;">
-                    <style>
-                        @keyframes slideInProfile { from { transform: translateX(100%); } to { transform: translateX(0); } }
-                    </style>
-
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
-                        <h2 style="color:white;font-size:18px;margin:0;">Mon Profil</h2>
-                        <button onclick="closeProfileMenu()" style="background:none;border:none;color:rgba(255,255,255,0.6);font-size:24px;cursor:pointer;line-height:1;">&times;</button>
-                    </div>
-
-                    <div style="text-align:center;margin-bottom:24px;">
-                        <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#FF6B35,#ff8f5a);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:28px;font-weight:600;color:white;">
-                            ${getInitials(profile.first_name, profile.last_name)}
-                        </div>
-                        <div style="color:white;font-size:16px;font-weight:600;">${profile.first_name || ''} ${profile.last_name || ''}</div>
-                        <div style="color:rgba(255,255,255,0.5);font-size:13px;">${profile.email}</div>
-                        <div style="margin-top:8px;display:inline-block;padding:4px 12px;background:rgba(255,107,53,0.15);border-radius:12px;font-size:11px;color:#FF6B35;text-transform:uppercase;">
-                            ${profile.role}
-                        </div>
-                    </div>
-
-                    <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:20px;">
-                        <div style="margin-bottom:16px;">
-                            <label style="display:block;font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:4px;">Prénom</label>
-                            <div style="color:white;font-size:14px;">${profile.first_name || '-'}</div>
-                        </div>
-
-                        <div style="margin-bottom:16px;">
-                            <label style="display:block;font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:4px;">Nom</label>
-                            <div style="color:white;font-size:14px;">${profile.last_name || '-'}</div>
-                        </div>
-
-                        <div style="margin-bottom:16px;">
-                            <label style="display:block;font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:4px;">Email</label>
-                            <div style="color:white;font-size:14px;">${profile.email || '-'}</div>
-                        </div>
-
-                        <div style="margin-bottom:16px;">
-                            <label style="display:block;font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:4px;">Téléphone</label>
-                            <div style="color:white;font-size:14px;">${profile.phone || '-'}</div>
-                        </div>
-
-                        ${profile.company_name ? `
-                        <div style="margin-bottom:16px;">
-                            <label style="display:block;font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:4px;">Entreprise</label>
-                            <div style="color:white;font-size:14px;">${profile.company_name}</div>
-                        </div>
-                        ` : ''}
-                    </div>
-
-                    <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:20px;margin-top:20px;">
-                        <button onclick="logout()" style="width:100%;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#ef4444;padding:12px;border-radius:8px;font-size:14px;cursor:pointer;transition:all 0.2s;">
-                            Se déconnecter
-                        </button>
-                    </div>
-                </div>
-            `;
-
-            document.body.insertAdjacentHTML('beforeend', menuHTML);
-        }
-
-        function closeProfileMenu() {
-            document.getElementById('profileOverlay')?.remove();
-            document.getElementById('profilePanel')?.remove();
         }
 
         async function logout() {
             await sb.auth.signOut();
             localStorage.removeItem('supabase.auth.token');
-            localStorage.removeItem(REDIRECT_FLAG);
             cleanupSubscriptions();
-            window.location.replace('https://go.fixair.ai/auth?logout=true');
+            supabaseUser = null;
+            currentUserId = null;
+            currentAdminProfile = null;
+            loginStep = 0;
+            isNewUser = false;
+            isPasswordRecovery = false;
+            clearLoginStatus();
+
+            document.getElementById('loginEmailInput').value = '';
+            document.getElementById('loginPasswordInput').value = '';
+            document.getElementById('loginPhoneInput').value = '';
+            document.getElementById('loginNameInput').value = '';
+            document.getElementById('loginSlider').style.transform = 'translateX(0)';
+            document.getElementById('loginSphere').style.display = 'flex';
+            document.getElementById('loginBack').style.display = 'none';
+            document.getElementById('loginBtn').innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+            document.getElementById('loginBtn').onclick = nextLoginStep;
+
+            // Redirect to auth page
+            window.location.href = 'https://go.fixair.ai/auth';
         }
 
         // Initialize auth on page load
         async function initAuth() {
-            // Clear redirect flag - we arrived successfully
-            localStorage.removeItem(REDIRECT_FLAG);
-
-            // Handle URL tokens (from password reset links)
             if (hasAccessToken && hasRefreshToken) {
                 if (isRecoveryLink) {
                     isPasswordRecovery = true;
@@ -1573,7 +1605,6 @@
 
                     if (error) {
                         isPasswordRecovery = false;
-                        window.location.replace('https://go.fixair.ai/auth');
                         return;
                     }
 
@@ -1586,56 +1617,40 @@
 
                     if (isRecoveryLink) {
                         showPasswordResetScreen();
-                        return;
                     } else if (data.session && data.session.user) {
                         await handleAuthenticatedUser(data.session.user);
-                        return;
                     }
                 } catch (err) {
                     isPasswordRecovery = false;
-                    window.location.replace('https://go.fixair.ai/auth');
-                    return;
                 }
-            }
-
-            // Check for existing session via Supabase SDK
-            try {
-                const { data: { session }, error } = await sb.auth.getSession();
-
-                if (session && session.user) {
-                    await handleAuthenticatedUser(session.user);
-                    return;
-                }
-
-                // Try localStorage as fallback
-                const stored = localStorage.getItem('supabase.auth.token');
-                if (stored) {
-                    const parsed = JSON.parse(stored);
-                    if (parsed.currentSession) {
-                        const { data, error } = await sb.auth.setSession({
-                            access_token: parsed.currentSession.access_token,
-                            refresh_token: parsed.currentSession.refresh_token
-                        });
-                        if (!error && data.session) {
-                            await handleAuthenticatedUser(data.session.user);
-                            return;
+            } else {
+                // Check for existing session in localStorage
+                try {
+                    const stored = localStorage.getItem('supabase.auth.token');
+                    if (stored) {
+                        const parsed = JSON.parse(stored);
+                        if (parsed.currentSession) {
+                            const { data, error } = await sb.auth.setSession({
+                                access_token: parsed.currentSession.access_token,
+                                refresh_token: parsed.currentSession.refresh_token
+                            });
+                            if (!error && data.session) {
+                                await handleAuthenticatedUser(data.session.user);
+                                return;
+                            }
                         }
                     }
+                } catch (err) {
+                    console.log('No valid stored session');
                 }
-            } catch (err) {
-                console.log('Session check error:', err);
             }
-
-            // No valid session found - redirect to auth
-            console.log('No valid session found - redirecting to auth');
-            window.location.replace('https://go.fixair.ai/auth');
         }
 
         async function handleAuthenticatedUser(user) {
             supabaseUser = user;
 
-            // Load user profile (by email)
-            const profile = await loadUserProfile(user.email);
+            // Load user profile
+            const profile = await loadUserProfile(user.id);
 
             if (profile) {
                 currentAdminProfile = profile;
@@ -1910,7 +1925,7 @@
                     .from('availability_shares')
                     .select(`
                         *,
-                        technician:users!technician_id(id, first_name, last_name, email)
+                        technician:users!technician_id(id, first_name, last_name, email, avatar_url)
                     `)
                     .eq('recipient_email', currentAdminProfile.email)
                     .eq('status', 'pending');
@@ -2141,54 +2156,29 @@
         // ═══════════════════════════════════════════════════════════════
         // INVITE TECHNICIAN (INTERNE)
         // ═══════════════════════════════════════════════════════════════
-        async function inviteInterneTechnician(email, firstName, lastName, phone, retryCount = 0) {
+        async function inviteInterneTechnician(email, firstName, lastName, phone) {
             try {
                 const token = crypto.randomUUID();
-
-                // Create invitation record with retry for AbortError
-                let invitation = null;
-                let invError = null;
-
-                for (let attempt = 0; attempt <= 2; attempt++) {
-                    const result = await sb
-                        .from('invitations')
-                        .insert({
-                            inviter_id: currentUserId,
-                            email: email,
-                            phone: phone,
-                            first_name: firstName,
-                            last_name: lastName,
-                            member_type: 'internal',
-                            role: 'technician',
-                            token: token,
-                            status: 'pending'
-                        })
-                        .select()
-                        .single();
-
-                    invitation = result.data;
-                    invError = result.error;
-
-                    // If success or non-AbortError, break
-                    if (!invError || !invError.message?.includes('AbortError')) {
-                        break;
-                    }
-
-                    // Wait before retry
-                    if (attempt < 2) {
-                        console.log(`Retry attempt ${attempt + 1} after AbortError...`);
-                        await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
-                    }
-                }
-
-                if (invError) {
-                    // Check for RLS policy error
-                    if (invError.code === '42501' || invError.message?.includes('policy')) {
-                        throw new Error('Permission refusée. Contactez l\'administrateur pour configurer les droits.');
-                    }
-                    throw invError;
-                }
-
+                
+                // Create invitation record
+                const { data: invitation, error: invError } = await sb
+                    .from('invitations')
+                    .insert({
+                        inviter_id: currentUserId,
+                        email: email,
+                        phone: phone,
+                        first_name: firstName,
+                        last_name: lastName,
+                        member_type: 'internal',
+                        role: 'technician',
+                        token: token,
+                        status: 'pending'
+                    })
+                    .select()
+                    .single();
+                
+                if (invError) throw invError;
+                
                 // Call Edge Function to send invitation email
                 try {
                     const response = await fetch(`${SUPABASE_URL}/functions/v1/send-invite`, {
@@ -2206,9 +2196,9 @@
                             token: token
                         })
                     });
-
+                    
                     const result = await response.json();
-
+                    
                     if (response.ok) {
                         console.log('✅ Invitation email sent:', result);
                         invitation.emailSent = true;
@@ -2220,12 +2210,12 @@
                     console.warn('⚠️ Edge Function not available:', emailErr.message);
                     invitation.emailSent = false;
                 }
-
+                
                 return invitation;
-
+                
             } catch (err) {
                 console.error('Error inviting technician:', err);
-                toast('❌ Erreur: ' + (err.message || 'Impossible de créer l\'invitation'));
+                toast('❌ Erreur: ' + err.message);
                 return null;
             }
         }
@@ -2944,29 +2934,24 @@
             const firstName = document.getElementById('inviteFirstName')?.value?.trim();
             const lastName = document.getElementById('inviteLastName')?.value?.trim();
             const phone = document.getElementById('invitePhone')?.value?.trim();
-
+            
             if (!email) {
                 toast('❌ Email requis');
                 return;
             }
-
+            
             // Disable button to prevent double-click
-            const btn = document.querySelector('.drawer-btn.orange');
-            if (btn) {
-                btn.disabled = true;
-                btn.textContent = 'Envoi...';
-            }
-
+            event.target.disabled = true;
+            event.target.textContent = 'Envoi...';
+            
             const result = await inviteInterneTechnician(email, firstName, lastName, phone);
-
+            
             if (result) {
                 // Show success modal with invitation link
                 showInvitationSuccessModal(result, email);
             } else {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.textContent = 'Inviter';
-                }
+                event.target.disabled = false;
+                event.target.textContent = 'Inviter';
             }
         }
         

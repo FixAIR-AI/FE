@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FixAIR Technician v51</title>
+    <title>FixAIR</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -4852,9 +4853,9 @@
             </div>
             <h1 class="pending-title">Vérifiez votre email</h1>
             <p class="pending-subtitle">
-                Un email de confirmation a été envoyé à votre adresse. Cliquez sur le lien pour activer votre compte.
+                Un email de confirmation a été envoyé à votre adresse (vérifiez vos spams). Cliquez sur le lien pour activer votre compte.
             </p>
-            <div class="pending-email" id="confirmEmail">email@example.com</div>
+            <div class="pending-email" id="confirmEmail"></div>
             <button class="pending-logout" onclick="resendConfirmation()" style="margin-top: 8px; border-color: var(--copilot); color: var(--copilot);">
                 Renvoyer l'email
             </button>
@@ -4875,9 +4876,37 @@
             <p class="pending-subtitle">
                 Votre email a été confirmé ! Un administrateur va valider votre accès dans les plus brefs délais.
             </p>
-            <div class="pending-email" id="pendingEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="cda8a0aca4a18da8b5aca0bda1a8e3aea2a0">[email&#160;protected]</a></div>
+            <div class="pending-email" id="pendingEmail"></div>
             <button class="pending-logout" onclick="logoutFromPending()">
                 Se déconnecter
+            </button>
+        </div>
+    </div>
+
+    <!-- PASSWORD RESET SCREEN -->
+    <div class="screen pending-screen" id="passwordResetScreen">
+        <div class="scan-line"></div>
+        <div class="pending-container">
+            <div class="pending-logo">
+                <svg viewBox="0 0 235 48" style="height: 40px; color: var(--copilot);"><use href="#icon-fixair-logo"/></svg>
+            </div>
+            <h1 class="pending-title">Nouveau mot de passe</h1>
+            <p class="pending-subtitle">
+                Créez un nouveau mot de passe pour votre compte.
+            </p>
+            <div style="width: 100%; max-width: 300px; margin: 20px auto;">
+                <input type="password" id="newPasswordInput" placeholder="Nouveau mot de passe (min 6 caractères)"
+                    style="width: 100%; padding: 12px 16px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; margin-bottom: 12px;">
+                <input type="password" id="confirmPasswordInput" placeholder="Confirmer le mot de passe"
+                    style="width: 100%; padding: 12px 16px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; margin-bottom: 12px;">
+                <div id="passwordResetStatus" style="margin-bottom: 12px; padding: 8px; border-radius: 6px; font-size: 13px; display: none;"></div>
+                <button onclick="setNewPassword()"
+                    style="width: 100%; padding: 12px 16px; background: var(--copilot); border: none; border-radius: 8px; color: #000; font-size: 14px; font-weight: 600; cursor: pointer;">
+                    Mettre à jour le mot de passe
+                </button>
+            </div>
+            <button class="pending-logout" onclick="cancelPasswordReset()" style="margin-top: 8px;">
+                Annuler
             </button>
         </div>
     </div>
@@ -5566,8 +5595,8 @@
 
     <div class="toast" id="toast"></div>
 
-    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-        // ═══════════════════════════════════════════════════════════════
+    <script>
+    // ═══════════════════════════════════════════════════════════════
         // PRODUCTION MODE - Set to false for debugging
         // ═══════════════════════════════════════════════════════════════
         const PRODUCTION_MODE = true;
@@ -5864,13 +5893,101 @@
         // ═══ SUPABASE CLIENT INITIALIZATION (must be before auth code) ═══
         const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTcyMTksImV4cCI6MjA4MTgzMzIxOX0.8ryQm1tsdx5ox3aFJiiflmwuEGGxxH_PlobGxXMgFuQ';
-        
-        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-            auth: {
-                lock: false
+
+        let db;
+        let supabaseReady = false;
+
+        // ═══ PARSE URL HASH FOR AUTH TOKENS ═══
+        // This must happen BEFORE createClient to prevent AbortError in cross-browser scenarios
+        function parseHashParams(hash) {
+            if (!hash || hash.length < 2) return {};
+            const params = {};
+            const hashContent = hash.substring(1); // Remove #
+            const pairs = hashContent.split('&');
+            for (const pair of pairs) {
+                const [key, value] = pair.split('=');
+                if (key && value) {
+                    params[decodeURIComponent(key)] = decodeURIComponent(value);
+                }
             }
-        });
-        console.log('✅ Supabase client initialized');
+            return params;
+        }
+
+        // Parse URL hash for tokens BEFORE creating client
+        const initialHash = window.location.hash;
+        const hashParams = parseHashParams(initialHash);
+        const hasAccessToken = !!hashParams.access_token;
+        const hasRefreshToken = !!hashParams.refresh_token;
+        const tokenType = hashParams.type; // 'recovery', 'signup', 'magiclink', etc.
+        const isRecoveryLink = tokenType === 'recovery';
+
+        // CRITICAL: Clean URL hash BEFORE creating Supabase client
+        // This prevents Supabase from internally trying to process the tokens
+        // which causes AbortError in fresh browsers (different browser than signup)
+        if (initialHash) {
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+
+        if (window.supabase && window.supabase.createClient) {
+            // DISABLE automatic features to avoid AbortError in cross-browser scenarios
+            // We handle URL tokens manually in initAuth()
+            db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                auth: {
+                    persistSession: false,     // Disabled - we handle manually to avoid lock issues
+                    autoRefreshToken: false,   // Disabled - we handle manually
+                    detectSessionInUrl: false, // Disabled - we parse tokens manually above
+                    flowType: 'implicit'
+                }
+            });
+
+            // Mark Supabase as ready immediately since we handle auth manually
+            supabaseReady = true;
+        } else {
+            console.error('❌ Supabase library not loaded! window.supabase =', window.supabase);
+            alert('Erreur: Supabase non chargé. Veuillez rafraîchir la page.');
+        }
+        
+        // Helper function to wait for Supabase to be ready
+        async function waitForSupabase() {
+            if (supabaseReady) return true;
+            let attempts = 0;
+            while (!supabaseReady && attempts < 20) {
+                await new Promise(r => setTimeout(r, 100));
+                attempts++;
+            }
+            return supabaseReady;
+        }
+        
+        // Safe query wrapper that handles AbortError with timeout
+        async function safeQuery(queryFn, retries = 3, timeoutMs = 5000) {
+            await waitForSupabase();
+            
+            for (let attempt = 0; attempt < retries; attempt++) {
+                try {
+                    // Add timeout to prevent infinite hang
+                    const timeoutPromise = new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Query timeout')), timeoutMs)
+                    );
+                    
+                    const result = await Promise.race([queryFn(), timeoutPromise]);
+
+                    // Check if result has AbortError
+                    if (result.error && result.error.message && result.error.message.includes('AbortError')) {
+                        await new Promise(r => setTimeout(r, 300 * (attempt + 1)));
+                        continue;
+                    }
+                    return result;
+                } catch (err) {
+                    if ((err.message.includes('AbortError') || err.message.includes('timeout')) && attempt < retries - 1) {
+                        await new Promise(r => setTimeout(r, 300 * (attempt + 1)));
+                        continue;
+                    }
+                    // Don't throw, return error object
+                    return { data: null, error: { message: err.message } };
+                }
+            }
+            return { data: null, error: { message: 'Query failed after retries' } };
+        }
         
         // ═══ TOAST UTILITY (needed early for error handling) ═══
         let toastTimeout = null;
@@ -5892,6 +6009,8 @@
         let authToken = null;
         let currentUser = null;
         let supabaseUser = null;
+        let isPasswordRecovery = false;  // Track if user is in password recovery flow
+        let isReady = false;  // Prevents duplicate handling
         
         const colors = {carrier:'#3B82F6', daikin:'#10B981', mitsubishi:'#E60012'};
         const names = {carrier:'Carrier', daikin:'Daikin', mitsubishi:'Mitsubishi'};
@@ -5923,17 +6042,17 @@
         
         async function prefetchApiKeys() {
             await getApiKey('elevenlabs_api_key');
-            console.log('✅ API keys prefetched');
         }
 
         // ═══ GET CURRENT USER FROM PUBLIC.USERS TABLE ═══
         async function loadUserProfile(authId) {
             try {
-                const { data, error } = await db
-                    .from('users')
-                    .select('*')
-                    .eq('auth_id', authId)
-                    .single();
+                const { data, error } = await safeQuery(() => 
+                    db.from('users')
+                      .select('*')
+                      .eq('id', authId)
+                      .single()
+                );
                 
                 if (error) {
                     console.error('Error loading user profile:', error);
@@ -5946,85 +6065,284 @@
             }
         }
 
-        // ═══ CHECK SUPABASE AUTH SESSION ON LOAD ═══
-        async function initAuth() {
-            console.log('🔐 Checking Supabase Auth session...');
-            
-            const { data: { session }, error } = await db.auth.getSession();
-            
-            if (error) {
-                console.error('Auth session error:', error);
+        // ═══ HELPER: Load user and show appropriate screen ═══
+        async function loadUserAndShowApp(user) {
+            if (!user) {
                 return;
             }
-            
-            if (session && session.user) {
-                console.log('🔐 Found existing session:', session.user.email);
-                supabaseUser = session.user;
-                
-                // Load user profile from public.users
-                const profile = await loadUserProfile(session.user.id);
-                
-                if (profile) {
-                    currentUser = profile;
-                    
-                    // Check approval status
-                    if (profile.status !== 'approved' && profile.status !== 'active') {
-                        console.log('⏳ User pending approval');
-                        showPendingScreen(profile.email);
+
+            supabaseUser = user;
+
+            // Load user profile from public.users
+            let profile = await loadUserProfile(user.id);
+
+            if (profile) {
+                // Sync missing user data from auth metadata to public.users
+                const authMeta = user.user_metadata || {};
+                const needsUpdate = {};
+
+                if (!profile.first_name && authMeta.first_name) {
+                    needsUpdate.first_name = authMeta.first_name;
+                }
+                if (!profile.phone && authMeta.phone) {
+                    needsUpdate.phone = authMeta.phone;
+                }
+                if (!profile.email && user.email) {
+                    needsUpdate.email = user.email;
+                }
+
+                // Update public.users if we have missing data from auth
+                if (Object.keys(needsUpdate).length > 0) {
+                    try {
+                        needsUpdate.updated_at = new Date().toISOString();
+                        const { data: updatedProfile } = await db
+                            .from('users')
+                            .update(needsUpdate)
+                            .eq('id', user.id)
+                            .select()
+                            .single();
+
+                        if (updatedProfile) {
+                            profile = updatedProfile;
+                        }
+                    } catch (e) {
+                        // Silently handle sync error
+                    }
+                }
+
+                currentUser = profile;
+
+                // Check approval status
+                if (profile.status !== 'approved' && profile.status !== 'active') {
+                    showPendingScreen(profile.email);
+                    return;
+                }
+
+                // User is approved - proceed to app
+                document.getElementById('userName').textContent = profile.first_name || 'Utilisateur';
+                document.getElementById('profileFirstName').value = profile.first_name || '';
+                document.getElementById('profileLastName').value = profile.last_name || '';
+                if (profile.email) document.getElementById('profileEmail').value = profile.email;
+                if (profile.phone) document.getElementById('profilePhone').value = profile.phone;
+
+                // Load language preference from database
+                if (profile.language && (profile.language === 'fr' || profile.language === 'en')) {
+                    setLanguage(profile.language);
+                }
+
+                // Check onboarding status from localStorage OR database
+                const onboardingDoneLocal = localStorage.getItem('fixair_onboarding_done');
+                const onboardingDoneDB = profile.onboarding_done;
+                if (onboardingDoneLocal || onboardingDoneDB) {
+                    onboardingComplete = true;
+                    document.querySelector('.onboarding-section').classList.add('hidden');
+                    document.getElementById('homepageContent').classList.add('active');
+                    // Sync localStorage if DB has the flag but local doesn't
+                    if (onboardingDoneDB && !onboardingDoneLocal) {
+                        localStorage.setItem('fixair_onboarding_done', 'true');
+                    }
+                }
+
+                document.getElementById('loginScreen').classList.remove('active');
+                document.getElementById('passwordResetScreen')?.classList.remove('active');
+                document.getElementById('mainApp').classList.add('active');
+
+                // Load projects and check if user should skip onboarding
+                await loadProjectsListAndCheckOnboarding();
+                initGamification();
+                prefetchApiKeys();
+            } else {
+                showPendingScreen(user.email);
+            }
+        }
+
+        // ═══ HELPER: Show password reset screen ═══
+        function showPasswordResetScreen() {
+            document.getElementById('loginScreen').classList.remove('active');
+            document.getElementById('pendingScreen')?.classList.remove('active');
+            document.getElementById('emailConfirmScreen')?.classList.remove('active');
+            document.getElementById('mainApp').classList.remove('active');
+            document.getElementById('passwordResetScreen').classList.add('active');
+        }
+
+        // ═══ CHECK SUPABASE AUTH SESSION ON LOAD ═══
+        async function initAuth() {
+            // If we have tokens in URL, manually set the session
+            if (hasAccessToken && hasRefreshToken) {
+                // IMPORTANT: Set recovery flag BEFORE setSession to prevent race condition
+                // The SIGNED_IN event will fire during setSession, and we need isPasswordRecovery
+                // to be true so the event handler shows the password reset form
+                if (isRecoveryLink) {
+                    isPasswordRecovery = true;
+                }
+
+                try {
+                    // Set the session using the tokens from the URL
+                    const { data, error } = await db.auth.setSession({
+                        access_token: hashParams.access_token,
+                        refresh_token: hashParams.refresh_token
+                    });
+
+                    if (error) {
+                        isPasswordRecovery = false;
                         return;
                     }
-                    
-                    // User is approved - proceed to app
-                    console.log('✅ User approved, loading app');
-                    document.getElementById('userName').textContent = profile.first_name || 'Utilisateur';
-                    document.getElementById('profileFirstName').value = profile.first_name || '';
-                    if (profile.email) document.getElementById('profileEmail').value = profile.email;
-                    
-                    const onboardingDone = localStorage.getItem('fixair_onboarding_done');
-                    if (onboardingDone) {
-                        onboardingComplete = true;
-                        document.querySelector('.onboarding-section').classList.add('hidden');
-                        document.getElementById('homepageContent').classList.add('active');
+
+                    // Manually persist session to localStorage since we disabled persistSession
+                    if (data.session) {
+                        localStorage.setItem('supabase.auth.token', JSON.stringify({
+                            currentSession: data.session,
+                            expiresAt: data.session.expires_at
+                        }));
                     }
-                    
-                    document.getElementById('loginScreen').classList.remove('active');
-                    document.getElementById('mainApp').classList.add('active');
-                    
-                    loadProjectsList();
-                    initGamification();
-                    prefetchApiKeys();
-                } else {
-                    console.log('⚠️ No user profile found, showing pending...');
-                    showPendingScreen(session.user.email);
+
+                    // Handle based on token type
+                    if (isRecoveryLink) {
+                        isReady = true;
+                        showPasswordResetScreen();
+                    } else if (data.session && data.session.user) {
+                        isReady = true;
+                        await loadUserAndShowApp(data.session.user);
+                    }
+
+                } catch (err) {
+                    isPasswordRecovery = false;
+                }
+            } else if (hasAccessToken && !hasRefreshToken) {
+                // Some flows only have access_token - try to use it anyway
+
+                if (isRecoveryLink) {
+                    isPasswordRecovery = true;
+                }
+
+                try {
+                    const { data, error } = await db.auth.setSession({
+                        access_token: hashParams.access_token,
+                        refresh_token: hashParams.access_token // Use same token as fallback
+                    });
+
+                    if (error) {
+                        isPasswordRecovery = false;
+                        return;
+                    }
+
+                    // Manually persist session
+                    if (data.session) {
+                        localStorage.setItem('supabase.auth.token', JSON.stringify({
+                            currentSession: data.session,
+                            expiresAt: data.session.expires_at
+                        }));
+                    }
+
+                    if (isRecoveryLink) {
+                        isReady = true;
+                        showPasswordResetScreen();
+                    } else if (data.session && data.session.user) {
+                        isReady = true;
+                        await loadUserAndShowApp(data.session.user);
+                    }
+
+                } catch (err) {
+                    isPasswordRecovery = false;
                 }
             } else {
-                console.log('🔐 No session found, showing login');
+                // No URL tokens - check localStorage for existing session
+                try {
+                    const stored = localStorage.getItem('supabase.auth.token');
+                    if (stored) {
+                        const parsed = JSON.parse(stored);
+                        if (parsed.currentSession) {
+                            const { data, error } = await db.auth.setSession({
+                                access_token: parsed.currentSession.access_token,
+                                refresh_token: parsed.currentSession.refresh_token
+                            });
+                            if (!error && data.session) {
+                                isReady = true;
+                                await loadUserAndShowApp(data.session.user);
+                                return;
+                            }
+                        }
+                    }
+                } catch (err) {
+                    // Error restoring session
+                }
+                // No valid session found
+                isReady = true;
             }
         }
 
         // Listen for auth state changes
+        let authHandled = false;
         db.auth.onAuthStateChange(async (event, session) => {
-            console.log('🔐 Auth state changed:', event);
-            
+            // Handle PASSWORD_RECOVERY event
+            if (event === 'PASSWORD_RECOVERY') {
+                isPasswordRecovery = true;
+                isReady = true;
+                showPasswordResetScreen();
+                return;
+            }
+
+            // Handle USER_UPDATED event (after password change)
+            if (event === 'USER_UPDATED') {
+                // Don't auto-load app - the setNewPassword function handles the flow
+                // by signing out and showing a "Se connecter" button
+                isReady = true;
+                return;
+            }
+
+            // Handle SIGNED_IN event
             if (event === 'SIGNED_IN' && session) {
-                supabaseUser = session.user;
-                if (!currentUser) {
-                    const profile = await loadUserProfile(session.user.id);
-                    if (profile) {
-                        currentUser = profile;
-                        if (profile.status === 'approved' || profile.status === 'active') {
-                            location.reload();
-                        }
-                    }
+                // If we're in password recovery mode, stay on reset form
+                if (isPasswordRecovery) {
+                    showPasswordResetScreen();
+                    return;
                 }
-            } else if (event === 'SIGNED_OUT') {
+
+                // Persist session to localStorage for page reload persistence
+                localStorage.setItem('supabase.auth.token', JSON.stringify({
+                    currentSession: session,
+                    expiresAt: session.expires_at
+                }));
+
+                supabaseUser = session.user;
+
+                // Only process if we don't have currentUser yet and not already in app
+                if (!currentUser && !document.getElementById('mainApp').classList.contains('active')) {
+                    authHandled = true;
+                    isReady = true;
+                    await loadUserAndShowApp(session.user);
+                }
+                return;
+            }
+
+            // Handle INITIAL_SESSION event
+            if (event === 'INITIAL_SESSION') {
+                // Skip if we already handled or if we're processing URL tokens manually
+                if (authHandled || hasAccessToken) {
+                    return;
+                }
+
+                if (session && session.user && !isPasswordRecovery) {
+                    supabaseUser = session.user;
+                    authHandled = true;
+                    isReady = true;
+                    await loadUserAndShowApp(session.user);
+                }
+                return;
+            }
+
+            // Handle SIGNED_OUT event
+            if (event === 'SIGNED_OUT') {
                 supabaseUser = null;
                 currentUser = null;
+                isPasswordRecovery = false;
+                authHandled = false;
+                isReady = true;
             }
         });
 
-        // Initialize auth on page load
-        setTimeout(() => initAuth(), 500);
+        // Initialize auth on page load (reduced timeout since we handle manually)
+        setTimeout(() => initAuth(), 300);
 
         // ═══ LOGIN STATUS MESSAGES ═══
         let existingUserName = '';
@@ -6058,33 +6376,159 @@
             }
             
             try {
+                const redirectUrl = window.location.origin + window.location.pathname;
+
                 const { error } = await db.auth.resetPasswordForEmail(email, {
-                    redirectTo: window.location.origin
+                    redirectTo: redirectUrl
                 });
-                
+
                 if (error) {
                     setLoginStatus('Erreur: ' + error.message, 'error');
                 } else {
-                    setLoginStatus('Email de réinitialisation envoyé !', 'success');
+                    setLoginStatus('Email de réinitialisation envoyé ! Vérifiez votre boîte mail (et spam).', 'success');
                 }
             } catch (err) {
                 setLoginStatus('Erreur lors de l\'envoi', 'error');
             }
         }
 
+        // ═══ SET NEW PASSWORD (from password recovery link) ═══
+        async function setNewPassword() {
+            const newPass = document.getElementById('newPasswordInput').value;
+            const confirmPass = document.getElementById('confirmPasswordInput').value;
+            const statusEl = document.getElementById('passwordResetStatus');
+
+            // Validation
+            if (!newPass || newPass.length < 6) {
+                statusEl.style.display = 'block';
+                statusEl.style.background = 'rgba(239,68,68,0.2)';
+                statusEl.style.border = '1px solid rgba(239,68,68,0.5)';
+                statusEl.style.color = '#ef4444';
+                statusEl.textContent = 'Le mot de passe doit contenir au moins 6 caractères';
+                return;
+            }
+
+            if (newPass !== confirmPass) {
+                statusEl.style.display = 'block';
+                statusEl.style.background = 'rgba(239,68,68,0.2)';
+                statusEl.style.border = '1px solid rgba(239,68,68,0.5)';
+                statusEl.style.color = '#ef4444';
+                statusEl.textContent = 'Les mots de passe ne correspondent pas';
+                return;
+            }
+
+            statusEl.style.display = 'block';
+            statusEl.style.background = 'rgba(59,130,246,0.2)';
+            statusEl.style.border = '1px solid rgba(59,130,246,0.5)';
+            statusEl.style.color = '#3b82f6';
+            statusEl.textContent = 'Mise à jour en cours...';
+
+            try {
+                const { error } = await db.auth.updateUser({ password: newPass });
+
+                if (error) {
+                    statusEl.style.background = 'rgba(239,68,68,0.2)';
+                    statusEl.style.border = '1px solid rgba(239,68,68,0.5)';
+                    statusEl.style.color = '#ef4444';
+                    statusEl.textContent = 'Erreur: ' + error.message;
+                    return;
+                }
+
+                statusEl.style.background = 'rgba(16,185,129,0.2)';
+                statusEl.style.border = '1px solid rgba(16,185,129,0.5)';
+                statusEl.style.color = '#10b981';
+                statusEl.textContent = 'Mot de passe mis à jour avec succès !';
+
+                // Reset the recovery flag
+                isPasswordRecovery = false;
+
+                // Clear the input fields
+                document.getElementById('newPasswordInput').value = '';
+                document.getElementById('confirmPasswordInput').value = '';
+
+                // Sign out to force fresh login with new password
+                localStorage.removeItem('supabase.auth.token');
+                await db.auth.signOut();
+
+                // Change the update button to a "Se connecter" button
+                const updateBtn = document.querySelector('#passwordResetScreen button[onclick="setNewPassword()"]');
+                if (updateBtn) {
+                    updateBtn.textContent = 'Se connecter';
+                    updateBtn.onclick = goToLoginFromPasswordReset;
+                }
+
+                // Hide the cancel button
+                const cancelBtn = document.querySelector('#passwordResetScreen button[onclick="cancelPasswordReset()"]');
+                if (cancelBtn) {
+                    cancelBtn.style.display = 'none';
+                }
+
+            } catch (err) {
+                console.error('❌ Password update exception:', err);
+                statusEl.style.background = 'rgba(239,68,68,0.2)';
+                statusEl.style.border = '1px solid rgba(239,68,68,0.5)';
+                statusEl.style.color = '#ef4444';
+                statusEl.textContent = 'Erreur lors de la mise à jour';
+            }
+        }
+
+        // ═══ GO TO LOGIN FROM PASSWORD RESET ═══
+        function goToLoginFromPasswordReset() {
+            document.getElementById('passwordResetScreen').classList.remove('active');
+            document.getElementById('loginScreen').classList.add('active');
+
+            // Reset the password reset screen for next use
+            const statusEl = document.getElementById('passwordResetStatus');
+            statusEl.style.display = 'none';
+
+            const updateBtn = document.querySelector('#passwordResetScreen button[onclick="goToLoginFromPasswordReset()"]');
+            if (updateBtn) {
+                updateBtn.textContent = 'Mettre à jour le mot de passe';
+                updateBtn.onclick = setNewPassword;
+            }
+
+            const cancelBtn = document.querySelector('#passwordResetScreen button[onclick="cancelPasswordReset()"]');
+            if (cancelBtn) {
+                cancelBtn.style.display = '';
+            }
+        }
+
+        // ═══ CANCEL PASSWORD RESET ═══
+        function cancelPasswordReset() {
+            isPasswordRecovery = false;
+            localStorage.removeItem('supabase.auth.token');
+            db.auth.signOut();
+
+            // Hide password reset screen and show login
+            document.getElementById('passwordResetScreen').classList.remove('active');
+            document.getElementById('pendingScreen').classList.remove('active');
+            document.getElementById('emailConfirmScreen').classList.remove('active');
+            document.getElementById('mainApp').classList.remove('active');
+            document.getElementById('loginScreen').classList.add('active');
+
+            // Clear inputs
+            document.getElementById('newPasswordInput').value = '';
+            document.getElementById('confirmPasswordInput').value = '';
+            document.getElementById('passwordResetStatus').style.display = 'none';
+        }
+
         // LOGIN STEPS
         async function nextLoginStep() {
             const btn = document.getElementById('loginBtn');
-            console.log('📱 nextLoginStep called, current step:', loginStep);
-            
+
             if (loginStep === 0) {
                 // Step 0: Check email
                 const email = document.getElementById('loginEmail').value.trim();
-                console.log('📧 Email entered:', email);
-                
+
                 if (!email.includes('@')) { 
                     setLoginStatus('Veuillez entrer un email valide', 'error');
                     return; 
+                }
+                
+                // Check if Supabase is available
+                if (!db) {
+                    setLoginStatus('Erreur de connexion. Rafraîchissez la page.', 'error');
+                    return;
                 }
                 
                 clearLoginStatus();
@@ -6092,22 +6536,35 @@
                 btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
                 
                 try {
-                    // Check if user exists in database
-                    const { data, error } = await db
-                        .from('users')
-                        .select('id, first_name, status')
-                        .eq('email', email)
-                        .maybeSingle();
+                    // Wait for Supabase to be ready
+                    await waitForSupabase();
                     
-                    isNewUser = !data;
-                    console.log('👤 Is new user:', isNewUser);
+                    // SIMPLIFIED: Only check public.users table
+                    // If user is in public.users = existing user
+                    // If not = new user (will handle auth conflicts during signup)
+                    const { data: publicUser, error: publicError } = await safeQuery(() => 
+                        db.from('users')
+                          .select('id, first_name, status')
+                          .eq('email', email)
+                          .maybeSingle()
+                    );
+                    
+                    // If found in public.users, user exists
+                    if (publicUser && publicUser.id) {
+                        isNewUser = false;
+                        existingUserName = publicUser.first_name || '';
+                    } else {
+                        // Not in public.users = treat as new user
+                        // If they have an auth account but no profile, signup will fail
+                        // and we'll handle that case then
+                        isNewUser = true;
+                    }
                     
                     const pwdInput = document.getElementById('loginPassword');
                     if (isNewUser) {
                         pwdInput.placeholder = 'Créez votre mot de passe';
                         setLoginStatus('Nouveau compte ! Choisissez un mot de passe', 'success');
                     } else {
-                        existingUserName = data.first_name || '';
                         pwdInput.placeholder = 'Entrez votre mot de passe';
                         if (existingUserName) {
                             setLoginStatus('Bienvenue ' + existingUserName + ' ! Entrez votre mot de passe', 'info');
@@ -6158,10 +6615,8 @@
                         });
                         
                         if (error) {
-                            console.error('Login error:', error);
                             setLoginStatus('Mot de passe incorrect', 'error', true);
                         } else {
-                            console.log('✅ Login successful:', data.user.email);
                             clearLoginStatus();
                             supabaseUser = data.user;
                             
@@ -6181,12 +6636,22 @@
                                 document.getElementById('userName').textContent = profile.first_name;
                                 document.getElementById('profileFirstName').value = profile.first_name;
                                 if (profile.email) document.getElementById('profileEmail').value = profile.email;
-                                
-                                onboardingComplete = true;
-                                document.querySelector('.onboarding-section').classList.add('hidden');
-                                document.getElementById('homepageContent').classList.add('active');
-                                localStorage.setItem('fixair_onboarding_done', 'true');
-                                
+                                if (profile.phone) document.getElementById('profilePhone').value = profile.phone;
+
+                                // Check onboarding status from localStorage OR database
+                                const onboardingDoneLocal = localStorage.getItem('fixair_onboarding_done');
+                                const onboardingDoneDB = profile.onboarding_done;
+                                if (onboardingDoneLocal || onboardingDoneDB) {
+                                    onboardingComplete = true;
+                                    document.querySelector('.onboarding-section').classList.add('hidden');
+                                    document.getElementById('homepageContent').classList.add('active');
+                                    // Sync localStorage if DB has the flag but local doesn't
+                                    if (onboardingDoneDB && !onboardingDoneLocal) {
+                                        localStorage.setItem('fixair_onboarding_done', 'true');
+                                    }
+                                }
+                                // If NOT done, loadProjectsListAndCheckOnboarding will check for existing projects
+
                                 toast('Bienvenue ' + profile.first_name + ' !');
                                 doLogin();
                             } else {
@@ -6270,11 +6735,25 @@
                 
                 if (error) {
                     console.error('Registration error:', error);
-                    setLoginStatus(error.message || 'Erreur lors de la création du compte', 'error');
+                    const errMsg = error.message.toLowerCase();
+                    
+                    // Check if user already exists in auth (but not in public.users)
+                    if (errMsg.includes('already registered') || 
+                        errMsg.includes('already exists') ||
+                        errMsg.includes('user already') ||
+                        errMsg.includes('email already')) {
+                        // User has an auth account but no profile - ask them to login instead
+                        setLoginStatus('Ce compte existe déjà. Essayez de vous connecter ou réinitialisez votre mot de passe.', 'error', true);
+                        
+                        // Reset to login flow for existing user
+                        isNewUser = false;
+                        loginStep = 0;
+                        updateLoginUI();
+                    } else {
+                        setLoginStatus(error.message || 'Erreur lors de la création du compte', 'error');
+                    }
                     return;
                 }
-                
-                console.log('✅ Registration successful:', data);
                 
                 // Check if email confirmation is required
                 if (data.user && !data.user.email_confirmed_at) {
@@ -6347,8 +6826,10 @@
 
         async function logoutFromPending() {
             await db.auth.signOut();
+            localStorage.removeItem('supabase.auth.token');  // Clear manual session storage
             supabaseUser = null;
             currentUser = null;
+            isPasswordRecovery = false;
             localStorage.removeItem('fixair_onboarding_done');
             clearLoginStatus();
             
@@ -6370,21 +6851,23 @@
             toast('Déconnecté');
         }
 
-        function doLogin() {
+        async function doLogin() {
             document.getElementById('loginScreen').classList.remove('active');
             document.getElementById('emailConfirmScreen').classList.remove('active');
             document.getElementById('pendingScreen').classList.remove('active');
             document.getElementById('mainApp').classList.add('active');
-            
-            loadProjectsList();
+
+            await loadProjectsListAndCheckOnboarding();
             initGamification();
             prefetchApiKeys();
         }
 
         async function logout() {
             await db.auth.signOut();
+            localStorage.removeItem('supabase.auth.token');  // Clear manual session storage
             supabaseUser = null;
             currentUser = null;
+            isPasswordRecovery = false;
             loginStep = 0;
             isNewUser = false;
             onboardingComplete = false;
@@ -6422,107 +6905,130 @@
 
         async function saveProfile() {
             const firstName = document.getElementById('profileFirstName').value.trim();
+            const lastName = document.getElementById('profileLastName').value.trim();
             const email = document.getElementById('profileEmail').value.trim();
-            
+            const phone = document.getElementById('profilePhone')?.value.trim() || '';
+            const language = currentLang || 'fr';
+
             if (!firstName) { toast('Entrez votre prénom'); return; }
-            
+
             // Update UI immediately
             document.getElementById('userName').textContent = firstName;
-            
+
+            // ═══ GET USER ID (priority: currentUser > session > localStorage) ═══
+            let userId = currentUser?.id;
+            if (!userId && typeof db !== 'undefined') {
+                try {
+                    const { data: { session } } = await db.auth.getSession();
+                    userId = session?.user?.id;
+                } catch (e) { }
+            }
+            if (!userId) {
+                const savedUser = JSON.parse(localStorage.getItem('fixair_user') || '{}');
+                userId = savedUser.id;
+            }
+
+            console.log('saveProfile - userId:', userId);
+
             // ═══ SAVE TO LOCALSTORAGE (ALWAYS WORKS) ═══
             const savedUser = JSON.parse(localStorage.getItem('fixair_user') || '{}');
+            savedUser.id = userId; // Ensure ID is saved
             savedUser.first_name = firstName;
+            savedUser.last_name = lastName;
             if (email) savedUser.email = email;
+            if (phone) savedUser.phone = phone;
+            savedUser.language = language;
             localStorage.setItem('fixair_user', JSON.stringify(savedUser));
             currentUser = savedUser;
-            console.log('✅ Profile saved to localStorage:', savedUser);
-            
+
             let dbSaveSuccess = false;
-            
+
             // ═══ SAVE TO SUPABASE users table ═══
-            if (savedUser.id && typeof db !== 'undefined') {
+            if (userId && typeof db !== 'undefined') {
                 try {
-                    console.log('🔄 Updating Supabase users table...', {
-                        id: savedUser.id,
+                    const updateData = {
                         first_name: firstName,
-                        email: email
-                    });
-                    
+                        last_name: lastName,
+                        email: email,
+                        phone: phone,
+                        language: language,
+                        updated_at: new Date().toISOString()
+                    };
+
+                    console.log('Saving profile to Supabase:', updateData, 'for user:', userId);
+
                     const { data, error } = await db
                         .from('users')
-                        .update({ 
-                            first_name: firstName,
-                            email: email,
-                            updated_at: new Date().toISOString()
-                        })
-                        .eq('id', savedUser.id)
+                        .update(updateData)
+                        .eq('id', userId)
                         .select();
-                    
+
                     if (error) {
-                        console.error('❌ Supabase update error:', error);
-                        
-                        // If table doesn't exist or record not found, try insert
-                        if (error.code === '42P01' || error.code === 'PGRST116') {
-                            console.log('⚠️ Table or record not found, trying upsert...');
-                            const { error: upsertError } = await db
-                                .from('users')
-                                .upsert({ 
-                                    id: savedUser.id,
-                                    first_name: firstName,
-                                    email: email,
-                                    updated_at: new Date().toISOString()
-                                });
-                            
-                            if (!upsertError) {
-                                console.log('✅ Profile upserted to Supabase');
-                                dbSaveSuccess = true;
-                            } else {
-                                console.error('❌ Upsert also failed:', upsertError);
-                            }
+                        console.error('Profile update error:', error.code, error.message);
+
+                        // Try upsert as fallback
+                        const upsertData = {
+                            id: userId,
+                            first_name: firstName,
+                            last_name: lastName,
+                            email: email,
+                            phone: phone,
+                            language: language,
+                            updated_at: new Date().toISOString()
+                        };
+
+                        const { error: upsertError } = await db
+                            .from('users')
+                            .upsert(upsertData);
+
+                        if (!upsertError) {
+                            dbSaveSuccess = true;
+                            console.log('Profile saved via upsert');
+                        } else {
+                            console.error('Profile upsert error:', upsertError.code, upsertError.message);
                         }
                     } else {
-                        console.log('✅ Profile updated in Supabase:', data);
                         dbSaveSuccess = true;
+                        console.log('Profile saved successfully:', data);
                     }
                 } catch (e) {
-                    console.error('❌ Supabase exception:', e);
+                    console.error('Profile save exception:', e);
                 }
+            } else {
+                console.log('Cannot save to Supabase - no userId or db not available');
             }
-            
+
             // ═══ ALSO TRY n8n API (if endpoint exists) ═══
             if (savedUser.id && authToken && !dbSaveSuccess) {
                 try {
-                    console.log('🔄 Calling n8n update-profile API...');
                     const response = await fetch(`${API_BASE}/auth/update-profile`, {
                         method: 'POST',
-                        headers: { 
+                        headers: {
                             'Content-Type': 'application/json',
                             'Authorization': `Bearer ${authToken}`
                         },
-                        body: JSON.stringify({ 
+                        body: JSON.stringify({
                             user_id: savedUser.id,
                             first_name: firstName,
-                            email: email
+                            last_name: lastName,
+                            email: email,
+                            phone: phone,
+                            language: language
                         })
                     });
-                    
+
                     if (response.ok) {
-                        const data = await response.json();
-                        console.log('✅ Profile saved via n8n API:', data);
                         dbSaveSuccess = true;
-                    } else {
-                        console.log('⚠️ n8n API returned:', response.status);
                     }
                 } catch (error) {
-                    console.log('⚠️ n8n API not available:', error.message);
+                    // n8n API not available
                 }
             }
-            
+
             if (dbSaveSuccess) {
                 toast('Profil enregistré ✓');
             } else {
                 toast('Profil enregistré localement');
-                console.warn('⚠️ Profile only saved to localStorage - database update failed');
             }
             
             // Handle onboarding step progression
@@ -6626,10 +7132,25 @@
             document.getElementById('onboardingProgress').textContent = completed + '/4';
         }
 
-        function showCongrats() {
+        async function showCongrats() {
             document.getElementById('welcomeSection').style.display = 'none';
             document.getElementById('onboardingCard').classList.add('congrats');
             onboardingComplete = true;
+            // Persist onboarding completion so it's remembered on page reload
+            localStorage.setItem('fixair_onboarding_done', 'true');
+
+            // Also save to database so it persists across devices/browsers
+            const userId = await getCurrentUserId();
+            if (userId && typeof db !== 'undefined') {
+                try {
+                    await db
+                        .from('users')
+                        .update({ onboarding_done: true, updated_at: new Date().toISOString() })
+                        .eq('id', userId);
+                } catch (e) {
+                    // Silently fail - localStorage is the backup
+                }
+            }
         }
 
         function closeCongrats() {
@@ -6724,8 +7245,6 @@
                     chatHistory[panel].push({ role: 'system', content: brandContext });
                 }
             });
-            
-            console.log('🏷️ Brand context updated:', brandName);
         }
 
         // ═══════════════════════════════════════════════════════════════
@@ -6842,24 +7361,17 @@
                         .update(updateData)
                         .eq('id', currentProjectId);
                     
-                    if (error) {
-                        console.error('❌ Error updating project brand:', error);
-                    } else {
-                        console.log('✅ Project brand updated to:', newBrand);
-                    }
                 } catch (e) {
-                    console.error('❌ Failed to update brand in database:', e);
+                    // Failed to update brand in database
                 }
             }
-            
+
             // Close dropdown
             closeChatBrandDropdowns();
-            
+
             // Add confirmation message in chat
             const confirmMsg = `<p style="color: var(--mode-color);">✓ Marque changée: <strong>${oldBrandName}</strong> → <strong>${newBrandName}</strong></p><p style="font-size: 12px; opacity: 0.7;">On continue avec ${newBrandName}.</p>`;
             addMsg(panel, 'ai', confirmMsg);
-            
-            console.log('🏷️ Brand changed in chat:', oldBrand, '→', newBrand);
         }
 
         // Old updateRing removed - now using gamification refreshWeeklyStats()
@@ -6894,11 +7406,9 @@
             
             if (isFromProject) {
                 // Opening existing project - keep the loaded messages
-                console.log('📂 Opening existing project:', currentProjectId);
                 // Don't clear body - messages are already loaded
             } else {
                 // Starting fresh chat - reset everything
-                console.log('🆕 Opening fresh chat - resetting project state');
                 currentProjectId = null;
                 currentChatId = { assistant: null, copilot: null };
                 currentProjectTitle = null;
@@ -6946,11 +7456,9 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                 
                 // Add brand context as first system message
                 chatHistory[m].push({ 
-                    role: 'system', 
-                    content: brandContext 
+                    role: 'system',
+                    content: brandContext
                 });
-                
-                console.log('🏷️ Brand context added to history:', brandName);
                 // ═══ END FIX ═══
                 
                 updateChatHeader();
@@ -7097,7 +7605,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                                     const sourceImg = findSourceImage(messages, ocrData.sourcePhotoId);
                                     renderOCRMessage(m, ocrData, sourceImg);
                                 } catch (e) {
-                                    console.error('Error parsing OCR message:', e);
+                                    // Error parsing OCR message
                                 }
                             } else {
                                 // Regular text message
@@ -7112,17 +7620,15 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                                             const reportData = JSON.parse(reportDataMatch[1].trim());
                                             lastReportData = reportData;
                                             updateDrawerPreview(reportData);
-                                            console.log('📊 Restored report data from saved message');
                                         }
                                     } catch (e) {
-                                        console.warn('Could not parse saved REPORT_DATA:', e);
+                                        // Could not parse saved REPORT_DATA
                                     }
                                 }
                             }
                             chatHistory[m].push({ role: msg.role, content: msg.content });
                         }
                     }
-                    console.log('✅ Loaded existing chat for', m);
                     return;
                 } else {
                     // Create new chat in same project
@@ -7141,7 +7647,6 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                         
                         if (newChat) {
                             currentChatId[m] = newChat.id;
-                            console.log('✅ Created new chat for', m, 'in project', currentProjectId);
                         }
                     }
                 }
@@ -7363,7 +7868,6 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                 sessionIds.copilot = 'copilot-temp-' + tempId;
                 sessionIds.assistant = 'assistant-temp-' + tempId;
             }
-            console.log('🔑 Session IDs updated:', sessionIds);
         }
         
         // ═══════════════════════════════════════════════════════════════
@@ -7390,6 +7894,9 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                 currentUserId = currentUser.id;
                 return currentUser.id;
             }
+            
+            // Wait for Supabase to be ready
+            await waitForSupabase();
             
             // Fallback: get from Supabase Auth session
             try {
@@ -7425,7 +7932,6 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             
             const userId = await getCurrentUserId();
             if (!userId || userId.startsWith('demo-')) {
-                console.log('⚠️ Demo mode - not saving to Supabase');
                 return null;
             }
             
@@ -7443,13 +7949,11 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                     .single();
                 
                 if (projectError) {
-                    console.error('Error creating project:', projectError);
                     return null;
                 }
-                
+
                 currentProjectId = project.id;
                 updateSessionIds(project.id); // Update session IDs for n8n memory
-                console.log('✅ Project created:', project.id);
             }
             
             // If no chat for this panel, create one
@@ -7466,12 +7970,10 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                     .single();
                 
                 if (chatError) {
-                    console.error('Error creating chat:', chatError);
                     return null;
                 }
-                
+
                 currentChatId[panel] = chat.id;
-                console.log('✅ Chat created:', chat.id, 'type:', panel);
             }
             
             return { projectId: currentProjectId, chatId: currentChatId[panel] };
@@ -7493,7 +7995,6 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                 .single();
             
             if (error) {
-                console.error('Error saving message:', error);
                 return null;
             }
             
@@ -7539,24 +8040,46 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                 // Update current project title and header
                 currentProjectTitle = title;
                 updateChatHeader();
-                
-                console.log('✅ Project auto-named:', title);
-                
+
                 // Refresh projects list
                 loadProjectsList();
             }
         }
         
+        // Load projects and check if user should skip onboarding (has existing projects)
+        async function loadProjectsListAndCheckOnboarding() {
+            await loadProjectsList();
+
+            // If user has projects but hasn't completed onboarding, they're an existing user
+            // Skip onboarding for them and mark as done
+            if (!onboardingComplete && window.projectsData && window.projectsData.length > 0) {
+                onboardingComplete = true;
+                document.querySelector('.onboarding-section').classList.add('hidden');
+                document.getElementById('homepageContent').classList.add('active');
+                localStorage.setItem('fixair_onboarding_done', 'true');
+
+                // Also update database
+                const userId = await getCurrentUserId();
+                if (userId && typeof db !== 'undefined') {
+                    try {
+                        await db
+                            .from('users')
+                            .update({ onboarding_done: true, updated_at: new Date().toISOString() })
+                            .eq('id', userId);
+                    } catch (e) {
+                        // Silently fail - localStorage is the backup
+                    }
+                }
+            }
+        }
+
         // Load user's projects list
         async function loadProjectsList() {
-            console.log('🔄 Loading projects list...');
-            
             const userId = await getCurrentUserId();
             if (!userId || userId.startsWith('demo-')) {
-                console.log('⚠️ Demo mode - not loading from Supabase');
                 return;
             }
-            
+
             try {
                 const { data: projects, error } = await db
                     .from('projects')
@@ -7579,12 +8102,9 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                     .limit(20);
                 
                 if (error) {
-                    console.error('❌ Error loading projects:', error);
                     return;
                 }
-                
-                console.log('✅ Projects loaded:', projects?.length || 0);
-                
+
                 // Store projects globally for context menu
                 window.projectsData = projects || [];
                 
@@ -7592,7 +8112,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                 renderRecentProjects(projects?.slice(0, 2) || []);
                 
             } catch (e) {
-                console.error('❌ Unexpected error loading projects:', e);
+                // Unexpected error loading projects
             }
         }
         
@@ -7802,8 +8322,6 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                 currentProjectTitle = newTitle;
                 updateChatHeader();
             }
-            
-            console.log('✅ Project renamed:', newTitle);
         }
         
         // Delete project
@@ -7832,20 +8350,17 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                 .eq('id', contextMenuProjectId);
             
             if (error) {
-                console.error('Error deleting project:', error);
                 alert('Erreur lors de la suppression');
                 return;
             }
-            
+
             loadProjectsList(); // Refresh list
-            
+
             // If this project was open, close chat
             if (currentProjectId === contextMenuProjectId) {
                 closeChat();
                 startNewProject();
             }
-            
-            console.log('✅ Project deleted');
         }
         
         // Format time ago
@@ -7886,8 +8401,6 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
         }
         // Load a specific project (FIXED: uses separate queries for reliability)
         async function loadProject(projectId) {
-            console.log('🔄 Loading project:', projectId);
-            
             // ═══ INSTANT OPEN: Open chat immediately ═══
             openingFromProject = true;
             currentProjectId = projectId;
@@ -7905,22 +8418,19 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                 
                 if (projectChats && projectChats.length > 0) {
                     const chatTypes = projectChats.map(c => c.chat_type);
-                    console.log('📋 Project has chat types:', chatTypes);
-                    
+
                     // If project only has assistant, switch to assistant
                     if (chatTypes.includes('assistant') && !chatTypes.includes('copilot')) {
                         initialMode = 'assistant';
-                        console.log('🔄 Switching to assistant mode (project has assistant chat)');
                     }
                     // If project only has copilot, switch to copilot
                     else if (chatTypes.includes('copilot') && !chatTypes.includes('assistant')) {
                         initialMode = 'copilot';
-                        console.log('🔄 Switching to copilot mode (project has copilot chat)');
                     }
                     // If both, use current mode
                 }
             } catch (e) {
-                console.log('Could not pre-check chat types:', e);
+                // Could not pre-check chat types
             }
             
             // Open chat view with correct mode
@@ -7941,12 +8451,9 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                     .single();
                 
                 if (projectError || !project) {
-                    console.error('❌ Error loading project:', projectError);
                     if (body) body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--hotline);">Erreur de chargement</div>';
                     return;
                 }
-                
-                console.log('✅ Project loaded:', project.title, 'brand:', project.brand);
                 
                 // Try to load photos separately (column might not exist yet)
                 try {
@@ -7956,9 +8463,7 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                         .eq('id', projectId)
                         .single();
                     window.reportPhotos = projectWithPhotos?.photos || [];
-                    console.log('📷 Loaded', window.reportPhotos.length, 'photos for project');
                 } catch (e) {
-                    console.log('📷 Photos column not available yet');
                     window.reportPhotos = [];
                 }
                 
@@ -7986,9 +8491,8 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                 
                 // Check if user selected a different brand on main page
                 if (userSelectedBrand && projectOriginalBrand && userSelectedBrand !== projectOriginalBrand) {
-                    console.log('🔄 Brand changed from main page:', projectOriginalBrand, '→', userSelectedBrand);
                     brandWasChanged = true;
-                    
+
                     // Update project with new brand and store original
                     try {
                         const updateData = { brand: userSelectedBrand };
@@ -7996,15 +8500,13 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                         if (!project.original_brand) {
                             updateData.original_brand = projectOriginalBrand;
                         }
-                        
+
                         await db
                             .from('projects')
                             .update(updateData)
                             .eq('id', projectId);
-                        
-                        console.log('✅ Project brand updated in database');
                     } catch (e) {
-                        console.error('❌ Failed to update brand:', e);
+                        // Failed to update brand
                     }
                     
                     // Keep the user's selected brand (don't override from project)
@@ -8024,15 +8526,8 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                     .select('id, chat_type, project_id, started_at')
                     .eq('project_id', projectId);
                 
-                if (chatsError) {
-                    console.error('❌ Error loading chats:', chatsError);
-                }
-                
-                console.log('✅ Chats found:', chats?.length || 0);
-                
                 // Step 3: Load messages for each chat
                 for (const chat of chats || []) {
-                    console.log(`🔄 Loading messages for ${chat.chat_type} chat:`, chat.id);
                     
                     currentChatId[chat.chat_type] = chat.id;
                     
@@ -8044,11 +8539,8 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                         .order('created_at', { ascending: true });
                     
                     if (msgError) {
-                        console.error('❌ Error loading messages:', msgError);
                         continue;
                     }
-                    
-                    console.log(`✅ Found ${messages?.length || 0} messages for ${chat.chat_type}`);
                     
                     // Clear existing chat UI
                     chatHistory[chat.chat_type] = [];
@@ -8082,7 +8574,7 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                                     const sourceImg = findSourceImage(messages, ocrData.sourcePhotoId);
                                     renderOCRMessage(chat.chat_type, ocrData, sourceImg);
                                 } catch (e) {
-                                    console.error('Error parsing OCR message:', e);
+                                    // Error parsing OCR message
                                 }
                             } else {
                                 // Regular text message
@@ -8097,10 +8589,9 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                                             const reportData = JSON.parse(reportDataMatch[1].trim());
                                             lastReportData = reportData;
                                             updateDrawerPreview(reportData);
-                                            console.log('📊 Restored report data from saved message');
                                         }
                                     } catch (e) {
-                                        console.warn('Could not parse saved REPORT_DATA:', e);
+                                        // Could not parse saved REPORT_DATA
                                     }
                                 }
                             }
@@ -8159,12 +8650,6 @@ INSTRUCTIONS:
                         history.unshift({ role: 'system', content: contextSummary });
                     }
                 });
-                
-                console.log('🏷️ Comprehensive context added for existing project:', projectBrandName);
-                console.log('📝 Chat history lengths:', {
-                    assistant: chatHistory.assistant.length,
-                    copilot: chatHistory.copilot.length
-                });
                 // ═══ END FIX ═══
                 
                 // Open chat with the appropriate mode
@@ -8188,11 +8673,9 @@ INSTRUCTIONS:
                     }, 100);
                 }
                 // ═══ END FIX ═══
-                
-                console.log('✅ Project fully loaded:', currentProjectTitle);
-                
+
             } catch (e) {
-                console.error('❌ Unexpected error loading project:', e);
+                // Unexpected error loading project
             }
         }
         
@@ -8262,8 +8745,6 @@ INSTRUCTIONS:
             setTimeout(() => {
                 addMsg(mode, 'ai', '<p>Bonjour ! Comment puis-je vous aider ?</p>');
             }, 300);
-            
-            console.log('🆕 New project started');
         }
         
         // Update brand in UI
@@ -8286,66 +8767,14 @@ INSTRUCTIONS:
         // ═══════════════════════════════════════════════════════════════
         // END SUPABASE FUNCTIONS
         // ═══════════════════════════════════════════════════════════════
-        
-        // Debug function - run debugFixAIR() in browser console to diagnose issues
-        async function debugFixAIR() {
-            console.log('🔍 ═══════════════════════════════════════');
-            console.log('🔍 FIXAIR DEBUG REPORT');
-            console.log('🔍 ═══════════════════════════════════════');
-            
-            const userId = await getCurrentUserId();
-            console.log('👤 User ID:', userId);
-            console.log('🏷️ Current Brand:', brand);
-            console.log('📁 Current Project ID:', currentProjectId);
-            console.log('💬 Current Chat IDs:', currentChatId);
-            
-            if (!userId || userId.startsWith('demo-')) {
-                console.log('⚠️ Demo mode - no Supabase data');
-                return;
-            }
-            
-            // Check projects
-            const { data: projects, error: pe } = await db
-                .from('projects')
-                .select('*')
-                .eq('user_id', userId)
-                .limit(5);
-            console.log('📁 Projects:', projects?.length || 0, pe ? 'ERROR: ' + pe.message : '');
-            if (projects?.[0]) console.log('   Sample:', projects[0].title, '| Brand:', projects[0].brand);
-            
-            // Check chats for first project
-            if (projects?.[0]) {
-                const { data: chats, error: ce } = await db
-                    .from('chats')
-                    .select('*')
-                    .eq('project_id', projects[0].id);
-                console.log('💬 Chats for project:', chats?.length || 0, ce ? 'ERROR: ' + ce.message : '');
-                
-                // Check messages for first chat
-                if (chats?.[0]) {
-                    const { data: messages, error: me } = await db
-                        .from('messages')
-                        .select('*')
-                        .eq('chat_id', chats[0].id)
-                        .limit(5);
-                    console.log('📝 Messages for chat:', messages?.length || 0, me ? 'ERROR: ' + me.message : '');
-                    if (messages?.[0]) console.log('   Sample:', messages[0].role, ':', messages[0].content?.substring(0, 50) + '...');
-                }
-            }
-            
-            console.log('🔍 ═══════════════════════════════════════');
-            console.log('🔍 Run loadProject("project-id") to test loading');
-            console.log('🔍 ═══════════════════════════════════════');
-        }
-        
-        
+
+
         // ═══════════════════════════════════════════════════════════════
         // RENDER STRUCTURED REPORT - Beautiful Template
         // ═══════════════════════════════════════════════════════════════
         function renderReport(data) {
             // ═══ STORE FOR PDF EXPORT ═══
             lastReportData = data;
-            console.log('📊 Report data stored for PDF export:', data);
             
             // ═══ UPDATE DRAWER PREVIEW ═══
             updateDrawerPreview(data);
@@ -8698,27 +9127,9 @@ INSTRUCTIONS:
             general: { primary: '#EA580C', secondary: '#1a1a2e' }
         };
         
-        // Share report function
+        // Share report function - DISABLED (Premium feature)
         function shareReport() {
-            if (!lastReportData) {
-                toast('Aucun rapport à partager');
-                return;
-            }
-            
-            // Try native share API
-            if (navigator.share) {
-                const text = generateReportText(lastReportData);
-                navigator.share({
-                    title: 'Rapport d\'intervention FixAIR',
-                    text: text
-                }).catch(err => console.log('Share cancelled'));
-            } else {
-                // Fallback: copy to clipboard
-                const text = generateReportText(lastReportData);
-                navigator.clipboard.writeText(text).then(() => {
-                    toast('Rapport copié dans le presse-papier !');
-                });
-            }
+            toast('Partage disponible dans la version Pro');
         }
         
         // Generate plain text version of report
@@ -8776,23 +9187,9 @@ INSTRUCTIONS:
             return text;
         }
         
-        // Main PDF export function
+        // Main PDF export function - DISABLED (Premium feature)
         function exportReportPDF() {
-            if (!lastReportData) {
-                // Try to extract from last AI message
-                const assistantBody = document.getElementById('assistantBody');
-                if (assistantBody) {
-                    const reportDiv = assistantBody.querySelector('.rpt');
-                    if (!reportDiv) {
-                        toast('Aucun rapport à exporter');
-                        return;
-                    }
-                }
-                toast('Aucun rapport à exporter');
-                return;
-            }
-            
-            generatePDF(lastReportData);
+            toast('Export PDF disponible dans la version Pro');
         }
         
         // Generate professional PDF
@@ -9298,7 +9695,7 @@ INSTRUCTIONS:
                     lastReportData.status = 'complet';
                     lastReportData.exported_at = new Date().toISOString();
                     updateDrawerPreview(lastReportData);
-                    console.log('📄 Report exported and marked as complete');
+                    // Report exported and marked as complete
                 }
                 
                 // Track gamification
@@ -9356,7 +9753,7 @@ INSTRUCTIONS:
             // Attach event listeners for editable fields
             initEditableReport();
             
-            console.log('📋 Drawer preview updated - Completion:', completionStatus.percentage + '%');
+            // Drawer preview updated
         }
         
         // Calculate report completion for manager visibility
@@ -10498,8 +10895,6 @@ INSTRUCTIONS:
             
             // Auto-save indicator
             showAutoSaveIndicator();
-            
-            console.log('📝 Report field updated:', fieldPath, '=', value);
         }
         
         // Add a new item to a list field
@@ -10541,7 +10936,7 @@ INSTRUCTIONS:
             updateReportProgress();
             showAutoSaveIndicator();
             
-            console.log('➕ Added item to', listName);
+            // Item added to list
         }
         
         // Remove an item from a list field
@@ -10555,7 +10950,7 @@ INSTRUCTIONS:
             updateReportProgress();
             showAutoSaveIndicator();
             
-            console.log('➖ Removed item from', listName, 'at index', index);
+            // Item removed from list
         }
         
         // Refresh the report preview with current data
@@ -10663,7 +11058,6 @@ INSTRUCTIONS:
                     try {
                         const jsonData = JSON.parse(jsonContent);
                         if (jsonData.type === 'report' || jsonData.resume || jsonData.travaux_effectues || jsonData.resultat) {
-                            console.log('📊 Detected JSON report in code block, rendering with template');
                             // Extract intro text before the code block
                             const introMatch = trimmed.match(/^([\s\S]*?)```/);
                             const introText = introMatch ? introMatch[1].trim() : '';
@@ -10671,35 +11065,33 @@ INSTRUCTIONS:
                             return introText ? `<p>${introText.replace(/\n/g, '<br>')}</p>${reportHtml}` : reportHtml;
                         }
                     } catch (e) {
-                        console.log('Code block is not valid JSON report:', e.message);
+                        // Code block is not valid JSON report
                     }
                 }
             }
-            
+
             // Check for raw JSON (starts with { and ends with })
             if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
                 try {
                     const jsonData = JSON.parse(trimmed);
                     if (jsonData.type === 'report' || jsonData.resume || jsonData.travaux_effectues || jsonData.resultat) {
-                        console.log('📊 Detected raw JSON report, rendering with template');
                         return renderReport(jsonData.data || jsonData);
                     }
                 } catch (e) {
-                    console.log('Not valid JSON, parsing as markdown');
+                    // Not valid JSON, parsing as markdown
                 }
             }
-            
+
             // Check for JSON embedded in text (intro text + JSON)
             const embeddedJsonMatch = trimmed.match(/^([\s\S]*?)\s*(\{[\s\S]*"type"\s*:\s*"report"[\s\S]*\})\s*$/);
             if (embeddedJsonMatch) {
                 try {
                     const jsonData = JSON.parse(embeddedJsonMatch[2]);
-                    console.log('📊 Detected embedded JSON report, rendering with template');
                     const introText = embeddedJsonMatch[1].trim();
                     const reportHtml = renderReport(jsonData.data || jsonData);
                     return introText ? `<p>${introText.replace(/\n/g, '<br>')}</p>${reportHtml}` : reportHtml;
                 } catch (e) {
-                    console.log('Embedded JSON parse failed:', e.message);
+                    // Embedded JSON parse failed
                 }
             }
             
@@ -11105,18 +11497,7 @@ RÈGLES:
                 
                 // Get the right webhook based on panel (copilot vs assistant)
                 const webhookUrl = getWebhookUrl(panel);
-                
-                console.log('📤 Sending to n8n:', webhookUrl);
-                console.log('📤 Panel:', panel);
-                console.log('📤 Session ID:', currentSessionId);
-                console.log('📤 Is existing conversation:', isExistingConversation, '(', previousUserMessages, 'user msgs,', previousAiMessages, 'AI msgs)');
-                console.log('📤 History length:', recentHistory.length, '(system msg:', systemMsg ? 'yes' : 'no', ')');
-                console.log('📤 Brand:', currentBrandName);
-                if (isExistingConversation) {
-                    console.log('📤 Full conversation summary being sent in brand_instruction');
-                    console.log('📤 Summary preview:', conversationSummary.substring(0, 500) + '...');
-                }
-                
+
                 // Call n8n webhook
                 const response = await fetch(webhookUrl, {
                     method: 'POST',
@@ -11125,9 +11506,7 @@ RÈGLES:
                     },
                     body: JSON.stringify(payload)
                 });
-                
-                console.log('📥 Response status:', response.status);
-                
+
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error('❌ n8n Error:', response.status, errorText);
@@ -11135,8 +11514,7 @@ RÈGLES:
                 }
                 
                 const data = await response.json();
-                console.log('📥 Response data:', data);
-                
+
                 // Remove loading
                 removeLoadingMsg(panel);
                 
@@ -11149,8 +11527,7 @@ RÈGLES:
                     if (reportDataMatch) {
                         try {
                             const extractedData = JSON.parse(reportDataMatch[1].trim());
-                            console.log('📊 Extracted report data:', extractedData);
-                            
+
                             // Merge with existing data
                             if (!lastReportData) {
                                 lastReportData = {
@@ -11164,10 +11541,8 @@ RÈGLES:
                             
                             // Immediately update preview
                             updateDrawerPreview(lastReportData);
-                            
-                            console.log('✅ Report preview updated with extracted data');
                         } catch (e) {
-                            console.warn('Failed to parse REPORT_DATA:', e);
+                            // Failed to parse REPORT_DATA
                         }
                     }
                     
@@ -11232,9 +11607,7 @@ RÈGLES:
                     .single();
                 
                 if (error) throw error;
-                
-                console.log('✅ Report saved:', data.id);
-                
+
                 // Update project status
                 await db
                     .from('projects')
@@ -11242,7 +11615,7 @@ RÈGLES:
                     .eq('id', currentProjectId);
                 
             } catch (e) {
-                console.error('Error saving report:', e);
+                // Error saving report
             }
         }
         
@@ -11352,7 +11725,7 @@ RÈGLES:
                 recordings[panel] = { stream, startTime: Date.now(), mediaRecorder };
                 
             } catch (err) {
-                console.log('Mic access denied, using simulation');
+                // Mic access denied, using simulation
                 recordings[panel] = { startTime: Date.now(), simulated: true };
                 
                 // Simulate speaking patterns
@@ -11425,8 +11798,7 @@ RÈGLES:
                     input.placeholder = panel === 'assistant' ? 'Décrivez l\'intervention...' : 'Posez votre question...';
                     handleChatInput(panel);
                     toast('🎤 Transcription terminée');
-                    console.log('✅ ElevenLabs transcription:', transcription);
-                    
+
                     // ═══ TRACK VOICE NOTE FOR GAMIFICATION ═══
                     trackAction('voice');
                 } else {
@@ -11435,8 +11807,6 @@ RÈGLES:
                 }
                 
             } catch (error) {
-                console.error('❌ ElevenLabs STT error:', error);
-                
                 // Hide sphere, show button
                 sphere.classList.remove('active');
                 btn.style.display = 'flex';
@@ -11571,54 +11941,25 @@ RÈGLES:
             el.closest('.report-menu-dropdown').classList.remove('show');
         }
         
-        // Share from report card menu (different from main shareReport)
+        // Share from report card menu - DISABLED (Premium feature)
         function shareReportCard(event, el) {
             event.stopPropagation();
-            const card = el.closest('.report-card');
-            const content = card.innerText;
-            
-            if (navigator.share) {
-                navigator.share({
-                    title: 'Rapport d\'intervention FixAIR',
-                    text: content
-                }).catch(() => {});
-            } else {
-                navigator.clipboard.writeText(content);
-                toast('Rapport copié pour partage !');
-            }
             el.closest('.report-menu-dropdown').classList.remove('show');
+            toast('Partage disponible dans la version Pro');
         }
-        
-        // Menu version of export PDF (called from dropdown)
+
+        // Menu version of export PDF - DISABLED (Premium feature)
         function exportReportPDFMenu(event, el) {
             event.stopPropagation();
             el.closest('.report-menu-dropdown').classList.remove('show');
-            exportReportPDF();
+            toast('Export PDF disponible dans la version Pro');
         }
-        
-        // Menu version of share (called from dropdown in chat)
+
+        // Menu version of share - DISABLED (Premium feature)
         function shareReportMenu(event, el) {
             event.stopPropagation();
             el.closest('.report-menu-dropdown').classList.remove('show');
-            // Use lastReportData if available, otherwise use shareReport
-            if (lastReportData) {
-                shareReport();
-            } else {
-                // Fallback: try to get content from card
-                const card = el.closest('.report-card');
-                if (card) {
-                    const content = card.innerText;
-                    if (navigator.share) {
-                        navigator.share({
-                            title: 'Rapport d\'intervention FixAIR',
-                            text: content
-                        }).catch(() => {});
-                    } else {
-                        navigator.clipboard.writeText(content);
-                        toast('Rapport copié pour partage !');
-                    }
-                }
-            }
+            toast('Partage disponible dans la version Pro');
         }
         
         // Close report menu when clicking outside
@@ -11645,8 +11986,7 @@ RÈGLES:
         function attachAction(type, panel) {
             closeAllAttach();
             currentPhotoPanel = panel;
-            console.log('📸 attachAction:', type, 'panel:', panel);
-            
+
             if (type === 'camera') {
                 document.getElementById('cameraInput').click();
             } else if (type === 'file') {
@@ -11656,10 +11996,8 @@ RÈGLES:
         
         function handleFileSelect(event, source) {
             const file = event.target.files[0];
-            console.log('📸 handleFileSelect:', source, 'file:', file?.name, 'panel:', currentPhotoPanel);
-            
+
             if (!file) {
-                console.log('❌ No file selected');
                 return;
             }
             
@@ -11672,7 +12010,6 @@ RÈGLES:
                 
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    console.log('📸 Image loaded, adding to chat...');
                     addPhotoToChat(currentPhotoPanel, e.target.result);
                 };
                 reader.onerror = function(e) {
@@ -11746,17 +12083,13 @@ RÈGLES:
         
         // Add photo directly to chat with action buttons
         async function addPhotoToChat(panel, imageData) {
-            console.log('📸 addPhotoToChat called, panel:', panel);
-            
             const container = document.getElementById(panel + 'Body');
             if (!container) {
-                console.error('❌ Chat container not found:', panel + 'Body');
                 toast('Erreur: chat non trouvé');
                 return;
             }
-            
+
             const msgId = 'photo-' + Date.now();
-            console.log('📸 Creating message:', msgId);
             
             const msgDiv = document.createElement('div');
             msgDiv.className = 'msg user';
@@ -11771,19 +12104,17 @@ RÈGLES:
             scrollToBottom(panel);
             
             projectMessageCount++;
-            console.log('✅ Photo added to chat:', panel);
             toast('Photo ajoutée');
-            
+
             // ═══ GAMIFICATION: Track photo upload ═══
             trackAction('photo');
-            
+
             // ═══ Save photo to database ═══
             if (currentProjectId && currentChatId[panel]) {
                 try {
                     await saveMessage(currentChatId[panel], 'user', imageData, 'image');
-                    console.log('📸 Photo saved to database');
                 } catch (e) {
-                    console.error('❌ Error saving photo:', e);
+                    // Error saving photo
                 }
             }
         }
@@ -11861,8 +12192,6 @@ RÈGLES:
                 // ═══════════════════════════════════════════════════════════
                 // MÉTHODE 1: CLAUDE VISION (haute qualité)
                 // ═══════════════════════════════════════════════════════════
-                console.log('🔍 Tentative Claude Vision...');
-                
                 try {
                     const visionResponse = await fetch(OCR_WEBHOOK_URL, {
                         method: 'POST',
@@ -11878,24 +12207,22 @@ RÈGLES:
                         const visionText = visionResult.output || visionResult.response || visionResult.text || '';
                         
                         // Vérifier que c'est une vraie extraction (pas une erreur)
-                        if (visionText && 
+                        if (visionText &&
                             visionText.length > 30 &&
                             !visionText.includes('Je suis prêt') &&
                             !visionText.includes('Envoie-moi')) {
                             extractedText = visionText;
                             ocrMethod = 'vision';
-                            console.log('✅ Claude Vision réussi:', extractedText.length, 'caractères');
                         }
                     }
                 } catch (visionErr) {
-                    console.log('⚠️ Claude Vision non disponible:', visionErr.message);
+                    // Claude Vision non disponible
                 }
-                
+
                 // ═══════════════════════════════════════════════════════════
                 // MÉTHODE 2: TESSERACT.JS (fallback)
                 // ═══════════════════════════════════════════════════════════
                 if (!extractedText && typeof Tesseract !== 'undefined') {
-                    console.log('🔄 Fallback Tesseract.js...');
                     
                     if (extractBtn) {
                         extractBtn.innerHTML = '<span class="icon"><svg><use href="#icon-search"/></svg></span> OCR...';
@@ -11916,7 +12243,6 @@ RÈGLES:
                     if (data.text && data.text.trim().length > 5) {
                         extractedText = data.text.trim();
                         ocrMethod = 'tesseract';
-                        console.log('✅ Tesseract réussi:', extractedText.length, 'caractères');
                     }
                 }
                 
@@ -11943,8 +12269,6 @@ RÈGLES:
                 // ═══════════════════════════════════════════════════════════
                 // CONSTRUIRE L'AFFICHAGE (Card UI)
                 // ═══════════════════════════════════════════════════════════
-                console.log('📊 Construction de l\'affichage...');
-                
                 // Parser le texte pour infos structurées (si Tesseract)
                 const structuredInfo = parseOCRForStructuredInfo(extractedText);
                 const rawTextId = 'raw-' + quoteId;
@@ -12043,7 +12367,6 @@ RÈGLES:
                         htmlContent: finalHtml,
                         sourcePhotoId: msgId
                     }), 'ocr');
-                    console.log('💾 OCR sauvegardé en base');
                 }
                 
                 // Succès
@@ -12060,8 +12383,6 @@ RÈGLES:
                 scrollToBottom(panel);
                 
             } catch (error) {
-                console.error('❌ Erreur OCR:', error);
-                
                 updateOCRQuoteWithResults(quoteId, `
                     <div style="color:var(--hotline);padding:12px;">
                         Erreur: ${error.message}
@@ -12850,7 +13171,7 @@ RÈGLES:
                     .from('project-photos')
                     .getPublicUrl(filename);
                 
-                console.log('Photo uploaded:', urlData.publicUrl);
+                // Photo uploaded successfully
                 return urlData.publicUrl;
                 
             } catch (error) {
@@ -12884,7 +13205,7 @@ RÈGLES:
                     .update({ photos: updatedPhotos })
                     .eq('id', projectId);
                 
-                console.log('Photo saved to project:', projectId);
+                // Photo saved to project
                 
             } catch (error) {
                 console.error('Error saving photo to project:', error);
@@ -12963,15 +13284,13 @@ RÈGLES:
         // Listen for SDK ready event
         window.addEventListener('elevenlabs-ready', () => {
             elevenLabsSDKReady = true;
-            console.log('✅ ElevenLabs SDK loaded and ready');
         });
-        
+
         async function connectHotline() {
             if(isConnecting || isConnected) return;
-            
+
             // Check if SDK is ready
             if (!elevenLabsSDKReady || !window.ElevenLabsConversation) {
-                console.log('⏳ SDK not ready yet, waiting...');
                 toast('Chargement en cours...');
                 // Wait a bit and try again
                 setTimeout(() => {
@@ -12991,14 +13310,12 @@ RÈGLES:
             
             // Get the correct agent ID for the selected brand
             const agentId = ELEVENLABS_AGENT_IDS[brand] || ELEVENLABS_AGENT_IDS['general'];
-            console.log('🎙️ Connecting to ElevenLabs agent:', agentId, 'for brand:', brand);
             
             try {
                 elevenLabsConversation = await window.ElevenLabsConversation.startSession({
                     agentId: agentId,
                     
                     onMessage: ({ message, source }) => {
-                        console.log('📨 Message from', source, ':', message);
                         if (source === 'user') {
                             addHotlineMessage(message, 'user');
                         } else {
@@ -13007,7 +13324,6 @@ RÈGLES:
                     },
                     
                     onModeChange: ({ mode }) => {
-                        console.log('🎤 Mode change:', mode);
                         if (mode === 'speaking') {
                             document.getElementById('pulseSphere').classList.add('ai-speaking');
                             showAISpeakingIndicator();
@@ -13018,8 +13334,6 @@ RÈGLES:
                     },
                     
                     onConnect: ({ conversationId }) => {
-                        console.log('✅ Connected! Conversation ID:', conversationId);
-                        
                         isConnecting = false;
                         isConnected = true;
                         document.getElementById('pulseSphere').classList.remove('connecting');
@@ -13034,19 +13348,16 @@ RÈGLES:
                     },
                     
                     onDisconnect: () => {
-                        console.log('🔌 Disconnected');
                         handleHotlineDisconnect();
                     },
-                    
+
                     onError: (error) => {
-                        console.error('❌ ElevenLabs error:', error);
                         toast('Erreur connexion');
                         handleHotlineDisconnect();
                     }
                 });
 
             } catch (error) {
-                console.error('❌ Connection failed:', error);
                 isConnecting = false;
                 document.getElementById('pulseSphere').classList.remove('connecting');
                 document.getElementById('widgetSublabel').textContent = 'Appuyez pour parler';
@@ -13111,9 +13422,8 @@ RÈGLES:
             if (elevenLabsConversation) {
                 try {
                     await elevenLabsConversation.endSession();
-                    console.log('✅ Session ended');
                 } catch (e) {
-                    console.log('End session error:', e);
+                    // End session error
                 }
                 elevenLabsConversation = null;
             }
@@ -13323,18 +13633,16 @@ RÈGLES:
             // Ensure we have user ID
             const userId = await getCurrentUserId();
             if (!userId || userId.startsWith('demo-')) {
-                console.log('⚠️ No valid user ID, skipping track');
                 return;
             }
-            
+
             const config = GAMIFICATION_CONFIG.actions[actionType];
             if (!config) {
-                console.warn('Action type inconnu:', actionType);
                 return;
             }
-            
+
             // NOTE: Don't update lastKnownStats here - let the homepage comparison work
-            
+
             try {
                 const { error } = await db.from('user_actions').insert({
                     user_id: userId,
@@ -13343,22 +13651,19 @@ RÈGLES:
                     euros_saved: config.euros,
                     project_id: projectId || currentProjectId
                 });
-                
+
                 if (error) {
                     // Si table n'existe pas encore, ignorer silencieusement
                     if (error.code === '42P01') {
-                        console.log('⚠️ Table user_actions pas encore créée');
                         return;
                     }
                     throw error;
                 }
-                
-                console.log(`✅ Action trackée: ${actionType} (+${config.minutes}min, +${config.euros}€)`);
-                
+
                 // Don't refresh stats here - let homepage celebration handle it
-                
+
             } catch (err) {
-                console.error('Erreur tracking action:', err);
+                // Erreur tracking action
             }
         }
         
@@ -13378,22 +13683,20 @@ RÈGLES:
             // Ensure we have user ID
             const userId = await getCurrentUserId();
             if (!userId || userId.startsWith('demo-')) {
-                console.log('⚠️ No valid user ID for stats');
                 return null;
             }
-            
+
             try {
                 const monday = getWeekStart();
-                
+
                 const { data, error } = await db
                     .from('user_actions')
                     .select('action_type, minutes_saved, euros_saved')
                     .eq('user_id', userId)
                     .gte('created_at', monday.toISOString());
-                
+
                 if (error) {
                     if (error.code === '42P01') {
-                        console.log('⚠️ Table user_actions pas encore créée');
                         return null;
                     }
                     throw error;
@@ -13556,13 +13859,6 @@ RÈGLES:
             if (reportsEl) reportsEl.textContent = displayStats.reports;
             if (messageEl) messageEl.innerHTML = formatMotivationalMessage(message);
             if (weekLabelEl) weekLabelEl.textContent = getWeekLabel();
-            
-            console.log('📊 Stats hebdo:', {
-                temps: `${timeData.value}${timeData.unit}${timeData.extra ? timeData.extra + 'min' : ''}`,
-                euros: displayStats.totalEuros + '€',
-                rapports: displayStats.reports,
-                ring: percentage + '%'
-            });
         }
         
         // ═══════════════════════════════════════════════════════════════
@@ -13691,9 +13987,7 @@ RÈGLES:
         function triggerCelebration(newStats, oldStats) {
             if (celebrationInProgress) return;
             celebrationInProgress = true;
-            
-            console.log('🎊 Célébration déclenchée!');
-            
+
             // Calculate difference for +X display
             const eurosDiff = Math.round(newStats.totalEuros - oldStats.totalEuros);
             const percentDiff = calculateRingPercentage(newStats.totalEuros) - calculateRingPercentage(oldStats.totalEuros);
@@ -13728,107 +14022,50 @@ RÈGLES:
         
         // Initialize gamification on login with celebration check
         async function initGamification(forceCheck = false) {
-            console.log('🎮 initGamification called, forceCheck:', forceCheck);
-            
             // Ensure we have the user ID
             const userId = await getCurrentUserId();
             if (!userId || userId.startsWith('demo-')) {
-                console.log('⚠️ No valid user ID for gamification');
                 return;
             }
-            
+
             const stats = await getWeeklyStats();
             const newStats = stats || { totalMinutes: 0, totalEuros: 0, reports: 0 };
-            
-            console.log('📊 Current DB stats:', newStats);
-            console.log('📊 Last known stats:', lastKnownStats);
-            
+
             // First login ever (no previous stats saved) - just display without animation
             if (!forceCheck && lastKnownStats.totalEuros === 0 && lastKnownStats.totalMinutes === 0 && lastKnownStats.reports === 0) {
                 // But if DB has stats, it means user was already active - show celebration!
                 if (newStats.totalEuros > 0 || newStats.totalMinutes > 0 || newStats.reports > 0) {
-                    console.log('🎊 First load but has stats - celebrating!');
                     triggerCelebration(newStats, { totalMinutes: 0, totalEuros: 0, reports: 0 });
                     saveLastKnownStats(newStats);
                     return;
                 }
                 await refreshWeeklyStats();
                 saveLastKnownStats(newStats);
-                console.log('📊 First init - no celebration');
                 return;
             }
-            
+
             // Check if we should celebrate (any increase in stats)
-            const hasIncrease = 
-                newStats.totalEuros > lastKnownStats.totalEuros || 
+            const hasIncrease =
+                newStats.totalEuros > lastKnownStats.totalEuros ||
                 newStats.totalMinutes > lastKnownStats.totalMinutes ||
                 newStats.reports > lastKnownStats.reports;
-            
-            console.log('🎊 Should celebrate?', hasIncrease);
-            
+
             if (hasIncrease || forceCheck) {
-                console.log('🎊 Triggering celebration!');
                 triggerCelebration(newStats, forceCheck ? { totalMinutes: 0, totalEuros: 0, reports: 0 } : lastKnownStats);
             } else {
                 await refreshWeeklyStats();
             }
-            
+
             saveLastKnownStats(newStats);
         }
-        
+
         // Call celebration when returning to homepage
         function onReturnToHomepage() {
-            console.log('🏠 onReturnToHomepage called');
-            console.log('🏠 currentUserId:', currentUserId);
-            console.log('🏠 homepage active:', document.getElementById('homepageContent')?.classList.contains('active'));
-            
             if (currentUserId) {
                 initGamification(false);
             }
         }
         
-        // TEST FUNCTION - Call from console: testCelebration()
-        window.testCelebration = function() {
-            console.log('🧪 Test celebration triggered');
-            const fakeOld = { totalMinutes: 0, totalEuros: 0, reports: 0 };
-            const fakeNew = { totalMinutes: 5, totalEuros: 4, reports: 0 };
-            triggerCelebration(fakeNew, fakeOld);
-        };
-        
-        // TEST: Force celebration with real stats
-        window.forceCelebration = async function() {
-            console.log('🧪 Force celebration with real stats');
-            initGamification(true);
-        };
-        
-        // DEBUG: Check current gamification state
-        window.debugGamification = async function() {
-            console.log('═══════════════════════════════════════');
-            console.log('🔍 GAMIFICATION DEBUG');
-            console.log('═══════════════════════════════════════');
-            console.log('Current User ID:', currentUserId);
-            console.log('Last Known Stats (localStorage):', lastKnownStats);
-            
-            const dbStats = await getWeeklyStats();
-            console.log('Current DB Stats:', dbStats);
-            
-            if (dbStats) {
-                const hasIncrease = 
-                    dbStats.totalEuros > lastKnownStats.totalEuros || 
-                    dbStats.totalMinutes > lastKnownStats.totalMinutes ||
-                    dbStats.reports > lastKnownStats.reports;
-                console.log('Has increase (should celebrate):', hasIncrease);
-            }
-            console.log('═══════════════════════════════════════');
-            return { lastKnownStats, dbStats };
-        };
-        
-        // RESET: Clear saved stats to test first-time animation
-        window.resetGamificationStats = function() {
-            localStorage.removeItem('fixair_lastStats');
-            lastKnownStats = { totalMinutes: 0, totalEuros: 0, reports: 0 };
-            console.log('✅ Stats reset! Reload page to test celebration');
-        };
 
         // ═══════════════════════════════════════════════════════════════════════════
         // CALENDAR FUNCTIONS
@@ -13867,7 +14104,6 @@ RÈGLES:
                             projectId: ev.project_id,
                             jobId: ev.job_id
                         }));
-                        console.log('📅 Calendar events loaded from Supabase:', calendarEvents.length);
                         // Clear old localStorage demo events
                         localStorage.removeItem('fixair_calendar_events');
                         renderTechCalendar();
@@ -13900,10 +14136,8 @@ RÈGLES:
 
         async function saveEventToSupabase(eventData) {
             const userId = await getCurrentUserId();
-            console.log('📅 Attempting to save event, userId:', userId, 'eventType:', eventData.type);
-            
+
             if (!db || !userId || userId.startsWith('demo-')) {
-                console.log('📅 Supabase not available or demo mode, saving to localStorage only');
                 return null;
             }
             
@@ -13922,9 +14156,7 @@ RÈGLES:
                     notes: eventData.notes || null,
                     project_id: eventData.projectId || null
                 };
-                
-                console.log('📅 Supabase data to insert:', JSON.stringify(supabaseData, null, 2));
-                
+
                 if (eventData.id && !eventData.id.startsWith('ev-') && !eventData.id.startsWith('demo')) {
                     // Update existing
                     const { data, error } = await db
@@ -13935,11 +14167,7 @@ RÈGLES:
                         .select()
                         .single();
                     
-                    if (error) {
-                        console.error('📅 Supabase UPDATE error:', error.message, error.details, error.hint);
-                        throw error;
-                    }
-                    console.log('📅 Event updated in Supabase:', data.id);
+                    if (error) throw error;
                     return data;
                 } else {
                     // Insert new
@@ -13950,16 +14178,10 @@ RÈGLES:
                         .select()
                         .single();
                     
-                    if (error) {
-                        console.error('📅 Supabase INSERT error:', error.message, error.details, error.hint);
-                        console.error('📅 Full error object:', JSON.stringify(error));
-                        throw error;
-                    }
-                    console.log('📅 Event created in Supabase:', data.id);
+                    if (error) throw error;
                     return data;
                 }
             } catch (err) {
-                console.error('📅 Error saving event to Supabase:', err);
                 toast('Erreur sauvegarde calendrier');
                 return null;
             }
@@ -13978,9 +14200,8 @@ RÈGLES:
                     .eq('user_id', userId);
                 
                 if (error) throw error;
-                console.log('📅 Event deleted from Supabase:', eventId);
             } catch (err) {
-                console.error('Error deleting event from Supabase:', err);
+                // Error deleting event
             }
         }
 
@@ -13988,11 +14209,9 @@ RÈGLES:
             // Create a project when event type is copilot or assistant
             const userId = await getCurrentUserId();
             if (!db || !userId || userId.startsWith('demo-')) {
-                console.log('📅 Cannot create project: no valid user');
                 return null;
             }
             if (eventData.type !== 'copilot' && eventData.type !== 'assistant') {
-                console.log('📅 Event type is not copilot/assistant, skipping project creation');
                 return null;
             }
             
@@ -14009,8 +14228,7 @@ RÈGLES:
                     .single();
                 
                 if (projectError) throw projectError;
-                console.log('📅 Project created for event:', project.id);
-                
+
                 // Create a chat with the correct type (copilot or assistant)
                 const { data: chat, error: chatError } = await db
                     .from('chats')
@@ -14022,15 +14240,10 @@ RÈGLES:
                     .select()
                     .single();
                 
-                if (chatError) {
-                    console.error('Error creating chat for project:', chatError);
-                } else {
-                    console.log('📅 Chat created with type:', eventData.type, 'id:', chat.id);
-                }
-                
+                // Chat creation error handled silently
+
                 return project.id;
             } catch (err) {
-                console.error('Error creating project for event:', err);
                 return null;
             }
         }
@@ -14374,15 +14587,11 @@ RÈGLES:
         }
 
         async function saveCalendarEvent() {
-            console.log('📅 saveCalendarEvent called!');
-            
             const name = document.getElementById('eventName').value.trim();
             if (!name) {
                 toast('Veuillez entrer un nom');
                 return;
             }
-            
-            console.log('📅 Saving event with type:', selectedEventType);
             
             // Get existing event data if editing (to preserve projectId)
             const existingEvent = editingEventId ? calendarEvents.find(e => e.id === editingEventId) : null;
@@ -14404,15 +14613,12 @@ RÈGLES:
                 projectId: existingEvent?.projectId || null,
                 jobId: existingEvent?.jobId || null
             };
-            
-            console.log('📅 Event data:', JSON.stringify(eventData, null, 2));
-            
+
             // Create project for copilot/assistant events (only for new events without projectId)
             if (!eventData.projectId && (selectedEventType === 'copilot' || selectedEventType === 'assistant')) {
                 const projectId = await createProjectForEvent(eventData);
                 if (projectId) {
                     eventData.projectId = projectId;
-                    console.log('📅 Event linked to project:', projectId);
                 }
             }
             
@@ -14424,9 +14630,6 @@ RÈGLES:
                 if (savedEvent.project_id) {
                     eventData.projectId = savedEvent.project_id;
                 }
-                console.log('📅 Event saved successfully with ID:', eventData.id);
-            } else {
-                console.log('📅 Event NOT saved to Supabase, keeping local ID:', eventData.id);
             }
             
             if (editingEventId) {
@@ -14554,8 +14757,8 @@ RÈGLES:
         };
 
         function openConnect() {
-            document.getElementById('connectView').classList.add('active');
-            document.getElementById('navConnect').classList.add('active');
+            // DISABLED - Coming soon
+            toast('FixAIR Connect — Disponible prochainement');
         }
 
         function closeConnect() {
@@ -14646,7 +14849,11 @@ RÈGLES:
 
         // Initialize calendar when page loads
         document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(initTechCalendar, 500);
+            // Wait longer to ensure Supabase is ready
+            setTimeout(async function() {
+                await waitForSupabase();
+                initTechCalendar();
+            }, 1000);
         });
     </script>
     
@@ -14948,6 +15155,18 @@ RÈGLES:
                         <select class="event-field-select" id="eventVisibility">
                             <option value="private">Privé (moi uniquement)</option>
                             <option value="company">Entreprise (managers)</option>
-                            <option value="connect">FixAIR Connect</option>
+                                             <option value="connect">FixAIR Connect</option>
                         </select>
                     </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="event-drawer-footer">
+            <button class="event-drawer-btn secondary" onclick="closeEventDrawer()">Annuler</button>
+            <button class="event-drawer-btn primary" onclick="saveCalendarEvent()">Enregistrer</button>
+        </div>
+    </div>
+
+</body>
+</html>
