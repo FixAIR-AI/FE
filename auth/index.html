@@ -576,7 +576,7 @@
 
     <script>
         // ═══════════════════════════════════════════════════════════════
-        // SUPABASE CONFIGURATION
+        // SUPABASE CONFIGURATION - SAME PATTERN AS MANAGER APP
         // ═══════════════════════════════════════════════════════════════
         const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTcyMTksImV4cCI6MjA4MTgzMzIxOX0.8ryQm1tsdx5ox3aFJiiflmwuEGGxxH_PlobGxXMgFuQ';
@@ -585,42 +585,30 @@
         const REDIRECT_FLAG = 'fixair_redirect_in_progress';
         const REDIRECT_TIMEOUT = 5000; // 5 seconds
 
-        // Create Supabase client ONCE at top level
-        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-            auth: {
-                persistSession: true,
-                autoRefreshToken: true,
-                detectSessionInUrl: false, // Disable to prevent AbortError
-                storageKey: 'fixair-auth',
-                storage: window.localStorage
-            }
-        });
-        console.log('Supabase initialized');
-
+        let sb = null;
         let currentEmail = '';
         let selectedUserType = null;
         let existingUserData = null;
         let loginStep = 0; // 0 = email, 1 = password
 
-        // Safe getSession with retry for AbortError
-        async function safeGetSession(retries = 3) {
-            for (let i = 0; i < retries; i++) {
-                try {
-                    const result = await sb.auth.getSession();
-                    if (result.error?.message?.includes('AbortError')) {
-                        await new Promise(r => setTimeout(r, 200 * (i + 1)));
-                        continue;
+        // Initialize Supabase - SAME PATTERN AS MANAGER APP
+        function initSupabase() {
+            try {
+                sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                    auth: {
+                        persistSession: true,
+                        autoRefreshToken: true,
+                        detectSessionInUrl: false,
+                        storageKey: 'fixair-auth',
+                        storage: window.localStorage
                     }
-                    return result;
-                } catch (err) {
-                    if (err.message?.includes('AbortError') && i < retries - 1) {
-                        await new Promise(r => setTimeout(r, 200 * (i + 1)));
-                        continue;
-                    }
-                    return { data: { session: null }, error: err };
-                }
+                });
+                console.log('✅ Supabase initialized');
+                return true;
+            } catch (err) {
+                console.error('❌ Supabase init error:', err);
+                return false;
             }
-            return { data: { session: null }, error: { message: 'Failed after retries' } };
         }
 
         // ═══════════════════════════════════════════════════════════════
@@ -1147,11 +1135,9 @@
         }
 
         // ═══════════════════════════════════════════════════════════════
-        // INITIALIZATION
+        // INITIALIZATION - SAME PATTERN AS MANAGER APP
         // ═══════════════════════════════════════════════════════════════
-        async function init() {
-            console.log('Initializing FixAIR Auth...');
-
+        async function initAuth() {
             // Check URL params
             const urlParams = new URLSearchParams(window.location.search);
             const fromLogout = urlParams.get('logout') === 'true';
@@ -1170,8 +1156,6 @@
             if (redirectFlag) {
                 const redirectTime = parseInt(redirectFlag);
                 const now = Date.now();
-
-                // If redirect was started less than 5 seconds ago, we might be in a loop
                 if (now - redirectTime < REDIRECT_TIMEOUT) {
                     console.log('Redirect loop detected - clearing session and showing login');
                     localStorage.removeItem(REDIRECT_FLAG);
@@ -1179,65 +1163,72 @@
                     showLoginForm();
                     return;
                 }
-
-                // Old flag, remove it
                 localStorage.removeItem(REDIRECT_FLAG);
             }
 
-            // Check if user is already logged in using safe retry
+            // Check for existing session via Supabase SDK - same as manager app
             try {
-                const { data: { session }, error } = await safeGetSession();
+                const { data: { session }, error } = await sb.auth.getSession();
 
-                if (error || !session) {
-                    showLoginForm();
+                if (session && session.user) {
+                    const email = session.user.email;
+
+                    // Query profile by EMAIL
+                    const { data: profile } = await sb
+                        .from('users')
+                        .select('role, status, first_name')
+                        .eq('email', email)
+                        .maybeSingle();
+
+                    if (!profile) {
+                        console.log('No profile found for email:', email);
+                        try { await sb.auth.signOut(); } catch(e) {}
+                        showLoginForm();
+                        return;
+                    }
+
+                    if (profile.status === 'pending') {
+                        showPendingScreenWithRole(profile);
+                        return;
+                    }
+
+                    // Redirect to correct app
+                    redirectByRole(profile.role);
                     return;
                 }
-
-                // User is logged in - get email from session
-                const email = session.user.email;
-
-                // Query profile by EMAIL (more reliable than auth_id)
-                const { data: profile } = await sb
-                    .from('users')
-                    .select('role, status, first_name')
-                    .eq('email', email)
-                    .maybeSingle();
-
-                if (!profile) {
-                    // No profile - sign out and show login
-                    console.log('No profile found for email:', email);
-                    try { await sb.auth.signOut(); } catch(e) {}
-                    showLoginForm();
-                    return;
-                }
-
-                if (profile.status === 'pending') {
-                    showPendingScreenWithRole(profile);
-                    return;
-                }
-
-                // Redirect to correct app
-                redirectByRole(profile.role);
-
             } catch (err) {
-                console.error('Session check error:', err);
-                showLoginForm();
+                console.log('Session check error:', err);
             }
+
+            // No session - show login form
+            showLoginForm();
         }
 
         function showLoginForm() {
-            // Clear any redirect flags
             localStorage.removeItem(REDIRECT_FLAG);
-            // Show login screen (it's already visible by default with .active class)
             console.log('FixAIR Auth ready - showing login form');
         }
 
-        // Start when DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
-        } else {
-            init();
+        // Initialize auth app - SAME PATTERN AS MANAGER APP
+        async function initAuthApp() {
+            console.log('🚀 Initializing FixAIR Auth...');
+
+            // Initialize Supabase first
+            if (!initSupabase()) {
+                console.error('Failed to init Supabase');
+                return;
+            }
+
+            // Then check auth
+            await initAuth();
+
+            console.log('✅ Auth App initialized');
         }
+
+        // Run init on DOM ready - SAME PATTERN AS MANAGER APP
+        document.addEventListener('DOMContentLoaded', () => {
+            initAuthApp();
+        });
     </script>
 </body>
 </html>
