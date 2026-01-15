@@ -6413,11 +6413,8 @@
                 clearLoginStatus();
                 btn.disabled = true;
                 btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
-                
+
                 try {
-                    // Wait for Supabase to be ready
-                    await waitForSupabase();
-                    
                     // SIMPLIFIED: Only check public.users table
                     // If user is in public.users = existing user
                     // If not = new user (will handle auth conflicts during signup)
@@ -7706,10 +7703,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                 currentUserId = currentUser.id;
                 return currentUser.id;
             }
-            
-            // Wait for Supabase to be ready
-            await waitForSupabase();
-            
+
             // Fallback: get from Supabase Auth session
             try {
                 const { data: { session } } = await db.auth.getSession();
@@ -14661,11 +14655,10 @@ RÈGLES:
 
         // Initialize calendar when page loads
         document.addEventListener('DOMContentLoaded', function() {
-            // Wait longer to ensure Supabase is ready
-            setTimeout(async function() {
-                await waitForSupabase();
+            // Wait for app to be ready, then init calendar
+            setTimeout(function() {
                 initTechCalendar();
-            }, 1000);
+            }, 1500);
         });
     </script>
     
