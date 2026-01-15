@@ -1018,11 +1018,11 @@
             try {
                 sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
                     auth: {
-                        persistSession: true,
-                        autoRefreshToken: true,
-                        detectSessionInUrl: false, // Disabled to prevent AbortError
                         storageKey: 'fixair-auth',
-                        storage: window.localStorage
+                        lock: false,  // CRITICAL: Disable lock to prevent AbortError
+                        autoRefreshToken: true,
+                        persistSession: true,
+                        detectSessionInUrl: false
                     }
                 });
                 console.log('✅ Supabase initialized');
