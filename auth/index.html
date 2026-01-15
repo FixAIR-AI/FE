@@ -601,7 +601,7 @@
                         storageKey: 'fixair-auth'
                     }
                 });
-                console.log('Supabase initialized');
+                // console.log('Supabase initialized');
                 return true;
             } catch (err) {
                 console.error('Supabase init error:', err);
@@ -880,7 +880,7 @@
 
                 if (data) {
                     currentLeadId = data.id;
-                    console.log('Lead email saved:', email);
+                    // console.log('Lead email saved:', email);
                 }
             } catch (err) {
                 console.error('Error saving lead email:', err);
@@ -897,7 +897,7 @@
                         updated_at: new Date().toISOString()
                     })
                     .eq('email', currentEmail);
-                console.log('Lead type saved:', role);
+                // console.log('Lead type saved:', role);
             } catch (err) {
                 console.error('Error saving lead type:', err);
             }
@@ -1223,7 +1223,7 @@
         // INITIALIZATION
         // ═══════════════════════════════════════════════════════════════
         async function init() {
-            console.log('Initializing FixAIR Auth...');
+            // console.log('Initializing FixAIR Auth...');
 
             if (!initSupabase()) {
                 console.error('Failed to initialize Supabase');
@@ -1236,7 +1236,7 @@
             const fromParam = urlParams.get('from');
 
             if (emailParam) {
-                console.log('Email param received:', emailParam, 'from:', fromParam);
+                // console.log('Email param received:', emailParam, 'from:', fromParam);
             }
 
             // Check if user is already logged in
@@ -1277,7 +1277,7 @@
                 goToScreen('userTypeScreen');
             }
 
-            console.log('FixAIR Auth ready');
+            // console.log('FixAIR Auth ready');
         }
 
         // Start when DOM is ready
