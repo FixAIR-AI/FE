@@ -696,19 +696,37 @@
                     }
 
                     if (existingUser) {
-                        // User exists - slide to password
-                        existingUserData = existingUser;
+                        // User exists - redirect to correct app based on role
+                        const encodedEmail = encodeURIComponent(email);
                         const name = existingUser.first_name || '';
+
                         if (name) {
-                            showStatus('loginStatus', 'Bienvenue ' + name + ' !', 'success');
+                            showStatus('loginStatus', 'Redirection vers votre app...', 'success');
                         } else {
-                            showStatus('loginStatus', 'Bienvenue !', 'success');
+                            showStatus('loginStatus', 'Redirection...', 'success');
                         }
-                        loginStep = 1;
-                        updateLoginUI();
+
+                        // Small delay to show message
+                        await new Promise(resolve => setTimeout(resolve, 500));
+
+                        switch (existingUser.role) {
+                            case 'admin':
+                            case 'owner':
+                                window.location.href = `/admin?email=${encodedEmail}`;
+                                break;
+                            case 'manager':
+                                window.location.href = `/manager?email=${encodedEmail}`;
+                                break;
+                            case 'technician':
+                            default:
+                                window.location.href = `/technician?email=${encodedEmail}`;
+                                break;
+                        }
+                        return;
                     } else {
-                        // New user - go to user type selection
+                        // New user - save lead and go to user type selection
                         existingUserData = null;
+                        await saveLeadEmail(email);
                         goToScreen('userTypeScreen');
                     }
                 } catch (err) {
@@ -841,6 +859,51 @@
         }
 
         // ═══════════════════════════════════════════════════════════════
+        // PROGRESSIVE LEAD CAPTURE
+        // ═══════════════════════════════════════════════════════════════
+        let currentLeadId = null;
+
+        async function saveLeadEmail(email) {
+            try {
+                const { data, error } = await sb
+                    .from('users')
+                    .upsert({
+                        email: email,
+                        status: 'incomplete',
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    }, {
+                        onConflict: 'email'
+                    })
+                    .select()
+                    .single();
+
+                if (data) {
+                    currentLeadId = data.id;
+                    console.log('Lead email saved:', email);
+                }
+            } catch (err) {
+                console.error('Error saving lead email:', err);
+            }
+        }
+
+        async function saveLeadType(role) {
+            if (!currentEmail) return;
+            try {
+                await sb
+                    .from('users')
+                    .update({
+                        role: role,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('email', currentEmail);
+                console.log('Lead type saved:', role);
+            } catch (err) {
+                console.error('Error saving lead type:', err);
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
         // STEP 2B: USER TYPE SELECTION
         // ═══════════════════════════════════════════════════════════════
         function selectUserType(type) {
@@ -854,8 +917,12 @@
             document.getElementById('userTypeBtn').disabled = false;
         }
 
-        function continueToSignup() {
+        async function continueToSignup() {
             if (!selectedUserType) return;
+
+            // Save user type to lead
+            const role = selectedUserType === 'technician' ? 'technician' : 'manager';
+            await saveLeadType(role);
 
             if (selectedUserType === 'technician') {
                 document.getElementById('techEmailInput').value = currentEmail;

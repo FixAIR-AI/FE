@@ -1647,12 +1647,31 @@
             if (passwordInput) passwordInput.value = '';
             updateLoginUI();
 
-            // Redirect to auth page
-            window.location.href = 'https://go.fixair.ai/auth';
+            // Show login screen (stay on same app)
+            document.getElementById('mainApp').classList.remove('active');
+            document.getElementById('pendingScreen').classList.remove('active');
+            document.getElementById('emailConfirmScreen').classList.remove('active');
+            document.getElementById('accessDeniedScreen').classList.remove('active');
+            document.getElementById('passwordResetScreen').classList.remove('active');
+            document.getElementById('loginScreen').classList.add('active');
+
+            toast('Déconnecté');
         }
 
         // Initialize auth on page load
         async function initAuth() {
+            // Check if email passed in URL (from /auth redirect)
+            const urlParams = new URLSearchParams(window.location.search);
+            const emailParam = urlParams.get('email');
+            if (emailParam) {
+                const emailInput = document.getElementById('loginEmailInput');
+                if (emailInput) {
+                    emailInput.value = decodeURIComponent(emailParam);
+                }
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
             if (hasAccessToken && hasRefreshToken) {
                 if (isRecoveryLink) {
                     isPasswordRecovery = true;

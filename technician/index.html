@@ -6112,6 +6112,15 @@
 
                 currentUser = profile;
 
+                // Check role and redirect to correct app if needed
+                if (profile.role === 'admin' || profile.role === 'owner') {
+                    window.location.replace('/admin');
+                    return;
+                } else if (profile.role === 'manager') {
+                    window.location.replace('/manager');
+                    return;
+                }
+
                 // Check approval status
                 if (profile.status !== 'approved' && profile.status !== 'active') {
                     showPendingScreen(profile.email);
@@ -6167,6 +6176,18 @@
 
         // ═══ CHECK SUPABASE AUTH SESSION ON LOAD ═══
         async function initAuth() {
+            // Check if email passed in URL (from /auth redirect)
+            const urlParams = new URLSearchParams(window.location.search);
+            const emailParam = urlParams.get('email');
+            if (emailParam) {
+                const emailInput = document.getElementById('loginEmail');
+                if (emailInput) {
+                    emailInput.value = decodeURIComponent(emailParam);
+                }
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
             // If we have tokens in URL, manually set the session
             if (hasAccessToken && hasRefreshToken) {
                 // IMPORTANT: Set recovery flag BEFORE setSession to prevent race condition
