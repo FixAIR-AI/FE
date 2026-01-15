@@ -1,13 +1,9 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <script>
-        window.location.replace('https://go.fixair.ai/technician');
-    </script>
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FixAIR</title>
+    <title>FixAIR Technician v51</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -4813,19 +4809,58 @@
         </defs>
     </svg>
 
-    <!-- LOADING SCREEN -->
-    <div class="screen active" id="loadingScreen" style="justify-content: center; align-items: center;">
-        <div style="text-align: center;">
-            <div class="login-logo" style="margin: 0 auto 24px;">
-                <svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg>
-            </div>
-            <div class="glass-sphere" style="margin: 0 auto 16px;">
-                <div class="sphere-fog-container">
-                    <div class="sphere-fog"></div>
-                    <div class="sphere-fog-2"></div>
+    <!-- LOGIN -->
+    <div class="screen login-screen active" id="loginScreen">
+        <div class="scan-line"></div>
+        <div class="login-container">
+            <div class="login-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
+            <h1 class="login-title">Bienvenue</h1>
+            <p class="login-sub">Assistant IA pour techniciens HVAC</p>
+            <div class="login-bar">
+                <div class="login-icon-slot">
+                    <div class="login-mini" id="loginSphere"><div class="glass-sphere"><div class="sphere-fog-container"><div class="sphere-fog"></div><div class="sphere-fog-2"></div></div></div></div>
+                    <button type="button" class="login-back" id="loginBack" onclick="prevLoginStep()"><svg viewBox="0 0 24 24"><use href="#icon-arrow-left"/></svg></button>
                 </div>
+                <div class="login-input-container">
+                    <div class="login-input-slider" id="loginSlider">
+                        <div class="login-input-slide">
+                            <input type="email" class="login-input" id="loginEmail" placeholder="Quelle est votre adresse email ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
+                        </div>
+                        <div class="login-input-slide">
+                            <input type="password" class="login-input" id="loginPassword" placeholder="Quel est votre mot de passe ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
+                        </div>
+                        <div class="login-input-slide">
+                            <input type="tel" class="login-input" id="loginPhone" placeholder="Quel est votre numéro de téléphone ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
+                        </div>
+                        <div class="login-input-slide">
+                            <input type="text" class="login-input" id="loginName" placeholder="Quel est votre prénom ?" onkeypress="if(event.key==='Enter')completeLogin()">
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="login-btn" id="loginBtn" onclick="nextLoginStep()"><span class="icon"><svg><use href="#icon-arrow-right"/></svg></span></button>
             </div>
-            <div style="color: rgba(255,255,255,0.5); font-size: 14px;">Chargement...</div>
+            <div class="login-status" id="loginStatus"></div>
+        </div>
+    </div>
+
+    <!-- EMAIL CONFIRMATION SCREEN -->
+    <div class="screen pending-screen" id="emailConfirmScreen">
+        <div class="scan-line"></div>
+        <div class="pending-container">
+            <div class="pending-logo">
+                <svg viewBox="0 0 235 48" style="height: 40px; color: var(--copilot);"><use href="#icon-fixair-logo"/></svg>
+            </div>
+            <h1 class="pending-title">Vérifiez votre email</h1>
+            <p class="pending-subtitle">
+                Un email de confirmation a été envoyé à votre adresse. Cliquez sur le lien pour activer votre compte.
+            </p>
+            <div class="pending-email" id="confirmEmail">email@example.com</div>
+            <button class="pending-logout" onclick="resendConfirmation()" style="margin-top: 8px; border-color: var(--copilot); color: var(--copilot);">
+                Renvoyer l'email
+            </button>
+            <button class="pending-logout" onclick="backToLogin()">
+                Retour à la connexion
+            </button>
         </div>
     </div>
 
@@ -4840,37 +4875,9 @@
             <p class="pending-subtitle">
                 Votre email a été confirmé ! Un administrateur va valider votre accès dans les plus brefs délais.
             </p>
-            <div class="pending-email" id="pendingEmail"></div>
+            <div class="pending-email" id="pendingEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="cda8a0aca4a18da8b5aca0bda1a8e3aea2a0">[email&#160;protected]</a></div>
             <button class="pending-logout" onclick="logoutFromPending()">
                 Se déconnecter
-            </button>
-        </div>
-    </div>
-
-    <!-- PASSWORD RESET SCREEN -->
-    <div class="screen pending-screen" id="passwordResetScreen">
-        <div class="scan-line"></div>
-        <div class="pending-container">
-            <div class="pending-logo">
-                <svg viewBox="0 0 235 48" style="height: 40px; color: var(--copilot);"><use href="#icon-fixair-logo"/></svg>
-            </div>
-            <h1 class="pending-title">Nouveau mot de passe</h1>
-            <p class="pending-subtitle">
-                Créez un nouveau mot de passe pour votre compte.
-            </p>
-            <div style="width: 100%; max-width: 300px; margin: 20px auto;">
-                <input type="password" id="newPasswordInput" placeholder="Nouveau mot de passe (min 6 caractères)"
-                    style="width: 100%; padding: 12px 16px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; margin-bottom: 12px;">
-                <input type="password" id="confirmPasswordInput" placeholder="Confirmer le mot de passe"
-                    style="width: 100%; padding: 12px 16px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; margin-bottom: 12px;">
-                <div id="passwordResetStatus" style="margin-bottom: 12px; padding: 8px; border-radius: 6px; font-size: 13px; display: none;"></div>
-                <button onclick="setNewPassword()"
-                    style="width: 100%; padding: 12px 16px; background: var(--copilot); border: none; border-radius: 8px; color: #000; font-size: 14px; font-weight: 600; cursor: pointer;">
-                    Mettre à jour le mot de passe
-                </button>
-            </div>
-            <button class="pending-logout" onclick="cancelPasswordReset()" style="margin-top: 8px;">
-                Annuler
             </button>
         </div>
     </div>
@@ -5559,8 +5566,8 @@
 
     <div class="toast" id="toast"></div>
 
-    <script>
-    // ═══════════════════════════════════════════════════════════════
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+        // ═══════════════════════════════════════════════════════════════
         // PRODUCTION MODE - Set to false for debugging
         // ═══════════════════════════════════════════════════════════════
         const PRODUCTION_MODE = true;
@@ -5853,87 +5860,18 @@
         let step3Done = false;
         let step4Done = false;
         let onboardingBrand = null;
-
-        // ═══ SUPABASE CLIENT INITIALIZATION ═══
+        
+        // ═══ SUPABASE CLIENT INITIALIZATION (must be before auth code) ═══
         const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTcyMTksImV4cCI6MjA4MTgzMzIxOX0.8ryQm1tsdx5ox3aFJiiflmwuEGGxxH_PlobGxXMgFuQ';
-
-        // ANTI-LOOP: localStorage flag to detect redirect loops
-        const REDIRECT_FLAG = 'fixair_redirect_in_progress';
-
-        let db = null;
-
-        // ═══ PARSE URL HASH FOR AUTH TOKENS ═══
-        function parseHashParams(hash) {
-            if (!hash || hash.length < 2) return {};
-            const params = {};
-            const hashContent = hash.substring(1);
-            const pairs = hashContent.split('&');
-            for (const pair of pairs) {
-                const [key, value] = pair.split('=');
-                if (key && value) {
-                    params[decodeURIComponent(key)] = decodeURIComponent(value);
-                }
+        
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: {
+                lock: false
             }
-            return params;
-        }
-
-        const initialHash = window.location.hash;
-        const hashParams = parseHashParams(initialHash);
-        const hasAccessToken = !!hashParams.access_token;
-        const hasRefreshToken = !!hashParams.refresh_token;
-        const tokenType = hashParams.type;
-        const isRecoveryLink = tokenType === 'recovery';
-
-        // Clean URL hash
-        if (initialHash) {
-            window.history.replaceState(null, '', window.location.pathname + window.location.search);
-        }
-
-        // Initialize Supabase - SAME PATTERN AS MANAGER APP
-        function initSupabase() {
-            try {
-                db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-                    auth: {
-                        storageKey: 'fixair-auth',
-                        lock: false,  // CRITICAL: Disable lock to prevent AbortError
-                        autoRefreshToken: true,
-                        persistSession: true,
-                        detectSessionInUrl: false
-                    }
-                });
-                console.log('✅ Supabase initialized');
-                return true;
-            } catch (err) {
-                console.error('❌ Supabase init error:', err);
-                return false;
-            }
-        }
-
-        // Safe query wrapper - same pattern as manager app
-        async function safeQuery(queryFn, retries = 2, timeoutMs = 3000) {
-            for (let attempt = 0; attempt < retries; attempt++) {
-                try {
-                    const timeoutPromise = new Promise((_, reject) =>
-                        setTimeout(() => reject(new Error('Query timeout')), timeoutMs)
-                    );
-                    const result = await Promise.race([queryFn(), timeoutPromise]);
-                    if (result.error && result.error.message && result.error.message.includes('AbortError')) {
-                        await new Promise(r => setTimeout(r, 300 * (attempt + 1)));
-                        continue;
-                    }
-                    return result;
-                } catch (err) {
-                    if ((err.message.includes('AbortError') || err.message.includes('timeout')) && attempt < retries - 1) {
-                        await new Promise(r => setTimeout(r, 300 * (attempt + 1)));
-                        continue;
-                    }
-                    return { data: null, error: { message: err.message } };
-                }
-            }
-            return { data: null, error: { message: 'Query failed after retries' } };
-        }
-
+        });
+        console.log('✅ Supabase client initialized');
+        
         // ═══ TOAST UTILITY (needed early for error handling) ═══
         let toastTimeout = null;
         function toast(m) {
@@ -5954,8 +5892,6 @@
         let authToken = null;
         let currentUser = null;
         let supabaseUser = null;
-        let isPasswordRecovery = false;  // Track if user is in password recovery flow
-        let isReady = false;  // Prevents duplicate handling
         
         const colors = {carrier:'#3B82F6', daikin:'#10B981', mitsubishi:'#E60012'};
         const names = {carrier:'Carrier', daikin:'Daikin', mitsubishi:'Mitsubishi'};
@@ -5987,26 +5923,18 @@
         
         async function prefetchApiKeys() {
             await getApiKey('elevenlabs_api_key');
+            console.log('✅ API keys prefetched');
         }
 
         // ═══ GET CURRENT USER FROM PUBLIC.USERS TABLE ═══
-        async function loadUserProfile(userOrEmail) {
+        async function loadUserProfile(authId) {
             try {
-                // Get email - either passed directly or from user object
-                const email = typeof userOrEmail === 'string' ? userOrEmail : userOrEmail?.email;
-
-                if (!email) {
-                    console.error('No email provided for profile lookup');
-                    return null;
-                }
-
-                // Query by email (most reliable - always matches)
                 const { data, error } = await db
                     .from('users')
                     .select('*')
-                    .eq('email', email)
-                    .maybeSingle();
-
+                    .eq('auth_id', authId)
+                    .single();
+                
                 if (error) {
                     console.error('Error loading user profile:', error);
                     return null;
@@ -6018,255 +5946,85 @@
             }
         }
 
-        // ═══ HELPER: Load user and show appropriate screen ═══
-        async function loadUserAndShowApp(user) {
-            if (!user) {
-                return;
-            }
-
-            supabaseUser = user;
-
-            // Load user profile from public.users (by email)
-            let profile = await loadUserProfile(user.email);
-
-            if (profile) {
-                // Sync missing user data from auth metadata to public.users
-                const authMeta = user.user_metadata || {};
-                const needsUpdate = {};
-
-                if (!profile.first_name && authMeta.first_name) {
-                    needsUpdate.first_name = authMeta.first_name;
-                }
-                if (!profile.phone && authMeta.phone) {
-                    needsUpdate.phone = authMeta.phone;
-                }
-                if (!profile.email && user.email) {
-                    needsUpdate.email = user.email;
-                }
-
-                // Update public.users if we have missing data from auth
-                if (Object.keys(needsUpdate).length > 0) {
-                    try {
-                        needsUpdate.updated_at = new Date().toISOString();
-                        const { data: updatedProfile } = await db
-                            .from('users')
-                            .update(needsUpdate)
-                            .eq('id', user.id)
-                            .select()
-                            .single();
-
-                        if (updatedProfile) {
-                            profile = updatedProfile;
-                        }
-                    } catch (e) {
-                        // Silently handle sync error
-                    }
-                }
-
-                currentUser = profile;
-
-                // Check approval status
-                if (profile.status !== 'approved' && profile.status !== 'active') {
-                    showPendingScreen(profile.email);
-                    return;
-                }
-
-                // User is approved - proceed to app
-                document.getElementById('userName').textContent = profile.first_name || 'Utilisateur';
-                document.getElementById('profileFirstName').value = profile.first_name || '';
-                document.getElementById('profileLastName').value = profile.last_name || '';
-                if (profile.email) document.getElementById('profileEmail').value = profile.email;
-                if (profile.phone) document.getElementById('profilePhone').value = profile.phone;
-
-                // Load language preference from database
-                if (profile.language && (profile.language === 'fr' || profile.language === 'en')) {
-                    setLanguage(profile.language);
-                }
-
-                // Check onboarding status from localStorage OR database
-                const onboardingDoneLocal = localStorage.getItem('fixair_onboarding_done');
-                const onboardingDoneDB = profile.onboarding_done;
-                if (onboardingDoneLocal || onboardingDoneDB) {
-                    onboardingComplete = true;
-                    document.querySelector('.onboarding-section').classList.add('hidden');
-                    document.getElementById('homepageContent').classList.add('active');
-                    // Sync localStorage if DB has the flag but local doesn't
-                    if (onboardingDoneDB && !onboardingDoneLocal) {
-                        localStorage.setItem('fixair_onboarding_done', 'true');
-                    }
-                }
-
-                document.getElementById('loadingScreen').classList.remove('active');
-                document.getElementById('passwordResetScreen')?.classList.remove('active');
-                document.getElementById('mainApp').classList.add('active');
-
-                // Load projects and check if user should skip onboarding
-                await loadProjectsListAndCheckOnboarding();
-                initGamification();
-                prefetchApiKeys();
-            } else {
-                showPendingScreen(user.email);
-            }
-        }
-
-        // ═══ HELPER: Show password reset screen ═══
-        function showPasswordResetScreen() {
-            document.getElementById('loadingScreen').classList.remove('active');
-            document.getElementById('pendingScreen')?.classList.remove('active');
-            document.getElementById('mainApp').classList.remove('active');
-            document.getElementById('passwordResetScreen').classList.add('active');
-        }
-
         // ═══ CHECK SUPABASE AUTH SESSION ON LOAD ═══
         async function initAuth() {
-            // Clear redirect flag - we arrived successfully
-            localStorage.removeItem(REDIRECT_FLAG);
-
-            // Handle URL tokens first (password recovery, etc.)
-            if (hasAccessToken) {
-                if (isRecoveryLink) {
-                    isPasswordRecovery = true;
-                }
-
-                try {
-                    const { data, error } = await db.auth.setSession({
-                        access_token: hashParams.access_token,
-                        refresh_token: hashParams.refresh_token || hashParams.access_token
-                    });
-
-                    if (!error && data.session) {
-                        if (isRecoveryLink) {
-                            isReady = true;
-                            showPasswordResetScreen();
-                            return;
-                        }
-                        isReady = true;
-                        await loadUserAndShowApp(data.session.user);
-                        return;
-                    }
-                } catch (err) {
-                    console.error('Token handling error:', err);
-                }
-                isPasswordRecovery = false;
-            }
-
-            // Check for existing session via Supabase SDK - same as manager app
-            try {
-                const { data: { session }, error } = await db.auth.getSession();
-
-                if (session && session.user) {
-                    isReady = true;
-                    await loadUserAndShowApp(session.user);
-                    return;
-                }
-
-                // Try localStorage as fallback
-                const stored = localStorage.getItem('supabase.auth.token');
-                if (stored) {
-                    const parsed = JSON.parse(stored);
-                    if (parsed.currentSession) {
-                        const { data, error } = await db.auth.setSession({
-                            access_token: parsed.currentSession.access_token,
-                            refresh_token: parsed.currentSession.refresh_token
-                        });
-                        if (!error && data.session) {
-                            isReady = true;
-                            await loadUserAndShowApp(data.session.user);
-                            return;
-                        }
-                    }
-                }
-            } catch (err) {
-                console.log('Session check error:', err);
-            }
-
-            // No valid session found - check if we should redirect or show error
-            console.log('No valid session found');
-
-            // Check if we just came from auth (has timestamp param) - prevent loop
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('t')) {
-                // We have timestamp - came from auth but session failed
-                // Show error instead of redirecting again (stops loop)
-                document.body.innerHTML = `
-                    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0D1117;font-family:sans-serif;">
-                        <div style="text-align:center;color:white;">
-                            <h1 style="color:#FF6B35;">❌ Erreur de session</h1>
-                            <p>Impossible de charger votre session.</p>
-                            <a href="https://go.fixair.ai/auth?logout=true" style="color:#FF6B35;">Retour à la connexion</a>
-                        </div>
-                    </div>
-                `;
+            console.log('🔐 Checking Supabase Auth session...');
+            
+            const { data: { session }, error } = await db.auth.getSession();
+            
+            if (error) {
+                console.error('Auth session error:', error);
                 return;
             }
-
-            // No timestamp = fresh visit, redirect to auth
-            window.location.replace('https://go.fixair.ai/auth');
-        }
-
-        // Listen for auth state changes - must be called after initSupabase
-        let authHandled = false;
-        function setupAuthListener() {
-            db.auth.onAuthStateChange(async (event, session) => {
-                if (event === 'PASSWORD_RECOVERY') {
-                    isPasswordRecovery = true;
-                    isReady = true;
-                    showPasswordResetScreen();
-                    return;
-                }
-
-                if (event === 'USER_UPDATED') {
-                    isReady = true;
-                    return;
-                }
-
-                if (event === 'SIGNED_IN' && session) {
-                    if (isPasswordRecovery) {
-                        showPasswordResetScreen();
+            
+            if (session && session.user) {
+                console.log('🔐 Found existing session:', session.user.email);
+                supabaseUser = session.user;
+                
+                // Load user profile from public.users
+                const profile = await loadUserProfile(session.user.id);
+                
+                if (profile) {
+                    currentUser = profile;
+                    
+                    // Check approval status
+                    if (profile.status !== 'approved' && profile.status !== 'active') {
+                        console.log('⏳ User pending approval');
+                        showPendingScreen(profile.email);
                         return;
                     }
-                    supabaseUser = session.user;
-                    if (!currentUser && !document.getElementById('mainApp').classList.contains('active')) {
-                        authHandled = true;
-                        isReady = true;
-                        await loadUserAndShowApp(session.user);
+                    
+                    // User is approved - proceed to app
+                    console.log('✅ User approved, loading app');
+                    document.getElementById('userName').textContent = profile.first_name || 'Utilisateur';
+                    document.getElementById('profileFirstName').value = profile.first_name || '';
+                    if (profile.email) document.getElementById('profileEmail').value = profile.email;
+                    
+                    const onboardingDone = localStorage.getItem('fixair_onboarding_done');
+                    if (onboardingDone) {
+                        onboardingComplete = true;
+                        document.querySelector('.onboarding-section').classList.add('hidden');
+                        document.getElementById('homepageContent').classList.add('active');
                     }
-                    return;
+                    
+                    document.getElementById('loginScreen').classList.remove('active');
+                    document.getElementById('mainApp').classList.add('active');
+                    
+                    loadProjectsList();
+                    initGamification();
+                    prefetchApiKeys();
+                } else {
+                    console.log('⚠️ No user profile found, showing pending...');
+                    showPendingScreen(session.user.email);
                 }
-
-                if (event === 'SIGNED_OUT') {
-                    supabaseUser = null;
-                    currentUser = null;
-                    isPasswordRecovery = false;
-                    authHandled = false;
-                    isReady = true;
-                }
-            });
-        }
-
-        // Initialize app - SAME PATTERN AS MANAGER APP
-        async function initTechnicianApp() {
-            console.log('🚀 Initializing FixAIR Technician App...');
-
-            // Initialize Supabase first
-            if (!initSupabase()) {
-                console.error('Failed to init Supabase');
-                return;
+            } else {
+                console.log('🔐 No session found, showing login');
             }
-
-            // Setup auth state listener
-            setupAuthListener();
-
-            // Then initialize auth
-            await initAuth();
-
-            console.log('✅ Technician App initialized');
         }
 
-        // Run init on DOM ready - SAME PATTERN AS MANAGER APP
-        document.addEventListener('DOMContentLoaded', () => {
-            initTechnicianApp();
+        // Listen for auth state changes
+        db.auth.onAuthStateChange(async (event, session) => {
+            console.log('🔐 Auth state changed:', event);
+            
+            if (event === 'SIGNED_IN' && session) {
+                supabaseUser = session.user;
+                if (!currentUser) {
+                    const profile = await loadUserProfile(session.user.id);
+                    if (profile) {
+                        currentUser = profile;
+                        if (profile.status === 'approved' || profile.status === 'active') {
+                            location.reload();
+                        }
+                    }
+                }
+            } else if (event === 'SIGNED_OUT') {
+                supabaseUser = null;
+                currentUser = null;
+            }
         });
+
+        // Initialize auth on page load
+        setTimeout(() => initAuth(), 500);
 
         // ═══ LOGIN STATUS MESSAGES ═══
         let existingUserName = '';
@@ -6300,150 +6058,56 @@
             }
             
             try {
-                const redirectUrl = window.location.origin + window.location.pathname;
-
                 const { error } = await db.auth.resetPasswordForEmail(email, {
-                    redirectTo: redirectUrl
+                    redirectTo: window.location.origin
                 });
-
+                
                 if (error) {
                     setLoginStatus('Erreur: ' + error.message, 'error');
                 } else {
-                    setLoginStatus('Email de réinitialisation envoyé ! Vérifiez votre boîte mail (et spam).', 'success');
+                    setLoginStatus('Email de réinitialisation envoyé !', 'success');
                 }
             } catch (err) {
                 setLoginStatus('Erreur lors de l\'envoi', 'error');
             }
         }
 
-        // ═══ SET NEW PASSWORD (from password recovery link) ═══
-        async function setNewPassword() {
-            const newPass = document.getElementById('newPasswordInput').value;
-            const confirmPass = document.getElementById('confirmPasswordInput').value;
-            const statusEl = document.getElementById('passwordResetStatus');
-
-            // Validation
-            if (!newPass || newPass.length < 6) {
-                statusEl.style.display = 'block';
-                statusEl.style.background = 'rgba(239,68,68,0.2)';
-                statusEl.style.border = '1px solid rgba(239,68,68,0.5)';
-                statusEl.style.color = '#ef4444';
-                statusEl.textContent = 'Le mot de passe doit contenir au moins 6 caractères';
-                return;
-            }
-
-            if (newPass !== confirmPass) {
-                statusEl.style.display = 'block';
-                statusEl.style.background = 'rgba(239,68,68,0.2)';
-                statusEl.style.border = '1px solid rgba(239,68,68,0.5)';
-                statusEl.style.color = '#ef4444';
-                statusEl.textContent = 'Les mots de passe ne correspondent pas';
-                return;
-            }
-
-            statusEl.style.display = 'block';
-            statusEl.style.background = 'rgba(59,130,246,0.2)';
-            statusEl.style.border = '1px solid rgba(59,130,246,0.5)';
-            statusEl.style.color = '#3b82f6';
-            statusEl.textContent = 'Mise à jour en cours...';
-
-            try {
-                const { error } = await db.auth.updateUser({ password: newPass });
-
-                if (error) {
-                    statusEl.style.background = 'rgba(239,68,68,0.2)';
-                    statusEl.style.border = '1px solid rgba(239,68,68,0.5)';
-                    statusEl.style.color = '#ef4444';
-                    statusEl.textContent = 'Erreur: ' + error.message;
-                    return;
-                }
-
-                statusEl.style.background = 'rgba(16,185,129,0.2)';
-                statusEl.style.border = '1px solid rgba(16,185,129,0.5)';
-                statusEl.style.color = '#10b981';
-                statusEl.textContent = 'Mot de passe mis à jour ! Redirection...';
-
-                isPasswordRecovery = false;
-                localStorage.removeItem('supabase.auth.token');
-                await db.auth.signOut();
-
-                // Redirect to auth page after brief delay
-                setTimeout(() => {
-                    window.location.replace('https://go.fixair.ai/auth');
-                }, 1500);
-
-            } catch (err) {
-                console.error('❌ Password update exception:', err);
-                statusEl.style.background = 'rgba(239,68,68,0.2)';
-                statusEl.style.border = '1px solid rgba(239,68,68,0.5)';
-                statusEl.style.color = '#ef4444';
-                statusEl.textContent = 'Erreur lors de la mise à jour';
-            }
-        }
-
-        // ═══ GO TO LOGIN FROM PASSWORD RESET ═══
-        function goToLoginFromPasswordReset() {
-            window.location.replace('https://go.fixair.ai/auth');
-        }
-
-        // ═══ CANCEL PASSWORD RESET ═══
-        function cancelPasswordReset() {
-            isPasswordRecovery = false;
-            localStorage.removeItem('supabase.auth.token');
-            db.auth.signOut();
-            window.location.replace('https://go.fixair.ai/auth');
-        }
-
         // LOGIN STEPS
         async function nextLoginStep() {
             const btn = document.getElementById('loginBtn');
-
+            console.log('📱 nextLoginStep called, current step:', loginStep);
+            
             if (loginStep === 0) {
                 // Step 0: Check email
                 const email = document.getElementById('loginEmail').value.trim();
-
+                console.log('📧 Email entered:', email);
+                
                 if (!email.includes('@')) { 
                     setLoginStatus('Veuillez entrer un email valide', 'error');
                     return; 
                 }
                 
-                // Check if Supabase is available
-                if (!db) {
-                    setLoginStatus('Erreur de connexion. Rafraîchissez la page.', 'error');
-                    return;
-                }
-                
                 clearLoginStatus();
                 btn.disabled = true;
                 btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
-
+                
                 try {
-                    // SIMPLIFIED: Only check public.users table
-                    // If user is in public.users = existing user
-                    // If not = new user (will handle auth conflicts during signup)
-                    const { data: publicUser, error: publicError } = await safeQuery(() => 
-                        db.from('users')
-                          .select('id, first_name, status')
-                          .eq('email', email)
-                          .maybeSingle()
-                    );
+                    // Check if user exists in database
+                    const { data, error } = await db
+                        .from('users')
+                        .select('id, first_name, status')
+                        .eq('email', email)
+                        .maybeSingle();
                     
-                    // If found in public.users, user exists
-                    if (publicUser && publicUser.id) {
-                        isNewUser = false;
-                        existingUserName = publicUser.first_name || '';
-                    } else {
-                        // Not in public.users = treat as new user
-                        // If they have an auth account but no profile, signup will fail
-                        // and we'll handle that case then
-                        isNewUser = true;
-                    }
+                    isNewUser = !data;
+                    console.log('👤 Is new user:', isNewUser);
                     
                     const pwdInput = document.getElementById('loginPassword');
                     if (isNewUser) {
                         pwdInput.placeholder = 'Créez votre mot de passe';
                         setLoginStatus('Nouveau compte ! Choisissez un mot de passe', 'success');
                     } else {
+                        existingUserName = data.first_name || '';
                         pwdInput.placeholder = 'Entrez votre mot de passe';
                         if (existingUserName) {
                             setLoginStatus('Bienvenue ' + existingUserName + ' ! Entrez votre mot de passe', 'info');
@@ -6494,13 +6158,15 @@
                         });
                         
                         if (error) {
+                            console.error('Login error:', error);
                             setLoginStatus('Mot de passe incorrect', 'error', true);
                         } else {
+                            console.log('✅ Login successful:', data.user.email);
                             clearLoginStatus();
                             supabaseUser = data.user;
-
-                            // Load user profile (by email)
-                            const profile = await loadUserProfile(data.user.email);
+                            
+                            // Load user profile
+                            const profile = await loadUserProfile(data.user.id);
                             
                             if (profile) {
                                 currentUser = profile;
@@ -6515,22 +6181,12 @@
                                 document.getElementById('userName').textContent = profile.first_name;
                                 document.getElementById('profileFirstName').value = profile.first_name;
                                 if (profile.email) document.getElementById('profileEmail').value = profile.email;
-                                if (profile.phone) document.getElementById('profilePhone').value = profile.phone;
-
-                                // Check onboarding status from localStorage OR database
-                                const onboardingDoneLocal = localStorage.getItem('fixair_onboarding_done');
-                                const onboardingDoneDB = profile.onboarding_done;
-                                if (onboardingDoneLocal || onboardingDoneDB) {
-                                    onboardingComplete = true;
-                                    document.querySelector('.onboarding-section').classList.add('hidden');
-                                    document.getElementById('homepageContent').classList.add('active');
-                                    // Sync localStorage if DB has the flag but local doesn't
-                                    if (onboardingDoneDB && !onboardingDoneLocal) {
-                                        localStorage.setItem('fixair_onboarding_done', 'true');
-                                    }
-                                }
-                                // If NOT done, loadProjectsListAndCheckOnboarding will check for existing projects
-
+                                
+                                onboardingComplete = true;
+                                document.querySelector('.onboarding-section').classList.add('hidden');
+                                document.getElementById('homepageContent').classList.add('active');
+                                localStorage.setItem('fixair_onboarding_done', 'true');
+                                
                                 toast('Bienvenue ' + profile.first_name + ' !');
                                 doLogin();
                             } else {
@@ -6614,25 +6270,11 @@
                 
                 if (error) {
                     console.error('Registration error:', error);
-                    const errMsg = error.message.toLowerCase();
-                    
-                    // Check if user already exists in auth (but not in public.users)
-                    if (errMsg.includes('already registered') || 
-                        errMsg.includes('already exists') ||
-                        errMsg.includes('user already') ||
-                        errMsg.includes('email already')) {
-                        // User has an auth account but no profile - ask them to login instead
-                        setLoginStatus('Ce compte existe déjà. Essayez de vous connecter ou réinitialisez votre mot de passe.', 'error', true);
-                        
-                        // Reset to login flow for existing user
-                        isNewUser = false;
-                        loginStep = 0;
-                        updateLoginUI();
-                    } else {
-                        setLoginStatus(error.message || 'Erreur lors de la création du compte', 'error');
-                    }
+                    setLoginStatus(error.message || 'Erreur lors de la création du compte', 'error');
                     return;
                 }
+                
+                console.log('✅ Registration successful:', data);
                 
                 // Check if email confirmation is required
                 if (data.user && !data.user.email_confirmed_at) {
@@ -6654,10 +6296,21 @@
         }
 
         // ═══ SCREEN HELPER FUNCTIONS ═══
-        function showPendingScreen(email) {
-            document.getElementById('pendingEmail').textContent = email;
-            document.getElementById('loadingScreen').classList.remove('active');
+        function showEmailConfirmScreen(email) {
+            clearLoginStatus();
+            document.getElementById('confirmEmail').textContent = email;
+            document.getElementById('loginScreen').classList.remove('active');
             document.getElementById('mainApp').classList.remove('active');
+            document.getElementById('pendingScreen').classList.remove('active');
+            document.getElementById('emailConfirmScreen').classList.add('active');
+        }
+
+        function showPendingScreen(email) {
+            clearLoginStatus();
+            document.getElementById('pendingEmail').textContent = email;
+            document.getElementById('loginScreen').classList.remove('active');
+            document.getElementById('mainApp').classList.remove('active');
+            document.getElementById('emailConfirmScreen').classList.remove('active');
             document.getElementById('pendingScreen').classList.add('active');
         }
 
@@ -6679,31 +6332,83 @@
         }
 
         function backToLogin() {
-            window.location.replace('https://go.fixair.ai/auth');
+            clearLoginStatus();
+            document.getElementById('emailConfirmScreen').classList.remove('active');
+            document.getElementById('pendingScreen').classList.remove('active');
+            document.getElementById('loginScreen').classList.add('active');
+            
+            loginStep = 0;
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('loginPhone').value = '';
+            document.getElementById('loginName').value = '';
+            updateLoginUI();
         }
 
         async function logoutFromPending() {
             await db.auth.signOut();
-            localStorage.removeItem('supabase.auth.token');
-            localStorage.removeItem(REDIRECT_FLAG);
-            window.location.replace('https://go.fixair.ai/auth?logout=true');
+            supabaseUser = null;
+            currentUser = null;
+            localStorage.removeItem('fixair_onboarding_done');
+            clearLoginStatus();
+            
+            document.getElementById('pendingScreen').classList.remove('active');
+            document.getElementById('emailConfirmScreen').classList.remove('active');
+            document.getElementById('loginScreen').classList.add('active');
+            
+            loginStep = 0;
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('loginPhone').value = '';
+            document.getElementById('loginName').value = '';
+            document.getElementById('loginSlider').style.transform = 'translateX(0)';
+            document.getElementById('loginSphere').style.display = 'flex';
+            document.getElementById('loginBack').style.display = 'none';
+            document.getElementById('loginBtn').innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+            document.getElementById('loginBtn').onclick = nextLoginStep;
+            
+            toast('Déconnecté');
         }
 
-        async function doLogin() {
-            document.getElementById('loadingScreen').classList.remove('active');
+        function doLogin() {
+            document.getElementById('loginScreen').classList.remove('active');
+            document.getElementById('emailConfirmScreen').classList.remove('active');
             document.getElementById('pendingScreen').classList.remove('active');
             document.getElementById('mainApp').classList.add('active');
-
-            await loadProjectsListAndCheckOnboarding();
+            
+            loadProjectsList();
             initGamification();
             prefetchApiKeys();
         }
 
         async function logout() {
             await db.auth.signOut();
-            localStorage.removeItem('supabase.auth.token');
-            localStorage.removeItem(REDIRECT_FLAG);
-            window.location.replace('https://go.fixair.ai/auth?logout=true');
+            supabaseUser = null;
+            currentUser = null;
+            loginStep = 0;
+            isNewUser = false;
+            onboardingComplete = false;
+            localStorage.removeItem('fixair_onboarding_done');
+            clearLoginStatus();
+            
+            document.getElementById('profileView').classList.remove('active');
+            document.querySelector('.onboarding-section').classList.remove('hidden');
+            document.getElementById('homepageContent').classList.remove('active');
+            
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('loginPhone').value = '';
+            document.getElementById('loginName').value = '';
+            document.getElementById('loginSlider').style.transform = 'translateX(0)';
+            document.getElementById('loginSphere').style.display = 'flex';
+            document.getElementById('loginBack').style.display = 'none';
+            document.getElementById('loginBtn').innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+            document.getElementById('loginBtn').onclick = nextLoginStep;
+            
+            document.getElementById('mainApp').classList.remove('active');
+            document.getElementById('loginScreen').classList.add('active');
+            
+            toast('Déconnecté');
         }
 
         // PROFILE
@@ -6717,130 +6422,107 @@
 
         async function saveProfile() {
             const firstName = document.getElementById('profileFirstName').value.trim();
-            const lastName = document.getElementById('profileLastName').value.trim();
             const email = document.getElementById('profileEmail').value.trim();
-            const phone = document.getElementById('profilePhone')?.value.trim() || '';
-            const language = currentLang || 'fr';
-
+            
             if (!firstName) { toast('Entrez votre prénom'); return; }
-
+            
             // Update UI immediately
             document.getElementById('userName').textContent = firstName;
-
-            // ═══ GET USER ID (priority: currentUser > session > localStorage) ═══
-            let userId = currentUser?.id;
-            if (!userId && typeof db !== 'undefined') {
-                try {
-                    const { data: { session } } = await db.auth.getSession();
-                    userId = session?.user?.id;
-                } catch (e) { }
-            }
-            if (!userId) {
-                const savedUser = JSON.parse(localStorage.getItem('fixair_user') || '{}');
-                userId = savedUser.id;
-            }
-
-            console.log('saveProfile - userId:', userId);
-
+            
             // ═══ SAVE TO LOCALSTORAGE (ALWAYS WORKS) ═══
             const savedUser = JSON.parse(localStorage.getItem('fixair_user') || '{}');
-            savedUser.id = userId; // Ensure ID is saved
             savedUser.first_name = firstName;
-            savedUser.last_name = lastName;
             if (email) savedUser.email = email;
-            if (phone) savedUser.phone = phone;
-            savedUser.language = language;
             localStorage.setItem('fixair_user', JSON.stringify(savedUser));
             currentUser = savedUser;
-
+            console.log('✅ Profile saved to localStorage:', savedUser);
+            
             let dbSaveSuccess = false;
-
+            
             // ═══ SAVE TO SUPABASE users table ═══
-            if (userId && typeof db !== 'undefined') {
+            if (savedUser.id && typeof db !== 'undefined') {
                 try {
-                    const updateData = {
+                    console.log('🔄 Updating Supabase users table...', {
+                        id: savedUser.id,
                         first_name: firstName,
-                        last_name: lastName,
-                        email: email,
-                        phone: phone,
-                        language: language,
-                        updated_at: new Date().toISOString()
-                    };
-
-                    console.log('Saving profile to Supabase:', updateData, 'for user:', userId);
-
+                        email: email
+                    });
+                    
                     const { data, error } = await db
                         .from('users')
-                        .update(updateData)
-                        .eq('id', userId)
-                        .select();
-
-                    if (error) {
-                        console.error('Profile update error:', error.code, error.message);
-
-                        // Try upsert as fallback
-                        const upsertData = {
-                            id: userId,
+                        .update({ 
                             first_name: firstName,
-                            last_name: lastName,
                             email: email,
-                            phone: phone,
-                            language: language,
                             updated_at: new Date().toISOString()
-                        };
-
-                        const { error: upsertError } = await db
-                            .from('users')
-                            .upsert(upsertData);
-
-                        if (!upsertError) {
-                            dbSaveSuccess = true;
-                            console.log('Profile saved via upsert');
-                        } else {
-                            console.error('Profile upsert error:', upsertError.code, upsertError.message);
+                        })
+                        .eq('id', savedUser.id)
+                        .select();
+                    
+                    if (error) {
+                        console.error('❌ Supabase update error:', error);
+                        
+                        // If table doesn't exist or record not found, try insert
+                        if (error.code === '42P01' || error.code === 'PGRST116') {
+                            console.log('⚠️ Table or record not found, trying upsert...');
+                            const { error: upsertError } = await db
+                                .from('users')
+                                .upsert({ 
+                                    id: savedUser.id,
+                                    first_name: firstName,
+                                    email: email,
+                                    updated_at: new Date().toISOString()
+                                });
+                            
+                            if (!upsertError) {
+                                console.log('✅ Profile upserted to Supabase');
+                                dbSaveSuccess = true;
+                            } else {
+                                console.error('❌ Upsert also failed:', upsertError);
+                            }
                         }
                     } else {
+                        console.log('✅ Profile updated in Supabase:', data);
                         dbSaveSuccess = true;
-                        console.log('Profile saved successfully:', data);
                     }
                 } catch (e) {
-                    console.error('Profile save exception:', e);
+                    console.error('❌ Supabase exception:', e);
                 }
-            } else {
-                console.log('Cannot save to Supabase - no userId or db not available');
             }
-
+            
             // ═══ ALSO TRY n8n API (if endpoint exists) ═══
             if (savedUser.id && authToken && !dbSaveSuccess) {
                 try {
+                    console.log('🔄 Calling n8n update-profile API...');
                     const response = await fetch(`${API_BASE}/auth/update-profile`, {
                         method: 'POST',
-                        headers: {
+                        headers: { 
                             'Content-Type': 'application/json',
                             'Authorization': `Bearer ${authToken}`
                         },
-                        body: JSON.stringify({
+                        body: JSON.stringify({ 
                             user_id: savedUser.id,
                             first_name: firstName,
-                            last_name: lastName,
-                            email: email,
-                            phone: phone,
-                            language: language
+                            email: email
                         })
                     });
-
+                    
                     if (response.ok) {
+                        const data = await response.json();
+                        console.log('✅ Profile saved via n8n API:', data);
                         dbSaveSuccess = true;
+                    } else {
+                        console.log('⚠️ n8n API returned:', response.status);
                     }
                 } catch (error) {
-                    // n8n API not available
+                    console.log('⚠️ n8n API not available:', error.message);
                 }
             }
-
+            
             if (dbSaveSuccess) {
                 toast('Profil enregistré ✓');
             } else {
                 toast('Profil enregistré localement');
+                console.warn('⚠️ Profile only saved to localStorage - database update failed');
             }
             
             // Handle onboarding step progression
@@ -6944,25 +6626,10 @@
             document.getElementById('onboardingProgress').textContent = completed + '/4';
         }
 
-        async function showCongrats() {
+        function showCongrats() {
             document.getElementById('welcomeSection').style.display = 'none';
             document.getElementById('onboardingCard').classList.add('congrats');
             onboardingComplete = true;
-            // Persist onboarding completion so it's remembered on page reload
-            localStorage.setItem('fixair_onboarding_done', 'true');
-
-            // Also save to database so it persists across devices/browsers
-            const userId = await getCurrentUserId();
-            if (userId && typeof db !== 'undefined') {
-                try {
-                    await db
-                        .from('users')
-                        .update({ onboarding_done: true, updated_at: new Date().toISOString() })
-                        .eq('id', userId);
-                } catch (e) {
-                    // Silently fail - localStorage is the backup
-                }
-            }
         }
 
         function closeCongrats() {
@@ -7057,6 +6724,8 @@
                     chatHistory[panel].push({ role: 'system', content: brandContext });
                 }
             });
+            
+            console.log('🏷️ Brand context updated:', brandName);
         }
 
         // ═══════════════════════════════════════════════════════════════
@@ -7173,17 +6842,24 @@
                         .update(updateData)
                         .eq('id', currentProjectId);
                     
+                    if (error) {
+                        console.error('❌ Error updating project brand:', error);
+                    } else {
+                        console.log('✅ Project brand updated to:', newBrand);
+                    }
                 } catch (e) {
-                    // Failed to update brand in database
+                    console.error('❌ Failed to update brand in database:', e);
                 }
             }
-
+            
             // Close dropdown
             closeChatBrandDropdowns();
-
+            
             // Add confirmation message in chat
             const confirmMsg = `<p style="color: var(--mode-color);">✓ Marque changée: <strong>${oldBrandName}</strong> → <strong>${newBrandName}</strong></p><p style="font-size: 12px; opacity: 0.7;">On continue avec ${newBrandName}.</p>`;
             addMsg(panel, 'ai', confirmMsg);
+            
+            console.log('🏷️ Brand changed in chat:', oldBrand, '→', newBrand);
         }
 
         // Old updateRing removed - now using gamification refreshWeeklyStats()
@@ -7218,9 +6894,11 @@
             
             if (isFromProject) {
                 // Opening existing project - keep the loaded messages
+                console.log('📂 Opening existing project:', currentProjectId);
                 // Don't clear body - messages are already loaded
             } else {
                 // Starting fresh chat - reset everything
+                console.log('🆕 Opening fresh chat - resetting project state');
                 currentProjectId = null;
                 currentChatId = { assistant: null, copilot: null };
                 currentProjectTitle = null;
@@ -7268,9 +6946,11 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                 
                 // Add brand context as first system message
                 chatHistory[m].push({ 
-                    role: 'system',
-                    content: brandContext
+                    role: 'system', 
+                    content: brandContext 
                 });
+                
+                console.log('🏷️ Brand context added to history:', brandName);
                 // ═══ END FIX ═══
                 
                 updateChatHeader();
@@ -7417,7 +7097,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                                     const sourceImg = findSourceImage(messages, ocrData.sourcePhotoId);
                                     renderOCRMessage(m, ocrData, sourceImg);
                                 } catch (e) {
-                                    // Error parsing OCR message
+                                    console.error('Error parsing OCR message:', e);
                                 }
                             } else {
                                 // Regular text message
@@ -7432,15 +7112,17 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                                             const reportData = JSON.parse(reportDataMatch[1].trim());
                                             lastReportData = reportData;
                                             updateDrawerPreview(reportData);
+                                            console.log('📊 Restored report data from saved message');
                                         }
                                     } catch (e) {
-                                        // Could not parse saved REPORT_DATA
+                                        console.warn('Could not parse saved REPORT_DATA:', e);
                                     }
                                 }
                             }
                             chatHistory[m].push({ role: msg.role, content: msg.content });
                         }
                     }
+                    console.log('✅ Loaded existing chat for', m);
                     return;
                 } else {
                     // Create new chat in same project
@@ -7459,6 +7141,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                         
                         if (newChat) {
                             currentChatId[m] = newChat.id;
+                            console.log('✅ Created new chat for', m, 'in project', currentProjectId);
                         }
                     }
                 }
@@ -7680,6 +7363,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                 sessionIds.copilot = 'copilot-temp-' + tempId;
                 sessionIds.assistant = 'assistant-temp-' + tempId;
             }
+            console.log('🔑 Session IDs updated:', sessionIds);
         }
         
         // ═══════════════════════════════════════════════════════════════
@@ -7706,12 +7390,12 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                 currentUserId = currentUser.id;
                 return currentUser.id;
             }
-
+            
             // Fallback: get from Supabase Auth session
             try {
                 const { data: { session } } = await db.auth.getSession();
                 if (session && session.user) {
-                    const profile = await loadUserProfile(session.user.email);
+                    const profile = await loadUserProfile(session.user.id);
                     if (profile) {
                         currentUser = profile;
                         currentUserId = profile.id;
@@ -7741,6 +7425,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             
             const userId = await getCurrentUserId();
             if (!userId || userId.startsWith('demo-')) {
+                console.log('⚠️ Demo mode - not saving to Supabase');
                 return null;
             }
             
@@ -7758,11 +7443,13 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                     .single();
                 
                 if (projectError) {
+                    console.error('Error creating project:', projectError);
                     return null;
                 }
-
+                
                 currentProjectId = project.id;
                 updateSessionIds(project.id); // Update session IDs for n8n memory
+                console.log('✅ Project created:', project.id);
             }
             
             // If no chat for this panel, create one
@@ -7779,10 +7466,12 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                     .single();
                 
                 if (chatError) {
+                    console.error('Error creating chat:', chatError);
                     return null;
                 }
-
+                
                 currentChatId[panel] = chat.id;
+                console.log('✅ Chat created:', chat.id, 'type:', panel);
             }
             
             return { projectId: currentProjectId, chatId: currentChatId[panel] };
@@ -7804,6 +7493,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                 .single();
             
             if (error) {
+                console.error('Error saving message:', error);
                 return null;
             }
             
@@ -7849,46 +7539,24 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                 // Update current project title and header
                 currentProjectTitle = title;
                 updateChatHeader();
-
+                
+                console.log('✅ Project auto-named:', title);
+                
                 // Refresh projects list
                 loadProjectsList();
             }
         }
         
-        // Load projects and check if user should skip onboarding (has existing projects)
-        async function loadProjectsListAndCheckOnboarding() {
-            await loadProjectsList();
-
-            // If user has projects but hasn't completed onboarding, they're an existing user
-            // Skip onboarding for them and mark as done
-            if (!onboardingComplete && window.projectsData && window.projectsData.length > 0) {
-                onboardingComplete = true;
-                document.querySelector('.onboarding-section').classList.add('hidden');
-                document.getElementById('homepageContent').classList.add('active');
-                localStorage.setItem('fixair_onboarding_done', 'true');
-
-                // Also update database
-                const userId = await getCurrentUserId();
-                if (userId && typeof db !== 'undefined') {
-                    try {
-                        await db
-                            .from('users')
-                            .update({ onboarding_done: true, updated_at: new Date().toISOString() })
-                            .eq('id', userId);
-                    } catch (e) {
-                        // Silently fail - localStorage is the backup
-                    }
-                }
-            }
-        }
-
         // Load user's projects list
         async function loadProjectsList() {
+            console.log('🔄 Loading projects list...');
+            
             const userId = await getCurrentUserId();
             if (!userId || userId.startsWith('demo-')) {
+                console.log('⚠️ Demo mode - not loading from Supabase');
                 return;
             }
-
+            
             try {
                 const { data: projects, error } = await db
                     .from('projects')
@@ -7911,9 +7579,12 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                     .limit(20);
                 
                 if (error) {
+                    console.error('❌ Error loading projects:', error);
                     return;
                 }
-
+                
+                console.log('✅ Projects loaded:', projects?.length || 0);
+                
                 // Store projects globally for context menu
                 window.projectsData = projects || [];
                 
@@ -7921,7 +7592,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                 renderRecentProjects(projects?.slice(0, 2) || []);
                 
             } catch (e) {
-                // Unexpected error loading projects
+                console.error('❌ Unexpected error loading projects:', e);
             }
         }
         
@@ -8131,6 +7802,8 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                 currentProjectTitle = newTitle;
                 updateChatHeader();
             }
+            
+            console.log('✅ Project renamed:', newTitle);
         }
         
         // Delete project
@@ -8159,17 +7832,20 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                 .eq('id', contextMenuProjectId);
             
             if (error) {
+                console.error('Error deleting project:', error);
                 alert('Erreur lors de la suppression');
                 return;
             }
-
+            
             loadProjectsList(); // Refresh list
-
+            
             // If this project was open, close chat
             if (currentProjectId === contextMenuProjectId) {
                 closeChat();
                 startNewProject();
             }
+            
+            console.log('✅ Project deleted');
         }
         
         // Format time ago
@@ -8210,6 +7886,8 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
         }
         // Load a specific project (FIXED: uses separate queries for reliability)
         async function loadProject(projectId) {
+            console.log('🔄 Loading project:', projectId);
+            
             // ═══ INSTANT OPEN: Open chat immediately ═══
             openingFromProject = true;
             currentProjectId = projectId;
@@ -8227,19 +7905,22 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                 
                 if (projectChats && projectChats.length > 0) {
                     const chatTypes = projectChats.map(c => c.chat_type);
-
+                    console.log('📋 Project has chat types:', chatTypes);
+                    
                     // If project only has assistant, switch to assistant
                     if (chatTypes.includes('assistant') && !chatTypes.includes('copilot')) {
                         initialMode = 'assistant';
+                        console.log('🔄 Switching to assistant mode (project has assistant chat)');
                     }
                     // If project only has copilot, switch to copilot
                     else if (chatTypes.includes('copilot') && !chatTypes.includes('assistant')) {
                         initialMode = 'copilot';
+                        console.log('🔄 Switching to copilot mode (project has copilot chat)');
                     }
                     // If both, use current mode
                 }
             } catch (e) {
-                // Could not pre-check chat types
+                console.log('Could not pre-check chat types:', e);
             }
             
             // Open chat view with correct mode
@@ -8260,9 +7941,12 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                     .single();
                 
                 if (projectError || !project) {
+                    console.error('❌ Error loading project:', projectError);
                     if (body) body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--hotline);">Erreur de chargement</div>';
                     return;
                 }
+                
+                console.log('✅ Project loaded:', project.title, 'brand:', project.brand);
                 
                 // Try to load photos separately (column might not exist yet)
                 try {
@@ -8272,7 +7956,9 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                         .eq('id', projectId)
                         .single();
                     window.reportPhotos = projectWithPhotos?.photos || [];
+                    console.log('📷 Loaded', window.reportPhotos.length, 'photos for project');
                 } catch (e) {
+                    console.log('📷 Photos column not available yet');
                     window.reportPhotos = [];
                 }
                 
@@ -8300,8 +7986,9 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                 
                 // Check if user selected a different brand on main page
                 if (userSelectedBrand && projectOriginalBrand && userSelectedBrand !== projectOriginalBrand) {
+                    console.log('🔄 Brand changed from main page:', projectOriginalBrand, '→', userSelectedBrand);
                     brandWasChanged = true;
-
+                    
                     // Update project with new brand and store original
                     try {
                         const updateData = { brand: userSelectedBrand };
@@ -8309,13 +7996,15 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                         if (!project.original_brand) {
                             updateData.original_brand = projectOriginalBrand;
                         }
-
+                        
                         await db
                             .from('projects')
                             .update(updateData)
                             .eq('id', projectId);
+                        
+                        console.log('✅ Project brand updated in database');
                     } catch (e) {
-                        // Failed to update brand
+                        console.error('❌ Failed to update brand:', e);
                     }
                     
                     // Keep the user's selected brand (don't override from project)
@@ -8335,8 +8024,15 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                     .select('id, chat_type, project_id, started_at')
                     .eq('project_id', projectId);
                 
+                if (chatsError) {
+                    console.error('❌ Error loading chats:', chatsError);
+                }
+                
+                console.log('✅ Chats found:', chats?.length || 0);
+                
                 // Step 3: Load messages for each chat
                 for (const chat of chats || []) {
+                    console.log(`🔄 Loading messages for ${chat.chat_type} chat:`, chat.id);
                     
                     currentChatId[chat.chat_type] = chat.id;
                     
@@ -8348,8 +8044,11 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                         .order('created_at', { ascending: true });
                     
                     if (msgError) {
+                        console.error('❌ Error loading messages:', msgError);
                         continue;
                     }
+                    
+                    console.log(`✅ Found ${messages?.length || 0} messages for ${chat.chat_type}`);
                     
                     // Clear existing chat UI
                     chatHistory[chat.chat_type] = [];
@@ -8383,7 +8082,7 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                                     const sourceImg = findSourceImage(messages, ocrData.sourcePhotoId);
                                     renderOCRMessage(chat.chat_type, ocrData, sourceImg);
                                 } catch (e) {
-                                    // Error parsing OCR message
+                                    console.error('Error parsing OCR message:', e);
                                 }
                             } else {
                                 // Regular text message
@@ -8398,9 +8097,10 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                                             const reportData = JSON.parse(reportDataMatch[1].trim());
                                             lastReportData = reportData;
                                             updateDrawerPreview(reportData);
+                                            console.log('📊 Restored report data from saved message');
                                         }
                                     } catch (e) {
-                                        // Could not parse saved REPORT_DATA
+                                        console.warn('Could not parse saved REPORT_DATA:', e);
                                     }
                                 }
                             }
@@ -8459,6 +8159,12 @@ INSTRUCTIONS:
                         history.unshift({ role: 'system', content: contextSummary });
                     }
                 });
+                
+                console.log('🏷️ Comprehensive context added for existing project:', projectBrandName);
+                console.log('📝 Chat history lengths:', {
+                    assistant: chatHistory.assistant.length,
+                    copilot: chatHistory.copilot.length
+                });
                 // ═══ END FIX ═══
                 
                 // Open chat with the appropriate mode
@@ -8482,9 +8188,11 @@ INSTRUCTIONS:
                     }, 100);
                 }
                 // ═══ END FIX ═══
-
+                
+                console.log('✅ Project fully loaded:', currentProjectTitle);
+                
             } catch (e) {
-                // Unexpected error loading project
+                console.error('❌ Unexpected error loading project:', e);
             }
         }
         
@@ -8554,6 +8262,8 @@ INSTRUCTIONS:
             setTimeout(() => {
                 addMsg(mode, 'ai', '<p>Bonjour ! Comment puis-je vous aider ?</p>');
             }, 300);
+            
+            console.log('🆕 New project started');
         }
         
         // Update brand in UI
@@ -8576,14 +8286,66 @@ INSTRUCTIONS:
         // ═══════════════════════════════════════════════════════════════
         // END SUPABASE FUNCTIONS
         // ═══════════════════════════════════════════════════════════════
-
-
+        
+        // Debug function - run debugFixAIR() in browser console to diagnose issues
+        async function debugFixAIR() {
+            console.log('🔍 ═══════════════════════════════════════');
+            console.log('🔍 FIXAIR DEBUG REPORT');
+            console.log('🔍 ═══════════════════════════════════════');
+            
+            const userId = await getCurrentUserId();
+            console.log('👤 User ID:', userId);
+            console.log('🏷️ Current Brand:', brand);
+            console.log('📁 Current Project ID:', currentProjectId);
+            console.log('💬 Current Chat IDs:', currentChatId);
+            
+            if (!userId || userId.startsWith('demo-')) {
+                console.log('⚠️ Demo mode - no Supabase data');
+                return;
+            }
+            
+            // Check projects
+            const { data: projects, error: pe } = await db
+                .from('projects')
+                .select('*')
+                .eq('user_id', userId)
+                .limit(5);
+            console.log('📁 Projects:', projects?.length || 0, pe ? 'ERROR: ' + pe.message : '');
+            if (projects?.[0]) console.log('   Sample:', projects[0].title, '| Brand:', projects[0].brand);
+            
+            // Check chats for first project
+            if (projects?.[0]) {
+                const { data: chats, error: ce } = await db
+                    .from('chats')
+                    .select('*')
+                    .eq('project_id', projects[0].id);
+                console.log('💬 Chats for project:', chats?.length || 0, ce ? 'ERROR: ' + ce.message : '');
+                
+                // Check messages for first chat
+                if (chats?.[0]) {
+                    const { data: messages, error: me } = await db
+                        .from('messages')
+                        .select('*')
+                        .eq('chat_id', chats[0].id)
+                        .limit(5);
+                    console.log('📝 Messages for chat:', messages?.length || 0, me ? 'ERROR: ' + me.message : '');
+                    if (messages?.[0]) console.log('   Sample:', messages[0].role, ':', messages[0].content?.substring(0, 50) + '...');
+                }
+            }
+            
+            console.log('🔍 ═══════════════════════════════════════');
+            console.log('🔍 Run loadProject("project-id") to test loading');
+            console.log('🔍 ═══════════════════════════════════════');
+        }
+        
+        
         // ═══════════════════════════════════════════════════════════════
         // RENDER STRUCTURED REPORT - Beautiful Template
         // ═══════════════════════════════════════════════════════════════
         function renderReport(data) {
             // ═══ STORE FOR PDF EXPORT ═══
             lastReportData = data;
+            console.log('📊 Report data stored for PDF export:', data);
             
             // ═══ UPDATE DRAWER PREVIEW ═══
             updateDrawerPreview(data);
@@ -8936,9 +8698,27 @@ INSTRUCTIONS:
             general: { primary: '#EA580C', secondary: '#1a1a2e' }
         };
         
-        // Share report function - DISABLED (Premium feature)
+        // Share report function
         function shareReport() {
-            toast('Partage disponible dans la version Pro');
+            if (!lastReportData) {
+                toast('Aucun rapport à partager');
+                return;
+            }
+            
+            // Try native share API
+            if (navigator.share) {
+                const text = generateReportText(lastReportData);
+                navigator.share({
+                    title: 'Rapport d\'intervention FixAIR',
+                    text: text
+                }).catch(err => console.log('Share cancelled'));
+            } else {
+                // Fallback: copy to clipboard
+                const text = generateReportText(lastReportData);
+                navigator.clipboard.writeText(text).then(() => {
+                    toast('Rapport copié dans le presse-papier !');
+                });
+            }
         }
         
         // Generate plain text version of report
@@ -8996,9 +8776,23 @@ INSTRUCTIONS:
             return text;
         }
         
-        // Main PDF export function - DISABLED (Premium feature)
+        // Main PDF export function
         function exportReportPDF() {
-            toast('Export PDF disponible dans la version Pro');
+            if (!lastReportData) {
+                // Try to extract from last AI message
+                const assistantBody = document.getElementById('assistantBody');
+                if (assistantBody) {
+                    const reportDiv = assistantBody.querySelector('.rpt');
+                    if (!reportDiv) {
+                        toast('Aucun rapport à exporter');
+                        return;
+                    }
+                }
+                toast('Aucun rapport à exporter');
+                return;
+            }
+            
+            generatePDF(lastReportData);
         }
         
         // Generate professional PDF
@@ -9504,7 +9298,7 @@ INSTRUCTIONS:
                     lastReportData.status = 'complet';
                     lastReportData.exported_at = new Date().toISOString();
                     updateDrawerPreview(lastReportData);
-                    // Report exported and marked as complete
+                    console.log('📄 Report exported and marked as complete');
                 }
                 
                 // Track gamification
@@ -9562,7 +9356,7 @@ INSTRUCTIONS:
             // Attach event listeners for editable fields
             initEditableReport();
             
-            // Drawer preview updated
+            console.log('📋 Drawer preview updated - Completion:', completionStatus.percentage + '%');
         }
         
         // Calculate report completion for manager visibility
@@ -10704,6 +10498,8 @@ INSTRUCTIONS:
             
             // Auto-save indicator
             showAutoSaveIndicator();
+            
+            console.log('📝 Report field updated:', fieldPath, '=', value);
         }
         
         // Add a new item to a list field
@@ -10745,7 +10541,7 @@ INSTRUCTIONS:
             updateReportProgress();
             showAutoSaveIndicator();
             
-            // Item added to list
+            console.log('➕ Added item to', listName);
         }
         
         // Remove an item from a list field
@@ -10759,7 +10555,7 @@ INSTRUCTIONS:
             updateReportProgress();
             showAutoSaveIndicator();
             
-            // Item removed from list
+            console.log('➖ Removed item from', listName, 'at index', index);
         }
         
         // Refresh the report preview with current data
@@ -10867,6 +10663,7 @@ INSTRUCTIONS:
                     try {
                         const jsonData = JSON.parse(jsonContent);
                         if (jsonData.type === 'report' || jsonData.resume || jsonData.travaux_effectues || jsonData.resultat) {
+                            console.log('📊 Detected JSON report in code block, rendering with template');
                             // Extract intro text before the code block
                             const introMatch = trimmed.match(/^([\s\S]*?)```/);
                             const introText = introMatch ? introMatch[1].trim() : '';
@@ -10874,33 +10671,35 @@ INSTRUCTIONS:
                             return introText ? `<p>${introText.replace(/\n/g, '<br>')}</p>${reportHtml}` : reportHtml;
                         }
                     } catch (e) {
-                        // Code block is not valid JSON report
+                        console.log('Code block is not valid JSON report:', e.message);
                     }
                 }
             }
-
+            
             // Check for raw JSON (starts with { and ends with })
             if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
                 try {
                     const jsonData = JSON.parse(trimmed);
                     if (jsonData.type === 'report' || jsonData.resume || jsonData.travaux_effectues || jsonData.resultat) {
+                        console.log('📊 Detected raw JSON report, rendering with template');
                         return renderReport(jsonData.data || jsonData);
                     }
                 } catch (e) {
-                    // Not valid JSON, parsing as markdown
+                    console.log('Not valid JSON, parsing as markdown');
                 }
             }
-
+            
             // Check for JSON embedded in text (intro text + JSON)
             const embeddedJsonMatch = trimmed.match(/^([\s\S]*?)\s*(\{[\s\S]*"type"\s*:\s*"report"[\s\S]*\})\s*$/);
             if (embeddedJsonMatch) {
                 try {
                     const jsonData = JSON.parse(embeddedJsonMatch[2]);
+                    console.log('📊 Detected embedded JSON report, rendering with template');
                     const introText = embeddedJsonMatch[1].trim();
                     const reportHtml = renderReport(jsonData.data || jsonData);
                     return introText ? `<p>${introText.replace(/\n/g, '<br>')}</p>${reportHtml}` : reportHtml;
                 } catch (e) {
-                    // Embedded JSON parse failed
+                    console.log('Embedded JSON parse failed:', e.message);
                 }
             }
             
@@ -11306,7 +11105,18 @@ RÈGLES:
                 
                 // Get the right webhook based on panel (copilot vs assistant)
                 const webhookUrl = getWebhookUrl(panel);
-
+                
+                console.log('📤 Sending to n8n:', webhookUrl);
+                console.log('📤 Panel:', panel);
+                console.log('📤 Session ID:', currentSessionId);
+                console.log('📤 Is existing conversation:', isExistingConversation, '(', previousUserMessages, 'user msgs,', previousAiMessages, 'AI msgs)');
+                console.log('📤 History length:', recentHistory.length, '(system msg:', systemMsg ? 'yes' : 'no', ')');
+                console.log('📤 Brand:', currentBrandName);
+                if (isExistingConversation) {
+                    console.log('📤 Full conversation summary being sent in brand_instruction');
+                    console.log('📤 Summary preview:', conversationSummary.substring(0, 500) + '...');
+                }
+                
                 // Call n8n webhook
                 const response = await fetch(webhookUrl, {
                     method: 'POST',
@@ -11315,7 +11125,9 @@ RÈGLES:
                     },
                     body: JSON.stringify(payload)
                 });
-
+                
+                console.log('📥 Response status:', response.status);
+                
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error('❌ n8n Error:', response.status, errorText);
@@ -11323,7 +11135,8 @@ RÈGLES:
                 }
                 
                 const data = await response.json();
-
+                console.log('📥 Response data:', data);
+                
                 // Remove loading
                 removeLoadingMsg(panel);
                 
@@ -11336,7 +11149,8 @@ RÈGLES:
                     if (reportDataMatch) {
                         try {
                             const extractedData = JSON.parse(reportDataMatch[1].trim());
-
+                            console.log('📊 Extracted report data:', extractedData);
+                            
                             // Merge with existing data
                             if (!lastReportData) {
                                 lastReportData = {
@@ -11350,8 +11164,10 @@ RÈGLES:
                             
                             // Immediately update preview
                             updateDrawerPreview(lastReportData);
+                            
+                            console.log('✅ Report preview updated with extracted data');
                         } catch (e) {
-                            // Failed to parse REPORT_DATA
+                            console.warn('Failed to parse REPORT_DATA:', e);
                         }
                     }
                     
@@ -11416,7 +11232,9 @@ RÈGLES:
                     .single();
                 
                 if (error) throw error;
-
+                
+                console.log('✅ Report saved:', data.id);
+                
                 // Update project status
                 await db
                     .from('projects')
@@ -11424,7 +11242,7 @@ RÈGLES:
                     .eq('id', currentProjectId);
                 
             } catch (e) {
-                // Error saving report
+                console.error('Error saving report:', e);
             }
         }
         
@@ -11534,7 +11352,7 @@ RÈGLES:
                 recordings[panel] = { stream, startTime: Date.now(), mediaRecorder };
                 
             } catch (err) {
-                // Mic access denied, using simulation
+                console.log('Mic access denied, using simulation');
                 recordings[panel] = { startTime: Date.now(), simulated: true };
                 
                 // Simulate speaking patterns
@@ -11607,7 +11425,8 @@ RÈGLES:
                     input.placeholder = panel === 'assistant' ? 'Décrivez l\'intervention...' : 'Posez votre question...';
                     handleChatInput(panel);
                     toast('🎤 Transcription terminée');
-
+                    console.log('✅ ElevenLabs transcription:', transcription);
+                    
                     // ═══ TRACK VOICE NOTE FOR GAMIFICATION ═══
                     trackAction('voice');
                 } else {
@@ -11616,6 +11435,8 @@ RÈGLES:
                 }
                 
             } catch (error) {
+                console.error('❌ ElevenLabs STT error:', error);
+                
                 // Hide sphere, show button
                 sphere.classList.remove('active');
                 btn.style.display = 'flex';
@@ -11750,25 +11571,54 @@ RÈGLES:
             el.closest('.report-menu-dropdown').classList.remove('show');
         }
         
-        // Share from report card menu - DISABLED (Premium feature)
+        // Share from report card menu (different from main shareReport)
         function shareReportCard(event, el) {
             event.stopPropagation();
+            const card = el.closest('.report-card');
+            const content = card.innerText;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Rapport d\'intervention FixAIR',
+                    text: content
+                }).catch(() => {});
+            } else {
+                navigator.clipboard.writeText(content);
+                toast('Rapport copié pour partage !');
+            }
             el.closest('.report-menu-dropdown').classList.remove('show');
-            toast('Partage disponible dans la version Pro');
         }
-
-        // Menu version of export PDF - DISABLED (Premium feature)
+        
+        // Menu version of export PDF (called from dropdown)
         function exportReportPDFMenu(event, el) {
             event.stopPropagation();
             el.closest('.report-menu-dropdown').classList.remove('show');
-            toast('Export PDF disponible dans la version Pro');
+            exportReportPDF();
         }
-
-        // Menu version of share - DISABLED (Premium feature)
+        
+        // Menu version of share (called from dropdown in chat)
         function shareReportMenu(event, el) {
             event.stopPropagation();
             el.closest('.report-menu-dropdown').classList.remove('show');
-            toast('Partage disponible dans la version Pro');
+            // Use lastReportData if available, otherwise use shareReport
+            if (lastReportData) {
+                shareReport();
+            } else {
+                // Fallback: try to get content from card
+                const card = el.closest('.report-card');
+                if (card) {
+                    const content = card.innerText;
+                    if (navigator.share) {
+                        navigator.share({
+                            title: 'Rapport d\'intervention FixAIR',
+                            text: content
+                        }).catch(() => {});
+                    } else {
+                        navigator.clipboard.writeText(content);
+                        toast('Rapport copié pour partage !');
+                    }
+                }
+            }
         }
         
         // Close report menu when clicking outside
@@ -11795,7 +11645,8 @@ RÈGLES:
         function attachAction(type, panel) {
             closeAllAttach();
             currentPhotoPanel = panel;
-
+            console.log('📸 attachAction:', type, 'panel:', panel);
+            
             if (type === 'camera') {
                 document.getElementById('cameraInput').click();
             } else if (type === 'file') {
@@ -11805,8 +11656,10 @@ RÈGLES:
         
         function handleFileSelect(event, source) {
             const file = event.target.files[0];
-
+            console.log('📸 handleFileSelect:', source, 'file:', file?.name, 'panel:', currentPhotoPanel);
+            
             if (!file) {
+                console.log('❌ No file selected');
                 return;
             }
             
@@ -11819,6 +11672,7 @@ RÈGLES:
                 
                 const reader = new FileReader();
                 reader.onload = function(e) {
+                    console.log('📸 Image loaded, adding to chat...');
                     addPhotoToChat(currentPhotoPanel, e.target.result);
                 };
                 reader.onerror = function(e) {
@@ -11892,13 +11746,17 @@ RÈGLES:
         
         // Add photo directly to chat with action buttons
         async function addPhotoToChat(panel, imageData) {
+            console.log('📸 addPhotoToChat called, panel:', panel);
+            
             const container = document.getElementById(panel + 'Body');
             if (!container) {
+                console.error('❌ Chat container not found:', panel + 'Body');
                 toast('Erreur: chat non trouvé');
                 return;
             }
-
+            
             const msgId = 'photo-' + Date.now();
+            console.log('📸 Creating message:', msgId);
             
             const msgDiv = document.createElement('div');
             msgDiv.className = 'msg user';
@@ -11913,17 +11771,19 @@ RÈGLES:
             scrollToBottom(panel);
             
             projectMessageCount++;
+            console.log('✅ Photo added to chat:', panel);
             toast('Photo ajoutée');
-
+            
             // ═══ GAMIFICATION: Track photo upload ═══
             trackAction('photo');
-
+            
             // ═══ Save photo to database ═══
             if (currentProjectId && currentChatId[panel]) {
                 try {
                     await saveMessage(currentChatId[panel], 'user', imageData, 'image');
+                    console.log('📸 Photo saved to database');
                 } catch (e) {
-                    // Error saving photo
+                    console.error('❌ Error saving photo:', e);
                 }
             }
         }
@@ -12001,6 +11861,8 @@ RÈGLES:
                 // ═══════════════════════════════════════════════════════════
                 // MÉTHODE 1: CLAUDE VISION (haute qualité)
                 // ═══════════════════════════════════════════════════════════
+                console.log('🔍 Tentative Claude Vision...');
+                
                 try {
                     const visionResponse = await fetch(OCR_WEBHOOK_URL, {
                         method: 'POST',
@@ -12016,22 +11878,24 @@ RÈGLES:
                         const visionText = visionResult.output || visionResult.response || visionResult.text || '';
                         
                         // Vérifier que c'est une vraie extraction (pas une erreur)
-                        if (visionText &&
+                        if (visionText && 
                             visionText.length > 30 &&
                             !visionText.includes('Je suis prêt') &&
                             !visionText.includes('Envoie-moi')) {
                             extractedText = visionText;
                             ocrMethod = 'vision';
+                            console.log('✅ Claude Vision réussi:', extractedText.length, 'caractères');
                         }
                     }
                 } catch (visionErr) {
-                    // Claude Vision non disponible
+                    console.log('⚠️ Claude Vision non disponible:', visionErr.message);
                 }
-
+                
                 // ═══════════════════════════════════════════════════════════
                 // MÉTHODE 2: TESSERACT.JS (fallback)
                 // ═══════════════════════════════════════════════════════════
                 if (!extractedText && typeof Tesseract !== 'undefined') {
+                    console.log('🔄 Fallback Tesseract.js...');
                     
                     if (extractBtn) {
                         extractBtn.innerHTML = '<span class="icon"><svg><use href="#icon-search"/></svg></span> OCR...';
@@ -12052,6 +11916,7 @@ RÈGLES:
                     if (data.text && data.text.trim().length > 5) {
                         extractedText = data.text.trim();
                         ocrMethod = 'tesseract';
+                        console.log('✅ Tesseract réussi:', extractedText.length, 'caractères');
                     }
                 }
                 
@@ -12078,6 +11943,8 @@ RÈGLES:
                 // ═══════════════════════════════════════════════════════════
                 // CONSTRUIRE L'AFFICHAGE (Card UI)
                 // ═══════════════════════════════════════════════════════════
+                console.log('📊 Construction de l\'affichage...');
+                
                 // Parser le texte pour infos structurées (si Tesseract)
                 const structuredInfo = parseOCRForStructuredInfo(extractedText);
                 const rawTextId = 'raw-' + quoteId;
@@ -12176,6 +12043,7 @@ RÈGLES:
                         htmlContent: finalHtml,
                         sourcePhotoId: msgId
                     }), 'ocr');
+                    console.log('💾 OCR sauvegardé en base');
                 }
                 
                 // Succès
@@ -12192,6 +12060,8 @@ RÈGLES:
                 scrollToBottom(panel);
                 
             } catch (error) {
+                console.error('❌ Erreur OCR:', error);
+                
                 updateOCRQuoteWithResults(quoteId, `
                     <div style="color:var(--hotline);padding:12px;">
                         Erreur: ${error.message}
@@ -12980,7 +12850,7 @@ RÈGLES:
                     .from('project-photos')
                     .getPublicUrl(filename);
                 
-                // Photo uploaded successfully
+                console.log('Photo uploaded:', urlData.publicUrl);
                 return urlData.publicUrl;
                 
             } catch (error) {
@@ -13014,7 +12884,7 @@ RÈGLES:
                     .update({ photos: updatedPhotos })
                     .eq('id', projectId);
                 
-                // Photo saved to project
+                console.log('Photo saved to project:', projectId);
                 
             } catch (error) {
                 console.error('Error saving photo to project:', error);
@@ -13093,13 +12963,15 @@ RÈGLES:
         // Listen for SDK ready event
         window.addEventListener('elevenlabs-ready', () => {
             elevenLabsSDKReady = true;
+            console.log('✅ ElevenLabs SDK loaded and ready');
         });
-
+        
         async function connectHotline() {
             if(isConnecting || isConnected) return;
-
+            
             // Check if SDK is ready
             if (!elevenLabsSDKReady || !window.ElevenLabsConversation) {
+                console.log('⏳ SDK not ready yet, waiting...');
                 toast('Chargement en cours...');
                 // Wait a bit and try again
                 setTimeout(() => {
@@ -13119,12 +12991,14 @@ RÈGLES:
             
             // Get the correct agent ID for the selected brand
             const agentId = ELEVENLABS_AGENT_IDS[brand] || ELEVENLABS_AGENT_IDS['general'];
+            console.log('🎙️ Connecting to ElevenLabs agent:', agentId, 'for brand:', brand);
             
             try {
                 elevenLabsConversation = await window.ElevenLabsConversation.startSession({
                     agentId: agentId,
                     
                     onMessage: ({ message, source }) => {
+                        console.log('📨 Message from', source, ':', message);
                         if (source === 'user') {
                             addHotlineMessage(message, 'user');
                         } else {
@@ -13133,6 +13007,7 @@ RÈGLES:
                     },
                     
                     onModeChange: ({ mode }) => {
+                        console.log('🎤 Mode change:', mode);
                         if (mode === 'speaking') {
                             document.getElementById('pulseSphere').classList.add('ai-speaking');
                             showAISpeakingIndicator();
@@ -13143,6 +13018,8 @@ RÈGLES:
                     },
                     
                     onConnect: ({ conversationId }) => {
+                        console.log('✅ Connected! Conversation ID:', conversationId);
+                        
                         isConnecting = false;
                         isConnected = true;
                         document.getElementById('pulseSphere').classList.remove('connecting');
@@ -13157,16 +13034,19 @@ RÈGLES:
                     },
                     
                     onDisconnect: () => {
+                        console.log('🔌 Disconnected');
                         handleHotlineDisconnect();
                     },
-
+                    
                     onError: (error) => {
+                        console.error('❌ ElevenLabs error:', error);
                         toast('Erreur connexion');
                         handleHotlineDisconnect();
                     }
                 });
 
             } catch (error) {
+                console.error('❌ Connection failed:', error);
                 isConnecting = false;
                 document.getElementById('pulseSphere').classList.remove('connecting');
                 document.getElementById('widgetSublabel').textContent = 'Appuyez pour parler';
@@ -13231,8 +13111,9 @@ RÈGLES:
             if (elevenLabsConversation) {
                 try {
                     await elevenLabsConversation.endSession();
+                    console.log('✅ Session ended');
                 } catch (e) {
-                    // End session error
+                    console.log('End session error:', e);
                 }
                 elevenLabsConversation = null;
             }
@@ -13442,16 +13323,18 @@ RÈGLES:
             // Ensure we have user ID
             const userId = await getCurrentUserId();
             if (!userId || userId.startsWith('demo-')) {
+                console.log('⚠️ No valid user ID, skipping track');
                 return;
             }
-
+            
             const config = GAMIFICATION_CONFIG.actions[actionType];
             if (!config) {
+                console.warn('Action type inconnu:', actionType);
                 return;
             }
-
+            
             // NOTE: Don't update lastKnownStats here - let the homepage comparison work
-
+            
             try {
                 const { error } = await db.from('user_actions').insert({
                     user_id: userId,
@@ -13460,19 +13343,22 @@ RÈGLES:
                     euros_saved: config.euros,
                     project_id: projectId || currentProjectId
                 });
-
+                
                 if (error) {
                     // Si table n'existe pas encore, ignorer silencieusement
                     if (error.code === '42P01') {
+                        console.log('⚠️ Table user_actions pas encore créée');
                         return;
                     }
                     throw error;
                 }
-
+                
+                console.log(`✅ Action trackée: ${actionType} (+${config.minutes}min, +${config.euros}€)`);
+                
                 // Don't refresh stats here - let homepage celebration handle it
-
+                
             } catch (err) {
-                // Erreur tracking action
+                console.error('Erreur tracking action:', err);
             }
         }
         
@@ -13492,20 +13378,22 @@ RÈGLES:
             // Ensure we have user ID
             const userId = await getCurrentUserId();
             if (!userId || userId.startsWith('demo-')) {
+                console.log('⚠️ No valid user ID for stats');
                 return null;
             }
-
+            
             try {
                 const monday = getWeekStart();
-
+                
                 const { data, error } = await db
                     .from('user_actions')
                     .select('action_type, minutes_saved, euros_saved')
                     .eq('user_id', userId)
                     .gte('created_at', monday.toISOString());
-
+                
                 if (error) {
                     if (error.code === '42P01') {
+                        console.log('⚠️ Table user_actions pas encore créée');
                         return null;
                     }
                     throw error;
@@ -13668,6 +13556,13 @@ RÈGLES:
             if (reportsEl) reportsEl.textContent = displayStats.reports;
             if (messageEl) messageEl.innerHTML = formatMotivationalMessage(message);
             if (weekLabelEl) weekLabelEl.textContent = getWeekLabel();
+            
+            console.log('📊 Stats hebdo:', {
+                temps: `${timeData.value}${timeData.unit}${timeData.extra ? timeData.extra + 'min' : ''}`,
+                euros: displayStats.totalEuros + '€',
+                rapports: displayStats.reports,
+                ring: percentage + '%'
+            });
         }
         
         // ═══════════════════════════════════════════════════════════════
@@ -13796,7 +13691,9 @@ RÈGLES:
         function triggerCelebration(newStats, oldStats) {
             if (celebrationInProgress) return;
             celebrationInProgress = true;
-
+            
+            console.log('🎊 Célébration déclenchée!');
+            
             // Calculate difference for +X display
             const eurosDiff = Math.round(newStats.totalEuros - oldStats.totalEuros);
             const percentDiff = calculateRingPercentage(newStats.totalEuros) - calculateRingPercentage(oldStats.totalEuros);
@@ -13831,50 +13728,107 @@ RÈGLES:
         
         // Initialize gamification on login with celebration check
         async function initGamification(forceCheck = false) {
+            console.log('🎮 initGamification called, forceCheck:', forceCheck);
+            
             // Ensure we have the user ID
             const userId = await getCurrentUserId();
             if (!userId || userId.startsWith('demo-')) {
+                console.log('⚠️ No valid user ID for gamification');
                 return;
             }
-
+            
             const stats = await getWeeklyStats();
             const newStats = stats || { totalMinutes: 0, totalEuros: 0, reports: 0 };
-
+            
+            console.log('📊 Current DB stats:', newStats);
+            console.log('📊 Last known stats:', lastKnownStats);
+            
             // First login ever (no previous stats saved) - just display without animation
             if (!forceCheck && lastKnownStats.totalEuros === 0 && lastKnownStats.totalMinutes === 0 && lastKnownStats.reports === 0) {
                 // But if DB has stats, it means user was already active - show celebration!
                 if (newStats.totalEuros > 0 || newStats.totalMinutes > 0 || newStats.reports > 0) {
+                    console.log('🎊 First load but has stats - celebrating!');
                     triggerCelebration(newStats, { totalMinutes: 0, totalEuros: 0, reports: 0 });
                     saveLastKnownStats(newStats);
                     return;
                 }
                 await refreshWeeklyStats();
                 saveLastKnownStats(newStats);
+                console.log('📊 First init - no celebration');
                 return;
             }
-
+            
             // Check if we should celebrate (any increase in stats)
-            const hasIncrease =
-                newStats.totalEuros > lastKnownStats.totalEuros ||
+            const hasIncrease = 
+                newStats.totalEuros > lastKnownStats.totalEuros || 
                 newStats.totalMinutes > lastKnownStats.totalMinutes ||
                 newStats.reports > lastKnownStats.reports;
-
+            
+            console.log('🎊 Should celebrate?', hasIncrease);
+            
             if (hasIncrease || forceCheck) {
+                console.log('🎊 Triggering celebration!');
                 triggerCelebration(newStats, forceCheck ? { totalMinutes: 0, totalEuros: 0, reports: 0 } : lastKnownStats);
             } else {
                 await refreshWeeklyStats();
             }
-
+            
             saveLastKnownStats(newStats);
         }
-
+        
         // Call celebration when returning to homepage
         function onReturnToHomepage() {
+            console.log('🏠 onReturnToHomepage called');
+            console.log('🏠 currentUserId:', currentUserId);
+            console.log('🏠 homepage active:', document.getElementById('homepageContent')?.classList.contains('active'));
+            
             if (currentUserId) {
                 initGamification(false);
             }
         }
         
+        // TEST FUNCTION - Call from console: testCelebration()
+        window.testCelebration = function() {
+            console.log('🧪 Test celebration triggered');
+            const fakeOld = { totalMinutes: 0, totalEuros: 0, reports: 0 };
+            const fakeNew = { totalMinutes: 5, totalEuros: 4, reports: 0 };
+            triggerCelebration(fakeNew, fakeOld);
+        };
+        
+        // TEST: Force celebration with real stats
+        window.forceCelebration = async function() {
+            console.log('🧪 Force celebration with real stats');
+            initGamification(true);
+        };
+        
+        // DEBUG: Check current gamification state
+        window.debugGamification = async function() {
+            console.log('═══════════════════════════════════════');
+            console.log('🔍 GAMIFICATION DEBUG');
+            console.log('═══════════════════════════════════════');
+            console.log('Current User ID:', currentUserId);
+            console.log('Last Known Stats (localStorage):', lastKnownStats);
+            
+            const dbStats = await getWeeklyStats();
+            console.log('Current DB Stats:', dbStats);
+            
+            if (dbStats) {
+                const hasIncrease = 
+                    dbStats.totalEuros > lastKnownStats.totalEuros || 
+                    dbStats.totalMinutes > lastKnownStats.totalMinutes ||
+                    dbStats.reports > lastKnownStats.reports;
+                console.log('Has increase (should celebrate):', hasIncrease);
+            }
+            console.log('═══════════════════════════════════════');
+            return { lastKnownStats, dbStats };
+        };
+        
+        // RESET: Clear saved stats to test first-time animation
+        window.resetGamificationStats = function() {
+            localStorage.removeItem('fixair_lastStats');
+            lastKnownStats = { totalMinutes: 0, totalEuros: 0, reports: 0 };
+            console.log('✅ Stats reset! Reload page to test celebration');
+        };
 
         // ═══════════════════════════════════════════════════════════════════════════
         // CALENDAR FUNCTIONS
@@ -13913,6 +13867,7 @@ RÈGLES:
                             projectId: ev.project_id,
                             jobId: ev.job_id
                         }));
+                        console.log('📅 Calendar events loaded from Supabase:', calendarEvents.length);
                         // Clear old localStorage demo events
                         localStorage.removeItem('fixair_calendar_events');
                         renderTechCalendar();
@@ -13945,8 +13900,10 @@ RÈGLES:
 
         async function saveEventToSupabase(eventData) {
             const userId = await getCurrentUserId();
-
+            console.log('📅 Attempting to save event, userId:', userId, 'eventType:', eventData.type);
+            
             if (!db || !userId || userId.startsWith('demo-')) {
+                console.log('📅 Supabase not available or demo mode, saving to localStorage only');
                 return null;
             }
             
@@ -13965,7 +13922,9 @@ RÈGLES:
                     notes: eventData.notes || null,
                     project_id: eventData.projectId || null
                 };
-
+                
+                console.log('📅 Supabase data to insert:', JSON.stringify(supabaseData, null, 2));
+                
                 if (eventData.id && !eventData.id.startsWith('ev-') && !eventData.id.startsWith('demo')) {
                     // Update existing
                     const { data, error } = await db
@@ -13976,7 +13935,11 @@ RÈGLES:
                         .select()
                         .single();
                     
-                    if (error) throw error;
+                    if (error) {
+                        console.error('📅 Supabase UPDATE error:', error.message, error.details, error.hint);
+                        throw error;
+                    }
+                    console.log('📅 Event updated in Supabase:', data.id);
                     return data;
                 } else {
                     // Insert new
@@ -13987,10 +13950,16 @@ RÈGLES:
                         .select()
                         .single();
                     
-                    if (error) throw error;
+                    if (error) {
+                        console.error('📅 Supabase INSERT error:', error.message, error.details, error.hint);
+                        console.error('📅 Full error object:', JSON.stringify(error));
+                        throw error;
+                    }
+                    console.log('📅 Event created in Supabase:', data.id);
                     return data;
                 }
             } catch (err) {
+                console.error('📅 Error saving event to Supabase:', err);
                 toast('Erreur sauvegarde calendrier');
                 return null;
             }
@@ -14009,8 +13978,9 @@ RÈGLES:
                     .eq('user_id', userId);
                 
                 if (error) throw error;
+                console.log('📅 Event deleted from Supabase:', eventId);
             } catch (err) {
-                // Error deleting event
+                console.error('Error deleting event from Supabase:', err);
             }
         }
 
@@ -14018,9 +13988,11 @@ RÈGLES:
             // Create a project when event type is copilot or assistant
             const userId = await getCurrentUserId();
             if (!db || !userId || userId.startsWith('demo-')) {
+                console.log('📅 Cannot create project: no valid user');
                 return null;
             }
             if (eventData.type !== 'copilot' && eventData.type !== 'assistant') {
+                console.log('📅 Event type is not copilot/assistant, skipping project creation');
                 return null;
             }
             
@@ -14037,7 +14009,8 @@ RÈGLES:
                     .single();
                 
                 if (projectError) throw projectError;
-
+                console.log('📅 Project created for event:', project.id);
+                
                 // Create a chat with the correct type (copilot or assistant)
                 const { data: chat, error: chatError } = await db
                     .from('chats')
@@ -14049,10 +14022,15 @@ RÈGLES:
                     .select()
                     .single();
                 
-                // Chat creation error handled silently
-
+                if (chatError) {
+                    console.error('Error creating chat for project:', chatError);
+                } else {
+                    console.log('📅 Chat created with type:', eventData.type, 'id:', chat.id);
+                }
+                
                 return project.id;
             } catch (err) {
+                console.error('Error creating project for event:', err);
                 return null;
             }
         }
@@ -14396,11 +14374,15 @@ RÈGLES:
         }
 
         async function saveCalendarEvent() {
+            console.log('📅 saveCalendarEvent called!');
+            
             const name = document.getElementById('eventName').value.trim();
             if (!name) {
                 toast('Veuillez entrer un nom');
                 return;
             }
+            
+            console.log('📅 Saving event with type:', selectedEventType);
             
             // Get existing event data if editing (to preserve projectId)
             const existingEvent = editingEventId ? calendarEvents.find(e => e.id === editingEventId) : null;
@@ -14422,12 +14404,15 @@ RÈGLES:
                 projectId: existingEvent?.projectId || null,
                 jobId: existingEvent?.jobId || null
             };
-
+            
+            console.log('📅 Event data:', JSON.stringify(eventData, null, 2));
+            
             // Create project for copilot/assistant events (only for new events without projectId)
             if (!eventData.projectId && (selectedEventType === 'copilot' || selectedEventType === 'assistant')) {
                 const projectId = await createProjectForEvent(eventData);
                 if (projectId) {
                     eventData.projectId = projectId;
+                    console.log('📅 Event linked to project:', projectId);
                 }
             }
             
@@ -14439,6 +14424,9 @@ RÈGLES:
                 if (savedEvent.project_id) {
                     eventData.projectId = savedEvent.project_id;
                 }
+                console.log('📅 Event saved successfully with ID:', eventData.id);
+            } else {
+                console.log('📅 Event NOT saved to Supabase, keeping local ID:', eventData.id);
             }
             
             if (editingEventId) {
@@ -14566,8 +14554,8 @@ RÈGLES:
         };
 
         function openConnect() {
-            // DISABLED - Coming soon
-            toast('FixAIR Connect — Disponible prochainement');
+            document.getElementById('connectView').classList.add('active');
+            document.getElementById('navConnect').classList.add('active');
         }
 
         function closeConnect() {
@@ -14658,10 +14646,7 @@ RÈGLES:
 
         // Initialize calendar when page loads
         document.addEventListener('DOMContentLoaded', function() {
-            // Wait for app to be ready, then init calendar
-            setTimeout(function() {
-                initTechCalendar();
-            }, 1500);
+            setTimeout(initTechCalendar, 500);
         });
     </script>
     
@@ -14963,18 +14948,6 @@ RÈGLES:
                         <select class="event-field-select" id="eventVisibility">
                             <option value="private">Privé (moi uniquement)</option>
                             <option value="company">Entreprise (managers)</option>
-                                             <option value="connect">FixAIR Connect</option>
+                            <option value="connect">FixAIR Connect</option>
                         </select>
                     </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="event-drawer-footer">
-            <button class="event-drawer-btn secondary" onclick="closeEventDrawer()">Annuler</button>
-            <button class="event-drawer-btn primary" onclick="saveCalendarEvent()">Enregistrer</button>
-        </div>
-    </div>
-
-</body>
-</html>
