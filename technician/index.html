@@ -4871,6 +4871,9 @@
                 Votre email a été confirmé ! Un administrateur va valider votre accès dans les plus brefs délais.
             </p>
             <div class="pending-email" id="pendingEmail"></div>
+            <button class="pending-logout" onclick="checkApprovalStatus()" style="margin-top: 8px; background: var(--copilot); color: white; border: none;" id="checkStatusBtn">
+                Vérifier le statut
+            </button>
             <button class="pending-logout" onclick="logoutFromPending()">
                 Se déconnecter
             </button>
@@ -6693,6 +6696,41 @@
             document.getElementById('mainApp').classList.remove('active');
             document.getElementById('emailConfirmScreen').classList.remove('active');
             document.getElementById('pendingScreen').classList.add('active');
+        }
+
+        async function checkApprovalStatus() {
+            const btn = document.getElementById('checkStatusBtn');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Vérification...';
+
+            try {
+                const { data: { user } } = await db.auth.getUser();
+                if (!user) {
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                    toast('Session expirée, veuillez vous reconnecter');
+                    logoutFromPending();
+                    return;
+                }
+
+                const profile = await loadUserProfile(user.id);
+                if (profile && (profile.status === 'approved' || profile.status === 'active')) {
+                    currentUser = profile;
+                    supabaseUser = user;
+                    toast('Accès approuvé ! Bienvenue ' + (profile.first_name || 'Technicien') + ' !');
+                    doLogin();
+                } else {
+                    toast('Votre compte est toujours en attente de validation');
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                }
+            } catch (err) {
+                console.error('Check status error:', err);
+                toast('Erreur lors de la vérification');
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
         }
 
         async function resendConfirmation() {
