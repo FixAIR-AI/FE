@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>FixAIR - Invitation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --copilot: #FF6B35;
+            --copilot-glow: rgba(255, 107, 53, 0.4);
+            --copilot-bg: rgba(255, 107, 53, 0.08);
+            --copilot-border: rgba(255, 107, 53, 0.2);
+            --assistant: #22c55e;
+            --assistant-glow: rgba(34, 197, 94, 0.4);
+            --assistant-bg: rgba(34, 197, 94, 0.08);
+            --assistant-border: rgba(34, 197, 94, 0.2);
+            --bg: #0D1117;
+            --bg-secondary: #161b22;
+            --card: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.06);
+            --text: rgba(255, 255, 255, 0.9);
+            --text-dim: rgba(255, 255, 255, 0.35);
+            --grid-color: rgba(255,255,255,0.015);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            min-height: 100dvh;
+            overflow-x: hidden;
+            background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+
+        * { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) transparent; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+
+        .container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 420px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px;
+        }
+
+        .logo {
+            width: 140px;
+            height: auto;
+            margin: 0 auto 24px;
+            display: block;
+            color: var(--copilot);
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--text-dim);
+            text-align: center;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .inviter-badge {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--assistant-bg);
+            border: 1px solid var(--assistant-border);
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .inviter-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--assistant);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            color: white;
+        }
+
+        .inviter-info {
+            flex: 1;
+        }
+
+        .inviter-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .inviter-label {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-dim);
+            margin-bottom: 6px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            border-color: var(--copilot);
+            box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.15);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-dim);
+        }
+
+        .form-input.readonly {
+            background: rgba(255,255,255,0.02);
+            color: var(--text-dim);
+            cursor: not-allowed;
+        }
+
+        .form-input:-webkit-autofill {
+            -webkit-box-shadow: 0 0 0 1000px var(--bg-secondary) inset !important;
+            -webkit-text-fill-color: var(--text) !important;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #FF6B35, #E55A2B);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            margin-top: 12px;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--text);
+        }
+
+        .status {
+            min-height: 20px;
+            margin-top: 16px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .status.success { color: #22c55e; }
+        .status.error { color: #ef4444; }
+        .status.info { color: rgba(255,255,255,0.7); }
+
+        .error-container {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .error-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 60px 20px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--copilot);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .success-container {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .success-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        #loadingScreen, #errorScreen, #signupScreen, #successScreen {
+            display: none;
+        }
+
+        #loadingScreen.active, #errorScreen.active, #signupScreen.active, #successScreen.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <!-- Logo -->
+            <svg class="logo" viewBox="0 0 235 48">
+                <path d="M35.1986 6.4H17.4706C15.4226 6.4 13.5666 6.912 11.9026 7.936C10.2386 8.96 8.89463 10.3253 7.87063 12.032C6.88929 13.696 6.39863 15.552 6.39863 17.6V48H-0.00137472V16C-0.00137472 13.7387 0.467959 11.648 1.40663 9.728C2.34529 7.76533 3.62529 6.08 5.24663 4.672C6.91063 3.22133 8.78796 2.09067 10.8786 1.28C12.9693 0.426664 15.1666 -3.8147e-06 17.4706 -3.8147e-06H35.1986V6.4ZM48.8306 4.8C48.8306 6.12266 48.3613 7.25333 47.4226 8.192C46.484 9.13066 45.3533 9.6 44.0306 9.6C42.708 9.6 41.5773 9.13066 40.6386 8.192C39.7 7.25333 39.2306 6.12266 39.2306 4.8C39.2306 3.47733 39.7 2.34666 40.6386 1.408C41.5773 0.46933 42.708 -3.8147e-06 44.0306 -3.8147e-06C45.3533 -3.8147e-06 46.484 0.46933 47.4226 1.408C48.3613 2.34666 48.8306 3.47733 48.8306 4.8ZM47.2306 48H40.8306V22.4H9.59863V16H47.2306V48ZM97.7161 48H88.5641L74.8681 34.752L61.4281 48H52.2761L70.4521 30.464L52.2761 12.8H61.4281L97.7161 48ZM97.7161 12.8L82.4841 27.648L77.8761 23.552L88.5641 12.8H97.7161Z" fill="currentColor"/>
+                <path d="M154.461 48H148.061V35.2H112.285V28.8H148.061V9.6H125.085C122.183 9.6 119.517 10.3253 117.085 11.776C114.653 13.184 112.711 15.104 111.261 17.536C109.853 19.968 109.149 22.656 109.149 25.6V48H102.749V25.6C102.749 22.528 103.325 19.648 104.477 16.96C105.629 14.2293 107.229 11.84 109.277 9.792C111.325 7.70133 113.693 6.08 116.381 4.928C119.111 3.776 122.013 3.2 125.085 3.2H154.461V48ZM171.604 48H165.204V3.2H171.604V48ZM234.041 48H225.401L211.961 35.2H192.313V28.864H218.041C219.833 28.864 221.454 28.4373 222.905 27.584C224.356 26.688 225.508 25.5147 226.361 24.064C227.214 22.5707 227.641 20.9493 227.641 19.2C227.641 17.408 227.214 15.7867 226.361 14.336C225.508 12.8853 224.356 11.7333 222.905 10.88C221.454 10.0267 219.833 9.6 218.041 9.6H188.729V48H182.329V3.2H218.041C220.985 3.2 223.673 3.92533 226.105 5.376C228.537 6.784 230.457 8.704 231.865 11.136C233.316 13.568 234.041 16.256 234.041 19.2C234.041 21.8453 233.444 24.2987 232.249 26.56C231.097 28.8213 229.497 30.6987 227.449 32.192C225.444 33.6427 223.161 34.5813 220.601 35.008L234.041 48Z" fill="currentColor"/>
+            </svg>
+
+            <!-- Loading Screen -->
+            <div id="loadingScreen" class="active">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p style="color: var(--text-dim);">Chargement de l'invitation...</p>
+                </div>
+            </div>
+
+            <!-- Error Screen -->
+            <div id="errorScreen">
+                <div class="error-container">
+                    <div class="error-icon">&#10060;</div>
+                    <h2 class="title">Invitation invalide</h2>
+                    <p class="subtitle" id="errorMessage">Cette invitation n'existe pas ou a expire.</p>
+                    <a href="https://go.fixair.ai/auth" class="btn btn-secondary" style="display: inline-block; text-decoration: none; text-align: center;">
+                        Retour a la connexion
+                    </a>
+                </div>
+            </div>
+
+            <!-- Signup Screen -->
+            <div id="signupScreen">
+                <h1 class="title">Rejoignez FixAIR</h1>
+                <p class="subtitle">Vous avez ete invite a rejoindre l'equipe</p>
+
+                <div class="inviter-badge" id="inviterBadge">
+                    <div class="inviter-avatar" id="inviterAvatar">M</div>
+                    <div class="inviter-info">
+                        <div class="inviter-name" id="inviterName">Manager</div>
+                        <div class="inviter-label">vous a invite</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input readonly" id="emailInput" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Prenom</label>
+                    <input type="text" class="form-input" id="firstNameInput" placeholder="Votre prenom">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Nom</label>
+                    <input type="text" class="form-input" id="lastNameInput" placeholder="Votre nom">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Telephone</label>
+                    <input type="tel" class="form-input" id="phoneInput" placeholder="06 12 34 56 78">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Mot de passe</label>
+                    <input type="password" class="form-input" id="passwordInput" placeholder="Minimum 6 caracteres">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Confirmer le mot de passe</label>
+                    <input type="password" class="form-input" id="passwordConfirmInput" placeholder="Confirmez votre mot de passe">
+                </div>
+
+                <button class="btn btn-primary" id="submitBtn" onclick="createAccount()">
+                    Creer mon compte
+                </button>
+
+                <div class="status" id="status"></div>
+            </div>
+
+            <!-- Success Screen -->
+            <div id="successScreen">
+                <div class="success-container">
+                    <div class="success-icon">&#9989;</div>
+                    <h2 class="title">Compte cree !</h2>
+                    <p class="subtitle">Votre compte a ete cree avec succes. Vous pouvez maintenant vous connecter.</p>
+                    <a href="https://go.fixair.ai/auth" class="btn btn-primary" style="display: inline-block; text-decoration: none; text-align: center;">
+                        Se connecter
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTcyMTksImV4cCI6MjA4MTgzMzIxOX0.8ryQm1tsdx5ox3aFJiiflmwuEGGxxH_PlobGxXMgFuQ';
+
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: false,
+                storageKey: 'fixair-auth',
+                storage: window.localStorage
+            }
+        });
+
+        let invitation = null;
+        let inviter = null;
+
+        function showScreen(screenId) {
+            ['loadingScreen', 'errorScreen', 'signupScreen', 'successScreen'].forEach(id => {
+                document.getElementById(id).classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            showScreen('errorScreen');
+        }
+
+        function showStatus(message, type = 'info') {
+            const el = document.getElementById('status');
+            el.textContent = message;
+            el.className = 'status ' + type;
+        }
+
+        async function init() {
+            // Get token from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+
+            if (!token) {
+                showError('Aucun token d\'invitation fourni.');
+                return;
+            }
+
+            try {
+                // Fetch invitation
+                const { data: inv, error: invError } = await sb
+                    .from('invitations')
+                    .select('*')
+                    .eq('token', token)
+                    .maybeSingle();
+
+                if (invError) {
+                    console.error('Invitation fetch error:', invError);
+                    showError('Erreur lors du chargement de l\'invitation.');
+                    return;
+                }
+
+                if (!inv) {
+                    showError('Cette invitation n\'existe pas.');
+                    return;
+                }
+
+                if (inv.status === 'accepted') {
+                    showError('Cette invitation a deja ete utilisee.');
+                    return;
+                }
+
+                if (inv.status === 'expired') {
+                    showError('Cette invitation a expire.');
+                    return;
+                }
+
+                invitation = inv;
+
+                // Fetch inviter info
+                const { data: inviterData } = await sb
+                    .from('users')
+                    .select('first_name, last_name, company_name')
+                    .eq('id', inv.inviter_id)
+                    .maybeSingle();
+
+                if (inviterData) {
+                    inviter = inviterData;
+                    const name = inviterData.company_name || `${inviterData.first_name || ''} ${inviterData.last_name || ''}`.trim() || 'Manager';
+                    document.getElementById('inviterName').textContent = name;
+                    document.getElementById('inviterAvatar').textContent = name.charAt(0).toUpperCase();
+                }
+
+                // Pre-fill form
+                document.getElementById('emailInput').value = inv.email || '';
+                document.getElementById('firstNameInput').value = inv.first_name || '';
+                document.getElementById('lastNameInput').value = inv.last_name || '';
+                document.getElementById('phoneInput').value = inv.phone || '';
+
+                showScreen('signupScreen');
+
+            } catch (err) {
+                console.error('Init error:', err);
+                showError('Une erreur est survenue.');
+            }
+        }
+
+        async function createAccount() {
+            const email = document.getElementById('emailInput').value.trim();
+            const firstName = document.getElementById('firstNameInput').value.trim();
+            const lastName = document.getElementById('lastNameInput').value.trim();
+            const phone = document.getElementById('phoneInput').value.trim();
+            const password = document.getElementById('passwordInput').value;
+            const passwordConfirm = document.getElementById('passwordConfirmInput').value;
+
+            // Validation
+            if (!firstName || !lastName) {
+                showStatus('Prenom et nom requis', 'error');
+                return;
+            }
+
+            if (!password || password.length < 6) {
+                showStatus('Le mot de passe doit contenir au moins 6 caracteres', 'error');
+                return;
+            }
+
+            if (password !== passwordConfirm) {
+                showStatus('Les mots de passe ne correspondent pas', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Creation en cours...';
+            showStatus('Creation de votre compte...', 'info');
+
+            try {
+                // Create auth user
+                const { data: authData, error: authError } = await sb.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        emailRedirectTo: 'https://go.fixair.ai',
+                        data: {
+                            first_name: firstName,
+                            last_name: lastName,
+                            phone: phone
+                        }
+                    }
+                });
+
+                if (authError) {
+                    if (authError.message.includes('already registered')) {
+                        showStatus('Cet email est deja utilise. Connectez-vous.', 'error');
+                    } else {
+                        showStatus('Erreur: ' + authError.message, 'error');
+                    }
+                    btn.disabled = false;
+                    btn.textContent = 'Creer mon compte';
+                    return;
+                }
+
+                // Create/update user profile
+                const { error: profileError } = await sb
+                    .from('users')
+                    .upsert({
+                        auth_id: authData.user?.id || null,
+                        email: email,
+                        first_name: firstName,
+                        last_name: lastName,
+                        phone: phone,
+                        role: invitation.role || 'technician',
+                        member_type: invitation.member_type || 'internal',
+                        manager_id: invitation.inviter_id,
+                        status: 'active', // Invited users are auto-approved
+                        live_status: 'offline'
+                    }, { onConflict: 'email' });
+
+                if (profileError) {
+                    console.error('Profile error:', profileError);
+                    // Don't fail - the auth user was created, they can still login
+                }
+
+                // Update invitation status
+                await sb
+                    .from('invitations')
+                    .update({
+                        status: 'accepted',
+                        accepted_at: new Date().toISOString()
+                    })
+                    .eq('id', invitation.id);
+
+                // Show success
+                showScreen('successScreen');
+
+            } catch (err) {
+                console.error('Create account error:', err);
+                showStatus('Une erreur est survenue. Reessayez.', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Creer mon compte';
+            }
+        }
+
+        // Initialize on load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>
