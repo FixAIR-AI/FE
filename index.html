@@ -5850,23 +5850,21 @@
         let step3Done = false;
         let step4Done = false;
         let onboardingBrand = null;
-        
-        // ═══ SUPABASE CLIENT INITIALIZATION (must be before auth code) ═══
+
+        // ═══ SUPABASE CLIENT INITIALIZATION ═══
         const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTcyMTksImV4cCI6MjA4MTgzMzIxOX0.8ryQm1tsdx5ox3aFJiiflmwuEGGxxH_PlobGxXMgFuQ';
 
         // ANTI-LOOP: localStorage flag to detect redirect loops
         const REDIRECT_FLAG = 'fixair_redirect_in_progress';
 
-        let db;
-        let supabaseReady = false;
+        let db = null;
 
         // ═══ PARSE URL HASH FOR AUTH TOKENS ═══
-        // This must happen BEFORE createClient to prevent AbortError in cross-browser scenarios
         function parseHashParams(hash) {
             if (!hash || hash.length < 2) return {};
             const params = {};
-            const hashContent = hash.substring(1); // Remove #
+            const hashContent = hash.substring(1);
             const pairs = hashContent.split('&');
             for (const pair of pairs) {
                 const [key, value] = pair.split('=');
@@ -5877,87 +5875,46 @@
             return params;
         }
 
-        // Parse URL hash for tokens BEFORE creating client
         const initialHash = window.location.hash;
         const hashParams = parseHashParams(initialHash);
         const hasAccessToken = !!hashParams.access_token;
         const hasRefreshToken = !!hashParams.refresh_token;
-        const tokenType = hashParams.type; // 'recovery', 'signup', 'magiclink', etc.
+        const tokenType = hashParams.type;
         const isRecoveryLink = tokenType === 'recovery';
 
-        // CRITICAL: Clean URL hash BEFORE creating Supabase client
-        // This prevents Supabase from internally trying to process the tokens
-        // which causes AbortError in fresh browsers (different browser than signup)
+        // Clean URL hash
         if (initialHash) {
             window.history.replaceState(null, '', window.location.pathname + window.location.search);
         }
 
-        if (window.supabase && window.supabase.createClient) {
-            // DISABLE automatic features to avoid AbortError in cross-browser scenarios
-            // We handle URL tokens manually in initAuth()
-            db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-                auth: {
-                    persistSession: true,
-                    autoRefreshToken: true,
-                    detectSessionInUrl: false, // Disabled to prevent AbortError
-                    storageKey: 'fixair-auth',
-                    storage: window.localStorage
-                }
-            });
-
-            // Mark Supabase as ready immediately since we handle auth manually
-            supabaseReady = true;
-        } else {
-            console.error('❌ Supabase library not loaded! window.supabase =', window.supabase);
-            alert('Erreur: Supabase non chargé. Veuillez rafraîchir la page.');
-        }
-
-        // Safe getSession with retry for AbortError
-        async function safeGetSession(retries = 3) {
-            for (let i = 0; i < retries; i++) {
-                try {
-                    const result = await db.auth.getSession();
-                    if (result.error?.message?.includes('AbortError')) {
-                        await new Promise(r => setTimeout(r, 200 * (i + 1)));
-                        continue;
+        // Initialize Supabase - SAME PATTERN AS MANAGER APP
+        function initSupabase() {
+            try {
+                db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                    auth: {
+                        persistSession: true,
+                        autoRefreshToken: true,
+                        detectSessionInUrl: false,
+                        storageKey: 'fixair-auth',
+                        storage: window.localStorage
                     }
-                    return result;
-                } catch (err) {
-                    if (err.message?.includes('AbortError') && i < retries - 1) {
-                        await new Promise(r => setTimeout(r, 200 * (i + 1)));
-                        continue;
-                    }
-                    return { data: { session: null }, error: err };
-                }
+                });
+                console.log('✅ Supabase initialized');
+                return true;
+            } catch (err) {
+                console.error('❌ Supabase init error:', err);
+                return false;
             }
-            return { data: { session: null }, error: { message: 'Failed after retries' } };
         }
-        
-        // Helper function to wait for Supabase to be ready
-        async function waitForSupabase() {
-            if (supabaseReady) return true;
-            let attempts = 0;
-            while (!supabaseReady && attempts < 20) {
-                await new Promise(r => setTimeout(r, 100));
-                attempts++;
-            }
-            return supabaseReady;
-        }
-        
-        // Safe query wrapper that handles AbortError with timeout
+
+        // Safe query wrapper - same pattern as manager app
         async function safeQuery(queryFn, retries = 2, timeoutMs = 3000) {
-            await waitForSupabase();
-
             for (let attempt = 0; attempt < retries; attempt++) {
                 try {
-                    // Add timeout to prevent infinite hang
                     const timeoutPromise = new Promise((_, reject) =>
                         setTimeout(() => reject(new Error('Query timeout')), timeoutMs)
                     );
-                    
                     const result = await Promise.race([queryFn(), timeoutPromise]);
-
-                    // Check if result has AbortError
                     if (result.error && result.error.message && result.error.message.includes('AbortError')) {
                         await new Promise(r => setTimeout(r, 300 * (attempt + 1)));
                         continue;
@@ -5968,13 +5925,12 @@
                         await new Promise(r => setTimeout(r, 300 * (attempt + 1)));
                         continue;
                     }
-                    // Don't throw, return error object
                     return { data: null, error: { message: err.message } };
                 }
             }
             return { data: null, error: { message: 'Query failed after retries' } };
         }
-        
+
         // ═══ TOAST UTILITY (needed early for error handling) ═══
         let toastTimeout = null;
         function toast(m) {
@@ -6191,17 +6147,34 @@
                 isPasswordRecovery = false;
             }
 
-            // Try to get existing session using safe retry method
+            // Check for existing session via Supabase SDK - same as manager app
             try {
-                const { data: { session }, error } = await safeGetSession();
+                const { data: { session }, error } = await db.auth.getSession();
 
-                if (!error && session) {
+                if (session && session.user) {
                     isReady = true;
                     await loadUserAndShowApp(session.user);
                     return;
                 }
+
+                // Try localStorage as fallback
+                const stored = localStorage.getItem('supabase.auth.token');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (parsed.currentSession) {
+                        const { data, error } = await db.auth.setSession({
+                            access_token: parsed.currentSession.access_token,
+                            refresh_token: parsed.currentSession.refresh_token
+                        });
+                        if (!error && data.session) {
+                            isReady = true;
+                            await loadUserAndShowApp(data.session.user);
+                            return;
+                        }
+                    }
+                }
             } catch (err) {
-                console.error('Session check error:', err);
+                console.log('Session check error:', err);
             }
 
             // No valid session found - check if we should redirect or show error
@@ -6228,78 +6201,69 @@
             window.location.replace('https://go.fixair.ai/auth');
         }
 
-        // Listen for auth state changes
+        // Listen for auth state changes - must be called after initSupabase
         let authHandled = false;
-        db.auth.onAuthStateChange(async (event, session) => {
-            // Handle PASSWORD_RECOVERY event
-            if (event === 'PASSWORD_RECOVERY') {
-                isPasswordRecovery = true;
-                isReady = true;
-                showPasswordResetScreen();
-                return;
-            }
-
-            // Handle USER_UPDATED event (after password change)
-            if (event === 'USER_UPDATED') {
-                // Don't auto-load app - the setNewPassword function handles the flow
-                // by signing out and showing a "Se connecter" button
-                isReady = true;
-                return;
-            }
-
-            // Handle SIGNED_IN event
-            if (event === 'SIGNED_IN' && session) {
-                // If we're in password recovery mode, stay on reset form
-                if (isPasswordRecovery) {
+        function setupAuthListener() {
+            db.auth.onAuthStateChange(async (event, session) => {
+                if (event === 'PASSWORD_RECOVERY') {
+                    isPasswordRecovery = true;
+                    isReady = true;
                     showPasswordResetScreen();
                     return;
                 }
 
-                // Persist session to localStorage for page reload persistence
-                localStorage.setItem('supabase.auth.token', JSON.stringify({
-                    currentSession: session,
-                    expiresAt: session.expires_at
-                }));
-
-                supabaseUser = session.user;
-
-                // Only process if we don't have currentUser yet and not already in app
-                if (!currentUser && !document.getElementById('mainApp').classList.contains('active')) {
-                    authHandled = true;
+                if (event === 'USER_UPDATED') {
                     isReady = true;
-                    await loadUserAndShowApp(session.user);
-                }
-                return;
-            }
-
-            // Handle INITIAL_SESSION event
-            if (event === 'INITIAL_SESSION') {
-                // Skip if we already handled or if we're processing URL tokens manually
-                if (authHandled || hasAccessToken) {
                     return;
                 }
 
-                if (session && session.user && !isPasswordRecovery) {
+                if (event === 'SIGNED_IN' && session) {
+                    if (isPasswordRecovery) {
+                        showPasswordResetScreen();
+                        return;
+                    }
                     supabaseUser = session.user;
-                    authHandled = true;
-                    isReady = true;
-                    await loadUserAndShowApp(session.user);
+                    if (!currentUser && !document.getElementById('mainApp').classList.contains('active')) {
+                        authHandled = true;
+                        isReady = true;
+                        await loadUserAndShowApp(session.user);
+                    }
+                    return;
                 }
+
+                if (event === 'SIGNED_OUT') {
+                    supabaseUser = null;
+                    currentUser = null;
+                    isPasswordRecovery = false;
+                    authHandled = false;
+                    isReady = true;
+                }
+            });
+        }
+
+        // Initialize app - SAME PATTERN AS MANAGER APP
+        async function initTechnicianApp() {
+            console.log('🚀 Initializing FixAIR Technician App...');
+
+            // Initialize Supabase first
+            if (!initSupabase()) {
+                console.error('Failed to init Supabase');
                 return;
             }
 
-            // Handle SIGNED_OUT event
-            if (event === 'SIGNED_OUT') {
-                supabaseUser = null;
-                currentUser = null;
-                isPasswordRecovery = false;
-                authHandled = false;
-                isReady = true;
-            }
-        });
+            // Setup auth state listener
+            setupAuthListener();
 
-        // Initialize auth on page load (reduced timeout since we handle manually)
-        setTimeout(() => initAuth(), 300);
+            // Then initialize auth
+            await initAuth();
+
+            console.log('✅ Technician App initialized');
+        }
+
+        // Run init on DOM ready - SAME PATTERN AS MANAGER APP
+        document.addEventListener('DOMContentLoaded', () => {
+            initTechnicianApp();
+        });
 
         // ═══ LOGIN STATUS MESSAGES ═══
         let existingUserName = '';
