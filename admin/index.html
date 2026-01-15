@@ -1020,7 +1020,9 @@
                     auth: {
                         persistSession: true,
                         autoRefreshToken: true,
-                        detectSessionInUrl: true
+                        detectSessionInUrl: true,
+                        storageKey: 'fixair-auth',
+                        storage: window.localStorage
                     }
                 });
                 console.log('✅ Supabase initialized');
