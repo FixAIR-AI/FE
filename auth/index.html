@@ -852,7 +852,7 @@
             let url;
             switch (role) {
                 case 'technician':
-                    url = `https://go.fixair.ai?t=${timestamp}`;
+                    url = `https://go.fixair.ai/technician?t=${timestamp}`;
                     break;
                 case 'manager':
                     url = `https://go.fixair.ai/manager?t=${timestamp}`;
@@ -861,7 +861,7 @@
                     url = `https://go.fixair.ai/admin?t=${timestamp}`;
                     break;
                 default:
-                    url = `https://go.fixair.ai?t=${timestamp}`;
+                    url = `https://go.fixair.ai/technician?t=${timestamp}`;
             }
 
             console.log('Redirecting to:', url);
