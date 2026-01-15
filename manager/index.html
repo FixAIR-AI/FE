@@ -1107,7 +1107,7 @@
                         storageKey: 'fixair-auth'
                     }
                 });
-                console.log('✅ Supabase initialized');
+                // console.log('✅ Supabase initialized');
                 return true;
             } catch (err) {
                 console.error('❌ Supabase init error:', err);
@@ -1633,7 +1633,7 @@
                         }
                     }
                 } catch (err) {
-                    console.log('No valid stored session');
+                    // console.log('No valid stored session');
                 }
             }
         }
@@ -1672,7 +1672,7 @@
             try {
                 const { data: { session } } = await sb.auth.getSession();
                 if (!session) {
-                    console.log('No session - showing login');
+                    // console.log('No session - showing login');
                     return null;
                 }
 
@@ -1683,7 +1683,7 @@
                     .maybeSingle();
 
                 if (!profile) {
-                    console.log('No profile found');
+                    // console.log('No profile found');
                     return null;
                 }
 
@@ -1692,11 +1692,11 @@
 
                 // Check if user is a manager
                 if (profile.role && !['manager', 'admin', 'owner'].includes(profile.role)) {
-                    console.log('User role is:', profile.role, '- not a manager');
+                    // console.log('User role is:', profile.role, '- not a manager');
                     return null;
                 }
 
-                console.log('✅ Manager authenticated:', profile.email);
+                // console.log('✅ Manager authenticated:', profile.email);
                 return profile;
             } catch (err) {
                 console.error('Auth check error:', err);
@@ -1819,7 +1819,7 @@
                     };
                 }
                 
-                console.log('✅ Loaded', Object.keys(liveTeamData).length, 'team members (INTERNE + EXTERNE)');
+                // console.log('✅ Loaded', Object.keys(liveTeamData).length, 'team members (INTERNE + EXTERNE)');
                 updateTeamUI();
                 
             } catch (err) {
@@ -1898,7 +1898,7 @@
                     };
                 }
                 
-                console.log('✅ Loaded', Object.keys(liveProjectData).length, 'projects');
+                // console.log('✅ Loaded', Object.keys(liveProjectData).length, 'projects');
                 updateProjectsUI();
                 
             } catch (err) {
@@ -1925,7 +1925,7 @@
                 if (error) throw error;
                 
                 livePendingShares = shares || [];
-                console.log('✅ Loaded', livePendingShares.length, 'pending availability shares');
+                // console.log('✅ Loaded', livePendingShares.length, 'pending availability shares');
                 
                 // Show notification if any pending
                 if (livePendingShares.length > 0) {
@@ -2031,7 +2031,7 @@
                     table: 'users',
                     filter: `manager_id=eq.${currentUserId}`
                 }, (payload) => {
-                    console.log('Team member update:', payload);
+                    // console.log('Team member update:', payload);
                     loadTeamMembers(); // Reload team
                 })
                 .subscribe();
@@ -2050,7 +2050,7 @@
                     // Check if this project belongs to our team
                     const techId = payload.new?.user_id || payload.old?.user_id;
                     if (techId && (liveTeamData[techId] || techId === currentUserId)) {
-                        console.log('Project update:', payload);
+                        // console.log('Project update:', payload);
                         loadProjects();
                     }
                 })
@@ -2067,7 +2067,7 @@
                     table: 'team_messages',
                     filter: `receiver_id=eq.${currentUserId}`
                 }, (payload) => {
-                    console.log('New message received:', payload);
+                    // console.log('New message received:', payload);
                     handleNewMessage(payload.new);
                 })
                 .subscribe();
@@ -2084,7 +2084,7 @@
                         table: 'availability_shares',
                         filter: `recipient_email=eq.${currentManagerProfile.email}`
                     }, (payload) => {
-                        console.log('New availability share:', payload);
+                        // console.log('New availability share:', payload);
                         loadPendingShares();
                         showNewShareNotification(payload.new);
                     })
@@ -2093,7 +2093,7 @@
                 realtimeSubscriptions.push(shareSub);
             }
             
-            console.log('✅ Real-time subscriptions active');
+            // console.log('✅ Real-time subscriptions active');
         }
 
         function cleanupSubscriptions() {
@@ -2192,7 +2192,7 @@
                     const result = await response.json();
                     
                     if (response.ok) {
-                        console.log('✅ Invitation email sent:', result);
+                        // console.log('✅ Invitation email sent:', result);
                         invitation.emailSent = true;
                     } else {
                         console.warn('⚠️ Email not sent:', result.error);
@@ -2399,7 +2399,7 @@
         }
 
         async function initManagerApp() {
-            console.log('🚀 Initializing FixAIR Manager V16...');
+            // console.log('🚀 Initializing FixAIR Manager V16...');
 
             // Initialize Supabase
             if (!initSupabase()) {
@@ -2410,7 +2410,7 @@
             // Initialize auth - this will handle showing login or main app
             await initAuth();
 
-            console.log('✅ Manager App V16 initialized');
+            // console.log('✅ Manager App V16 initialized');
         }
 
         // Run init on DOM ready
@@ -3124,7 +3124,7 @@
         function attachAction(type, prefix) {
             closeAllAttach();
             currentPhotoPanel = prefix;
-            console.log('📸 attachAction:', type, 'prefix:', prefix);
+            // console.log('📸 attachAction:', type, 'prefix:', prefix);
             
             if (type === 'camera') {
                 document.getElementById('cameraInput').click();
@@ -3135,7 +3135,7 @@
 
         function handleFileSelect(event, source) {
             const file = event.target.files[0];
-            console.log('📸 handleFileSelect:', source, 'file:', file?.name, 'prefix:', currentPhotoPanel);
+            // console.log('📸 handleFileSelect:', source, 'file:', file?.name, 'prefix:', currentPhotoPanel);
             
             if (!file) return;
             
@@ -3274,7 +3274,7 @@
                 recordings[prefix] = { stream, startTime: Date.now(), mediaRecorder };
                 
             } catch (err) {
-                console.log('Mic access denied, using simulation');
+                // console.log('Mic access denied, using simulation');
                 recordings[prefix] = { startTime: Date.now(), simulated: true };
             }
             

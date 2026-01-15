@@ -5993,7 +5993,7 @@
         let toastTimeout = null;
         function toast(m) {
             const t = document.getElementById('toast');
-            if (!t) { console.log('Toast:', m); return; }
+            if (!t) { // console.log('Toast:', m); return; }
             t.textContent = m;
             t.classList.add('show');
             if (toastTimeout) clearTimeout(toastTimeout);
@@ -6876,7 +6876,7 @@
                 userId = savedUser.id;
             }
 
-            console.log('saveProfile - userId:', userId);
+            // console.log('saveProfile - userId:', userId);
 
             // ═══ SAVE TO LOCALSTORAGE (ALWAYS WORKS) ═══
             const savedUser = JSON.parse(localStorage.getItem('fixair_user') || '{}');
@@ -6903,7 +6903,7 @@
                         updated_at: new Date().toISOString()
                     };
 
-                    console.log('Saving profile to Supabase:', updateData, 'for user:', userId);
+                    // console.log('Saving profile to Supabase:', updateData, 'for user:', userId);
 
                     const { data, error } = await db
                         .from('users')
@@ -6931,19 +6931,19 @@
 
                         if (!upsertError) {
                             dbSaveSuccess = true;
-                            console.log('Profile saved via upsert');
+                            // console.log('Profile saved via upsert');
                         } else {
                             console.error('Profile upsert error:', upsertError.code, upsertError.message);
                         }
                     } else {
                         dbSaveSuccess = true;
-                        console.log('Profile saved successfully:', data);
+                        // console.log('Profile saved successfully:', data);
                     }
                 } catch (e) {
                     console.error('Profile save exception:', e);
                 }
             } else {
-                console.log('Cannot save to Supabase - no userId or db not available');
+                // console.log('Cannot save to Supabase - no userId or db not available');
             }
 
             // ═══ ALSO TRY n8n API (if endpoint exists) ═══
