@@ -300,13 +300,6 @@
         const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTcyMTksImV4cCI6MjA4MTgzMzIxOX0.8ryQm1tsdx5ox3aFJiiflmwuEGGxxH_PlobGxXMgFuQ';
 
-        // ═══ WHITELIST - Only these emails can access Master ═══
-        const MASTER_WHITELIST = [
-            'houssam@fixair.ai',
-            'houssam.cherhabil@gmail.com',
-            // Add more authorized emails here
-        ];
-
         // ═══ SUPABASE CLIENT ═══
         let sb = null;
         let supabaseUser = null;
@@ -354,34 +347,26 @@
             supabaseUser = user;
             const email = user.email?.toLowerCase();
 
-            // Check whitelist first
-            if (!isEmailWhitelisted(email)) {
+            // Load user profile and check role
+            const { data: userData, error } = await sb
+                .from('users')
+                .select('*')
+                .eq('id', user.id)
+                .single();
+
+            if (error || !userData) {
                 showAccessDeniedScreen(email);
                 return;
             }
 
-            // Load user profile
-            const profile = await loadUserProfile(user.id);
-            if (profile) {
-                currentProfile = profile;
-
-                // Also check role - must be master, admin, or owner
-                if (profile.role && !['master', 'admin', 'owner'].includes(profile.role)) {
-                    // Role not allowed but email whitelisted - could update role or show error
-                    // For now, allow whitelisted emails regardless of role
-                }
-
-                showMainApp(profile);
-            } else {
-                // Profile not found but email whitelisted
-                // Create minimal profile display
-                showMainApp({ email: email, first_name: email.split('@')[0] });
+            // Check role - must be 'master' only
+            if (userData.role !== 'master') {
+                showAccessDeniedScreen(email);
+                return;
             }
-        }
 
-        function isEmailWhitelisted(email) {
-            if (!email) return false;
-            return MASTER_WHITELIST.some(w => w.toLowerCase() === email.toLowerCase());
+            currentProfile = userData;
+            showMainApp(userData);
         }
 
         async function loadUserProfile(authId) {
@@ -404,17 +389,11 @@
             const btn = document.getElementById('loginBtn');
 
             if (loginStep === 0) {
-                // Step 0: Check email is whitelisted
+                // Step 0: Check email exists and has master role
                 const email = document.getElementById('loginEmailInput').value.trim().toLowerCase();
 
                 if (!email.includes('@')) {
                     setLoginStatus('Veuillez entrer un email valide', 'error');
-                    return;
-                }
-
-                // Check whitelist BEFORE attempting any auth
-                if (!isEmailWhitelisted(email)) {
-                    setLoginStatus('Email non autorise pour Master', 'error');
                     return;
                 }
 
@@ -423,19 +402,28 @@
                 btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
 
                 try {
-                    // Check if user exists
+                    // Check if user exists and has master role
                     const { data: publicUser } = await sb
                         .from('users')
-                        .select('id, first_name, email')
+                        .select('id, first_name, email, role')
                         .eq('email', email)
                         .maybeSingle();
 
-                    if (publicUser) {
-                        setLoginStatus('Bienvenue ' + (publicUser.first_name || 'Admin') + ' !', 'success');
-                    } else {
-                        setLoginStatus('Email autorise - Connexion', 'success');
+                    if (!publicUser) {
+                        setLoginStatus('Compte non trouve', 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+                        return;
                     }
 
+                    if (publicUser.role !== 'master') {
+                        setLoginStatus('Acces reserve aux administrateurs Master', 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+                        return;
+                    }
+
+                    setLoginStatus('Bienvenue ' + (publicUser.first_name || 'Admin') + ' !', 'success');
                     loginStep = 1;
                     updateLoginUI();
 
