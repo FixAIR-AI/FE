@@ -5676,6 +5676,63 @@
     <div class="toast" id="toast"></div>
 
     <script>
+        // ═══════════════════════════════════════════════════════════════
+        // CLEAR CORRUPTED AUTH TOKENS ON LOAD
+        // This fixes "Invalid Refresh Token" errors from corrupted state
+        // ═══════════════════════════════════════════════════════════════
+        (function clearCorruptedTokens() {
+            // Check if we should clear (only if there's evidence of corruption)
+            const urlParams = new URLSearchParams(window.location.search);
+            const forceReset = urlParams.get('reset') === 'auth';
+
+            // Look for signs of corruption
+            const authKey = 'fixair-auth';
+            const storedAuth = localStorage.getItem(authKey);
+            let isCorrupted = false;
+
+            if (storedAuth) {
+                try {
+                    const parsed = JSON.parse(storedAuth);
+                    // Check for invalid/expired tokens
+                    if (!parsed.access_token || !parsed.refresh_token) {
+                        isCorrupted = true;
+                    }
+                    // Check if tokens are expired
+                    if (parsed.expires_at && parsed.expires_at * 1000 < Date.now()) {
+                        isCorrupted = true;
+                    }
+                } catch (e) {
+                    isCorrupted = true;
+                }
+            }
+
+            if (forceReset || isCorrupted) {
+                console.log('Clearing corrupted auth state...');
+                // Clear all auth-related keys
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && (key.includes('supabase') || key.includes('auth') || key.includes('fixair'))) {
+                        keysToRemove.push(key);
+                    }
+                }
+                keysToRemove.forEach(key => {
+                    console.log('Removing:', key);
+                    localStorage.removeItem(key);
+                });
+                sessionStorage.clear();
+
+                // Remove ?reset=auth from URL
+                if (forceReset) {
+                    urlParams.delete('reset');
+                    const newUrl = urlParams.toString()
+                        ? window.location.pathname + '?' + urlParams.toString()
+                        : window.location.pathname;
+                    window.history.replaceState({}, '', newUrl);
+                }
+            }
+        })();
+
     // ═══════════════════════════════════════════════════════════════
         // PRODUCTION MODE - Set to false for debugging
         // ═══════════════════════════════════════════════════════════════
@@ -6059,54 +6116,28 @@
             }
         }
 
-        // ═══ PARSE URL HASH FOR AUTH TOKENS ═══
-        // This must happen BEFORE createClient to prevent AbortError in cross-browser scenarios
-        function parseHashParams(hash) {
-            if (!hash || hash.length < 2) return {};
-            const params = {};
-            const hashContent = hash.substring(1); // Remove #
-            const pairs = hashContent.split('&');
-            for (const pair of pairs) {
-                const [key, value] = pair.split('=');
-                if (key && value) {
-                    params[decodeURIComponent(key)] = decodeURIComponent(value);
-                }
-            }
-            return params;
-        }
+        // ═══ SUPABASE CLIENT INITIALIZATION ═══
+        // Simplified initialization - let Supabase handle session management
 
-        // Parse URL hash for tokens BEFORE creating client
+        // Check for password recovery link in URL hash
         const initialHash = window.location.hash;
-        const hashParams = parseHashParams(initialHash);
-        const hasAccessToken = !!hashParams.access_token;
-        const hasRefreshToken = !!hashParams.refresh_token;
-        const tokenType = hashParams.type; // 'recovery', 'signup', 'magiclink', etc.
-        const isRecoveryLink = tokenType === 'recovery';
-
-        // CRITICAL: Clean URL hash BEFORE creating Supabase client
-        // This prevents Supabase from internally trying to process the tokens
-        // which causes AbortError in fresh browsers (different browser than signup)
-        if (initialHash) {
-            window.history.replaceState(null, '', window.location.pathname + window.location.search);
-        }
+        const isRecoveryLink = initialHash && initialHash.includes('type=recovery');
+        const hasAccessToken = initialHash && initialHash.includes('access_token=');
 
         if (window.supabase && window.supabase.createClient) {
-            // DISABLE automatic features to avoid AbortError in cross-browser scenarios
-            // We handle URL tokens manually in initAuth()
             db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
                 auth: {
-                    lock: false,           // CRITICAL: Disable lock to prevent AbortError
-                    persistSession: true,  // Enable session persistence
-                    autoRefreshToken: true,
-                    detectSessionInUrl: false,
+                    lock: false,              // Prevent AbortError on tab locks
+                    persistSession: true,     // Store session in localStorage
+                    autoRefreshToken: true,   // Auto-refresh expired tokens
+                    detectSessionInUrl: true, // Let Supabase handle URL tokens
                     storageKey: 'fixair-auth'
                 }
             });
 
-            // Mark Supabase as ready immediately since we handle auth manually
             supabaseReady = true;
         } else {
-            console.error('❌ Supabase library not loaded! window.supabase =', window.supabase);
+            console.error('Supabase library not loaded!');
             alert('Erreur: Supabase non chargé. Veuillez rafraîchir la page.');
         }
         
@@ -6417,7 +6448,7 @@
 
         // ═══ CHECK SUPABASE AUTH SESSION ON LOAD ═══
         async function initAuth() {
-            // Check if email passed in URL (from /auth redirect)
+            // Check if email passed in URL (from redirect)
             const urlParams = new URLSearchParams(window.location.search);
             const emailParam = urlParams.get('email');
             if (emailParam) {
@@ -6429,106 +6460,73 @@
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
 
-            // If we have tokens in URL, manually set the session
-            if (hasAccessToken && hasRefreshToken) {
-                // IMPORTANT: Set recovery flag BEFORE setSession to prevent race condition
-                // The SIGNED_IN event will fire during setSession, and we need isPasswordRecovery
-                // to be true so the event handler shows the password reset form
-                if (isRecoveryLink) {
-                    isPasswordRecovery = true;
+            // Set recovery flag if URL indicates password recovery
+            if (isRecoveryLink) {
+                isPasswordRecovery = true;
+            }
+
+            // Check for existing session
+            // Supabase will auto-handle URL tokens via detectSessionInUrl: true
+            try {
+                const { data, error } = await db.auth.getSession();
+
+                if (error) {
+                    console.error('Session check error:', error);
+                    // Clear corrupted session
+                    if (error.message && error.message.includes('Refresh Token')) {
+                        localStorage.removeItem('fixair-auth');
+                        localStorage.removeItem('supabase.auth.token');
+                    }
+                    isReady = true;
+                    return;
                 }
 
-                try {
-                    // Set the session using the tokens from the URL
-                    const { data, error } = await db.auth.setSession({
-                        access_token: hashParams.access_token,
-                        refresh_token: hashParams.refresh_token
-                    });
+                if (data.session) {
+                    // Session exists - persist to localStorage for page reload
+                    localStorage.setItem('supabase.auth.token', JSON.stringify({
+                        currentSession: data.session,
+                        expiresAt: data.session.expires_at
+                    }));
 
-                    if (error) {
-                        isPasswordRecovery = false;
+                    // Handle password recovery
+                    if (isRecoveryLink || isPasswordRecovery) {
+                        isReady = true;
+                        showPasswordResetScreen();
                         return;
                     }
 
-                    // Manually persist session to localStorage for reliability
-                    if (data.session) {
-                        localStorage.setItem('supabase.auth.token', JSON.stringify({
-                            currentSession: data.session,
-                            expiresAt: data.session.expires_at
-                        }));
-                    }
+                    // Load user app
+                    isReady = true;
+                    await loadUserAndShowApp(data.session.user);
+                } else {
+                    // No session - try to restore from manual localStorage backup
+                    try {
+                        const stored = localStorage.getItem('supabase.auth.token');
+                        if (stored) {
+                            const parsed = JSON.parse(stored);
+                            if (parsed.currentSession && parsed.currentSession.access_token) {
+                                const { data: restored, error: restoreError } = await db.auth.setSession({
+                                    access_token: parsed.currentSession.access_token,
+                                    refresh_token: parsed.currentSession.refresh_token
+                                });
 
-                    // Handle based on token type
-                    if (isRecoveryLink) {
-                        isReady = true;
-                        showPasswordResetScreen();
-                    } else if (data.session && data.session.user) {
-                        isReady = true;
-                        await loadUserAndShowApp(data.session.user);
-                    }
-
-                } catch (err) {
-                    isPasswordRecovery = false;
-                }
-            } else if (hasAccessToken && !hasRefreshToken) {
-                // Some flows only have access_token - try to use it anyway
-
-                if (isRecoveryLink) {
-                    isPasswordRecovery = true;
-                }
-
-                try {
-                    const { data, error } = await db.auth.setSession({
-                        access_token: hashParams.access_token,
-                        refresh_token: hashParams.access_token // Use same token as fallback
-                    });
-
-                    if (error) {
-                        isPasswordRecovery = false;
-                        return;
-                    }
-
-                    // Manually persist session to localStorage for reliability
-                    if (data.session) {
-                        localStorage.setItem('supabase.auth.token', JSON.stringify({
-                            currentSession: data.session,
-                            expiresAt: data.session.expires_at
-                        }));
-                    }
-
-                    if (isRecoveryLink) {
-                        isReady = true;
-                        showPasswordResetScreen();
-                    } else if (data.session && data.session.user) {
-                        isReady = true;
-                        await loadUserAndShowApp(data.session.user);
-                    }
-
-                } catch (err) {
-                    isPasswordRecovery = false;
-                }
-            } else {
-                // No URL tokens - check localStorage for existing session
-                try {
-                    const stored = localStorage.getItem('supabase.auth.token');
-                    if (stored) {
-                        const parsed = JSON.parse(stored);
-                        if (parsed.currentSession) {
-                            const { data, error } = await db.auth.setSession({
-                                access_token: parsed.currentSession.access_token,
-                                refresh_token: parsed.currentSession.refresh_token
-                            });
-                            if (!error && data.session) {
-                                isReady = true;
-                                await loadUserAndShowApp(data.session.user);
-                                return;
+                                if (!restoreError && restored.session) {
+                                    isReady = true;
+                                    await loadUserAndShowApp(restored.session.user);
+                                    return;
+                                }
                             }
                         }
+                    } catch (e) {
+                        // Restore failed - clear stale data
+                        localStorage.removeItem('supabase.auth.token');
                     }
-                } catch (err) {
-                    // Error restoring session
+
+                    // No valid session
+                    isReady = true;
                 }
-                // No valid session found
+            } catch (err) {
+                console.error('Auth init error:', err);
                 isReady = true;
             }
         }
