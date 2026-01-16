@@ -6777,7 +6777,14 @@
                           .maybeSingle()
                     );
                     
-                    // If found in public.users, user exists
+                    // FIRST: Check if there was an error (timeout, network, etc)
+                    if (publicError) {
+                        console.error('Email check failed with error:', publicError);
+                        setLoginStatus('Problème de connexion. Veuillez réessayer.', 'error');
+                        return;
+                    }
+
+                    // THEN: Check if user exists (only if no error)
                     if (publicUser && publicUser.id) {
                         // User exists - check role
                         if (publicUser.role && publicUser.role !== 'technician') {
@@ -6806,7 +6813,8 @@
                         loginStep = 1;
                         updateLoginUI();
                     } else {
-                        // User doesn't exist - redirect to /auth for signup
+                        // No error AND no user = genuinely new user, redirect to signup
+                        console.log('User not found in database, redirecting to signup');
                         setLoginStatus('Redirection vers la page d\'inscription...', 'info');
                         setTimeout(() => {
                             window.location.href = 'https://go.fixair.ai/auth?email=' + encodeURIComponent(email) + '&from=technician';
@@ -6814,7 +6822,7 @@
                     }
 
                 } catch (error) {
-                    console.error('❌ Check email error:', error);
+                    console.error('❌ Check email exception:', error);
                     setLoginStatus('Erreur de connexion. Réessayez.', 'error');
                 } finally {
                     btn.disabled = false;

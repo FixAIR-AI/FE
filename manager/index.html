@@ -1262,12 +1262,20 @@
 
                 try {
                     // Check if user exists in public.users
-                    const { data: publicUser } = await sb
+                    const { data: publicUser, error: publicError } = await sb
                         .from('users')
                         .select('id, first_name, status, role')
                         .eq('email', email)
                         .maybeSingle();
 
+                    // FIRST: Check if there was an error (timeout, network, etc)
+                    if (publicError) {
+                        console.error('Email check failed with error:', publicError);
+                        setLoginStatus('Problème de connexion. Veuillez réessayer.', 'error');
+                        return;
+                    }
+
+                    // THEN: Check if user exists (only if no error)
                     if (publicUser && publicUser.id) {
                         // User exists - check role
                         if (publicUser.role && !['manager', 'admin', 'owner'].includes(publicUser.role)) {
@@ -1293,7 +1301,8 @@
                         loginStep = 1;
                         updateLoginUI();
                     } else {
-                        // User doesn't exist - redirect to /auth for signup
+                        // No error AND no user = genuinely new user, redirect to signup
+                        console.log('User not found in database, redirecting to signup');
                         setLoginStatus('Redirection vers la page d\'inscription...', 'info');
                         setTimeout(() => {
                             window.location.href = 'https://go.fixair.ai/auth?email=' + encodeURIComponent(email) + '&from=manager';
@@ -1301,8 +1310,8 @@
                     }
 
                 } catch (error) {
-                    console.error('Check email error:', error);
-                    setLoginStatus('Erreur de connexion. Reessayez.', 'error');
+                    console.error('Check email exception:', error);
+                    setLoginStatus('Erreur de connexion. Réessayez.', 'error');
                 } finally {
                     btn.disabled = false;
                     btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
