@@ -5998,7 +5998,7 @@
         let toastTimeout = null;
         function toast(m) {
             const t = document.getElementById('toast');
-            if (!t) { // console.log('Toast:', m); return; }
+            if (!t) { return; }
             t.textContent = m;
             t.classList.add('show');
             if (toastTimeout) clearTimeout(toastTimeout);
