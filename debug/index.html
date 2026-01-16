@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FixAIR Auth Debug Console</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            background: #0d1117;
+            color: #e6edf3;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 { color: #FF6B35; margin-bottom: 10px; font-size: 24px; }
+        h2 { color: #8B5CF6; margin: 20px 0 10px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+        .header-info {
+            color: #7d8590;
+            font-size: 12px;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: rgba(255,107,53,0.1);
+            border-left: 3px solid #FF6B35;
+            border-radius: 0 6px 6px 0;
+        }
+        .section {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #e6edf3;
+            font-family: inherit;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        input:focus { outline: none; border-color: #FF6B35; }
+        button {
+            padding: 10px 16px;
+            background: #FF6B35;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+        }
+        button:hover { background: #e55a2b; transform: translateY(-1px); }
+        button.secondary { background: #30363d; }
+        button.secondary:hover { background: #484f58; }
+        button.success { background: #22c55e; }
+        button.success:hover { background: #16a34a; }
+        button.danger { background: #ef4444; }
+        button.danger:hover { background: #dc2626; }
+        .log {
+            background: #000;
+            border-radius: 6px;
+            padding: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 11px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-top: 10px;
+        }
+        .log-entry { margin-bottom: 4px; padding: 2px 0; }
+        .log-info { color: #58a6ff; }
+        .log-success { color: #3fb950; }
+        .log-error { color: #f85149; }
+        .log-warn { color: #d29922; }
+        .log-data { color: #a5d6ff; }
+        .log-critical { color: #ff7b72; font-weight: bold; background: rgba(248,81,73,0.1); padding: 4px 8px; border-radius: 4px; }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .status.success { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .status.error { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .status.pending { background: rgba(234, 179, 8, 0.2); color: #eab308; }
+        .status.idle { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
+        .result-box {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        .result-box p { margin: 4px 0; }
+        .result-box strong { color: #8B5CF6; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+        .bug-box {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .bug-box h3 { color: #ef4444; margin-bottom: 10px; font-size: 14px; }
+        .bug-box p { font-size: 12px; color: #e6edf3; margin-bottom: 8px; }
+        .bug-box code {
+            background: rgba(0,0,0,0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #ff7b72;
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
+        th, td { border: 1px solid #30363d; padding: 8px; text-align: left; }
+        th { background: #21262d; color: #8B5CF6; }
+        td { background: #161b22; }
+        .check { color: #3fb950; }
+        .cross { color: #f85149; }
+    </style>
+</head>
+<body>
+    <h1>FixAIR Auth Debug Console</h1>
+    <div class="header-info">
+        <strong>Purpose:</strong> Isolate and test each step of the auth flow to diagnose login timeout redirect bugs.<br>
+        <strong>Problem:</strong> Approved users getting redirected to /auth (signup) on timeout instead of seeing error message.
+    </div>
+
+    <!-- BUG SUMMARY -->
+    <div class="bug-box">
+        <h3>IDENTIFIED BUG: Timeout treated as "User Not Found"</h3>
+        <p><strong>Location:</strong> <code>/technician/index.html</code> lines 6773-6814</p>
+        <p><strong>Issue:</strong> When <code>safeQuery()</code> times out, it returns <code>{data: null, error: {...}}</code>. The code checks <code>if (publicUser && publicUser.id)</code> which is FALSE, so it falls through to redirect to /auth.</p>
+        <p><strong>Result:</strong> Approved user (samcherhabil@gmail.com) with timeout error is redirected to signup page!</p>
+        <p><strong>Fix needed:</strong> Check for error BEFORE checking if user exists. Only redirect when genuinely no user found (no error AND no data).</p>
+    </div>
+
+    <!-- Comparison Table -->
+    <div class="section">
+        <h2>Comparison: Root vs /technician vs /auth</h2>
+        <table>
+            <tr>
+                <th>Aspect</th>
+                <th>Root (/)</th>
+                <th>/technician</th>
+                <th>/auth</th>
+            </tr>
+            <tr>
+                <td>Email check query</td>
+                <td>safeQuery() with 30s timeout</td>
+                <td>safeQuery() with 30s timeout</td>
+                <td>Direct query (no timeout wrapper)</td>
+            </tr>
+            <tr>
+                <td>On timeout error</td>
+                <td class="check">Sets isNewUser=true, stays on page</td>
+                <td class="cross">Redirects to /auth (BUG!)</td>
+                <td>Shows error message</td>
+            </tr>
+            <tr>
+                <td>On user not found</td>
+                <td>Goes to password step (creates new user)</td>
+                <td>Redirects to /auth for signup</td>
+                <td>Goes to userTypeScreen</td>
+            </tr>
+            <tr>
+                <td>Distinguishes error vs not-found?</td>
+                <td class="cross">No (but stays on page)</td>
+                <td class="cross">No (redirects on both!)</td>
+                <td class="check">Yes (shows error message)</td>
+            </tr>
+            <tr>
+                <td>Uses AbortController?</td>
+                <td>Via safeQuery timeout</td>
+                <td>Via safeQuery timeout</td>
+                <td>No</td>
+            </tr>
+            <tr>
+                <td>lock:false config?</td>
+                <td class="check">Yes</td>
+                <td class="check">Yes</td>
+                <td class="check">Yes</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Supabase Connection Test -->
+    <div class="section">
+        <h2>1. Supabase Connection Test</h2>
+        <button onclick="testSupabaseConnection()">Test Default Connection</button>
+        <button onclick="testSupabaseConnectionWithLock()" class="secondary">Test WITH lock:false</button>
+        <button onclick="clearLogs('supabaseLog')" class="secondary">Clear</button>
+        <div class="result-box">
+            <span>Status: </span><span id="supabaseStatus" class="status idle">Not tested</span>
+        </div>
+        <div id="supabaseLog" class="log"></div>
+    </div>
+
+    <!-- Email Check Test -->
+    <div class="section">
+        <h2>2. Check Email Exists (Core Bug Test)</h2>
+        <input type="email" id="testEmail" placeholder="Enter email to test" value="samcherhabil@gmail.com">
+        <div>
+            <button onclick="testEmailExists()">Test with safeQuery (like /technician)</button>
+            <button onclick="testEmailExistsSimple()" class="secondary">Simple Query (like /auth)</button>
+            <button onclick="testEmailExistsRaw()" class="secondary">Raw Fetch (bypass Supabase)</button>
+            <button onclick="clearLogs('emailLog')" class="secondary">Clear</button>
+        </div>
+        <div class="result-box">
+            <span>User Found: </span><span id="emailStatus" class="status idle">Not tested</span>
+            <div id="emailResult"></div>
+        </div>
+        <div id="emailLog" class="log"></div>
+    </div>
+
+    <!-- Session Check Test -->
+    <div class="section">
+        <h2>3. Check Existing Session</h2>
+        <button onclick="testSession()">Check Session (getSession)</button>
+        <button onclick="testSessionStorage()" class="secondary">Check localStorage</button>
+        <button onclick="clearLogs('sessionLog')" class="secondary">Clear</button>
+        <div class="result-box">
+            <span>Session: </span><span id="sessionStatus" class="status idle">Not tested</span>
+            <div id="sessionResult"></div>
+        </div>
+        <div id="sessionLog" class="log"></div>
+    </div>
+
+    <!-- Login Test -->
+    <div class="section">
+        <h2>4. Test Login Flow</h2>
+        <input type="email" id="loginEmail" placeholder="Email" value="samcherhabil@gmail.com">
+        <input type="password" id="loginPassword" placeholder="Password">
+        <div>
+            <button onclick="testLogin()">Test signInWithPassword</button>
+            <button onclick="testLogout()" class="danger">Logout</button>
+            <button onclick="clearLogs('loginLog')" class="secondary">Clear</button>
+        </div>
+        <div class="result-box">
+            <span>Login: </span><span id="loginStatus" class="status idle">Not tested</span>
+        </div>
+        <div id="loginLog" class="log"></div>
+    </div>
+
+    <!-- Full Flow Simulation -->
+    <div class="section">
+        <h2>5. Simulate /technician Login Flow (Bug Reproduction)</h2>
+        <input type="email" id="flowEmail" placeholder="Email" value="samcherhabil@gmail.com">
+        <div>
+            <button onclick="simulateFullFlow()">Run Full Flow (Current Buggy Logic)</button>
+            <button onclick="simulateFixedFlow()" class="success">Run Fixed Flow</button>
+            <button onclick="clearLogs('flowLog')" class="secondary">Clear</button>
+        </div>
+        <div class="result-box">
+            <span>Result: </span><span id="flowStatus" class="status idle">Not tested</span>
+            <div id="flowDecision"></div>
+        </div>
+        <div id="flowLog" class="log"></div>
+    </div>
+
+    <!-- LocalStorage Debug -->
+    <div class="section">
+        <h2>6. LocalStorage / Session Debug</h2>
+        <button onclick="showLocalStorage()">Show All Storage</button>
+        <button onclick="clearAuthStorage()" class="danger">Clear Auth Storage Only</button>
+        <button onclick="clearAllStorage()" class="danger">Clear ALL Storage</button>
+        <button onclick="clearLogs('storageLog')" class="secondary">Clear Log</button>
+        <div id="storageLog" class="log"></div>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // CONFIGURATION
+        // ═══════════════════════════════════════════════════════════════
+        const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMwNzYxNzgsImV4cCI6MjA0ODY1MjE3OH0.UaS-SWPqLvlwKDcFHaGperFfPYgjlCKvPojqL9VhqN8';
+
+        let db = null;
+        let supabaseReady = false;
+
+        // ═══════════════════════════════════════════════════════════════
+        // LOGGING UTILITIES
+        // ═══════════════════════════════════════════════════════════════
+        function log(containerId, message, type = 'info') {
+            const container = document.getElementById(containerId);
+            const timestamp = new Date().toISOString().split('T')[1].slice(0, 12);
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${timestamp}] ${message}`;
+            container.appendChild(entry);
+            container.scrollTop = container.scrollHeight;
+            console.log(`[${type.toUpperCase()}]`, message);
+        }
+
+        function logData(containerId, label, data) {
+            const container = document.getElementById(containerId);
+            const timestamp = new Date().toISOString().split('T')[1].slice(0, 12);
+            const entry = document.createElement('div');
+            entry.className = 'log-entry log-data';
+            entry.textContent = `[${timestamp}] ${label}: ${JSON.stringify(data, null, 2)}`;
+            container.appendChild(entry);
+            container.scrollTop = container.scrollHeight;
+            console.log(label, data);
+        }
+
+        function clearLogs(containerId) {
+            document.getElementById(containerId).innerHTML = '';
+        }
+
+        function setStatus(elementId, status, text) {
+            const el = document.getElementById(elementId);
+            el.className = `status ${status}`;
+            el.textContent = text;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // SAFE QUERY (Exact copy from /technician/index.html)
+        // ═══════════════════════════════════════════════════════════════
+        async function safeQuery(queryFn, retries = 3, timeoutMs = 30000) {
+            for (let attempt = 0; attempt < retries; attempt++) {
+                try {
+                    const timeoutPromise = new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error('Query timeout')), timeoutMs)
+                    );
+                    const result = await Promise.race([queryFn(), timeoutPromise]);
+
+                    if (result.error && result.error.message && result.error.message.includes('AbortError')) {
+                        const delay = 1000 * Math.pow(2, attempt);
+                        console.log(`Query AbortError, retrying in ${delay}ms (attempt ${attempt + 1}/${retries})`);
+                        await new Promise(r => setTimeout(r, delay));
+                        continue;
+                    }
+                    return result;
+                } catch (err) {
+                    if ((err.message.includes('AbortError') || err.message.includes('timeout')) && attempt < retries - 1) {
+                        const delay = 1000 * Math.pow(2, attempt);
+                        console.log(`Query timeout, retrying in ${delay}ms (attempt ${attempt + 1}/${retries})`);
+                        await new Promise(r => setTimeout(r, delay));
+                        continue;
+                    }
+                    return { data: null, error: { message: err.message } };
+                }
+            }
+            return { data: null, error: { message: 'Query failed after retries' } };
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // TEST 1: SUPABASE CONNECTION
+        // ═══════════════════════════════════════════════════════════════
+        async function testSupabaseConnection() {
+            const logId = 'supabaseLog';
+            log(logId, '=== Testing Supabase Connection (DEFAULT CONFIG) ===', 'info');
+
+            try {
+                log(logId, 'Creating Supabase client with DEFAULT options...', 'info');
+
+                db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+                log(logId, 'Client created, testing simple query...', 'info');
+
+                const startTime = Date.now();
+                const { data, error } = await db.from('users').select('count').limit(1);
+                const duration = Date.now() - startTime;
+
+                if (error) {
+                    log(logId, `Query failed after ${duration}ms: ${error.message}`, 'error');
+                    logData(logId, 'Error details', error);
+                    setStatus('supabaseStatus', 'error', `Failed: ${error.message}`);
+                } else {
+                    log(logId, `Query succeeded in ${duration}ms`, 'success');
+                    supabaseReady = true;
+                    setStatus('supabaseStatus', 'success', `Connected (${duration}ms)`);
+                }
+            } catch (err) {
+                log(logId, `Exception: ${err.message}`, 'error');
+                logData(logId, 'Exception details', { name: err.name, message: err.message });
+                setStatus('supabaseStatus', 'error', `Exception: ${err.name}`);
+            }
+        }
+
+        async function testSupabaseConnectionWithLock() {
+            const logId = 'supabaseLog';
+            log(logId, '=== Testing Supabase Connection (WITH lock:false) ===', 'info');
+
+            try {
+                log(logId, 'Creating Supabase client with lock:false (like /technician)...', 'info');
+
+                db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                    auth: {
+                        persistSession: true,
+                        autoRefreshToken: true,
+                        detectSessionInUrl: false,
+                        storageKey: 'fixair-debug',
+                        lock: false
+                    }
+                });
+
+                log(logId, 'Client created with lock:false, testing query...', 'info');
+
+                const startTime = Date.now();
+                const { data, error } = await db.from('users').select('count').limit(1);
+                const duration = Date.now() - startTime;
+
+                if (error) {
+                    log(logId, `Query failed after ${duration}ms: ${error.message}`, 'error');
+                    setStatus('supabaseStatus', 'error', `Failed with lock:false`);
+                } else {
+                    log(logId, `Query succeeded in ${duration}ms WITH lock:false`, 'success');
+                    supabaseReady = true;
+                    setStatus('supabaseStatus', 'success', `Connected with lock:false (${duration}ms)`);
+                }
+            } catch (err) {
+                log(logId, `Exception: ${err.message}`, 'error');
+                setStatus('supabaseStatus', 'error', `Exception: ${err.name}`);
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // TEST 2: EMAIL CHECK (CORE BUG TEST)
+        // ═══════════════════════════════════════════════════════════════
+        async function testEmailExists() {
+            const logId = 'emailLog';
+            const email = document.getElementById('testEmail').value.trim().toLowerCase();
+
+            log(logId, `=== Testing Email Check with safeQuery (like /technician): ${email} ===`, 'info');
+
+            if (!db) {
+                log(logId, 'Supabase client not initialized! Run connection test first.', 'error');
+                return;
+            }
+
+            try {
+                log(logId, 'Calling safeQuery (30s timeout, 3 retries)...', 'info');
+                const startTime = Date.now();
+
+                const { data: publicUser, error: publicError } = await safeQuery(() =>
+                    db.from('users')
+                      .select('id, email, status, role, first_name, live_status')
+                      .eq('email', email)
+                      .maybeSingle()
+                );
+
+                const duration = Date.now() - startTime;
+
+                log(logId, `Query completed in ${duration}ms`, 'info');
+                logData(logId, 'Result', { data: publicUser, error: publicError });
+
+                // SIMULATE THE BUGGY /technician LOGIC
+                log(logId, '', 'info');
+                log(logId, '=== SIMULATING /technician DECISION LOGIC ===', 'warn');
+
+                if (publicUser && publicUser.id) {
+                    log(logId, 'DECISION: User found - would show password screen', 'success');
+                    setStatus('emailStatus', 'success', `Found: ${publicUser.status}`);
+                    document.getElementById('emailResult').innerHTML = `
+                        <p><strong>ID:</strong> ${publicUser.id}</p>
+                        <p><strong>Email:</strong> ${publicUser.email}</p>
+                        <p><strong>Status:</strong> ${publicUser.status}</p>
+                        <p><strong>Role:</strong> ${publicUser.role}</p>
+                        <p style="color:#22c55e">-> Correct: Show PASSWORD screen</p>
+                    `;
+                } else {
+                    // THIS IS THE BUG!
+                    log(logId, 'DECISION: publicUser is null/undefined', 'error');
+
+                    if (publicError) {
+                        log(logId, `ERROR EXISTS: ${publicError.message}`, 'critical');
+                        log(logId, 'BUG: Current code ignores this error and redirects to /auth anyway!', 'critical');
+                        setStatus('emailStatus', 'error', `Error: ${publicError.message}`);
+                        document.getElementById('emailResult').innerHTML = `
+                            <p style="color:#ef4444"><strong>BUG TRIGGERED!</strong></p>
+                            <p>Error: ${publicError.message}</p>
+                            <p style="color:#ef4444">-> WRONG: Current code would redirect to /auth (signup)</p>
+                            <p style="color:#22c55e">-> CORRECT: Should show error message, not redirect!</p>
+                        `;
+                    } else {
+                        log(logId, 'No error, user genuinely not found', 'warn');
+                        setStatus('emailStatus', 'pending', 'Not Found');
+                        document.getElementById('emailResult').innerHTML = `
+                            <p>User not found in database</p>
+                            <p style="color:#eab308">-> CORRECT: Redirect to /auth for signup</p>
+                        `;
+                    }
+                }
+
+            } catch (err) {
+                log(logId, `Exception: ${err.name} - ${err.message}`, 'error');
+                setStatus('emailStatus', 'error', `Exception: ${err.name}`);
+            }
+        }
+
+        async function testEmailExistsSimple() {
+            const logId = 'emailLog';
+            const email = document.getElementById('testEmail').value.trim().toLowerCase();
+
+            log(logId, `=== Simple Email Check (like /auth - no timeout wrapper): ${email} ===`, 'info');
+
+            if (!db) {
+                log(logId, 'Supabase client not initialized!', 'error');
+                return;
+            }
+
+            try {
+                const startTime = Date.now();
+                const { data, error } = await db
+                    .from('users')
+                    .select('id, email, status, role, first_name')
+                    .eq('email', email)
+                    .maybeSingle();
+                const duration = Date.now() - startTime;
+
+                log(logId, `Query completed in ${duration}ms`, 'info');
+                logData(logId, 'Result', { data, error });
+
+                if (error) {
+                    log(logId, `Error: ${error.message}`, 'error');
+                    setStatus('emailStatus', 'error', `Error: ${error.code || error.message}`);
+                } else if (data) {
+                    log(logId, 'User found!', 'success');
+                    setStatus('emailStatus', 'success', `Found: ${data.status}`);
+                    document.getElementById('emailResult').innerHTML = `<p>User: ${JSON.stringify(data)}</p>`;
+                } else {
+                    log(logId, 'User not found (no error)', 'warn');
+                    setStatus('emailStatus', 'pending', 'Not Found');
+                }
+            } catch (err) {
+                log(logId, `Exception: ${err.message}`, 'error');
+                setStatus('emailStatus', 'error', err.name);
+            }
+        }
+
+        async function testEmailExistsRaw() {
+            const logId = 'emailLog';
+            const email = document.getElementById('testEmail').value.trim().toLowerCase();
+
+            log(logId, `=== Raw Fetch (bypass Supabase client): ${email} ===`, 'info');
+
+            try {
+                const url = `${SUPABASE_URL}/rest/v1/users?email=eq.${encodeURIComponent(email)}&select=id,email,status,role,first_name`;
+                log(logId, `Fetching: ${url}`, 'info');
+
+                const startTime = Date.now();
+                const response = await fetch(url, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+                const duration = Date.now() - startTime;
+
+                const data = await response.json();
+
+                log(logId, `Fetch completed in ${duration}ms, status: ${response.status}`, 'success');
+                logData(logId, 'Response', data);
+
+                if (data && data.length > 0) {
+                    setStatus('emailStatus', 'success', `Found: ${data[0].status}`);
+                    document.getElementById('emailResult').innerHTML = `<p>User: ${JSON.stringify(data[0])}</p>`;
+                } else {
+                    setStatus('emailStatus', 'pending', 'Not Found');
+                    document.getElementById('emailResult').innerHTML = `<p>No user found</p>`;
+                }
+            } catch (err) {
+                log(logId, `Exception: ${err.message}`, 'error');
+                setStatus('emailStatus', 'error', err.name);
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // TEST 3: SESSION CHECK
+        // ═══════════════════════════════════════════════════════════════
+        async function testSession() {
+            const logId = 'sessionLog';
+            log(logId, '=== Testing Session Check (getSession) ===', 'info');
+
+            if (!db) {
+                log(logId, 'Supabase client not initialized!', 'error');
+                return;
+            }
+
+            try {
+                log(logId, 'Calling db.auth.getSession()...', 'info');
+                const startTime = Date.now();
+
+                const { data, error } = await db.auth.getSession();
+                const duration = Date.now() - startTime;
+
+                if (error) {
+                    log(logId, `Session check failed after ${duration}ms: ${error.message}`, 'error');
+                    setStatus('sessionStatus', 'error', 'Error');
+                } else if (data.session) {
+                    log(logId, `Session found in ${duration}ms`, 'success');
+                    logData(logId, 'Session user', {
+                        id: data.session.user.id,
+                        email: data.session.user.email,
+                        expires_at: data.session.expires_at
+                    });
+                    setStatus('sessionStatus', 'success', 'Active');
+                    document.getElementById('sessionResult').innerHTML = `<p>User: ${data.session.user.email}</p><p>Expires: ${new Date(data.session.expires_at * 1000).toLocaleString()}</p>`;
+                } else {
+                    log(logId, `No session found (${duration}ms)`, 'warn');
+                    setStatus('sessionStatus', 'pending', 'No Session');
+                    document.getElementById('sessionResult').innerHTML = '';
+                }
+            } catch (err) {
+                log(logId, `Exception: ${err.name} - ${err.message}`, 'error');
+                setStatus('sessionStatus', 'error', err.name);
+            }
+        }
+
+        function testSessionStorage() {
+            const logId = 'sessionLog';
+            log(logId, '=== Checking localStorage for session tokens ===', 'info');
+
+            const keys = [
+                'fixair-auth',
+                'fixair-debug',
+                'sb-fwuhzraxqrvmpqxnzpqm-auth-token',
+                'fixair_user_approved',
+                'fixair_cached_profile'
+            ];
+
+            for (const key of keys) {
+                const value = localStorage.getItem(key);
+                if (value) {
+                    log(logId, `FOUND: ${key}`, 'success');
+                    try {
+                        const parsed = JSON.parse(value);
+                        if (key.includes('auth')) {
+                            logData(logId, 'Parsed', {
+                                hasAccessToken: !!parsed.access_token,
+                                hasUser: !!parsed.user,
+                                userEmail: parsed.user?.email,
+                                expiresAt: parsed.expires_at
+                            });
+                        } else {
+                            logData(logId, 'Value', parsed);
+                        }
+                    } catch (e) {
+                        log(logId, `  Raw value: ${value.substring(0, 50)}...`, 'data');
+                    }
+                } else {
+                    log(logId, `NOT FOUND: ${key}`, 'info');
+                }
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // TEST 4: LOGIN
+        // ═══════════════════════════════════════════════════════════════
+        async function testLogin() {
+            const logId = 'loginLog';
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            log(logId, `=== Testing Login: ${email} ===`, 'info');
+
+            if (!db) {
+                log(logId, 'Supabase client not initialized!', 'error');
+                return;
+            }
+
+            if (!password) {
+                log(logId, 'Password required!', 'error');
+                return;
+            }
+
+            try {
+                log(logId, 'Calling signInWithPassword...', 'info');
+                const startTime = Date.now();
+
+                const { data, error } = await db.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                const duration = Date.now() - startTime;
+
+                if (error) {
+                    log(logId, `Login failed after ${duration}ms: ${error.message}`, 'error');
+                    setStatus('loginStatus', 'error', error.message);
+                } else {
+                    log(logId, `Login succeeded in ${duration}ms`, 'success');
+                    logData(logId, 'User', { id: data.user.id, email: data.user.email });
+                    setStatus('loginStatus', 'success', 'Logged In');
+
+                    // Now load profile
+                    log(logId, 'Loading user profile...', 'info');
+                    const { data: profile, error: profileError } = await db
+                        .from('users')
+                        .select('*')
+                        .eq('id', data.user.id)
+                        .single();
+
+                    if (profile) {
+                        logData(logId, 'Profile', {
+                            status: profile.status,
+                            role: profile.role,
+                            first_name: profile.first_name
+                        });
+
+                        if (profile.status === 'approved') {
+                            log(logId, 'User is APPROVED - would show main app', 'success');
+                        } else if (profile.status === 'pending') {
+                            log(logId, 'User is PENDING - would show pending screen', 'warn');
+                        } else {
+                            log(logId, `User status: ${profile.status}`, 'warn');
+                        }
+                    }
+                }
+            } catch (err) {
+                log(logId, `Exception: ${err.name} - ${err.message}`, 'error');
+                setStatus('loginStatus', 'error', err.name);
+            }
+        }
+
+        async function testLogout() {
+            const logId = 'loginLog';
+            log(logId, '=== Logging Out ===', 'info');
+
+            if (db) {
+                await db.auth.signOut();
+                log(logId, 'Signed out from Supabase', 'success');
+            }
+
+            setStatus('loginStatus', 'idle', 'Logged Out');
+            setStatus('sessionStatus', 'idle', 'No Session');
+            document.getElementById('sessionResult').innerHTML = '';
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // TEST 5: FULL FLOW SIMULATION
+        // ═══════════════════════════════════════════════════════════════
+        async function simulateFullFlow() {
+            const logId = 'flowLog';
+            const email = document.getElementById('flowEmail').value.trim().toLowerCase();
+
+            log(logId, '════════════════════════════════════════════════════════════', 'info');
+            log(logId, '=== SIMULATING /TECHNICIAN LOGIN FLOW (CURRENT BUGGY CODE) ===', 'warn');
+            log(logId, `Email: ${email}`, 'info');
+            log(logId, '════════════════════════════════════════════════════════════', 'info');
+
+            if (!db) {
+                db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                    auth: { lock: false, persistSession: true, storageKey: 'fixair-debug' }
+                });
+            }
+
+            // Step 1: Check if email exists (EXACT CODE FROM /technician)
+            log(logId, '', 'info');
+            log(logId, 'STEP 1: Check if email exists in users table...', 'info');
+            log(logId, 'Using safeQuery() with 30s timeout, 3 retries...', 'info');
+
+            try {
+                const startTime = Date.now();
+                const { data: publicUser, error: publicError } = await safeQuery(() =>
+                    db.from('users')
+                      .select('id, first_name, status, role')
+                      .eq('email', email)
+                      .maybeSingle()
+                );
+                const duration = Date.now() - startTime;
+
+                log(logId, `Query completed in ${duration}ms`, 'info');
+                logData(logId, 'Raw result', { data: publicUser, error: publicError });
+
+                // EXACT BUGGY LOGIC FROM /technician/index.html lines 6781-6814
+                log(logId, '', 'info');
+                log(logId, '=== CURRENT /technician DECISION LOGIC ===', 'warn');
+                log(logId, 'Code: if (publicUser && publicUser.id) { ... } else { redirect to /auth }', 'info');
+
+                if (publicUser && publicUser.id) {
+                    // User found
+                    log(logId, '✓ Condition TRUE: publicUser exists with id', 'success');
+                    log(logId, `User found: ${publicUser.first_name}, status=${publicUser.status}, role=${publicUser.role}`, 'success');
+
+                    if (publicUser.status === 'approved') {
+                        log(logId, '-> DECISION: Show password screen, then dashboard', 'success');
+                        setStatus('flowStatus', 'success', 'Approved -> Password');
+                        document.getElementById('flowDecision').innerHTML = '<p style="color:#22c55e">CORRECT: Show PASSWORD, then DASHBOARD</p>';
+                    } else {
+                        log(logId, `-> DECISION: Show ${publicUser.status} screen`, 'warn');
+                        setStatus('flowStatus', 'pending', publicUser.status);
+                        document.getElementById('flowDecision').innerHTML = `<p>Show ${publicUser.status.toUpperCase()} screen</p>`;
+                    }
+                } else {
+                    // THIS IS THE BUG PATH
+                    log(logId, '✗ Condition FALSE: publicUser is null/undefined', 'error');
+
+                    if (publicError) {
+                        log(logId, `ERROR EXISTS: ${publicError.message}`, 'critical');
+                        log(logId, '', 'info');
+                        log(logId, '╔═══════════════════════════════════════════════════════════╗', 'critical');
+                        log(logId, '║  BUG TRIGGERED! Error is IGNORED, redirecting to /auth!   ║', 'critical');
+                        log(logId, '╚═══════════════════════════════════════════════════════════╝', 'critical');
+                        log(logId, '', 'info');
+                        log(logId, 'WRONG: window.location.href = "/auth?email=...&from=technician"', 'error');
+                        log(logId, 'RESULT: Approved user sees SIGNUP page instead of error message!', 'error');
+
+                        setStatus('flowStatus', 'error', 'BUG: Redirect to signup!');
+                        document.getElementById('flowDecision').innerHTML = `
+                            <p style="color:#ef4444; font-weight:bold;">BUG TRIGGERED!</p>
+                            <p>Error: ${publicError.message}</p>
+                            <p style="color:#ef4444;">WRONG: Redirects to /auth (signup page)</p>
+                            <p style="color:#22c55e;">CORRECT: Should show error message</p>
+                        `;
+                    } else {
+                        log(logId, 'No error, user genuinely not found in database', 'warn');
+                        log(logId, '-> DECISION: Redirect to /auth for signup (CORRECT for new user)', 'info');
+                        setStatus('flowStatus', 'pending', 'Not Found -> Signup');
+                        document.getElementById('flowDecision').innerHTML = '<p>CORRECT: Redirect to /auth for signup (new user)</p>';
+                    }
+                }
+
+            } catch (err) {
+                log(logId, `Exception: ${err.name} - ${err.message}`, 'error');
+                setStatus('flowStatus', 'error', `Exception: ${err.name}`);
+            }
+        }
+
+        async function simulateFixedFlow() {
+            const logId = 'flowLog';
+            const email = document.getElementById('flowEmail').value.trim().toLowerCase();
+
+            log(logId, '════════════════════════════════════════════════════════════', 'info');
+            log(logId, '=== SIMULATING FIXED LOGIN FLOW ===', 'success');
+            log(logId, `Email: ${email}`, 'info');
+            log(logId, '════════════════════════════════════════════════════════════', 'info');
+
+            if (!db) {
+                db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                    auth: { lock: false, persistSession: true, storageKey: 'fixair-debug' }
+                });
+            }
+
+            try {
+                const startTime = Date.now();
+                const { data: publicUser, error: publicError } = await safeQuery(() =>
+                    db.from('users')
+                      .select('id, first_name, status, role')
+                      .eq('email', email)
+                      .maybeSingle()
+                );
+                const duration = Date.now() - startTime;
+
+                log(logId, `Query completed in ${duration}ms`, 'info');
+                logData(logId, 'Raw result', { data: publicUser, error: publicError });
+
+                // FIXED LOGIC: Check for error FIRST
+                log(logId, '', 'info');
+                log(logId, '=== FIXED DECISION LOGIC ===', 'success');
+                log(logId, 'Step 1: Check if there was an error (timeout, network, etc)', 'info');
+
+                if (publicError) {
+                    // ERROR occurred - show error message, DO NOT redirect!
+                    log(logId, `✓ Error detected: ${publicError.message}`, 'warn');
+                    log(logId, '-> DECISION: Show error message, let user retry', 'success');
+                    log(logId, '-> DO NOT redirect to /auth!', 'success');
+
+                    setStatus('flowStatus', 'error', 'Show Error (Fixed)');
+                    document.getElementById('flowDecision').innerHTML = `
+                        <p style="color:#22c55e; font-weight:bold;">FIXED BEHAVIOR</p>
+                        <p>Error detected: ${publicError.message}</p>
+                        <p style="color:#22c55e;">CORRECT: Show error message "Erreur de connexion. Réessayez."</p>
+                        <p style="color:#22c55e;">User stays on login page and can retry</p>
+                    `;
+                    return;
+                }
+
+                log(logId, '✓ No error - now check if user exists', 'info');
+
+                if (publicUser && publicUser.id) {
+                    log(logId, 'User found in database', 'success');
+                    log(logId, `-> DECISION: Show password screen for ${publicUser.first_name}`, 'success');
+                    setStatus('flowStatus', 'success', 'User Found');
+                    document.getElementById('flowDecision').innerHTML = `
+                        <p style="color:#22c55e;">User found: ${publicUser.first_name}</p>
+                        <p>Status: ${publicUser.status}</p>
+                        <p style="color:#22c55e;">CORRECT: Show password screen</p>
+                    `;
+                } else {
+                    log(logId, 'User NOT found (and no error)', 'warn');
+                    log(logId, '-> DECISION: Redirect to /auth for signup', 'info');
+                    setStatus('flowStatus', 'pending', 'New User -> Signup');
+                    document.getElementById('flowDecision').innerHTML = `
+                        <p>User not found in database</p>
+                        <p style="color:#22c55e;">CORRECT: Redirect to /auth for signup</p>
+                    `;
+                }
+
+            } catch (err) {
+                log(logId, `Exception: ${err.name} - ${err.message}`, 'error');
+                setStatus('flowStatus', 'error', `Exception`);
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // TEST 6: STORAGE DEBUG
+        // ═══════════════════════════════════════════════════════════════
+        function showLocalStorage() {
+            const logId = 'storageLog';
+            log(logId, '=== LocalStorage Contents ===', 'info');
+
+            if (localStorage.length === 0) {
+                log(logId, '(empty)', 'warn');
+            }
+
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                const preview = value.length > 100 ? value.substring(0, 100) + '...' : value;
+                log(logId, `${key}: ${preview}`, 'data');
+            }
+
+            log(logId, '', 'info');
+            log(logId, '=== SessionStorage Contents ===', 'info');
+
+            if (sessionStorage.length === 0) {
+                log(logId, '(empty)', 'warn');
+            }
+
+            for (let i = 0; i < sessionStorage.length; i++) {
+                const key = sessionStorage.key(i);
+                const value = sessionStorage.getItem(key);
+                const preview = value.length > 100 ? value.substring(0, 100) + '...' : value;
+                log(logId, `${key}: ${preview}`, 'data');
+            }
+        }
+
+        function clearAuthStorage() {
+            const logId = 'storageLog';
+            const authKeys = ['fixair-auth', 'fixair-debug', 'sb-fwuhzraxqrvmpqxnzpqm-auth-token', 'fixair_user_approved', 'fixair_cached_profile'];
+
+            authKeys.forEach(key => {
+                if (localStorage.getItem(key)) {
+                    localStorage.removeItem(key);
+                    log(logId, `Removed: ${key}`, 'success');
+                }
+            });
+
+            log(logId, 'Auth storage cleared!', 'success');
+        }
+
+        function clearAllStorage() {
+            localStorage.clear();
+            sessionStorage.clear();
+            log('storageLog', 'All storage cleared!', 'success');
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // INIT
+        // ═══════════════════════════════════════════════════════════════
+        console.log('Debug page loaded. Run connection test first.');
+    </script>
+</body>
+</html>
