@@ -1265,16 +1265,45 @@
                 console.error('Session check error:', err);
             }
 
-            // If email parameter provided, pre-fill and go to user type selection
+            // If email parameter provided, RE-VERIFY user doesn't exist before showing signup
             if (emailParam) {
                 const emailInput = document.getElementById('loginEmailInput');
                 if (emailInput) {
                     emailInput.value = emailParam;
                 }
-                // Set currentEmail so continueToSignup() can use it
-                currentEmail = emailParam;
-                // Go directly to user type selection screen
-                goToScreen('userTypeScreen');
+                currentEmail = emailParam.toLowerCase().trim();
+
+                // IMPORTANT: Re-verify the user doesn't exist before showing signup
+                // This prevents showing signup to existing users who were redirected due to timeout
+                try {
+                    const { data: existingUser, error } = await sb
+                        .from('users')
+                        .select('id, status, role')
+                        .eq('email', currentEmail)
+                        .maybeSingle();
+
+                    if (existingUser && existingUser.id) {
+                        // User EXISTS! They shouldn't be here - redirect back to login
+                        console.log('User already exists! Redirecting back to login...');
+                        const redirectApp = fromParam || 'technician';
+                        if (redirectApp === 'admin') {
+                            window.location.href = '/admin?email=' + encodeURIComponent(currentEmail);
+                        } else if (redirectApp === 'manager') {
+                            window.location.href = '/manager?email=' + encodeURIComponent(currentEmail);
+                        } else {
+                            window.location.href = '/technician?email=' + encodeURIComponent(currentEmail);
+                        }
+                        return;
+                    }
+
+                    // User genuinely doesn't exist - show signup
+                    console.log('User not found, proceeding with signup');
+                    goToScreen('userTypeScreen');
+                } catch (err) {
+                    console.error('Error verifying user:', err);
+                    // On error, still show signup (better UX than blocking)
+                    goToScreen('userTypeScreen');
+                }
             }
 
             // console.log('FixAIR Auth ready');
