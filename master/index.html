@@ -3479,9 +3479,11 @@
             }
             sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
                 auth: {
-                    autoRefreshToken: true,
-                    persistSession: true,
-                    detectSessionInUrl: true
+                    lock: false,                // REQUIRED - prevents AbortError from tab lock
+                    persistSession: true,       // REQUIRED - keep session across page loads
+                    autoRefreshToken: true,     // REQUIRED - auto refresh tokens
+                    detectSessionInUrl: false,  // REQUIRED - we handle URL tokens manually
+                    storageKey: 'fixair-auth'   // REQUIRED - same key for ALL FixAIR apps
                 }
             });
             initAuth();

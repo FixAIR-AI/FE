@@ -1420,7 +1420,7 @@
 
         async function logoutFromPending() {
             await sb.auth.signOut();
-            localStorage.removeItem('supabase.auth.token');
+            // Supabase handles session cleanup automatically with signOut()
             supabaseUser = null;
             currentUserId = null;
             currentAdminProfile = null;
@@ -1496,7 +1496,7 @@
                 document.getElementById('newPasswordInput').value = '';
                 document.getElementById('confirmPasswordInput').value = '';
 
-                localStorage.removeItem('supabase.auth.token');
+                // Supabase handles session cleanup automatically with signOut()
                 await sb.auth.signOut();
 
                 setTimeout(() => {
@@ -1516,7 +1516,7 @@
 
         function cancelPasswordReset() {
             isPasswordRecovery = false;
-            localStorage.removeItem('supabase.auth.token');
+            // Supabase handles session cleanup automatically with signOut()
             sb.auth.signOut();
 
             document.getElementById('passwordResetScreen').classList.remove('active');
@@ -1540,7 +1540,7 @@
 
         async function logout() {
             await sb.auth.signOut();
-            localStorage.removeItem('supabase.auth.token');
+            // Supabase handles session cleanup automatically with signOut()
             cleanupSubscriptions();
             supabaseUser = null;
             currentUserId = null;
@@ -1601,12 +1601,7 @@
                         return;
                     }
 
-                    if (data.session) {
-                        localStorage.setItem('supabase.auth.token', JSON.stringify({
-                            currentSession: data.session,
-                            expiresAt: data.session.expires_at
-                        }));
-                    }
+                    // Session is automatically persisted by Supabase with storageKey: 'fixair-auth'
 
                     if (isRecoveryLink) {
                         showPasswordResetScreen();
@@ -1617,21 +1612,12 @@
                     isPasswordRecovery = false;
                 }
             } else {
-                // Check for existing session in localStorage
+                // Check for existing session via Supabase (uses storageKey: 'fixair-auth')
                 try {
-                    const stored = localStorage.getItem('supabase.auth.token');
-                    if (stored) {
-                        const parsed = JSON.parse(stored);
-                        if (parsed.currentSession) {
-                            const { data, error } = await sb.auth.setSession({
-                                access_token: parsed.currentSession.access_token,
-                                refresh_token: parsed.currentSession.refresh_token
-                            });
-                            if (!error && data.session) {
-                                await handleAuthenticatedUser(data.session.user);
-                                return;
-                            }
-                        }
+                    const { data: { session }, error } = await sb.auth.getSession();
+                    if (!error && session && session.user) {
+                        await handleAuthenticatedUser(session.user);
+                        return;
                     }
                 } catch (err) {
                     // console.log('No valid stored session');
