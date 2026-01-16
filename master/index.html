@@ -1365,6 +1365,23 @@
                 return placeholder;
             });
 
+            // ═══ HELPER: Restore mermaid placeholders - MUST be called on ALL return paths ═══
+            function restoreMermaid(html) {
+                if (mermaidBlocks.length === 0) return html;
+                mermaidBlocks.forEach((code, i) => {
+                    const escapedCode = code
+                        .replace(/&/g, '&amp;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;');
+                    html = html.replace(
+                        `__MERMAID_${i}__`,
+                        `<div class="mermaid-placeholder" data-mermaid-code="${escapedCode}"><div class="mermaid-loading">Chargement du diagramme...</div></div>`
+                    );
+                });
+                return html;
+            }
+
             // ═══ STEP 2: Extract and store images separately ═══
             const images = [];
             text = text.replace(/(data:image\/[a-zA-Z+]+;base64,[A-Za-z0-9+/=]+)/g, (match) => {
@@ -1377,7 +1394,7 @@
             
             // ═══ STEP 3: Check for extraction result patterns ═══
             if (text.includes('RÉSUMÉ') && (text.includes('Marque:') || text.includes('Modèle:') || text.includes('N° série:'))) {
-                return renderExtractionCard(text, images);
+                return restoreMermaid(renderExtractionCard(text, images));
             }
             
             // ═══ STEP 3b: Check for OCR result JSON ═══
@@ -1403,7 +1420,7 @@
                     try {
                         const ocrData = JSON.parse(jsonStr);
                         if (ocrData.type === 'ocr_result') {
-                            return restoreImages(renderOCRCard(ocrData), images);
+                            return restoreMermaid(restoreImages(renderOCRCard(ocrData), images));
                         }
                     } catch (e) {
                         console.log('OCR JSON parse failed:', e.message);
@@ -1425,7 +1442,7 @@
                             const intro = introMatch ? introMatch[1].trim() : '';
                             let result = intro ? `<p>${escapeHtml(intro)}</p>` : '';
                             result += renderStructuredReport(jsonData.data || jsonData);
-                            return restoreImages(result, images);
+                            return restoreMermaid(restoreImages(result, images));
                         }
                     } catch (e) {}
                 }
@@ -1436,7 +1453,7 @@
                 try {
                     const jsonData = JSON.parse(trimmed);
                     if (jsonData.type === 'report' || jsonData.resume || jsonData.travaux_effectues) {
-                        return restoreImages(renderStructuredReport(jsonData.data || jsonData), images);
+                        return restoreMermaid(restoreImages(renderStructuredReport(jsonData.data || jsonData), images));
                     }
                 } catch (e) {}
             }
@@ -1451,13 +1468,13 @@
                     const jsonData = JSON.parse(jsonText);
                     let result = introText ? processBasicMarkdown(introText) : '';
                     result += renderStructuredReport(jsonData.data || jsonData);
-                    return restoreImages(result, images);
+                    return restoreMermaid(restoreImages(result, images));
                 } catch (e) {
                     console.log('Embedded JSON parse failed:', e.message);
                 }
             }
             
-            // Also check for text + {"data":{...}} pattern  
+            // Also check for text + {"data":{...}} pattern
             const dataJsonIndex = trimmed.indexOf('{"data":{');
             if (dataJsonIndex > 0) {
                 const introText = trimmed.substring(0, dataJsonIndex).trim();
@@ -1467,7 +1484,7 @@
                     if (jsonData.data && (jsonData.data.resume || jsonData.data.brand)) {
                         let result = introText ? processBasicMarkdown(introText) : '';
                         result += renderStructuredReport(jsonData.data);
-                        return restoreImages(result, images);
+                        return restoreMermaid(restoreImages(result, images));
                     }
                 } catch (e) {}
             }
@@ -1505,14 +1522,8 @@
             html = html.replace(/<p><\/p>/g, '');
             html = html.replace(/<p><br><\/p>/g, '');
 
-            // ═══ STEP 5b: Restore mermaid diagrams with placeholders for rendering ═══
-            mermaidBlocks.forEach((code, i) => {
-                const escapedCode = code.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                html = html.replace(`__MERMAID_${i}__`, `<div class="mermaid-placeholder" data-mermaid-code="${escapedCode}"><div class="mermaid-loading">Chargement du diagramme...</div></div>`);
-            });
-
-            // ═══ STEP 6: Restore images as proper img tags ═══
-            return restoreImages(html, images);
+            // ═══ STEP 6: Restore images and mermaid diagrams ═══
+            return restoreMermaid(restoreImages(html, images));
         }
         
         function renderExtractionCard(text, images) {
