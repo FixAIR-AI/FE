@@ -5934,14 +5934,14 @@
         }
 
         if (window.supabase && window.supabase.createClient) {
-            // DISABLE automatic features to avoid AbortError in cross-browser scenarios
-            // We handle URL tokens manually in initAuth()
+            // STANDARDIZED CONFIG - same across all FixAIR apps
             db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
                 auth: {
-                    persistSession: false,     // Disabled - we handle manually to avoid lock issues
-                    autoRefreshToken: false,   // Disabled - we handle manually
-                    detectSessionInUrl: false, // Disabled - we parse tokens manually above
-                    flowType: 'implicit'
+                    lock: false,                // REQUIRED - prevents AbortError from tab lock
+                    persistSession: true,       // REQUIRED - keep session across page loads
+                    autoRefreshToken: true,     // REQUIRED - auto refresh tokens
+                    detectSessionInUrl: false,  // REQUIRED - we handle URL tokens manually
+                    storageKey: 'fixair-auth'   // REQUIRED - same key for ALL FixAIR apps
                 }
             });
 
@@ -5964,27 +5964,32 @@
         }
         
         // Safe query wrapper that handles AbortError with timeout
-        async function safeQuery(queryFn, retries = 3, timeoutMs = 5000) {
+        // STANDARDIZED: 30s timeout with exponential backoff (1s, 2s, 4s)
+        async function safeQuery(queryFn, retries = 3, timeoutMs = 30000) {
             await waitForSupabase();
-            
+
             for (let attempt = 0; attempt < retries; attempt++) {
                 try {
                     // Add timeout to prevent infinite hang
-                    const timeoutPromise = new Promise((_, reject) => 
+                    const timeoutPromise = new Promise((_, reject) =>
                         setTimeout(() => reject(new Error('Query timeout')), timeoutMs)
                     );
-                    
+
                     const result = await Promise.race([queryFn(), timeoutPromise]);
 
                     // Check if result has AbortError
                     if (result.error && result.error.message && result.error.message.includes('AbortError')) {
-                        await new Promise(r => setTimeout(r, 300 * (attempt + 1)));
+                        const delay = 1000 * Math.pow(2, attempt); // Exponential: 1s, 2s, 4s
+                        console.log(`Query AbortError, retrying in ${delay}ms (attempt ${attempt + 1}/${retries})`);
+                        await new Promise(r => setTimeout(r, delay));
                         continue;
                     }
                     return result;
                 } catch (err) {
                     if ((err.message.includes('AbortError') || err.message.includes('timeout')) && attempt < retries - 1) {
-                        await new Promise(r => setTimeout(r, 300 * (attempt + 1)));
+                        const delay = 1000 * Math.pow(2, attempt); // Exponential: 1s, 2s, 4s
+                        console.log(`Query error, retrying in ${delay}ms (attempt ${attempt + 1}/${retries})`);
+                        await new Promise(r => setTimeout(r, delay));
                         continue;
                     }
                     // Don't throw, return error object
@@ -6193,13 +6198,7 @@
                         return;
                     }
 
-                    // Manually persist session to localStorage since we disabled persistSession
-                    if (data.session) {
-                        localStorage.setItem('supabase.auth.token', JSON.stringify({
-                            currentSession: data.session,
-                            expiresAt: data.session.expires_at
-                        }));
-                    }
+                    // Session is now automatically persisted by Supabase with storageKey: 'fixair-auth'
 
                     // Handle based on token type
                     if (isRecoveryLink) {
@@ -6231,13 +6230,7 @@
                         return;
                     }
 
-                    // Manually persist session
-                    if (data.session) {
-                        localStorage.setItem('supabase.auth.token', JSON.stringify({
-                            currentSession: data.session,
-                            expiresAt: data.session.expires_at
-                        }));
-                    }
+                    // Session is now automatically persisted by Supabase with storageKey: 'fixair-auth'
 
                     if (isRecoveryLink) {
                         isReady = true;
@@ -6251,22 +6244,13 @@
                     isPasswordRecovery = false;
                 }
             } else {
-                // No URL tokens - check localStorage for existing session
+                // No URL tokens - check for existing session via Supabase (uses storageKey: 'fixair-auth')
                 try {
-                    const stored = localStorage.getItem('supabase.auth.token');
-                    if (stored) {
-                        const parsed = JSON.parse(stored);
-                        if (parsed.currentSession) {
-                            const { data, error } = await db.auth.setSession({
-                                access_token: parsed.currentSession.access_token,
-                                refresh_token: parsed.currentSession.refresh_token
-                            });
-                            if (!error && data.session) {
-                                isReady = true;
-                                await loadUserAndShowApp(data.session.user);
-                                return;
-                            }
-                        }
+                    const { data: { session }, error } = await db.auth.getSession();
+                    if (!error && session && session.user) {
+                        isReady = true;
+                        await loadUserAndShowApp(session.user);
+                        return;
                     }
                 } catch (err) {
                     // Error restoring session
@@ -6303,11 +6287,7 @@
                     return;
                 }
 
-                // Persist session to localStorage for page reload persistence
-                localStorage.setItem('supabase.auth.token', JSON.stringify({
-                    currentSession: session,
-                    expiresAt: session.expires_at
-                }));
+                // Session is automatically persisted by Supabase with storageKey: 'fixair-auth'
 
                 supabaseUser = session.user;
 
@@ -6452,7 +6432,7 @@
                 document.getElementById('confirmPasswordInput').value = '';
 
                 // Sign out to force fresh login with new password
-                localStorage.removeItem('supabase.auth.token');
+                // Supabase handles session cleanup automatically with signOut()
                 await db.auth.signOut();
 
                 // Change the update button to a "Se connecter" button
@@ -6501,7 +6481,7 @@
         // ═══ CANCEL PASSWORD RESET ═══
         function cancelPasswordReset() {
             isPasswordRecovery = false;
-            localStorage.removeItem('supabase.auth.token');
+            // Supabase handles session cleanup automatically with signOut()
             db.auth.signOut();
 
             // Hide password reset screen and show login
@@ -6831,7 +6811,7 @@
 
         async function logoutFromPending() {
             await db.auth.signOut();
-            localStorage.removeItem('supabase.auth.token');  // Clear manual session storage
+            // Supabase handles session cleanup automatically with signOut()
             supabaseUser = null;
             currentUser = null;
             isPasswordRecovery = false;
@@ -6869,7 +6849,7 @@
 
         async function logout() {
             await db.auth.signOut();
-            localStorage.removeItem('supabase.auth.token');  // Clear manual session storage
+            // Supabase handles session cleanup automatically with signOut()
             supabaseUser = null;
             currentUser = null;
             isPasswordRecovery = false;
