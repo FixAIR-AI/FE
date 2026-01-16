@@ -8,6 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Mermaid.js for diagrams -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <style>
         :root {
             --copilot: #a78bfa;
@@ -743,6 +745,47 @@
         .msg-bubble pre { background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; overflow-x: auto; margin: 8px 0; }
         .msg-bubble pre code { background: none; padding: 0; }
 
+        /* ═══ MERMAID DIAGRAMS ═══ */
+        .mermaid-placeholder {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 12px 0;
+            overflow-x: auto;
+            min-height: 60px;
+        }
+        .mermaid-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-dim);
+            font-size: 12px;
+            padding: 20px;
+        }
+        .mermaid-rendered {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .mermaid-rendered svg {
+            max-width: 100%;
+            height: auto;
+        }
+        .mermaid-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        .mermaid-error-container {
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
         /* ═══ REPORT CARD IN CHAT ═══ */
         .report-card { background: #1E1E2E; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px 24px 20px 24px; margin-top: 12px; line-height: 1.5; position: relative; }
         .report-card .report-title { display: block; font-size: 17px; font-weight: 700; color: var(--assistant); margin-bottom: 4px; padding-right: 36px; }
@@ -1154,6 +1197,67 @@
             e4: { name: 'NordVentilation', initials: 'NV', plan: 'Trial', techs: 3, projects: 4 }
         };
 
+        // ═══ MERMAID INITIALIZATION ═══
+        let mermaidReady = false;
+        function initMermaid() {
+            if (typeof mermaid !== 'undefined') {
+                mermaid.initialize({
+                    startOnLoad: false,
+                    theme: 'dark',
+                    securityLevel: 'loose',
+                    flowchart: {
+                        useMaxWidth: true,
+                        htmlLabels: true,
+                        curve: 'basis'
+                    },
+                    themeVariables: {
+                        primaryColor: '#a78bfa',
+                        primaryTextColor: '#fff',
+                        primaryBorderColor: '#a78bfa',
+                        lineColor: 'rgba(255,255,255,0.3)',
+                        secondaryColor: '#161b22',
+                        tertiaryColor: '#0D1117',
+                        background: '#0D1117',
+                        mainBkg: '#161b22',
+                        nodeBorder: 'rgba(255,255,255,0.2)',
+                        clusterBkg: 'rgba(255,255,255,0.05)',
+                        defaultLinkColor: 'rgba(255,255,255,0.5)',
+                        titleColor: '#fff',
+                        edgeLabelBackground: '#161b22',
+                        nodeTextColor: '#fff'
+                    }
+                });
+                mermaidReady = true;
+            } else {
+                setTimeout(initMermaid, 100);
+            }
+        }
+        initMermaid();
+
+        // ═══ RENDER MERMAID DIAGRAMS ═══
+        async function renderMermaidDiagrams(container) {
+            if (!mermaidReady || typeof mermaid === 'undefined') return;
+
+            const placeholders = container.querySelectorAll('.mermaid-placeholder');
+            for (const placeholder of placeholders) {
+                if (placeholder.classList.contains('mermaid-rendered')) continue;
+
+                const code = placeholder.dataset.mermaidCode;
+                if (!code) continue;
+
+                try {
+                    const id = 'mermaid-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                    const { svg } = await mermaid.render(id, code);
+                    placeholder.innerHTML = svg;
+                    placeholder.classList.add('mermaid-rendered');
+                } catch (error) {
+                    console.error('Mermaid render error:', error);
+                    placeholder.innerHTML = '<pre class="mermaid-error">' + code + '</pre>';
+                    placeholder.classList.add('mermaid-error-container');
+                }
+            }
+        }
+
         // ═══ SUPABASE HELPERS ═══
         async function supabaseQuery(table, options = {}) {
             let url = `${SUPABASE_URL}/rest/v1/${table}`;
@@ -1249,10 +1353,18 @@
             
             // ═══ STEP 1: Strip [REPORT_DATA] blocks completely ═══
             text = text.replace(/\[REPORT_DATA\][\s\S]*?\[\/REPORT_DATA\]/g, '').trim();
-            
+
             // If empty after stripping, return empty
             if (!text) return '';
-            
+
+            // ═══ STEP 1b: Extract mermaid diagrams ═══
+            const mermaidBlocks = [];
+            text = text.replace(/```mermaid\n([\s\S]*?)```/g, (match, code) => {
+                const placeholder = `__MERMAID_${mermaidBlocks.length}__`;
+                mermaidBlocks.push(code.trim());
+                return placeholder;
+            });
+
             // ═══ STEP 2: Extract and store images separately ═══
             const images = [];
             text = text.replace(/(data:image\/[a-zA-Z+]+;base64,[A-Za-z0-9+/=]+)/g, (match) => {
@@ -1392,7 +1504,13 @@
             // Clean up
             html = html.replace(/<p><\/p>/g, '');
             html = html.replace(/<p><br><\/p>/g, '');
-            
+
+            // ═══ STEP 5b: Restore mermaid diagrams with placeholders for rendering ═══
+            mermaidBlocks.forEach((code, i) => {
+                const escapedCode = code.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                html = html.replace(`__MERMAID_${i}__`, `<div class="mermaid-placeholder" data-mermaid-code="${escapedCode}"><div class="mermaid-loading">Chargement du diagramme...</div></div>`);
+            });
+
             // ═══ STEP 6: Restore images as proper img tags ═══
             return restoreImages(html, images);
         }
@@ -2464,7 +2582,10 @@
             }).join('');
 
             body.scrollTop = body.scrollHeight;
-            
+
+            // Render any Mermaid diagrams in the chat
+            renderMermaidDiagrams(body);
+
             // Try to extract report data from messages
             messages.forEach(m => {
                 const content = m.content || m.message || '';
