@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <title>FixAIR Master</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --copilot: #a78bfa;
+            --copilot-glow: rgba(167, 139, 250, 0.4);
+            --copilot-bg: rgba(167, 139, 250, 0.08);
+            --copilot-border: rgba(167, 139, 250, 0.2);
+            --assistant: #22c55e;
+            --assistant-glow: rgba(34, 197, 94, 0.4);
+            --assistant-bg: rgba(34, 197, 94, 0.08);
+            --assistant-border: rgba(34, 197, 94, 0.2);
+            --review: #3B82F6;
+            --review-bg: rgba(59, 130, 246, 0.08);
+            --review-border: rgba(59, 130, 246, 0.2);
+            --warning: #eab308;
+            --warning-bg: rgba(234, 179, 8, 0.08);
+            --warning-border: rgba(234, 179, 8, 0.2);
+            --bg: #0D1117;
+            --bg-secondary: #161b22;
+            --card: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.06);
+            --text: rgba(255, 255, 255, 0.9);
+            --text-dim: rgba(255, 255, 255, 0.35);
+            --grid-color: rgba(255,255,255,0.015);
+            --content-width: 520px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            background-image:
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 32px 32px;
+            color: var(--text);
+            min-height: 100vh;
+            min-height: 100dvh;
+            overflow-x: hidden;
+        }
+
+        /* ═══ SVG DEFS ═══ */
+        .svg-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+        /* ═══ AUTH SCREENS ═══ */
+        .screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: none; flex-direction: column; background: var(--bg); background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px); background-size: 32px 32px; z-index: 1; }
+        .screen.active { display: flex; }
+        .main-app { height: 100%; }
+
+        /* LOGIN SCREEN */
+        .login-screen { justify-content: center; align-items: center; padding: 24px; }
+        .login-container { width: 100%; max-width: 380px; display: flex; flex-direction: column; align-items: center; }
+        .scan-line { position: fixed; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, var(--copilot), transparent); box-shadow: 0 0 20px var(--copilot-glow); animation: scanDown 2s ease-out forwards; }
+        @keyframes scanDown { to { top: 50%; opacity: 0; } }
+        .login-title { font-size: 22px; font-weight: 300; margin-bottom: 4px; color: rgba(255,255,255,0.9); }
+        .login-sub { font-size: 12px; color: var(--text-dim); margin-bottom: 32px; }
+        .login-logo { width: 160px; height: auto; margin-bottom: 24px; color: var(--copilot); }
+        .login-logo svg { width: 100%; height: auto; }
+        .login-bar { display: flex; align-items: center; gap: 8px; padding: 5px 5px 5px 8px; background: var(--card); border: 1px solid var(--border); border-radius: 40px; width: 100%; opacity: 0; animation: fadeUp 0.5s ease 1.5s forwards; }
+        @keyframes fadeUp { to { opacity: 1; } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .login-mini { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; position: relative; }
+        .glass-sphere { width: 26px; height: 26px; border-radius: 50%; position: relative; overflow: hidden; animation: glowPulse 8s ease-in-out infinite; }
+        @keyframes glowPulse {
+            0%, 100% { box-shadow: 0 0 14px rgba(167,139,250,0.7), 0 0 28px rgba(167,139,250,0.3); }
+            25% { box-shadow: 0 0 14px rgba(239,68,68,0.7), 0 0 28px rgba(239,68,68,0.3); }
+            50% { box-shadow: 0 0 14px rgba(59,130,246,0.7), 0 0 28px rgba(59,130,246,0.3); }
+            75% { box-shadow: 0 0 14px rgba(234,179,8,0.7), 0 0 28px rgba(234,179,8,0.3); }
+        }
+        .glass-sphere::before { content: ''; position: absolute; top: 2px; left: 4px; width: 5px; height: 4px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,0.5), transparent 70%); z-index: 10; }
+        .sphere-fog-container { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; background: rgba(20,24,32,0.3); }
+        .sphere-fog { position: absolute; inset: -50%; border-radius: 50%; background: radial-gradient(circle at 30% 40%, currentColor, transparent 50%), radial-gradient(circle at 70% 60%, currentColor, transparent 40%); filter: blur(2px); animation: fogSwirl 6s ease-in-out infinite, fogColor 8s ease-in-out infinite; opacity: 0.9; }
+        @keyframes fogSwirl { 0% { transform: rotate(0deg) translate(0, 0); } 25% { transform: rotate(90deg) translate(2px, -2px); } 50% { transform: rotate(180deg) translate(0, 0); } 75% { transform: rotate(270deg) translate(-2px, 2px); } 100% { transform: rotate(360deg) translate(0, 0); } }
+        @keyframes fogColor { 0%, 100% { color: #a78bfa; } 25% { color: #ef4444; } 50% { color: #3B82F6; } 75% { color: #eab308; } }
+        .sphere-fog-2 { position: absolute; inset: -30%; border-radius: 50%; background: radial-gradient(circle at 60% 30%, currentColor, transparent 45%); filter: blur(2px); animation: fogSwirl2 5s ease-in-out infinite reverse, fogColor2 8s ease-in-out infinite; opacity: 0.7; }
+        @keyframes fogSwirl2 { 0% { transform: rotate(0deg) scale(0.9); } 50% { transform: rotate(180deg) scale(1.1); } 100% { transform: rotate(360deg) scale(0.9); } }
+        @keyframes fogColor2 { 0%, 100% { color: #3B82F6; } 25% { color: #eab308; } 50% { color: #a78bfa; } 75% { color: #ef4444; } }
+        .login-icon-slot { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; }
+        .login-back { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.05); border: none; color: var(--text-dim); cursor: pointer; display: none; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
+        .login-back:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+        .login-back svg { width: 16px; height: 16px; stroke: currentColor; fill: none; }
+        .login-input-container { flex: 1; position: relative; height: 32px; overflow: hidden; }
+        .login-input-slider { display: flex; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); height: 100%; }
+        .login-input-slide { min-width: 100%; display: flex; align-items: center; }
+        .login-input { flex: 1; padding: 8px; background: transparent; border: none; color: white; font-size: 13px; outline: none; caret-color: white; }
+        .login-input::placeholder { color: rgba(255,255,255,0.25); }
+        .login-input:-webkit-autofill,
+        .login-input:-webkit-autofill:hover,
+        .login-input:-webkit-autofill:focus,
+        .login-input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+            -webkit-text-fill-color: white !important;
+            background-color: transparent !important;
+            background: transparent !important;
+            transition: background-color 9999s ease-out 9999s !important;
+            caret-color: white !important;
+        }
+        .icon { display: inline-flex; align-items: center; justify-content: center; }
+        .login-btn { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #a78bfa, #8b5cf6); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .login-btn .icon { width: 12px; height: 12px; }
+        .login-btn .icon svg { width: 100%; height: 100%; }
+        .login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* LOGIN STATUS MESSAGES */
+        .login-status {
+            min-height: 24px;
+            margin-top: 16px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .login-status:empty { display: none; }
+        .login-status.success { color: #22c55e; }
+        .login-status.error { color: #ef4444; }
+        .login-status.info { color: rgba(255,255,255,0.7); }
+        .login-status a {
+            color: inherit;
+            text-decoration: underline;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        .login-status a:hover { opacity: 0.8; }
+
+        /* ACCESS DENIED SCREEN */
+        .pending-screen { display: none; }
+        .pending-screen.active { display: flex; }
+        .pending-container { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 40px; text-align: center; }
+        .pending-logo { margin-bottom: 8px; }
+        .pending-logo svg { height: 40px; width: auto; }
+        .pending-title { font-size: 24px; font-weight: 700; color: var(--text); }
+        .pending-subtitle { font-size: 14px; color: var(--text-dim); max-width: 300px; line-height: 1.5; }
+        .pending-email { font-size: 13px; color: var(--copilot); font-weight: 500; padding: 8px 16px; background: rgba(167,139,250,0.1); border-radius: 8px; }
+        .pending-logout { margin-top: 16px; padding: 10px 24px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--text-dim); font-size: 13px; cursor: pointer; transition: all 0.2s; }
+        .pending-logout:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+
+        /* TOAST */
+        .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(100px); background: rgba(30,35,44,0.98); border: 1px solid var(--border); padding: 12px 20px; border-radius: 12px; font-size: 13px; z-index: 9999; opacity: 0; transition: all 0.3s; pointer-events: none; }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        /* ═══ MAIN APP STYLES ═══ */
+        .main-app { display: none; }
+        .main-app.active { display: flex; flex-direction: column; height: 100vh; }
+
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            padding-top: max(16px, env(safe-area-inset-top));
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+        .app-header-left { display: flex; align-items: center; gap: 12px; }
+        .app-header-logo { color: var(--copilot); height: 32px; }
+        .app-header-logo svg { height: 100%; width: auto; }
+        .app-header-title { font-size: 16px; font-weight: 600; }
+        .app-header-badge { font-size: 10px; padding: 3px 8px; border-radius: 4px; background: var(--copilot-bg); color: var(--copilot); font-weight: 600; margin-left: 8px; }
+        .app-header-right { display: flex; align-items: center; gap: 12px; }
+        .user-menu { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 6px 12px; border-radius: 8px; transition: background 0.2s; }
+        .user-menu:hover { background: var(--card); }
+        .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--copilot-bg); border: 1px solid var(--copilot-border); display: flex; align-items: center; justify-content: center; color: var(--copilot); font-weight: 600; font-size: 13px; }
+        .user-name { font-size: 13px; color: var(--text); }
+        .logout-btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); font-size: 13px; cursor: pointer; transition: all 0.2s; }
+        .logout-btn:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+
+        .app-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+        .app-content-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Placeholder content */
+        .placeholder-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            text-align: center;
+            color: var(--text-dim);
+        }
+        .placeholder-icon { font-size: 64px; margin-bottom: 24px; opacity: 0.5; }
+        .placeholder-title { font-size: 24px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+        .placeholder-subtitle { font-size: 14px; max-width: 400px; }
+
+        /* ═══ RESPONSIVE - LARGER SCREENS ═══ */
+        @media (min-width: 420px) {
+            .login-btn { width: 38px; height: 38px; }
+            .login-btn .icon { width: 14px; height: 14px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- SVG DEFINITIONS -->
+    <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <symbol id="icon-fixair-logo" viewBox="0 0 235 48"><path d="M35.1986 6.4H17.4706C15.4226 6.4 13.5666 6.912 11.9026 7.936C10.2386 8.96 8.89463 10.3253 7.87063 12.032C6.88929 13.696 6.39863 15.552 6.39863 17.6V48H-0.00137472V16C-0.00137472 13.7387 0.467959 11.648 1.40663 9.728C2.34529 7.76533 3.62529 6.08 5.24663 4.672C6.91063 3.22133 8.78796 2.09067 10.8786 1.28C12.9693 0.426664 15.1666 -3.8147e-06 17.4706 -3.8147e-06H35.1986V6.4ZM48.8306 4.8C48.8306 6.12266 48.3613 7.25333 47.4226 8.192C46.484 9.13066 45.3533 9.6 44.0306 9.6C42.708 9.6 41.5773 9.13066 40.6386 8.192C39.7 7.25333 39.2306 6.12266 39.2306 4.8C39.2306 3.47733 39.7 2.34666 40.6386 1.408C41.5773 0.46933 42.708 -3.8147e-06 44.0306 -3.8147e-06C45.3533 -3.8147e-06 46.484 0.46933 47.4226 1.408C48.3613 2.34666 48.8306 3.47733 48.8306 4.8ZM47.2306 48H40.8306V22.4H9.59863V16H47.2306V48ZM97.7161 48H88.5641L74.8681 34.752L61.4281 48H52.2761L70.4521 30.464L52.2761 12.8H61.4281L97.7161 48ZM97.7161 12.8L82.4841 27.648L77.8761 23.552L88.5641 12.8H97.7161Z" fill="currentColor"/><path d="M154.461 48H148.061V35.2H112.285V28.8H148.061V9.6H125.085C122.183 9.6 119.517 10.3253 117.085 11.776C114.653 13.184 112.711 15.104 111.261 17.536C109.853 19.968 109.149 22.656 109.149 25.6V48H102.749V25.6C102.749 22.528 103.325 19.648 104.477 16.96C105.629 14.2293 107.229 11.84 109.277 9.792C111.325 7.70133 113.693 6.08 116.381 4.928C119.111 3.776 122.013 3.2 125.085 3.2H154.461V48ZM171.604 48H165.204V3.2H171.604V48ZM234.041 48H225.401L211.961 35.2H192.313V28.864H218.041C219.833 28.864 221.454 28.4373 222.905 27.584C224.356 26.688 225.508 25.5147 226.361 24.064C227.214 22.5707 227.641 20.9493 227.641 19.2C227.641 17.408 227.214 15.7867 226.361 14.336C225.508 12.8853 224.356 11.7333 222.905 10.88C221.454 10.0267 219.833 9.6 218.041 9.6H188.729V48H182.329V3.2H218.041C220.985 3.2 223.673 3.92533 226.105 5.376C228.537 6.784 230.457 8.704 231.865 11.136C233.316 13.568 234.041 16.256 234.041 19.2C234.041 21.8453 233.444 24.2987 232.249 26.56C231.097 28.8213 229.497 30.6987 227.449 32.192C225.444 33.6427 223.161 34.5813 220.601 35.008L234.041 48Z" fill="currentColor"/></symbol>
+            <symbol id="icon-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
+            <symbol id="icon-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
+            <symbol id="icon-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+        </defs>
+    </svg>
+
+    <!-- LOGIN SCREEN -->
+    <div class="screen login-screen active" id="loginScreen">
+        <div class="scan-line"></div>
+        <div class="login-container">
+            <div class="login-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
+            <h1 class="login-title">FixAIR Master</h1>
+            <p class="login-sub">Administration centrale - Acces restreint</p>
+            <div class="login-bar">
+                <div class="login-icon-slot">
+                    <div class="login-mini" id="loginSphere"><div class="glass-sphere"><div class="sphere-fog-container"><div class="sphere-fog"></div><div class="sphere-fog-2"></div></div></div></div>
+                    <button type="button" class="login-back" id="loginBack" onclick="prevLoginStep()"><svg viewBox="0 0 24 24"><use href="#icon-arrow-left"/></svg></button>
+                </div>
+                <div class="login-input-container">
+                    <div class="login-input-slider" id="loginSlider">
+                        <div class="login-input-slide">
+                            <input type="email" class="login-input" id="loginEmailInput" placeholder="Adresse email autorisee" onkeypress="if(event.key==='Enter')nextLoginStep()">
+                        </div>
+                        <div class="login-input-slide">
+                            <input type="password" class="login-input" id="loginPasswordInput" placeholder="Mot de passe" onkeypress="if(event.key==='Enter')nextLoginStep()">
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="login-btn" id="loginBtn" onclick="nextLoginStep()"><span class="icon"><svg><use href="#icon-arrow-right"/></svg></span></button>
+            </div>
+            <div class="login-status" id="loginStatus"></div>
+        </div>
+    </div>
+
+    <!-- ACCESS DENIED SCREEN -->
+    <div class="screen pending-screen" id="accessDeniedScreen">
+        <div class="scan-line"></div>
+        <div class="pending-container">
+            <div class="pending-logo">
+                <svg viewBox="0 0 235 48" style="height: 40px; color: var(--copilot);"><use href="#icon-fixair-logo"/></svg>
+            </div>
+            <div style="font-size: 48px; margin: 16px 0;">&#128274;</div>
+            <h1 class="pending-title">Acces non autorise</h1>
+            <p class="pending-subtitle">
+                Cette zone est reservee aux administrateurs Master de FixAIR. Votre email n'est pas dans la liste des utilisateurs autorises.
+            </p>
+            <div class="pending-email" id="accessDeniedEmail"></div>
+            <button class="pending-logout" onclick="logout()">
+                Se deconnecter
+            </button>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
+    <!-- MAIN APP (placeholder - will be replaced with actual content) -->
+    <div class="main-app" id="mainApp">
+        <header class="app-header">
+            <div class="app-header-left">
+                <div class="app-header-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
+                <span class="app-header-title">FixAIR Master</span>
+                <span class="app-header-badge">ADMIN</span>
+            </div>
+            <div class="app-header-right">
+                <div class="user-menu">
+                    <div class="user-avatar" id="userAvatar">H</div>
+                    <span class="user-name" id="userName">Admin</span>
+                </div>
+                <button class="logout-btn" onclick="logout()">Deconnexion</button>
+            </div>
+        </header>
+        <main class="app-content">
+            <div class="app-content-inner">
+                <div class="placeholder-content">
+                    <div class="placeholder-icon">&#128272;</div>
+                    <h2 class="placeholder-title">Bienvenue sur FixAIR Master</h2>
+                    <p class="placeholder-subtitle">
+                        Le contenu du tableau de bord Master sera affiche ici. Vous etes connecte en tant qu'administrateur autorise.
+                    </p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // ═══ CONFIGURATION ═══
+        const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTcyMTksImV4cCI6MjA4MTgzMzIxOX0.8ryQm1tsdx5ox3aFJiiflmwuEGGxxH_PlobGxXMgFuQ';
+
+        // ═══ WHITELIST - Only these emails can access Master ═══
+        const MASTER_WHITELIST = [
+            'houssam@fixair.ai',
+            'houssam.cherhabil@gmail.com',
+            // Add more authorized emails here
+        ];
+
+        // ═══ SUPABASE CLIENT ═══
+        let sb = null;
+        let supabaseUser = null;
+        let currentProfile = null;
+        let loginStep = 0;
+
+        // Initialize Supabase
+        function initSupabase() {
+            if (!window.supabase) {
+                setTimeout(initSupabase, 100);
+                return;
+            }
+            sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                auth: {
+                    autoRefreshToken: true,
+                    persistSession: true,
+                    detectSessionInUrl: true
+                }
+            });
+            initAuth();
+        }
+
+        // ═══ AUTH FUNCTIONS ═══
+        async function initAuth() {
+            try {
+                const { data: { session } } = await sb.auth.getSession();
+                if (session && session.user) {
+                    await handleAuthenticatedUser(session.user);
+                }
+            } catch (err) {
+                console.error('Init auth error:', err);
+            }
+
+            // Listen for auth changes
+            sb.auth.onAuthStateChange(async (event, session) => {
+                if (event === 'SIGNED_IN' && session?.user) {
+                    await handleAuthenticatedUser(session.user);
+                } else if (event === 'SIGNED_OUT') {
+                    showLoginScreen();
+                }
+            });
+        }
+
+        async function handleAuthenticatedUser(user) {
+            supabaseUser = user;
+            const email = user.email?.toLowerCase();
+
+            // Check whitelist first
+            if (!isEmailWhitelisted(email)) {
+                showAccessDeniedScreen(email);
+                return;
+            }
+
+            // Load user profile
+            const profile = await loadUserProfile(user.id);
+            if (profile) {
+                currentProfile = profile;
+
+                // Also check role - must be master, admin, or owner
+                if (profile.role && !['master', 'admin', 'owner'].includes(profile.role)) {
+                    // Role not allowed but email whitelisted - could update role or show error
+                    // For now, allow whitelisted emails regardless of role
+                }
+
+                showMainApp(profile);
+            } else {
+                // Profile not found but email whitelisted
+                // Create minimal profile display
+                showMainApp({ email: email, first_name: email.split('@')[0] });
+            }
+        }
+
+        function isEmailWhitelisted(email) {
+            if (!email) return false;
+            return MASTER_WHITELIST.some(w => w.toLowerCase() === email.toLowerCase());
+        }
+
+        async function loadUserProfile(authId) {
+            try {
+                const { data, error } = await sb
+                    .from('users')
+                    .select('*')
+                    .eq('id', authId)
+                    .maybeSingle();
+                if (error) return null;
+                return data;
+            } catch (err) {
+                console.error('Load profile error:', err);
+                return null;
+            }
+        }
+
+        // ═══ LOGIN FLOW ═══
+        async function nextLoginStep() {
+            const btn = document.getElementById('loginBtn');
+
+            if (loginStep === 0) {
+                // Step 0: Check email is whitelisted
+                const email = document.getElementById('loginEmailInput').value.trim().toLowerCase();
+
+                if (!email.includes('@')) {
+                    setLoginStatus('Veuillez entrer un email valide', 'error');
+                    return;
+                }
+
+                // Check whitelist BEFORE attempting any auth
+                if (!isEmailWhitelisted(email)) {
+                    setLoginStatus('Email non autorise pour Master', 'error');
+                    return;
+                }
+
+                clearLoginStatus();
+                btn.disabled = true;
+                btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
+
+                try {
+                    // Check if user exists
+                    const { data: publicUser } = await sb
+                        .from('users')
+                        .select('id, first_name, email')
+                        .eq('email', email)
+                        .maybeSingle();
+
+                    if (publicUser) {
+                        setLoginStatus('Bienvenue ' + (publicUser.first_name || 'Admin') + ' !', 'success');
+                    } else {
+                        setLoginStatus('Email autorise - Connexion', 'success');
+                    }
+
+                    loginStep = 1;
+                    updateLoginUI();
+
+                } catch (error) {
+                    console.error('Check email error:', error);
+                    setLoginStatus('Erreur de connexion', 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+                }
+
+            } else if (loginStep === 1) {
+                // Step 1: Password login
+                const email = document.getElementById('loginEmailInput').value.trim();
+                const password = document.getElementById('loginPasswordInput').value;
+
+                if (!password) {
+                    setLoginStatus('Veuillez entrer votre mot de passe', 'error');
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
+                setLoginStatus('Connexion...', 'info');
+
+                try {
+                    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+                    if (error) {
+                        if (error.message.includes('Invalid login credentials')) {
+                            setLoginStatus('Email ou mot de passe incorrect', 'error');
+                        } else {
+                            setLoginStatus('Erreur: ' + error.message, 'error');
+                        }
+                        return;
+                    }
+
+                    clearLoginStatus();
+                    // handleAuthenticatedUser will be called by onAuthStateChange
+
+                } catch (error) {
+                    setLoginStatus('Erreur de connexion au serveur', 'error');
+                    console.error('Login error:', error);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+                }
+            }
+        }
+
+        function prevLoginStep() {
+            if (loginStep > 0) {
+                loginStep--;
+                clearLoginStatus();
+                updateLoginUI();
+            }
+        }
+
+        function updateLoginUI() {
+            document.getElementById('loginSlider').style.transform = `translateX(-${loginStep * 100}%)`;
+            document.getElementById('loginSphere').style.display = loginStep === 0 ? 'flex' : 'none';
+            document.getElementById('loginBack').style.display = loginStep === 0 ? 'none' : 'flex';
+
+            if (loginStep === 1) {
+                setTimeout(() => document.getElementById('loginPasswordInput').focus(), 400);
+            }
+        }
+
+        // ═══ SCREEN HELPERS ═══
+        function showLoginScreen() {
+            document.getElementById('loginScreen').classList.add('active');
+            document.getElementById('accessDeniedScreen').classList.remove('active');
+            document.getElementById('mainApp').classList.remove('active');
+            loginStep = 0;
+            updateLoginUI();
+            clearLoginStatus();
+        }
+
+        function showAccessDeniedScreen(email) {
+            document.getElementById('accessDeniedEmail').textContent = email;
+            document.getElementById('loginScreen').classList.remove('active');
+            document.getElementById('mainApp').classList.remove('active');
+            document.getElementById('accessDeniedScreen').classList.add('active');
+        }
+
+        function showMainApp(profile) {
+            document.getElementById('loginScreen').classList.remove('active');
+            document.getElementById('accessDeniedScreen').classList.remove('active');
+            document.getElementById('mainApp').classList.add('active');
+
+            // Update UI with profile info
+            const firstName = profile?.first_name || profile?.email?.split('@')[0] || 'Admin';
+            document.getElementById('userName').textContent = firstName;
+            document.getElementById('userAvatar').textContent = firstName.charAt(0).toUpperCase();
+
+            toast('Bienvenue ' + firstName + ' !');
+        }
+
+        async function logout() {
+            try {
+                await sb.auth.signOut();
+            } catch (err) {
+                console.error('Logout error:', err);
+            }
+            supabaseUser = null;
+            currentProfile = null;
+            document.getElementById('loginEmailInput').value = '';
+            document.getElementById('loginPasswordInput').value = '';
+            showLoginScreen();
+            toast('Deconnecte');
+        }
+
+        // ═══ UTILITIES ═══
+        function setLoginStatus(message, type) {
+            const status = document.getElementById('loginStatus');
+            status.textContent = message;
+            status.className = 'login-status ' + type;
+        }
+
+        function clearLoginStatus() {
+            const status = document.getElementById('loginStatus');
+            status.textContent = '';
+            status.className = 'login-status';
+        }
+
+        let toastTimeout = null;
+        function toast(message) {
+            const t = document.getElementById('toast');
+            if (!t) return;
+            t.textContent = message;
+            t.classList.add('show');
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                t.classList.remove('show');
+            }, 2000);
+        }
+
+        // ═══ INIT ═══
+        document.addEventListener('DOMContentLoaded', initSupabase);
+    </script>
+</body>
+</html>
