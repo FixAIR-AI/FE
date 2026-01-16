@@ -11378,9 +11378,10 @@ INSTRUCTIONS:
             text = text.replace(/\[REPORT_DATA\][\s\S]*?\[\/REPORT_DATA\]/g, '').trim();
 
             // ═══ EXTRACT MERMAID DIAGRAMS ═══
+            // Use %%MERMAID_X%% format to avoid conflict with markdown __ bold syntax
             const mermaidBlocks = [];
             text = text.replace(/```mermaid\n([\s\S]*?)```/g, (match, code) => {
-                const placeholder = `__MERMAID_${mermaidBlocks.length}__`;
+                const placeholder = `%%MERMAID_${mermaidBlocks.length}%%`;
                 mermaidBlocks.push(code.trim());
                 return placeholder;
             });
@@ -11395,7 +11396,7 @@ INSTRUCTIONS:
                         .replace(/</g, '&lt;')
                         .replace(/>/g, '&gt;');
                     html = html.replace(
-                        `__MERMAID_${i}__`,
+                        `%%MERMAID_${i}%%`,
                         `<div class="mermaid-placeholder" data-mermaid-code="${escapedCode}"><div class="mermaid-loading">Chargement du diagramme...</div></div>`
                     );
                 });
