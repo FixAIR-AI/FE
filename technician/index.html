@@ -6786,6 +6786,7 @@
         }
 
         async function logoutFromPending() {
+            stopLiveStatusTracking();
             await db.auth.signOut();
             localStorage.removeItem('supabase.auth.token');  // Clear manual session storage
             supabaseUser = null;
@@ -6815,9 +6816,15 @@
             await loadProjectsListAndCheckOnboarding();
             initGamification();
             prefetchApiKeys();
+
+            // Start live status tracking
+            initLiveStatusTracking();
         }
 
         async function logout() {
+            // Set offline before logging out
+            await stopLiveStatusTracking();
+
             await db.auth.signOut();
             localStorage.removeItem('supabase.auth.token');
             supabaseUser = null;
@@ -6840,6 +6847,96 @@
             document.getElementById('loginScreen').classList.add('active');
 
             toast('Déconnecté');
+        }
+
+        // ═══ LIVE STATUS TRACKING ═══
+        const IDLE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+        let idleTimer = null;
+        let currentLiveStatus = 'offline';
+
+        async function updateLiveStatus(status) {
+            if (!currentUser?.id || currentLiveStatus === status) return;
+
+            try {
+                await db
+                    .from('users')
+                    .update({
+                        live_status: status,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', currentUser.id);
+
+                currentLiveStatus = status;
+            } catch (err) {
+                console.error('Error updating live status:', err);
+            }
+        }
+
+        function resetIdleTimer() {
+            if (idleTimer) clearTimeout(idleTimer);
+
+            // Only track if user is logged in
+            if (!currentUser?.id) return;
+
+            // If was idle, set back to online
+            if (currentLiveStatus === 'idle') {
+                updateLiveStatus('online');
+            }
+
+            // Set idle after timeout
+            idleTimer = setTimeout(() => {
+                updateLiveStatus('idle');
+            }, IDLE_TIMEOUT);
+        }
+
+        function initLiveStatusTracking() {
+            // Set online when app starts
+            updateLiveStatus('online');
+
+            // Track user activity
+            const activityEvents = ['mousedown', 'keydown', 'touchstart', 'scroll'];
+            activityEvents.forEach(event => {
+                document.addEventListener(event, resetIdleTimer, { passive: true });
+            });
+
+            // Handle visibility change (tab switch)
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    updateLiveStatus('idle');
+                } else {
+                    updateLiveStatus('online');
+                    resetIdleTimer();
+                }
+            });
+
+            // Handle page close
+            window.addEventListener('beforeunload', () => {
+                // Use fetch with keepalive for reliable delivery on page close
+                if (currentUser?.id) {
+                    fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${currentUser.id}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                            'Prefer': 'return=minimal'
+                        },
+                        body: JSON.stringify({ live_status: 'offline', updated_at: new Date().toISOString() }),
+                        keepalive: true
+                    }).catch(() => {});
+                }
+            });
+
+            // Start idle timer
+            resetIdleTimer();
+        }
+
+        function stopLiveStatusTracking() {
+            if (idleTimer) {
+                clearTimeout(idleTimer);
+                idleTimer = null;
+            }
+            updateLiveStatus('offline');
         }
 
         // PROFILE
