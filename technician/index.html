@@ -2233,13 +2233,26 @@
         }
         .mermaid-error {
             background: rgba(239, 68, 68, 0.1);
-            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
             padding: 12px;
-            border-radius: 6px;
+        }
+        .mermaid-error-title {
+            color: #ef4444;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+        .mermaid-error pre {
+            background: rgba(0,0,0,0.2);
+            padding: 12px;
+            border-radius: 4px;
+            overflow-x: auto;
             font-size: 11px;
             font-family: monospace;
             white-space: pre-wrap;
-            overflow-x: auto;
+            color: var(--text-dim);
+            margin: 0;
         }
         .mermaid-error-container {
             border-color: rgba(239, 68, 68, 0.3);
@@ -6009,8 +6022,28 @@
             for (const placeholder of placeholders) {
                 if (placeholder.classList.contains('mermaid-rendered')) continue;
 
-                const code = placeholder.dataset.mermaidCode;
+                let code = placeholder.dataset.mermaidCode;
                 if (!code) continue;
+
+                // Decode HTML entities
+                code = code
+                    .replace(/&quot;/g, '"')
+                    .replace(/&lt;/g, '<')
+                    .replace(/&gt;/g, '>')
+                    .replace(/&amp;/g, '&');
+
+                // ═══ SANITIZE MERMAID CODE FOR SPECIAL CHARACTERS ═══
+                // Mermaid doesn't handle () / ' inside node labels without quotes
+                // Solution: Wrap labels containing special chars in quotes
+
+                // Fix node labels: [text with (special) chars] → ["text with (special) chars"]
+                code = code.replace(/\[([^\]"]*[()\/'][^\]"]*)\]/g, '["$1"]');
+
+                // Fix edge labels: |text with (special) chars| → |"text with (special) chars"|
+                code = code.replace(/\|([^|"]*[()\/'][^|"]*)\|/g, '|"$1"|');
+
+                // Remove any double-double quotes that might occur
+                code = code.replace(/""/g, '"');
 
                 try {
                     const id = 'mermaid-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
@@ -6019,7 +6052,8 @@
                     placeholder.classList.add('mermaid-rendered');
                 } catch (error) {
                     console.error('Mermaid render error:', error);
-                    placeholder.innerHTML = '<pre class="mermaid-error">' + code + '</pre>';
+                    console.error('Code that failed:', code);
+                    placeholder.innerHTML = '<div class="mermaid-error"><div class="mermaid-error-title">Erreur de rendu diagramme</div><pre>' + code.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre></div>';
                     placeholder.classList.add('mermaid-error-container');
                 }
             }
