@@ -6088,27 +6088,33 @@
         }
         
         // Safe query wrapper that handles AbortError with timeout
-        async function safeQuery(queryFn, retries = 3, timeoutMs = 5000) {
+        async function safeQuery(queryFn, retries = 3, timeoutMs = 30000) {
             await waitForSupabase();
-            
+
             for (let attempt = 0; attempt < retries; attempt++) {
                 try {
                     // Add timeout to prevent infinite hang
-                    const timeoutPromise = new Promise((_, reject) => 
+                    const timeoutPromise = new Promise((_, reject) =>
                         setTimeout(() => reject(new Error('Query timeout')), timeoutMs)
                     );
-                    
+
                     const result = await Promise.race([queryFn(), timeoutPromise]);
 
                     // Check if result has AbortError
                     if (result.error && result.error.message && result.error.message.includes('AbortError')) {
-                        await new Promise(r => setTimeout(r, 300 * (attempt + 1)));
+                        // Exponential backoff: 1s, 2s, 4s
+                        const delay = 1000 * Math.pow(2, attempt);
+                        console.log(`Query AbortError, retrying in ${delay}ms (attempt ${attempt + 1}/${retries})`);
+                        await new Promise(r => setTimeout(r, delay));
                         continue;
                     }
                     return result;
                 } catch (err) {
                     if ((err.message.includes('AbortError') || err.message.includes('timeout')) && attempt < retries - 1) {
-                        await new Promise(r => setTimeout(r, 300 * (attempt + 1)));
+                        // Exponential backoff: 1s, 2s, 4s
+                        const delay = 1000 * Math.pow(2, attempt);
+                        console.log(`Query timeout, retrying in ${delay}ms (attempt ${attempt + 1}/${retries})`);
+                        await new Promise(r => setTimeout(r, delay));
                         continue;
                     }
                     // Don't throw, return error object
@@ -6177,14 +6183,15 @@
         // Returns { data, error, isTimeout } to distinguish timeout from other errors
         async function loadUserProfile(authId) {
             try {
-                // Use 15 second timeout with 3 retries for profile loading
+                // Use 30 second timeout with 3 retries for profile loading
+                // Total max wait: 30s + 30s + 30s + backoff delays = ~97s
                 const { data, error } = await safeQuery(() =>
                     db.from('users')
                       .select('*')
                       .eq('id', authId)
                       .single(),
                     3,      // retries
-                    15000   // 15 second timeout
+                    30000   // 30 second timeout
                 );
 
                 if (error) {
