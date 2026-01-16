@@ -53,9 +53,10 @@
         .svg-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
 
         /* ═══ AUTH SCREENS ═══ */
-        .screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: none; flex-direction: column; background: var(--bg); background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px); background-size: 32px 32px; z-index: 1; }
+        .screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: none; flex-direction: column; background: var(--bg); background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px); background-size: 32px 32px; z-index: 9000; }
         .screen.active { display: flex; }
-        .main-app { height: 100%; }
+        .main-app { height: 100%; display: none; }
+        .main-app.active { display: flex; flex-direction: column; }
 
         /* LOGIN SCREEN */
         .login-screen { justify-content: center; align-items: center; padding: 24px; }
@@ -149,8 +150,6 @@
         .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
         /* ═══ MAIN APP STYLES ═══ */
-        .main-app { display: none; }
-        .main-app.active { display: flex; flex-direction: column; height: 100vh; }
 
         .app-header {
             display: flex;
