@@ -11378,6 +11378,23 @@ INSTRUCTIONS:
                 return placeholder;
             });
 
+            // ═══ HELPER: Restore mermaid placeholders - MUST be called on ALL return paths ═══
+            function restoreMermaid(html) {
+                if (mermaidBlocks.length === 0) return html;
+                mermaidBlocks.forEach((code, i) => {
+                    const escapedCode = code
+                        .replace(/&/g, '&amp;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;');
+                    html = html.replace(
+                        `__MERMAID_${i}__`,
+                        `<div class="mermaid-placeholder" data-mermaid-code="${escapedCode}"><div class="mermaid-loading">Chargement du diagramme...</div></div>`
+                    );
+                });
+                return html;
+            }
+
             // ═══ CHECK FOR JSON REPORT ═══
             // If the AI returns structured JSON, use the beautiful template
             let trimmed = text.trim();
@@ -11395,7 +11412,7 @@ INSTRUCTIONS:
                             const introMatch = trimmed.match(/^([\s\S]*?)```/);
                             const introText = introMatch ? introMatch[1].trim() : '';
                             const reportHtml = renderReport(jsonData.data || jsonData);
-                            return introText ? `<p>${introText.replace(/\n/g, '<br>')}</p>${reportHtml}` : reportHtml;
+                            return restoreMermaid(introText ? `<p>${introText.replace(/\n/g, '<br>')}</p>${reportHtml}` : reportHtml);
                         }
                     } catch (e) {
                         // Code block is not valid JSON report
@@ -11408,7 +11425,7 @@ INSTRUCTIONS:
                 try {
                     const jsonData = JSON.parse(trimmed);
                     if (jsonData.type === 'report' || jsonData.resume || jsonData.travaux_effectues || jsonData.resultat) {
-                        return renderReport(jsonData.data || jsonData);
+                        return restoreMermaid(renderReport(jsonData.data || jsonData));
                     }
                 } catch (e) {
                     // Not valid JSON, parsing as markdown
@@ -11422,7 +11439,7 @@ INSTRUCTIONS:
                     const jsonData = JSON.parse(embeddedJsonMatch[2]);
                     const introText = embeddedJsonMatch[1].trim();
                     const reportHtml = renderReport(jsonData.data || jsonData);
-                    return introText ? `<p>${introText.replace(/\n/g, '<br>')}</p>${reportHtml}` : reportHtml;
+                    return restoreMermaid(introText ? `<p>${introText.replace(/\n/g, '<br>')}</p>${reportHtml}` : reportHtml);
                 } catch (e) {
                     // Embedded JSON parse failed
                 }
@@ -11575,12 +11592,6 @@ INSTRUCTIONS:
                 html = html.replace(/<p><\/p>/g, '');
                 html = html.replace(/<p><br><\/p>/g, '');
 
-                // Restore mermaid diagrams with placeholders for rendering
-                mermaidBlocks.forEach((code, i) => {
-                    const escapedCode = code.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                    html = html.replace(`__MERMAID_${i}__`, `<div class="mermaid-placeholder" data-mermaid-code="${escapedCode}"><div class="mermaid-loading">Chargement du diagramme...</div></div>`);
-                });
-
                 return html;
             }
 
@@ -11619,10 +11630,10 @@ INSTRUCTIONS:
                 </div>`;
                 
                 result += '<div class="report-card">' + menuHtml + reportHtml + '</div>';
-                return result;
+                return restoreMermaid(result);
             }
-            
-            return processMarkdown(text);
+
+            return restoreMermaid(processMarkdown(text));
         }
         
         // Add loading message
