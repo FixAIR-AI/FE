@@ -6894,36 +6894,6 @@
                 console.log('Cannot save to Supabase - no userId or db not available');
             }
 
-            // ═══ ALSO TRY n8n API (if endpoint exists) ═══
-            if (savedUser.id && authToken && !dbSaveSuccess) {
-                try {
-                    console.log('Trying n8n API fallback...');
-                    const response = await fetch(`${API_BASE}/auth/update-profile`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${authToken}`
-                        },
-                        body: JSON.stringify({
-                            user_id: savedUser.id,
-                            first_name: firstName,
-                            last_name: lastName,
-                            phone: phone,
-                            language: language
-                        })
-                    });
-
-                    if (response.ok) {
-                        dbSaveSuccess = true;
-                        console.log('Profile saved via n8n API');
-                    } else {
-                        console.log('n8n API response not ok:', response.status);
-                    }
-                } catch (error) {
-                    console.log('n8n API not available:', error.message);
-                }
-            }
-
             console.log('=== SAVE COMPLETE ===');
             console.log('DB save success:', dbSaveSuccess);
 
