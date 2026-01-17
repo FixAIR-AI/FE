@@ -6042,7 +6042,9 @@
                     persistSession: true,
                     autoRefreshToken: true,
                     detectSessionInUrl: false,
-                    storageKey: 'fixair-auth'
+                    storageKey: 'fixair-tech-auth',
+                    flowType: 'implicit',
+                    lock: false  // CRITICAL: Prevents AbortError
                 }
             });
             supabaseReady = true;
@@ -6102,69 +6104,170 @@
             await getApiKey('elevenlabs_api_key');
         }
 
-        // ═══ LOAD USER PROFILE (SIMPLIFIED) ═══
-        async function loadUserProfile(userId) {
-            const { data, error } = await db
-                .from('users')
-                .select('*')
-                .eq('id', userId)
-                .single();
+        // ═══ USER-SPECIFIC URL ROUTING ═══
+        // URL Structure:
+        // /technician              → Login prompt (enter email)
+        // /technician/[userId]     → User's dashboard
 
-            if (error) {
-                console.error('Error loading profile:', error);
-                return null;
+        async function init() {
+            console.log('=== TECHNICIAN APP INIT ===');
+
+            // Get path parts from URL
+            const pathParts = window.location.pathname.split('/').filter(Boolean);
+            console.log('Path parts:', pathParts);
+
+            // /technician (no user) → show login prompt
+            if (pathParts.length === 1 && pathParts[0] === 'technician') {
+                showLoginPrompt();
+                return;
             }
 
-            currentUser = data;
-            return data;
+            // /technician/[userId] → load that user's dashboard
+            if (pathParts.length >= 2 && pathParts[0] === 'technician') {
+                const userSlug = pathParts[1];
+                console.log('Loading user dashboard:', userSlug);
+                await loadUserDashboard(userSlug);
+                return;
+            }
+
+            // Unknown path - show login prompt
+            showLoginPrompt();
         }
 
-        // ═══ SIMPLE INIT - Check session and show app or redirect ═══
-        async function init() {
-            console.log('Initializing app...');
+        function showLoginPrompt() {
+            document.body.innerHTML = `
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#0a0a0a;color:white;font-family:system-ui;">
+                    <h1 style="color:#FF6B35;font-size:2.5rem;margin-bottom:10px;">🔧 FixAIR Technician</h1>
+                    <p style="margin:20px 0;color:#888;">Entrez votre email pour accéder à votre tableau de bord</p>
+                    <input type="email" id="emailInput" placeholder="votre@email.com"
+                        style="padding:15px;width:300px;border-radius:8px;border:1px solid #333;background:#111;color:white;font-size:16px;">
+                    <button onclick="findUserAndRedirect()"
+                        style="margin-top:15px;padding:15px 40px;background:#FF6B35;color:white;border:none;border-radius:8px;cursor:pointer;font-size:16px;font-weight:bold;">
+                        Accéder →
+                    </button>
+                    <p id="errorMsg" style="color:#ef4444;margin-top:15px;display:none;"></p>
+                    <p style="margin-top:40px;color:#555;font-size:12px;">Pas encore de compte ? <a href="/auth" style="color:#FF6B35;">Créer un compte</a></p>
+                </div>
+            `;
 
-            const { data: { session } } = await db.auth.getSession();
+            // Enter key support
+            document.getElementById('emailInput')?.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') findUserAndRedirect();
+            });
+        }
 
-            if (session && session.user) {
-                console.log('Session found, loading user profile...');
-                supabaseUser = session.user;
+        async function findUserAndRedirect() {
+            const email = document.getElementById('emailInput').value.trim().toLowerCase();
+            const errorMsg = document.getElementById('errorMsg');
 
-                // Load user profile
-                const profile = await loadUserProfile(session.user.id);
+            if (!email) {
+                errorMsg.textContent = 'Veuillez entrer votre email';
+                errorMsg.style.display = 'block';
+                return;
+            }
 
-                if (profile) {
-                    // Populate UI
-                    document.getElementById('userName').textContent = profile.first_name || 'Utilisateur';
-                    document.getElementById('profileFirstName').value = profile.first_name || '';
-                    document.getElementById('profileLastName').value = profile.last_name || '';
-                    if (profile.email) document.getElementById('profileEmail').value = profile.email;
-                    if (profile.phone) document.getElementById('profilePhone').value = profile.phone;
+            console.log('Looking up user:', email);
 
-                    // Load language preference
-                    if (profile.language && (profile.language === 'fr' || profile.language === 'en')) {
-                        setLanguage(profile.language);
-                    }
+            try {
+                // Find user by email
+                const { data: user, error } = await db
+                    .from('users')
+                    .select('id, email, first_name, last_name, status, role')
+                    .eq('email', email)
+                    .single();
 
-                    // Check onboarding status
-                    const onboardingDoneLocal = localStorage.getItem('fixair_onboarding_done');
-                    const onboardingDoneDB = profile.onboarding_done;
-                    if (onboardingDoneLocal || onboardingDoneDB) {
-                        onboardingComplete = true;
-                        document.querySelector('.onboarding-section')?.classList.add('hidden');
-                        document.getElementById('homepageContent')?.classList.add('active');
-                    }
+                console.log('User lookup result:', { user, error });
 
-                    // Show main app
-                    showMainApp();
-                } else {
-                    // Profile not found - redirect to auth
-                    console.log('Profile not found, redirecting to /auth');
-                    window.location.href = '/auth';
+                if (error || !user) {
+                    errorMsg.textContent = 'Email non trouvé. Veuillez créer un compte.';
+                    errorMsg.style.display = 'block';
+                    return;
                 }
-            } else {
-                // No session - redirect to auth
-                console.log('No session, redirecting to /auth');
-                window.location.href = '/auth';
+
+                if (user.role !== 'technician') {
+                    errorMsg.textContent = 'Cette app est réservée aux techniciens. Votre rôle: ' + user.role;
+                    errorMsg.style.display = 'block';
+                    return;
+                }
+
+                if (user.status !== 'approved' && user.status !== 'active') {
+                    errorMsg.textContent = 'Votre compte est: ' + user.status + '. Veuillez attendre l\'approbation.';
+                    errorMsg.style.display = 'block';
+                    return;
+                }
+
+                // Redirect to user-specific URL
+                window.location.href = '/technician/' + user.id;
+
+            } catch (err) {
+                console.error('Lookup error:', err);
+                errorMsg.textContent = 'Erreur de connexion. Veuillez réessayer.';
+                errorMsg.style.display = 'block';
+            }
+        }
+
+        async function loadUserDashboard(userSlug) {
+            console.log('Loading dashboard for:', userSlug);
+
+            try {
+                // Load user profile by ID
+                const { data: user, error } = await db
+                    .from('users')
+                    .select('*')
+                    .eq('id', userSlug)
+                    .single();
+
+                if (error || !user) {
+                    console.error('User not found:', error);
+                    document.body.innerHTML = `
+                        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#0a0a0a;color:white;font-family:system-ui;">
+                            <h1 style="color:#FF6B35;">Utilisateur non trouvé</h1>
+                            <p style="color:#888;margin:20px 0;">L'ID utilisateur n'existe pas.</p>
+                            <a href="/technician" style="color:#FF6B35;margin-top:20px;">← Retour à la connexion</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                console.log('User loaded:', user.email);
+
+                // Set global user variables
+                currentUser = user;
+                supabaseUser = user;
+
+                // Populate UI
+                document.getElementById('userName').textContent = user.first_name || 'Utilisateur';
+                document.getElementById('profileFirstName').value = user.first_name || '';
+                document.getElementById('profileLastName').value = user.last_name || '';
+                if (user.email) document.getElementById('profileEmail').value = user.email;
+                if (user.phone) document.getElementById('profilePhone').value = user.phone;
+
+                // Load language preference
+                if (user.language && (user.language === 'fr' || user.language === 'en')) {
+                    setLanguage(user.language);
+                }
+
+                // Check onboarding status
+                const onboardingDoneLocal = localStorage.getItem('fixair_onboarding_done');
+                const onboardingDoneDB = user.onboarding_done;
+                if (onboardingDoneLocal || onboardingDoneDB) {
+                    onboardingComplete = true;
+                    document.querySelector('.onboarding-section')?.classList.add('hidden');
+                    document.getElementById('homepageContent')?.classList.add('active');
+                }
+
+                // Show main app
+                showMainApp();
+
+            } catch (err) {
+                console.error('Dashboard load error:', err);
+                document.body.innerHTML = `
+                    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#0a0a0a;color:white;font-family:system-ui;">
+                        <h1 style="color:#FF6B35;">Erreur</h1>
+                        <p style="color:#888;margin:20px 0;">${err.message}</p>
+                        <button onclick="location.reload()" style="margin-top:20px;padding:10px 20px;background:#FF6B35;color:white;border:none;border-radius:5px;cursor:pointer;">Réessayer</button>
+                    </div>
+                `;
             }
         }
 
@@ -6181,21 +6284,21 @@
             console.log('App loaded successfully');
         }
 
-
-        // ═══ SIMPLE LOGOUT ═══
+        // ═══ LOGOUT ═══
         async function logout() {
             await stopLiveStatusTracking();
             await db.auth.signOut();
-            localStorage.removeItem('fixair-auth');
+            localStorage.removeItem('fixair-tech-auth');
             supabaseUser = null;
             currentUser = null;
             onboardingComplete = false;
             localStorage.removeItem('fixair_onboarding_done');
-            window.location.href = '/auth';
+            // Go back to login prompt (not /auth)
+            window.location.href = '/technician';
         }
 
         // ═══ INITIALIZE APP ON PAGE LOAD ═══
-        setTimeout(() => init(), 300);
+        document.addEventListener('DOMContentLoaded', init);
 
         // ═══ LIVE STATUS TRACKING ═══
         const IDLE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
