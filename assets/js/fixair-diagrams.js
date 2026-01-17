@@ -1,22 +1,17 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
- * FIXAIR DIAGRAM SYSTEM - MERMAID CONFIGURATION & UTILITIES
- * Version: 2.0.0
+ * FIXAIR DIAGRAM SYSTEM - MERMAID CONFIGURATION
+ * Version: 2.1.0
  * 
- * This file initializes Mermaid with FixAIR premium styling and provides
- * utility functions for rendering diagrams in chat responses.
+ * This file initializes Mermaid with FixAIR premium styling.
+ * The styling is applied via themeVariables which Mermaid uses to generate
+ * inline SVG styles. External CSS cannot override these, so configuration
+ * must be done here.
  * 
  * USAGE:
- * 1. Include Mermaid CDN BEFORE this file:
- *    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
- * 
- * 2. Include this file:
- *    <script src="fixair-diagrams.js"></script>
- * 
- * 3. Mermaid will auto-initialize on page load
- * 
- * 4. For dynamic content, call: FixAIRDiagrams.render(element)
- * 
+ * 1. Include Mermaid CDN BEFORE this file
+ * 2. Include this file
+ * 3. For dynamic content, call: FixAIRDiagrams.render(element)
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
@@ -25,139 +20,240 @@
 
     // ─────────────────────────────────────────────────────────────────────────────
     // MERMAID CONFIGURATION - Premium FixAIR Theme
+    // These themeVariables generate inline SVG styles
     // ─────────────────────────────────────────────────────────────────────────────
     const MERMAID_CONFIG = {
         startOnLoad: true,
         theme: 'base',
         securityLevel: 'loose',
+        fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
         
+        // ═══════════════════════════════════════════════════════════════════════
+        // THEME VARIABLES - These control the inline SVG styles Mermaid generates
+        // ═══════════════════════════════════════════════════════════════════════
         themeVariables: {
-            // Backgrounds - TRANSPARENT
+            // ─────────────────────────────────────────────────────────────────────
+            // BACKGROUNDS
+            // ─────────────────────────────────────────────────────────────────────
             background: 'transparent',
-            mainBkg: 'transparent',
+            mainBkg: '#18181b',              // Node fill color
+            secondaryBkg: '#18181b',
+            tertiaryBkg: '#1f1f23',
             
-            // Nodes
-            primaryColor: '#18181b',
-            primaryTextColor: '#fafafa',
-            primaryBorderColor: 'rgba(255, 255, 255, 0.1)',
+            // ─────────────────────────────────────────────────────────────────────
+            // PRIMARY COLORS (Nodes)
+            // ─────────────────────────────────────────────────────────────────────
+            primaryColor: '#18181b',          // Node background - CRITICAL!
+            primaryTextColor: '#fafafa',      // Node text
+            primaryBorderColor: 'rgba(255, 255, 255, 0.12)', // Node border
             
+            // ─────────────────────────────────────────────────────────────────────
+            // SECONDARY COLORS
+            // ─────────────────────────────────────────────────────────────────────
             secondaryColor: '#18181b',
             secondaryTextColor: '#fafafa',
+            secondaryBorderColor: 'rgba(255, 255, 255, 0.1)',
             
+            // ─────────────────────────────────────────────────────────────────────
+            // TERTIARY COLORS
+            // ─────────────────────────────────────────────────────────────────────
             tertiaryColor: '#1f1f23',
-            tertiaryTextColor: '#71717a',
+            tertiaryTextColor: '#a1a1aa',
+            tertiaryBorderColor: 'rgba(255, 255, 255, 0.08)',
             
-            // Clusters
+            // ─────────────────────────────────────────────────────────────────────
+            // NODE SPECIFIC
+            // ─────────────────────────────────────────────────────────────────────
+            nodeBorder: 'rgba(255, 255, 255, 0.12)',
+            nodeTextColor: '#fafafa',
+            
+            // ─────────────────────────────────────────────────────────────────────
+            // LINES / EDGES
+            // ─────────────────────────────────────────────────────────────────────
+            lineColor: '#52525b',             // Edge/arrow color
+            
+            // ─────────────────────────────────────────────────────────────────────
+            // EDGE LABELS
+            // ─────────────────────────────────────────────────────────────────────
+            edgeLabelBackground: 'transparent',
+            
+            // ─────────────────────────────────────────────────────────────────────
+            // CLUSTERS / SUBGRAPHS
+            // ─────────────────────────────────────────────────────────────────────
             clusterBkg: 'rgba(255, 255, 255, 0.02)',
             clusterBorder: 'rgba(255, 255, 255, 0.05)',
             
-            // Lines
-            lineColor: '#3f3f46',
-            
-            // Edge labels - TRANSPARENT for state diagrams
-            edgeLabelBackground: 'transparent',
-            
-            // Notes
+            // ─────────────────────────────────────────────────────────────────────
+            // NOTES
+            // ─────────────────────────────────────────────────────────────────────
             noteBkgColor: '#18181b',
-            noteBorderColor: 'rgba(255, 255, 255, 0.08)',
+            noteBorderColor: 'rgba(255, 255, 255, 0.1)',
             noteTextColor: '#a1a1aa',
             
-            // Actors (sequence diagrams)
+            // ─────────────────────────────────────────────────────────────────────
+            // SEQUENCE DIAGRAM - ACTORS
+            // ─────────────────────────────────────────────────────────────────────
             actorBkg: '#18181b',
             actorBorder: 'rgba(255, 255, 255, 0.12)',
             actorTextColor: '#fafafa',
             actorLineColor: '#27272a',
             
-            // Signals
+            // ─────────────────────────────────────────────────────────────────────
+            // SEQUENCE DIAGRAM - SIGNALS
+            // ─────────────────────────────────────────────────────────────────────
             signalColor: '#52525b',
             signalTextColor: '#e4e4e7',
             
-            // State diagram
-            labelBoxBkgColor: 'transparent',
-            labelBoxBorderColor: 'transparent',
+            // ─────────────────────────────────────────────────────────────────────
+            // SEQUENCE DIAGRAM - LABELS
+            // ─────────────────────────────────────────────────────────────────────
+            labelBoxBkgColor: '#18181b',
+            labelBoxBorderColor: 'rgba(255, 255, 255, 0.08)',
             labelTextColor: '#71717a',
             
-            // Grid (Gantt)
-            gridColor: '#1f1f23',
+            // ─────────────────────────────────────────────────────────────────────
+            // SEQUENCE DIAGRAM - LOOPS
+            // ─────────────────────────────────────────────────────────────────────
+            loopTextColor: '#71717a',
             
-            // Font
+            // ─────────────────────────────────────────────────────────────────────
+            // SEQUENCE DIAGRAM - ACTIVATION
+            // ─────────────────────────────────────────────────────────────────────
+            activationBkgColor: '#1f1f23',
+            activationBorderColor: 'rgba(255, 255, 255, 0.1)',
+            
+            // ─────────────────────────────────────────────────────────────────────
+            // STATE DIAGRAM
+            // ─────────────────────────────────────────────────────────────────────
+            labelBackgroundColor: 'transparent',
+            
+            // ─────────────────────────────────────────────────────────────────────
+            // GANTT
+            // ─────────────────────────────────────────────────────────────────────
+            gridColor: '#1f1f23',
+            doneTaskBkgColor: '#18181b',
+            doneTaskBorderColor: '#22c55e',
+            activeTaskBkgColor: '#18181b',
+            activeTaskBorderColor: '#f97316',
+            taskBkgColor: '#18181b',
+            taskBorderColor: 'rgba(255, 255, 255, 0.08)',
+            taskTextColor: '#fafafa',
+            sectionBkgColor: 'rgba(255, 255, 255, 0.02)',
+            
+            // ─────────────────────────────────────────────────────────────────────
+            // PIE CHART
+            // ─────────────────────────────────────────────────────────────────────
+            pie1: '#f97316',
+            pie2: '#22c55e',
+            pie3: '#3b82f6',
+            pie4: '#a855f7',
+            pie5: '#ef4444',
+            pie6: '#eab308',
+            pie7: '#06b6d4',
+            pieStrokeColor: '#09090b',
+            pieStrokeWidth: '2px',
+            pieOpacity: '1',
+            pieTitleTextColor: '#fafafa',
+            pieSectionTextColor: '#fafafa',
+            pieLegendTextColor: '#a1a1aa',
+            
+            // ─────────────────────────────────────────────────────────────────────
+            // ER DIAGRAM
+            // ─────────────────────────────────────────────────────────────────────
+            entityBkg: '#18181b',
+            entityBorder: 'rgba(255, 255, 255, 0.1)',
+            
+            // ─────────────────────────────────────────────────────────────────────
+            // TYPOGRAPHY
+            // ─────────────────────────────────────────────────────────────────────
             fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
-            fontSize: '16px'
+            fontSize: '14px'
         },
         
-        // Flowchart settings
+        // ═══════════════════════════════════════════════════════════════════════
+        // FLOWCHART SETTINGS
+        // ═══════════════════════════════════════════════════════════════════════
         flowchart: {
             useMaxWidth: true,
             htmlLabels: true,
             curve: 'basis',
-            nodeSpacing: 80,
-            rankSpacing: 80,
-            padding: 30,
+            nodeSpacing: 50,
+            rankSpacing: 60,
+            padding: 20,
             diagramPadding: 20
         },
         
-        // Sequence diagram settings - EXTRA LARGE
+        // ═══════════════════════════════════════════════════════════════════════
+        // SEQUENCE DIAGRAM SETTINGS
+        // ═══════════════════════════════════════════════════════════════════════
         sequence: {
             useMaxWidth: true,
-            diagramMarginX: 80,
-            diagramMarginY: 50,
-            actorMargin: 120,
-            width: 280,
-            height: 80,
-            messageMargin: 80,
-            boxMargin: 40,
-            boxTextMargin: 15,
-            noteMargin: 30,
+            diagramMarginX: 50,
+            diagramMarginY: 30,
+            actorMargin: 80,
+            width: 180,
+            height: 60,
+            messageMargin: 50,
+            boxMargin: 20,
+            boxTextMargin: 10,
+            noteMargin: 20,
             mirrorActors: false,
             showSequenceNumbers: true,
-            actorFontSize: 18,
-            messageFontSize: 16,
-            noteFontSize: 15
+            actorFontSize: 16,
+            messageFontSize: 14,
+            noteFontSize: 13
         },
         
-        // ER diagram settings
+        // ═══════════════════════════════════════════════════════════════════════
+        // STATE DIAGRAM SETTINGS
+        // ═══════════════════════════════════════════════════════════════════════
+        state: {
+            useMaxWidth: true,
+            nodeSpacing: 50,
+            rankSpacing: 50
+        },
+        
+        // ═══════════════════════════════════════════════════════════════════════
+        // ER DIAGRAM SETTINGS
+        // ═══════════════════════════════════════════════════════════════════════
         er: {
             useMaxWidth: true,
             layoutDirection: 'TB',
-            minEntityWidth: 180,
-            minEntityHeight: 100,
-            entityPadding: 30,
+            minEntityWidth: 150,
+            minEntityHeight: 80,
+            entityPadding: 20,
             fontSize: 14
         },
         
-        // State diagram settings
-        state: {
-            useMaxWidth: true,
-            nodeSpacing: 80,
-            rankSpacing: 80,
-            labelBoxBkgColor: 'transparent',
-            labelBoxBorderColor: 'transparent'
-        },
-        
-        // Gantt chart settings
+        // ═══════════════════════════════════════════════════════════════════════
+        // GANTT SETTINGS
+        // ═══════════════════════════════════════════════════════════════════════
         gantt: {
             useMaxWidth: true,
-            barHeight: 40,
-            barGap: 10,
-            topPadding: 80,
-            leftPadding: 160,
-            gridLineStartPadding: 50,
-            fontSize: 14,
-            sectionFontSize: 16,
+            barHeight: 30,
+            barGap: 8,
+            topPadding: 60,
+            leftPadding: 120,
+            gridLineStartPadding: 40,
+            fontSize: 13,
+            sectionFontSize: 14,
             numberSectionStyles: 4
         },
         
-        // Class diagram settings
-        class: {
+        // ═══════════════════════════════════════════════════════════════════════
+        // PIE CHART SETTINGS
+        // ═══════════════════════════════════════════════════════════════════════
+        pie: {
             useMaxWidth: true
         },
         
-        // Pie chart settings
-        pie: {
+        // ═══════════════════════════════════════════════════════════════════════
+        // CLASS DIAGRAM SETTINGS
+        // ═══════════════════════════════════════════════════════════════════════
+        class: {
             useMaxWidth: true
         }
     };
-
 
     // ─────────────────────────────────────────────────────────────────────────────
     // FIXAIR DIAGRAMS NAMESPACE
@@ -166,25 +262,79 @@
         
         /**
          * Initialize Mermaid with FixAIR configuration
-         * Called automatically on load, but can be called manually if needed
          */
         init: function() {
             if (typeof mermaid === 'undefined') {
-                console.error('[FixAIR Diagrams] Mermaid library not found. Please include Mermaid CDN before this script.');
+                console.error('[FixAIR Diagrams] Mermaid library not found.');
                 return false;
             }
             
             mermaid.initialize(MERMAID_CONFIG);
-            console.log('[FixAIR Diagrams] Initialized with premium theme');
+            console.log('[FixAIR Diagrams] Initialized with premium theme ✓');
             return true;
         },
         
         /**
-         * Re-render all mermaid diagrams in a container
+         * Sanitize Mermaid code to fix common AI syntax errors
+         * Fixes: accents, parentheses, subgraph names, slashes
+         */
+        sanitize: function(code) {
+            let sanitized = code;
+            
+            // 1. Fix subgraph names with accents/special chars
+            sanitized = sanitized.replace(
+                /subgraph\s+([^[\n]+?)(?=\n)/g,
+                function(match, name) {
+                    if (name.includes('[')) return match;
+                    const id = name.trim()
+                        .toUpperCase()
+                        .replace(/[^A-Z0-9]/g, '_')
+                        .substring(0, 20);
+                    const displayName = name.trim()
+                        .replace(/[()]/g, '')
+                        .replace(/[éèêë]/g, 'e')
+                        .replace(/[àâä]/g, 'a')
+                        .replace(/[ùûü]/g, 'u')
+                        .replace(/[ôö]/g, 'o')
+                        .replace(/[îï]/g, 'i')
+                        .replace(/[ç]/g, 'c')
+                        .replace(/'/g, '');
+                    return 'subgraph ' + id + '[" ' + displayName + ' "]';
+                }
+            );
+            
+            // 2. Fix edge labels with parentheses
+            sanitized = sanitized.replace(
+                /\|([^|"]+\([^)]+\)[^|]*)\|/g,
+                function(match, content) {
+                    return '|"' + content.replace(/[()]/g, '') + '"|';
+                }
+            );
+            
+            // 3. Fix node labels with unquoted parentheses
+            sanitized = sanitized.replace(
+                /\[([^\]"]+\([^)]+\)[^\]]*)\]/g,
+                function(match, content) {
+                    return '[' + content.replace(/[()]/g, '') + ']';
+                }
+            );
+            
+            // 4. Fix slashes in node labels
+            sanitized = sanitized.replace(
+                /\[([^\]]*?)\/([^\]]*?)\]/g,
+                '[$1-$2]'
+            );
+            
+            // 5. Remove style commands (CSS handles styling)
+            sanitized = sanitized.replace(/^\s*style\s+.+$/gm, '');
+            sanitized = sanitized.replace(/^\s*classDef\s+.+$/gm, '');
+            
+            return sanitized;
+        },
+        
+        /**
+         * Render all mermaid diagrams in a container
          * Use this for dynamically added content (e.g., chat messages)
-         * Automatically sanitizes code to fix common AI syntax errors
-         * 
-         * @param {HTMLElement|string} container - DOM element or selector
          */
         render: async function(container) {
             const el = typeof container === 'string' 
@@ -197,39 +347,31 @@
             }
             
             try {
-                // Find all mermaid elements
+                // Find unprocessed mermaid elements
                 const mermaidEls = el.querySelectorAll('.mermaid:not([data-processed])');
                 
-                // Sanitize each element's code before rendering
-                for (const mermaidEl of mermaidEls) {
-                    const originalCode = mermaidEl.textContent;
-                    const sanitizedCode = this.sanitize(originalCode);
-                    
-                    if (originalCode !== sanitizedCode) {
-                        console.log('[FixAIR Diagrams] Sanitized code:', sanitizedCode);
-                        mermaidEl.textContent = sanitizedCode;
+                // Sanitize code before rendering
+                mermaidEls.forEach(function(mermaidEl) {
+                    const original = mermaidEl.textContent;
+                    const sanitized = FixAIRDiagrams.sanitize(original);
+                    if (original !== sanitized) {
+                        mermaidEl.textContent = sanitized;
+                        console.log('[FixAIR Diagrams] Sanitized code');
                     }
-                }
-                
-                // Now render
-                await mermaid.run({
-                    nodes: el.querySelectorAll('.mermaid:not([data-processed])')
                 });
-                console.log('[FixAIR Diagrams] Rendered diagrams in container');
+                
+                // Render
+                if (mermaidEls.length > 0) {
+                    await mermaid.run({ nodes: mermaidEls });
+                    console.log('[FixAIR Diagrams] Rendered', mermaidEls.length, 'diagram(s) ✓');
+                }
             } catch (error) {
                 console.error('[FixAIR Diagrams] Render error:', error);
-                console.error('[FixAIR Diagrams] Failed code might need manual review');
             }
         },
         
         /**
-         * Render a single mermaid diagram from code
-         * Automatically sanitizes code to fix AI syntax errors
-         * 
-         * @param {string} code - Mermaid diagram code
-         * @param {HTMLElement} container - Target container element
-         * @param {string} id - Optional unique ID for the diagram
-         * @returns {Promise<string>} - Rendered SVG string
+         * Render a single diagram from code string
          */
         renderCode: async function(code, container, id) {
             const diagramId = id || 'fd-diagram-' + Date.now();
@@ -237,24 +379,18 @@
             
             try {
                 const { svg } = await mermaid.render(diagramId, sanitizedCode);
-                
                 if (container) {
                     container.innerHTML = svg;
                 }
-                
                 return svg;
             } catch (error) {
                 console.error('[FixAIR Diagrams] Code render error:', error);
-                console.error('[FixAIR Diagrams] Code that failed:', sanitizedCode);
                 throw error;
             }
         },
         
         /**
-         * Parse AI response and extract mermaid code blocks
-         * 
-         * @param {string} content - AI response content
-         * @returns {Array} - Array of {type: 'mermaid', code: '...'} objects
+         * Parse content and extract mermaid code blocks
          */
         parseContent: function(content) {
             const diagrams = [];
@@ -273,18 +409,14 @@
         },
         
         /**
-         * Process a chat message and render any mermaid diagrams
-         * Replaces mermaid code blocks with rendered diagrams
-         * Automatically sanitizes code to fix AI syntax errors
-         * 
-         * @param {HTMLElement} messageElement - Chat message element
+         * Process a chat message and render mermaid diagrams
          */
         processMessage: async function(messageElement) {
             const mermaidBlocks = messageElement.querySelectorAll('pre code.language-mermaid, .mermaid-code');
             
             for (const block of mermaidBlocks) {
-                const originalCode = block.textContent;
-                const sanitizedCode = this.sanitize(originalCode);
+                const code = block.textContent;
+                const sanitizedCode = this.sanitize(code);
                 
                 const wrapper = document.createElement('div');
                 wrapper.className = 'fd-diagram-box fd-compact';
@@ -294,251 +426,67 @@
                 
                 const mermaidDiv = document.createElement('div');
                 mermaidDiv.className = 'mermaid';
-                mermaidDiv.textContent = sanitizedCode; // Use sanitized code
+                mermaidDiv.textContent = sanitizedCode;
                 
                 content.appendChild(mermaidDiv);
                 wrapper.appendChild(content);
                 
-                // Replace the code block with diagram
                 block.parentElement.replaceWith(wrapper);
             }
             
-            // Render any new mermaid elements
             await this.render(messageElement);
         },
         
         /**
-         * Create a diagram container with label
-         * 
-         * @param {string} label - Diagram label text
-         * @param {string} size - Size variant: 'compact', 'normal', 'large'
-         * @returns {HTMLElement} - Container element with label
+         * Get configuration (for debugging)
          */
-        createContainer: function(label, size = 'normal') {
-            const box = document.createElement('div');
-            box.className = 'fd-diagram-box';
-            
-            if (size === 'compact') {
-                box.classList.add('fd-compact');
-            } else if (size === 'large') {
-                box.classList.add('fd-extra-large');
-            }
-            
-            if (label) {
-                const labelEl = document.createElement('div');
-                labelEl.className = 'fd-diagram-label';
-                labelEl.textContent = label;
-                box.appendChild(labelEl);
-            }
-            
-            const content = document.createElement('div');
-            content.className = 'fd-diagram-content';
-            box.appendChild(content);
-            
-            return box;
+        getConfig: function() {
+            return { ...MERMAID_CONFIG };
         },
         
         /**
-         * Detect diagram type from mermaid code
-         * 
-         * @param {string} code - Mermaid diagram code
-         * @returns {string} - Diagram type
+         * Detect diagram type from code
          */
         detectType: function(code) {
             const firstLine = code.trim().split('\n')[0].toLowerCase();
             
-            if (firstLine.includes('flowchart') || firstLine.includes('graph')) {
-                return 'flowchart';
-            } else if (firstLine.includes('sequencediagram') || firstLine.includes('sequence')) {
-                return 'sequence';
-            } else if (firstLine.includes('erdiagram') || firstLine.includes('er')) {
-                return 'erd';
-            } else if (firstLine.includes('statediagram') || firstLine.includes('state')) {
-                return 'state';
-            } else if (firstLine.includes('classdiagram') || firstLine.includes('class')) {
-                return 'class';
-            } else if (firstLine.includes('gantt')) {
-                return 'gantt';
-            } else if (firstLine.includes('pie')) {
-                return 'pie';
-            } else if (firstLine.includes('journey')) {
-                return 'journey';
-            }
+            if (firstLine.includes('flowchart') || firstLine.includes('graph')) return 'flowchart';
+            if (firstLine.includes('sequencediagram') || firstLine.includes('sequence')) return 'sequence';
+            if (firstLine.includes('statediagram') || firstLine.includes('state')) return 'state';
+            if (firstLine.includes('erdiagram') || firstLine.includes('er')) return 'er';
+            if (firstLine.includes('classdiagram') || firstLine.includes('class')) return 'class';
+            if (firstLine.includes('gantt')) return 'gantt';
+            if (firstLine.includes('pie')) return 'pie';
+            if (firstLine.includes('journey')) return 'journey';
+            if (firstLine.includes('gitgraph') || firstLine.includes('git')) return 'git';
+            if (firstLine.includes('mindmap')) return 'mindmap';
+            if (firstLine.includes('timeline')) return 'timeline';
             
             return 'unknown';
-        },
-        
-        /**
-         * Sanitize mermaid code to fix common syntax errors from AI
-         * This prevents parse errors from AI-generated diagrams
-         * 
-         * @param {string} code - Raw mermaid code
-         * @returns {string} - Sanitized code
-         */
-        sanitize: function(code) {
-            let sanitized = code;
-            
-            // 1. Fix subgraph names with accents/special chars
-            // Pattern: subgraph Name With Spaces (and parens)
-            // Replace with: subgraph ID[" Name "]
-            sanitized = sanitized.replace(
-                /subgraph\s+([^[\n]+?)(?=\n)/g,
-                function(match, name) {
-                    // If already has brackets, skip
-                    if (name.includes('[')) return match;
-                    // Create safe ID from name (uppercase, no special chars)
-                    const id = name.trim()
-                        .toUpperCase()
-                        .replace(/[^A-Z0-9]/g, '_')
-                        .substring(0, 20);
-                    // Clean display name (remove/replace problematic chars)
-                    const displayName = name.trim()
-                        .replace(/[()]/g, '')
-                        .replace(/[éèêë]/g, 'e')
-                        .replace(/[àâä]/g, 'a')
-                        .replace(/[ùûü]/g, 'u')
-                        .replace(/[ôö]/g, 'o')
-                        .replace(/[îï]/g, 'i')
-                        .replace(/[ç]/g, 'c')
-                        .replace(/'/g, '');
-                    return `subgraph ${id}[" ${displayName} "]`;
-                }
-            );
-            
-            // 2. Fix edge labels with parentheses: -->|text (with parens)|
-            sanitized = sanitized.replace(
-                /\|([^|"]+\([^)]+\)[^|]*)\|/g,
-                function(match, content) {
-                    const cleanContent = content.replace(/[()]/g, '').trim();
-                    return `|"${cleanContent}"|`;
-                }
-            );
-            
-            // 3. Fix node labels with unquoted parentheses: A[text (parens)]
-            sanitized = sanitized.replace(
-                /\[([^\]"]+\([^)]+\)[^\]]*)\]/g,
-                function(match, content) {
-                    const cleanContent = content.replace(/[()]/g, '').trim();
-                    return `[${cleanContent}]`;
-                }
-            );
-            
-            // 4. Fix slashes in node labels (TB3/TB5 -> TB3-TB5)
-            sanitized = sanitized.replace(
-                /\[([^\]]*?)\/([^\]]*?)\]/g,
-                '[$1-$2]'
-            );
-            
-            // 5. Fix accents in node labels
-            sanitized = sanitized.replace(
-                /\[([^\]]*[éèêëàâäùûüôöîïç][^\]]*)\]/gi,
-                function(match, content) {
-                    const cleaned = content
-                        .replace(/[éèêë]/g, 'e')
-                        .replace(/[àâä]/g, 'a')
-                        .replace(/[ùûü]/g, 'u')
-                        .replace(/[ôö]/g, 'o')
-                        .replace(/[îï]/g, 'i')
-                        .replace(/[ç]/g, 'c');
-                    return `[${cleaned}]`;
-                }
-            );
-            
-            // 6. Remove any "style" commands (CSS handles styling)
-            sanitized = sanitized.replace(/^\s*style\s+.+$/gm, '');
-            sanitized = sanitized.replace(/^\s*classDef\s+.+$/gm, '');
-            
-            // 7. Fix angle brackets and ampersands
-            sanitized = sanitized.replace(/[<>]/g, '');
-            sanitized = sanitized.replace(/&(?!amp;|lt;|gt;|quot;)/g, 'and');
-            
-            return sanitized;
-        },
-        
-        /**
-         * Get configuration object (for debugging or modification)
-         */
-        getConfig: function() {
-            return { ...MERMAID_CONFIG };
         }
     };
-
-
-    // ─────────────────────────────────────────────────────────────────────────────
-    // DIAGRAM TEMPLATES - Pre-built for common HVAC scenarios
-    // ─────────────────────────────────────────────────────────────────────────────
-    FixAIRDiagrams.templates = {
-        
-        // Diagnostic flowchart template
-        diagnostic: (errorCode, steps) => `
-flowchart TB
-    START[🔴 Error ${errorCode}]
-    ${steps.map((s, i) => `C${i}[${s.check}]`).join('\n    ')}
-    ${steps.map((s, i) => `F${i}[🔧 ${s.fix}]`).join('\n    ')}
-    RETEST[🔄 Retest]
-    OK[✅ Resolved]
-    
-    START --> C0
-    ${steps.map((s, i) => i < steps.length - 1 
-        ? `C${i} -->|OK| C${i+1}\n    C${i} -->|Fail| F${i}` 
-        : `C${i} -->|OK| OK\n    C${i} -->|Fail| F${i}`
-    ).join('\n    ')}
-    ${steps.map((s, i) => `F${i} --> RETEST`).join('\n    ')}
-        `.trim(),
-        
-        // VRF wiring template
-        vrfWiring: (units) => `
-graph LR
-    subgraph OUT[" OUTDOOR "]
-        OC[Control Board]
-    end
-    
-    ${units.map((u, i) => `
-    subgraph U${i}[" ${u.name} "]
-        I${i}[${u.model || 'Indoor Unit'}]
-    end`).join('')}
-    
-    OC --- J1[ ]
-    ${units.map((u, i) => `J1 --- I${i}`).join('\n    ')}
-        `.trim(),
-        
-        // Sequence diagram template
-        apiFlow: (steps) => `
-sequenceDiagram
-    autonumber
-    ${steps.map(s => `${s.from}->>+${s.to}: ${s.action}`).join('\n    ')}
-        `.trim()
-    };
-
 
     // ─────────────────────────────────────────────────────────────────────────────
     // AUTO-INITIALIZATION
     // ─────────────────────────────────────────────────────────────────────────────
-    
-    // Wait for DOM and Mermaid to be ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
-            // Small delay to ensure Mermaid is loaded
             setTimeout(function() {
                 FixAIRDiagrams.init();
             }, 100);
         });
     } else {
-        // DOM already loaded
         setTimeout(function() {
             FixAIRDiagrams.init();
         }, 100);
     }
-    
-    
+
     // ─────────────────────────────────────────────────────────────────────────────
     // EXPORT TO GLOBAL SCOPE
     // ─────────────────────────────────────────────────────────────────────────────
     window.FixAIRDiagrams = FixAIRDiagrams;
-    
-    // Also export config for direct mermaid access if needed
     window.FIXAIR_MERMAID_CONFIG = MERMAID_CONFIG;
     
-    console.log('[FixAIR Diagrams] Module loaded');
+    console.log('[FixAIR Diagrams] Module loaded ✓');
 
 })();
