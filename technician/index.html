@@ -2205,11 +2205,12 @@
         .msg.ai .msg-bubble th { background: rgba(255,255,255,0.05); font-weight: 600; }
 
         /* Mermaid Diagrams */
+        /* Clean Mermaid Diagrams */
         .mermaid-placeholder {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 16px;
+            background: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
             margin: 12px 0;
             overflow-x: auto;
             min-height: 60px;
@@ -2230,6 +2231,44 @@
         .mermaid-rendered svg {
             max-width: 100%;
             height: auto;
+            min-height: 200px;
+        }
+        /* Override Mermaid default styles for clarity */
+        .mermaid-rendered .node rect,
+        .mermaid-rendered .node circle,
+        .mermaid-rendered .node ellipse,
+        .mermaid-rendered .node polygon,
+        .mermaid-rendered .node path {
+            fill: #2d2d2d !important;
+            stroke: #888 !important;
+            stroke-width: 2px !important;
+        }
+        .mermaid-rendered .node .label {
+            fill: #fff !important;
+            font-size: 13px !important;
+            font-weight: 500 !important;
+        }
+        .mermaid-rendered .edgeLabel {
+            background-color: #1e1e1e !important;
+            fill: #ccc !important;
+            font-size: 12px !important;
+        }
+        .mermaid-rendered .edgePath .path {
+            stroke: #888 !important;
+            stroke-width: 2px !important;
+        }
+        .mermaid-rendered .arrowheadPath {
+            fill: #888 !important;
+        }
+        /* Subgraph styling */
+        .mermaid-rendered .cluster rect {
+            fill: #252525 !important;
+            stroke: #555 !important;
+            stroke-width: 1px !important;
+        }
+        .mermaid-rendered .cluster .label {
+            fill: #aaa !important;
+            font-size: 12px !important;
         }
         .mermaid-error {
             background: rgba(239, 68, 68, 0.1);
@@ -2258,7 +2297,36 @@
             border-color: rgba(239, 68, 68, 0.3);
         }
         [data-theme="light"] .mermaid-placeholder {
-            background: rgba(0,0,0,0.02);
+            background: #f5f5f5;
+            border-color: #ddd;
+        }
+        [data-theme="light"] .mermaid-rendered .node rect,
+        [data-theme="light"] .mermaid-rendered .node circle,
+        [data-theme="light"] .mermaid-rendered .node ellipse,
+        [data-theme="light"] .mermaid-rendered .node polygon,
+        [data-theme="light"] .mermaid-rendered .node path {
+            fill: #e8e8e8 !important;
+            stroke: #666 !important;
+        }
+        [data-theme="light"] .mermaid-rendered .node .label {
+            fill: #333 !important;
+        }
+        [data-theme="light"] .mermaid-rendered .edgeLabel {
+            background-color: #f5f5f5 !important;
+            fill: #555 !important;
+        }
+        [data-theme="light"] .mermaid-rendered .edgePath .path {
+            stroke: #666 !important;
+        }
+        [data-theme="light"] .mermaid-rendered .arrowheadPath {
+            fill: #666 !important;
+        }
+        [data-theme="light"] .mermaid-rendered .cluster rect {
+            fill: #f0f0f0 !important;
+            stroke: #ccc !important;
+        }
+        [data-theme="light"] .mermaid-rendered .cluster .label {
+            fill: #666 !important;
         }
 
         /* Light theme markdown overrides */
@@ -6040,28 +6108,32 @@
             if (typeof mermaid !== 'undefined') {
                 mermaid.initialize({
                     startOnLoad: false,
-                    theme: 'dark',
+                    theme: 'base',
                     securityLevel: 'loose',
                     flowchart: {
                         useMaxWidth: true,
                         htmlLabels: true,
-                        curve: 'basis'
+                        curve: 'basis',
+                        nodeSpacing: 50,
+                        rankSpacing: 50,
+                        padding: 15
                     },
                     themeVariables: {
-                        primaryColor: '#FF6B35',
-                        primaryTextColor: '#fff',
-                        primaryBorderColor: '#FF6B35',
-                        lineColor: 'rgba(255,255,255,0.3)',
-                        secondaryColor: '#161b22',
-                        tertiaryColor: '#0D1117',
-                        background: '#0D1117',
-                        mainBkg: '#161b22',
-                        nodeBorder: 'rgba(255,255,255,0.2)',
-                        clusterBkg: 'rgba(255,255,255,0.05)',
-                        defaultLinkColor: 'rgba(255,255,255,0.5)',
-                        titleColor: '#fff',
-                        edgeLabelBackground: '#161b22',
-                        nodeTextColor: '#fff'
+                        primaryColor: '#2d2d2d',
+                        primaryTextColor: '#ffffff',
+                        primaryBorderColor: '#666666',
+                        lineColor: '#888888',
+                        secondaryColor: '#3d3d3d',
+                        tertiaryColor: '#4d4d4d',
+                        background: '#1a1a1a',
+                        mainBkg: '#2d2d2d',
+                        nodeBorder: '#888888',
+                        clusterBkg: '#252525',
+                        clusterBorder: '#666666',
+                        titleColor: '#ffffff',
+                        edgeLabelBackground: 'transparent',
+                        fontFamily: 'system-ui, -apple-system, sans-serif',
+                        fontSize: '14px'
                     }
                 });
                 mermaidReady = true;
@@ -6088,6 +6160,12 @@
                     .replace(/&lt;/g, '<')
                     .replace(/&gt;/g, '>')
                     .replace(/&amp;/g, '&');
+
+                // Remove AI-generated style commands (we use CSS instead)
+                code = code.replace(/\n\s*style\s+\w+\s+fill:[^;\n]+;?[^\n]*/g, '');
+                code = code.replace(/\n\s*style\s+\w+\s+[^\n]+/g, '');
+                code = code.replace(/\n\s*classDef\s+[^\n]+/g, '');
+                code = code.replace(/\n\s*class\s+\w+\s+\w+/g, '');
 
                 // ═══ SANITIZE MERMAID CODE FOR SPECIAL CHARACTERS ═══
                 // Mermaid doesn't handle () / ' inside node labels without quotes
