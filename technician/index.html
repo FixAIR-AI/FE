@@ -4962,7 +4962,6 @@
                 <button type="button" class="login-btn" id="loginBtn" onclick="nextLoginStep()"><span class="icon"><svg><use href="#icon-arrow-right"/></svg></span></button>
             </div>
             <div class="login-status" id="loginStatus"></div>
-            <p style="margin-top:32px;color:var(--text-dim);font-size:12px;">Pas encore de compte ? <a href="/auth?from=technician" style="color:var(--copilot);">Créer un compte</a></p>
         </div>
     </div>
 
@@ -6494,7 +6493,16 @@
 
                     if (error) {
                         console.error('Login error:', error);
-                        setLoginStatus('Mot de passe incorrect', 'error', true);
+
+                        // Handle specific error types
+                        if (error.message.includes('Email not confirmed')) {
+                            setLoginStatusWithResend(email, '📧 Veuillez confirmer votre email en cliquant sur le lien envoyé.');
+                        } else if (error.message.includes('Invalid login credentials')) {
+                            setLoginStatus('Mot de passe incorrect', 'error', true);
+                        } else {
+                            setLoginStatus('Erreur: ' + error.message, 'error');
+                        }
+
                         btn.disabled = false;
                         btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
                         return;
@@ -6548,6 +6556,35 @@
                     setLoginStatus('Erreur: ' + error.message, 'error');
                 } else {
                     setLoginStatus('Email de réinitialisation envoyé !', 'success');
+                }
+            } catch (err) {
+                setLoginStatus('Erreur lors de l\'envoi', 'error');
+            }
+        }
+
+        function setLoginStatusWithResend(email, message) {
+            const statusEl = document.getElementById('loginStatus');
+            if (!statusEl) return;
+            statusEl.className = 'login-status error';
+            statusEl.innerHTML = `
+                ${message}
+                <br><br>
+                <a onclick="resendConfirmation('${email}')" style="color: var(--copilot); cursor: pointer; text-decoration: underline;">
+                    Renvoyer l'email de confirmation
+                </a>
+            `;
+        }
+
+        async function resendConfirmation(email) {
+            try {
+                const { error } = await db.auth.resend({
+                    type: 'signup',
+                    email: email
+                });
+                if (error) {
+                    setLoginStatus('Erreur: ' + error.message, 'error');
+                } else {
+                    setLoginStatus('✅ Email de confirmation renvoyé ! Vérifiez votre boîte mail.', 'success');
                 }
             } catch (err) {
                 setLoginStatus('Erreur lors de l\'envoi', 'error');

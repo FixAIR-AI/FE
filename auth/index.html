@@ -490,42 +490,54 @@
     <!-- Email Confirmation Screen (Technician) -->
     <div class="screen" id="techConfirmScreen">
         <div class="scan-line"></div>
-        <div class="pending-container">
+        <div class="pending-container" style="background: rgba(255,107,53,0.05); border: 1px solid rgba(255,107,53,0.2); border-radius: 20px; padding: 40px 30px; max-width: 420px;">
             <div class="auth-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
-            <div class="pending-icon">&#9993;</div>
-            <h1 class="auth-title">V&eacute;rifiez votre email</h1>
-            <p class="auth-subtitle">
-                Nous avons envoy&eacute; un email de confirmation &agrave; votre adresse.
-                Cliquez sur le lien pour activer votre compte.
+            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #FF6B35, #ff8c5a); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 20px auto;">
+                <svg width="40" height="40" fill="white" viewBox="0 0 24 24">
+                    <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+            </div>
+            <h1 class="auth-title" style="color: #FF6B35;">📧 V&eacute;rifiez votre email</h1>
+            <p class="auth-subtitle" style="margin-bottom: 16px;">
+                Nous avons envoy&eacute; un email de confirmation &agrave; :
             </p>
-            <div class="pending-email" id="techConfirmEmail"></div>
-            <p class="auth-subtitle" style="margin-top: 16px; font-size: 13px;">
+            <div class="pending-email" id="techConfirmEmail" style="font-size: 16px; font-weight: 600; color: white; margin-bottom: 20px;"></div>
+            <p class="auth-subtitle" style="font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.5);">
+                Cliquez sur le lien dans l'email pour activer votre compte.<br>
                 Apr&egrave;s confirmation, votre demande sera examin&eacute;e par notre &eacute;quipe.
             </p>
-            <button class="btn btn-secondary" onclick="goToScreen('loginScreen')" style="margin-top: 16px; max-width: 200px;">
-                Retour &agrave; la connexion
-            </button>
+            <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <a href="/technician/" style="color: #FF6B35; text-decoration: none; font-size: 14px;">
+                    &larr; Retour &agrave; la connexion
+                </a>
+            </div>
         </div>
     </div>
 
     <!-- Email Confirmation Screen (Enterprise) -->
     <div class="screen" id="entConfirmScreen">
         <div class="scan-line"></div>
-        <div class="pending-container">
+        <div class="pending-container" style="background: rgba(255,107,53,0.05); border: 1px solid rgba(255,107,53,0.2); border-radius: 20px; padding: 40px 30px; max-width: 420px;">
             <div class="auth-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
-            <div class="pending-icon">&#9993;</div>
-            <h1 class="auth-title">Demande enregistr&eacute;e</h1>
-            <p class="auth-subtitle">
-                Nous avons envoy&eacute; un email de confirmation &agrave; votre adresse.
+            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #FF6B35, #ff8c5a); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 20px auto;">
+                <svg width="40" height="40" fill="white" viewBox="0 0 24 24">
+                    <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+            </div>
+            <h1 class="auth-title" style="color: #FF6B35;">📧 Demande enregistr&eacute;e</h1>
+            <p class="auth-subtitle" style="margin-bottom: 16px;">
+                Nous avons envoy&eacute; un email de confirmation &agrave; :
             </p>
-            <div class="pending-email" id="entConfirmEmail"></div>
-            <p class="auth-subtitle" style="margin-top: 16px; font-size: 13px;">
+            <div class="pending-email" id="entConfirmEmail" style="font-size: 16px; font-weight: 600; color: white; margin-bottom: 20px;"></div>
+            <p class="auth-subtitle" style="font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.5);">
                 Notre &eacute;quipe examinera votre demande et vous contactera sous 24h
                 pour finaliser la cr&eacute;ation de votre compte entreprise.
             </p>
-            <button class="btn btn-secondary" onclick="goToScreen('loginScreen')" style="margin-top: 16px; max-width: 200px;">
-                Retour &agrave; la connexion
-            </button>
+            <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <a href="/technician/" style="color: #FF6B35; text-decoration: none; font-size: 14px;">
+                    &larr; Retour &agrave; la connexion
+                </a>
+            </div>
         </div>
     </div>
 
