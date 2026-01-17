@@ -6116,33 +6116,44 @@
         }
 
         // ═══ USER-SPECIFIC URL ROUTING ═══
-        // URL Structure:
-        // /technician              → Login prompt (enter email)
-        // /technician/[userId]     → User's dashboard
+        // Supports multiple URL formats:
+        // /technician                    → Login prompt
+        // /technician/[userId]           → User's dashboard (requires _redirects)
+        // /technician/?user=[userId]     → User's dashboard (fallback, works without config)
+        // /technician/#[userId]          → User's dashboard (hash fallback)
 
         async function init() {
             console.log('=== TECHNICIAN APP INIT ===');
 
-            // Get path parts from URL
+            let userId = null;
+
+            // Method 1: Path-based /technician/[uuid]
             const pathParts = window.location.pathname.split('/').filter(Boolean);
             console.log('Path parts:', pathParts);
-
-            // /technician (no user) → show login prompt
-            if (pathParts.length === 1 && pathParts[0] === 'technician') {
-                showLoginPrompt();
-                return;
-            }
-
-            // /technician/[userId] → load that user's dashboard
             if (pathParts.length >= 2 && pathParts[0] === 'technician') {
-                const userSlug = pathParts[1];
-                console.log('Loading user dashboard:', userSlug);
-                await loadUserDashboard(userSlug);
-                return;
+                userId = pathParts[1];
+                console.log('User ID from path:', userId);
             }
 
-            // Unknown path - show login prompt
-            showLoginPrompt();
+            // Method 2: Query string /technician/?user=[uuid]
+            if (!userId) {
+                const params = new URLSearchParams(window.location.search);
+                userId = params.get('user') || params.get('id');
+                if (userId) console.log('User ID from query string:', userId);
+            }
+
+            // Method 3: Hash /technician/#[uuid]
+            if (!userId && window.location.hash) {
+                userId = window.location.hash.replace('#', '').replace('/', '');
+                if (userId) console.log('User ID from hash:', userId);
+            }
+
+            // Check if we have a valid userId (UUIDs are 36 chars, but accept 10+ to be safe)
+            if (userId && userId.length > 10) {
+                await loadUserDashboard(userId);
+            } else {
+                showLoginPrompt();
+            }
         }
 
         function showLoginPrompt() {
@@ -6207,8 +6218,8 @@
                     return;
                 }
 
-                // Redirect to user-specific URL
-                window.location.href = '/technician/' + user.id;
+                // Redirect to user-specific URL (using query string for compatibility)
+                window.location.href = '/technician/?user=' + user.id;
 
             } catch (err) {
                 console.error('Lookup error:', err);
