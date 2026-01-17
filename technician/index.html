@@ -4937,128 +4937,6 @@
         </defs>
     </svg>
 
-    <!-- LOGIN -->
-    <div class="screen login-screen active" id="loginScreen">
-        <div class="scan-line"></div>
-        <div class="login-container">
-            <div class="login-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
-            <h1 class="login-title">Bienvenue</h1>
-            <p class="login-sub">Assistant IA pour techniciens HVAC</p>
-            <div class="login-bar">
-                <div class="login-icon-slot">
-                    <div class="login-mini" id="loginSphere"><div class="glass-sphere"><div class="sphere-fog-container"><div class="sphere-fog"></div><div class="sphere-fog-2"></div></div></div></div>
-                    <button type="button" class="login-back" id="loginBack" onclick="prevLoginStep()"><svg viewBox="0 0 24 24"><use href="#icon-arrow-left"/></svg></button>
-                </div>
-                <div class="login-input-container">
-                    <div class="login-input-slider" id="loginSlider">
-                        <div class="login-input-slide">
-                            <input type="email" class="login-input" id="loginEmail" placeholder="Quelle est votre adresse email ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
-                        </div>
-                        <div class="login-input-slide">
-                            <input type="password" class="login-input" id="loginPassword" placeholder="Entrez votre mot de passe" onkeypress="if(event.key==='Enter')nextLoginStep()">
-                        </div>
-                    </div>
-                </div>
-                <button type="button" class="login-btn" id="loginBtn" onclick="nextLoginStep()"><span class="icon"><svg><use href="#icon-arrow-right"/></svg></span></button>
-            </div>
-            <div class="login-status" id="loginStatus"></div>
-        </div>
-    </div>
-
-    <!-- EMAIL CONFIRMATION SCREEN -->
-    <div class="screen pending-screen" id="emailConfirmScreen">
-        <div class="scan-line"></div>
-        <div class="pending-container">
-            <div class="pending-logo">
-                <svg viewBox="0 0 235 48" style="height: 40px; color: var(--copilot);"><use href="#icon-fixair-logo"/></svg>
-            </div>
-            <div class="pending-icon" style="font-size: 48px; margin: 16px 0;">&#9993;</div>
-            <h1 class="pending-title">Vérifiez votre email</h1>
-            <p class="pending-subtitle">
-                Un email de confirmation a été envoyé à votre adresse (vérifiez vos spams). Cliquez sur le lien pour activer votre compte.
-            </p>
-            <div class="pending-email" id="confirmEmail"></div>
-            <button class="pending-logout" onclick="resendConfirmation()" style="margin-top: 8px; border-color: var(--copilot); color: var(--copilot);">
-                Renvoyer l'email
-            </button>
-            <button class="pending-logout" onclick="backToLogin()">
-                Retour à la connexion
-            </button>
-        </div>
-    </div>
-
-    <!-- PENDING APPROVAL SCREEN -->
-    <div class="screen pending-screen" id="pendingScreen">
-        <div class="scan-line"></div>
-        <div class="pending-container">
-            <div class="pending-logo">
-                <svg viewBox="0 0 235 48" style="height: 40px; color: var(--copilot);"><use href="#icon-fixair-logo"/></svg>
-            </div>
-            <div class="pending-icon" style="font-size: 48px; margin: 16px 0;">&#9203;</div>
-            <h1 class="pending-title">Demande en attente</h1>
-            <p class="pending-subtitle">
-                Votre email a été confirmé ! Un administrateur va valider votre accès dans les plus brefs délais.
-            </p>
-            <div class="pending-email" id="pendingEmail"></div>
-            <button class="pending-logout" onclick="checkApprovalStatus()" style="margin-top: 8px; background: var(--copilot); color: white; border: none;" id="checkStatusBtn">
-                Vérifier le statut
-            </button>
-            <button class="pending-logout" onclick="logoutFromPending()">
-                Se déconnecter
-            </button>
-        </div>
-    </div>
-
-    <!-- CONNECTION ERROR SCREEN -->
-    <div class="screen pending-screen" id="connectionErrorScreen">
-        <div class="scan-line"></div>
-        <div class="pending-container">
-            <div class="pending-logo">
-                <svg viewBox="0 0 235 48" style="height: 40px; color: var(--copilot);"><use href="#icon-fixair-logo"/></svg>
-            </div>
-            <div class="pending-icon" style="font-size: 48px; margin: 16px 0;">&#128268;</div>
-            <h1 class="pending-title">Erreur de connexion</h1>
-            <p class="pending-subtitle">
-                Connexion au serveur en cours...
-            </p>
-            <div class="pending-email" id="connectionRetryText" style="color: var(--copilot);">Tentative 1/3...</div>
-            <div class="connection-spinner" style="margin: 16px 0;">
-                <div style="width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--copilot); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
-            </div>
-            <button class="pending-logout" onclick="cancelConnectionRetry()" style="margin-top: 8px;">
-                Annuler
-            </button>
-        </div>
-    </div>
-
-    <!-- PASSWORD RESET SCREEN -->
-    <div class="screen pending-screen" id="passwordResetScreen">
-        <div class="scan-line"></div>
-        <div class="pending-container">
-            <div class="pending-logo">
-                <svg viewBox="0 0 235 48" style="height: 40px; color: var(--copilot);"><use href="#icon-fixair-logo"/></svg>
-            </div>
-            <h1 class="pending-title">Nouveau mot de passe</h1>
-            <p class="pending-subtitle">
-                Créez un nouveau mot de passe pour votre compte.
-            </p>
-            <div style="width: 100%; max-width: 300px; margin: 20px auto;">
-                <input type="password" id="newPasswordInput" placeholder="Nouveau mot de passe (min 6 caractères)"
-                    style="width: 100%; padding: 12px 16px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; margin-bottom: 12px;">
-                <input type="password" id="confirmPasswordInput" placeholder="Confirmer le mot de passe"
-                    style="width: 100%; padding: 12px 16px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; margin-bottom: 12px;">
-                <div id="passwordResetStatus" style="margin-bottom: 12px; padding: 8px; border-radius: 6px; font-size: 13px; display: none;"></div>
-                <button onclick="setNewPassword()"
-                    style="width: 100%; padding: 12px 16px; background: var(--copilot); border: none; border-radius: 8px; color: #000; font-size: 14px; font-weight: 600; cursor: pointer;">
-                    Mettre à jour le mot de passe
-                </button>
-            </div>
-            <button class="pending-logout" onclick="cancelPasswordReset()" style="margin-top: 8px;">
-                Annuler
-            </button>
-        </div>
-    </div>
-
     <!-- MAIN APP -->
     <div class="screen main-app" id="mainApp">
         <header class="app-header">
@@ -5745,63 +5623,6 @@
 
     <script>
         // ═══════════════════════════════════════════════════════════════
-        // CLEAR CORRUPTED AUTH TOKENS ON LOAD
-        // This fixes "Invalid Refresh Token" errors from corrupted state
-        // ═══════════════════════════════════════════════════════════════
-        (function clearCorruptedTokens() {
-            // Check if we should clear (only if there's evidence of corruption)
-            const urlParams = new URLSearchParams(window.location.search);
-            const forceReset = urlParams.get('reset') === 'auth';
-
-            // Look for signs of corruption
-            const authKey = 'fixair-auth';
-            const storedAuth = localStorage.getItem(authKey);
-            let isCorrupted = false;
-
-            if (storedAuth) {
-                try {
-                    const parsed = JSON.parse(storedAuth);
-                    // Check for invalid/expired tokens
-                    if (!parsed.access_token || !parsed.refresh_token) {
-                        isCorrupted = true;
-                    }
-                    // Check if tokens are expired
-                    if (parsed.expires_at && parsed.expires_at * 1000 < Date.now()) {
-                        isCorrupted = true;
-                    }
-                } catch (e) {
-                    isCorrupted = true;
-                }
-            }
-
-            if (forceReset || isCorrupted) {
-                console.log('Clearing corrupted auth state...');
-                // Clear all auth-related keys
-                const keysToRemove = [];
-                for (let i = 0; i < localStorage.length; i++) {
-                    const key = localStorage.key(i);
-                    if (key && (key.includes('supabase') || key.includes('auth') || key.includes('fixair'))) {
-                        keysToRemove.push(key);
-                    }
-                }
-                keysToRemove.forEach(key => {
-                    console.log('Removing:', key);
-                    localStorage.removeItem(key);
-                });
-                sessionStorage.clear();
-
-                // Remove ?reset=auth from URL
-                if (forceReset) {
-                    urlParams.delete('reset');
-                    const newUrl = urlParams.toString()
-                        ? window.location.pathname + '?' + urlParams.toString()
-                        : window.location.pathname;
-                    window.history.replaceState({}, '', newUrl);
-                }
-            }
-        })();
-
-    // ═══════════════════════════════════════════════════════════════
         // PRODUCTION MODE - Set to false for debugging
         // ═══════════════════════════════════════════════════════════════
         const PRODUCTION_MODE = true;
@@ -6088,7 +5909,6 @@
         document.addEventListener('DOMContentLoaded', initSettings);
         
         // Onboarding state
-        let loginStep = 0;
         let onboardingStep = 1;
         let onboardingComplete = false;
         let step3Done = false;
@@ -6216,79 +6036,22 @@
         }
 
         // ═══ SUPABASE CLIENT INITIALIZATION ═══
-        // Simplified initialization - let Supabase handle session management
-
-        // Check for password recovery link in URL hash
-        const initialHash = window.location.hash;
-        const isRecoveryLink = initialHash && initialHash.includes('type=recovery');
-        const hasAccessToken = initialHash && initialHash.includes('access_token=');
-
         if (window.supabase && window.supabase.createClient) {
             db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
                 auth: {
-                    lock: false,              // Prevent AbortError on tab locks
-                    persistSession: true,     // Store session in localStorage
-                    autoRefreshToken: true,   // Auto-refresh expired tokens
-                    detectSessionInUrl: true, // Let Supabase handle URL tokens
+                    persistSession: true,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: false,
                     storageKey: 'fixair-auth'
                 }
             });
-
             supabaseReady = true;
         } else {
             console.error('Supabase library not loaded!');
             alert('Erreur: Supabase non chargé. Veuillez rafraîchir la page.');
         }
-        
-        // Helper function to wait for Supabase to be ready
-        async function waitForSupabase() {
-            if (supabaseReady) return true;
-            let attempts = 0;
-            while (!supabaseReady && attempts < 20) {
-                await new Promise(r => setTimeout(r, 100));
-                attempts++;
-            }
-            return supabaseReady;
-        }
-        
-        // Safe query wrapper that handles AbortError with timeout
-        async function safeQuery(queryFn, retries = 3, timeoutMs = 30000) {
-            await waitForSupabase();
 
-            for (let attempt = 0; attempt < retries; attempt++) {
-                try {
-                    // Add timeout to prevent infinite hang
-                    const timeoutPromise = new Promise((_, reject) =>
-                        setTimeout(() => reject(new Error('Query timeout')), timeoutMs)
-                    );
-
-                    const result = await Promise.race([queryFn(), timeoutPromise]);
-
-                    // Check if result has AbortError
-                    if (result.error && result.error.message && result.error.message.includes('AbortError')) {
-                        // Exponential backoff: 1s, 2s, 4s
-                        const delay = 1000 * Math.pow(2, attempt);
-                        console.log(`Query AbortError, retrying in ${delay}ms (attempt ${attempt + 1}/${retries})`);
-                        await new Promise(r => setTimeout(r, delay));
-                        continue;
-                    }
-                    return result;
-                } catch (err) {
-                    if ((err.message.includes('AbortError') || err.message.includes('timeout')) && attempt < retries - 1) {
-                        // Exponential backoff: 1s, 2s, 4s
-                        const delay = 1000 * Math.pow(2, attempt);
-                        console.log(`Query timeout, retrying in ${delay}ms (attempt ${attempt + 1}/${retries})`);
-                        await new Promise(r => setTimeout(r, delay));
-                        continue;
-                    }
-                    // Don't throw, return error object
-                    return { data: null, error: { message: err.message } };
-                }
-            }
-            return { data: null, error: { message: 'Query failed after retries' } };
-        }
-        
-        // ═══ TOAST UTILITY (needed early for error handling) ═══
+        // ═══ TOAST UTILITY ═══
         let toastTimeout = null;
         function toast(m) {
             const t = document.getElementById('toast');
@@ -6301,16 +6064,12 @@
                 toastTimeout = null;
             }, 2000);
         }
-        
-        // Auth state
+
+        // App state
         const API_BASE = 'https://cherhabil.app.n8n.cloud/webhook';
-        let isNewUser = false;
-        let authToken = null;
         let currentUser = null;
         let supabaseUser = null;
-        let isPasswordRecovery = false;  // Track if user is in password recovery flow
-        let isReady = false;  // Prevents duplicate handling
-        
+
         const colors = {carrier:'#3B82F6', daikin:'#10B981', mitsubishi:'#E60012'};
         const names = {carrier:'Carrier', daikin:'Daikin', mitsubishi:'Mitsubishi'};
 
@@ -6343,932 +6102,100 @@
             await getApiKey('elevenlabs_api_key');
         }
 
-        // ═══ GET CURRENT USER FROM PUBLIC.USERS TABLE ═══
-        // Returns { data, error, isTimeout } to distinguish timeout from other errors
-        async function loadUserProfile(authId) {
-            try {
-                // Use 30 second timeout with 3 retries for profile loading
-                // Total max wait: 30s + 30s + 30s + backoff delays = ~97s
-                const { data, error } = await safeQuery(() =>
-                    db.from('users')
-                      .select('*')
-                      .eq('id', authId)
-                      .single(),
-                    3,      // retries
-                    30000   // 30 second timeout
-                );
+        // ═══ LOAD USER PROFILE (SIMPLIFIED) ═══
+        async function loadUserProfile(userId) {
+            const { data, error } = await db
+                .from('users')
+                .select('*')
+                .eq('id', userId)
+                .single();
 
-                if (error) {
-                    const isTimeout = error.message && (
-                        error.message.includes('timeout') ||
-                        error.message.includes('AbortError') ||
-                        error.message.includes('failed after retries')
-                    );
-                    console.error('Error loading user profile:', error);
-                    return { data: null, error, isTimeout };
-                }
-                return { data, error: null, isTimeout: false };
-            } catch (err) {
-                const isTimeout = err.message && (
-                    err.message.includes('timeout') ||
-                    err.message.includes('AbortError')
-                );
-                console.error('Exception loading user profile:', err);
-                return { data: null, error: err, isTimeout };
+            if (error) {
+                console.error('Error loading profile:', error);
+                return null;
             }
+
+            currentUser = data;
+            return data;
         }
 
-        // ═══ HELPER: Background verification when using cached access ═══
-        async function verifyApprovalInBackground(user) {
-            try {
-                const result = await loadUserProfile(user.id);
-                if (result.data) {
-                    // Update currentUser with fresh data
-                    currentUser = result.data;
-                    // Check if user is no longer approved
-                    if (result.data.status !== 'approved' && result.data.status !== 'active') {
-                        // User was revoked - clear cache and show pending
-                        localStorage.removeItem('fixair_user_approved');
-                        localStorage.removeItem('fixair_cached_profile');
-                        showPendingScreen(user.email);
-                        toast('Votre accès a été révoqué');
-                    } else {
-                        // Update cache with fresh data
-                        localStorage.setItem('fixair_cached_profile', JSON.stringify(result.data));
-                    }
-                }
-            } catch (err) {
-                // Background verification failed silently
-            }
-        }
+        // ═══ SIMPLE INIT - Check session and show app or redirect ═══
+        async function init() {
+            console.log('Initializing app...');
 
-        // ═══ HELPER: Load user and show appropriate screen ═══
-        async function loadUserAndShowApp(user) {
-            if (!user) {
-                return;
-            }
+            const { data: { session } } = await db.auth.getSession();
 
-            supabaseUser = user;
-
-            // Load user profile from public.users
-            const result = await loadUserProfile(user.id);
-            let profile = result.data;
-            const isTimeout = result.isTimeout;
-            const hasError = result.error;
-
-            // On timeout/network error, check localStorage cache
-            if (!profile && (isTimeout || hasError)) {
-                const wasApproved = localStorage.getItem('fixair_user_approved') === 'true';
-                const cachedProfile = localStorage.getItem('fixair_cached_profile');
-
-                if (wasApproved && cachedProfile) {
-                    // User was previously approved - let them in with cached data
-                    try {
-                        profile = JSON.parse(cachedProfile);
-                        toast('Connexion lente - utilisation des données en cache');
-                        // Verify in background after letting them in
-                        setTimeout(() => verifyApprovalInBackground(user), 2000);
-                    } catch (e) {
-                        profile = null;
-                    }
-                }
-
-                // If still no profile and it was a timeout, show connection error
-                if (!profile && isTimeout) {
-                    showConnectionError(user);
-                    return;
-                }
-            }
-
-            if (profile) {
-                // Sync missing user data from auth metadata to public.users
-                const authMeta = user.user_metadata || {};
-                const needsUpdate = {};
-
-                if (!profile.first_name && authMeta.first_name) {
-                    needsUpdate.first_name = authMeta.first_name;
-                }
-                if (!profile.phone && authMeta.phone) {
-                    needsUpdate.phone = authMeta.phone;
-                }
-                if (!profile.email && user.email) {
-                    needsUpdate.email = user.email;
-                }
-
-                // Update public.users if we have missing data from auth
-                if (Object.keys(needsUpdate).length > 0) {
-                    try {
-                        needsUpdate.updated_at = new Date().toISOString();
-                        const { data: updatedProfile } = await db
-                            .from('users')
-                            .update(needsUpdate)
-                            .eq('id', user.id)
-                            .select()
-                            .single();
-
-                        if (updatedProfile) {
-                            profile = updatedProfile;
-                        }
-                    } catch (e) {
-                        // Silently handle sync error
-                    }
-                }
-
-                currentUser = profile;
-
-                // Check role and redirect to correct app if needed
-                if (profile.role === 'admin' || profile.role === 'owner') {
-                    window.location.replace('/admin');
-                    return;
-                } else if (profile.role === 'manager') {
-                    window.location.replace('/manager');
-                    return;
-                }
-
-                // Check approval status
-                if (profile.status !== 'approved' && profile.status !== 'active') {
-                    // Clear any stale approval cache
-                    localStorage.removeItem('fixair_user_approved');
-                    localStorage.removeItem('fixair_cached_profile');
-                    showPendingScreen(profile.email);
-                    return;
-                }
-
-                // User is approved - cache for offline/timeout access
-                localStorage.setItem('fixair_user_approved', 'true');
-                localStorage.setItem('fixair_cached_profile', JSON.stringify(profile));
-
-                // User is approved - proceed to app
-                document.getElementById('userName').textContent = profile.first_name || 'Utilisateur';
-                document.getElementById('profileFirstName').value = profile.first_name || '';
-                document.getElementById('profileLastName').value = profile.last_name || '';
-                if (profile.email) document.getElementById('profileEmail').value = profile.email;
-                if (profile.phone) document.getElementById('profilePhone').value = profile.phone;
-
-                // Load language preference from database
-                if (profile.language && (profile.language === 'fr' || profile.language === 'en')) {
-                    setLanguage(profile.language);
-                }
-
-                // Check onboarding status from localStorage OR database
-                const onboardingDoneLocal = localStorage.getItem('fixair_onboarding_done');
-                const onboardingDoneDB = profile.onboarding_done;
-                if (onboardingDoneLocal || onboardingDoneDB) {
-                    onboardingComplete = true;
-                    document.querySelector('.onboarding-section').classList.add('hidden');
-                    document.getElementById('homepageContent').classList.add('active');
-                    // Sync localStorage if DB has the flag but local doesn't
-                    if (onboardingDoneDB && !onboardingDoneLocal) {
-                        localStorage.setItem('fixair_onboarding_done', 'true');
-                    }
-                }
-
-                document.getElementById('loginScreen').classList.remove('active');
-                document.getElementById('passwordResetScreen')?.classList.remove('active');
-                document.getElementById('mainApp').classList.add('active');
-
-                // Load projects and check if user should skip onboarding
-                await loadProjectsListAndCheckOnboarding();
-                initGamification();
-                prefetchApiKeys();
-            } else {
-                showPendingScreen(user.email);
-            }
-        }
-
-        // ═══ HELPER: Show password reset screen ═══
-        function showPasswordResetScreen() {
-            document.getElementById('loginScreen').classList.remove('active');
-            document.getElementById('pendingScreen')?.classList.remove('active');
-            document.getElementById('emailConfirmScreen')?.classList.remove('active');
-            document.getElementById('mainApp').classList.remove('active');
-            document.getElementById('passwordResetScreen').classList.add('active');
-        }
-
-        // ═══ CHECK SUPABASE AUTH SESSION ON LOAD ═══
-        async function initAuth() {
-            // Check if email passed in URL (from redirect)
-            const urlParams = new URLSearchParams(window.location.search);
-            const emailParam = urlParams.get('email');
-            if (emailParam) {
-                const emailInput = document.getElementById('loginEmail');
-                if (emailInput) {
-                    emailInput.value = decodeURIComponent(emailParam);
-                }
-                // Clean URL
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }
-
-            // Set recovery flag if URL indicates password recovery
-            if (isRecoveryLink) {
-                isPasswordRecovery = true;
-            }
-
-            // Check for existing session
-            // Supabase will auto-handle URL tokens via detectSessionInUrl: true
-            try {
-                const { data, error } = await db.auth.getSession();
-
-                if (error) {
-                    console.error('Session check error:', error);
-                    // Clear corrupted session
-                    if (error.message && error.message.includes('Refresh Token')) {
-                        localStorage.removeItem('fixair-auth');
-                        localStorage.removeItem('supabase.auth.token');
-                    }
-                    isReady = true;
-                    return;
-                }
-
-                if (data.session) {
-                    // Session exists - persist to localStorage for page reload
-                    localStorage.setItem('supabase.auth.token', JSON.stringify({
-                        currentSession: data.session,
-                        expiresAt: data.session.expires_at
-                    }));
-
-                    // Handle password recovery
-                    if (isRecoveryLink || isPasswordRecovery) {
-                        isReady = true;
-                        showPasswordResetScreen();
-                        return;
-                    }
-
-                    // Load user app
-                    isReady = true;
-                    await loadUserAndShowApp(data.session.user);
-                } else {
-                    // No session - try to restore from manual localStorage backup
-                    try {
-                        const stored = localStorage.getItem('supabase.auth.token');
-                        if (stored) {
-                            const parsed = JSON.parse(stored);
-                            if (parsed.currentSession && parsed.currentSession.access_token) {
-                                const { data: restored, error: restoreError } = await db.auth.setSession({
-                                    access_token: parsed.currentSession.access_token,
-                                    refresh_token: parsed.currentSession.refresh_token
-                                });
-
-                                if (!restoreError && restored.session) {
-                                    isReady = true;
-                                    await loadUserAndShowApp(restored.session.user);
-                                    return;
-                                }
-                            }
-                        }
-                    } catch (e) {
-                        // Restore failed - clear stale data
-                        localStorage.removeItem('supabase.auth.token');
-                    }
-
-                    // No valid session
-                    isReady = true;
-                }
-            } catch (err) {
-                console.error('Auth init error:', err);
-                isReady = true;
-            }
-        }
-
-        // Listen for auth state changes
-        let authHandled = false;
-        db.auth.onAuthStateChange(async (event, session) => {
-            // Handle PASSWORD_RECOVERY event
-            if (event === 'PASSWORD_RECOVERY') {
-                isPasswordRecovery = true;
-                isReady = true;
-                showPasswordResetScreen();
-                return;
-            }
-
-            // Handle USER_UPDATED event (after password change)
-            if (event === 'USER_UPDATED') {
-                // Don't auto-load app - the setNewPassword function handles the flow
-                // by signing out and showing a "Se connecter" button
-                isReady = true;
-                return;
-            }
-
-            // Handle SIGNED_IN event
-            if (event === 'SIGNED_IN' && session) {
-                // If we're in password recovery mode, stay on reset form
-                if (isPasswordRecovery) {
-                    showPasswordResetScreen();
-                    return;
-                }
-
-                // Persist session to localStorage for page reload persistence
-                localStorage.setItem('supabase.auth.token', JSON.stringify({
-                    currentSession: session,
-                    expiresAt: session.expires_at
-                }));
-
+            if (session && session.user) {
+                console.log('Session found, loading user profile...');
                 supabaseUser = session.user;
 
-                // Only process if we don't have currentUser yet and not already in app
-                if (!currentUser && !document.getElementById('mainApp').classList.contains('active')) {
-                    authHandled = true;
-                    isReady = true;
-                    await loadUserAndShowApp(session.user);
+                // Load user profile
+                const profile = await loadUserProfile(session.user.id);
+
+                if (profile) {
+                    // Populate UI
+                    document.getElementById('userName').textContent = profile.first_name || 'Utilisateur';
+                    document.getElementById('profileFirstName').value = profile.first_name || '';
+                    document.getElementById('profileLastName').value = profile.last_name || '';
+                    if (profile.email) document.getElementById('profileEmail').value = profile.email;
+                    if (profile.phone) document.getElementById('profilePhone').value = profile.phone;
+
+                    // Load language preference
+                    if (profile.language && (profile.language === 'fr' || profile.language === 'en')) {
+                        setLanguage(profile.language);
+                    }
+
+                    // Check onboarding status
+                    const onboardingDoneLocal = localStorage.getItem('fixair_onboarding_done');
+                    const onboardingDoneDB = profile.onboarding_done;
+                    if (onboardingDoneLocal || onboardingDoneDB) {
+                        onboardingComplete = true;
+                        document.querySelector('.onboarding-section')?.classList.add('hidden');
+                        document.getElementById('homepageContent')?.classList.add('active');
+                    }
+
+                    // Show main app
+                    showMainApp();
+                } else {
+                    // Profile not found - redirect to auth
+                    console.log('Profile not found, redirecting to /auth');
+                    window.location.href = '/auth';
                 }
-                return;
-            }
-
-            // Handle INITIAL_SESSION event
-            if (event === 'INITIAL_SESSION') {
-                // Skip if we already handled or if we're processing URL tokens manually
-                if (authHandled || hasAccessToken) {
-                    return;
-                }
-
-                if (session && session.user && !isPasswordRecovery) {
-                    supabaseUser = session.user;
-                    authHandled = true;
-                    isReady = true;
-                    await loadUserAndShowApp(session.user);
-                }
-                return;
-            }
-
-            // Handle SIGNED_OUT event
-            if (event === 'SIGNED_OUT') {
-                supabaseUser = null;
-                currentUser = null;
-                isPasswordRecovery = false;
-                authHandled = false;
-                isReady = true;
-            }
-        });
-
-        // Initialize auth on page load (reduced timeout since we handle manually)
-        setTimeout(() => initAuth(), 300);
-
-        // ═══ LOGIN STATUS MESSAGES ═══
-        let existingUserName = '';
-        
-        function setLoginStatus(message, type = 'info', showReset = false) {
-            const statusEl = document.getElementById('loginStatus');
-            if (!statusEl) return;
-            
-            statusEl.className = 'login-status ' + type;
-            
-            if (showReset) {
-                statusEl.innerHTML = message + ' <a onclick="resetPassword()">Réinitialiser</a>';
             } else {
-                statusEl.textContent = message;
-            }
-        }
-        
-        function clearLoginStatus() {
-            const statusEl = document.getElementById('loginStatus');
-            if (statusEl) {
-                statusEl.textContent = '';
-                statusEl.className = 'login-status';
-            }
-        }
-        
-        async function resetPassword() {
-            const email = document.getElementById('loginEmail').value.trim();
-            if (!email.includes('@')) {
-                setLoginStatus('Entrez votre email d\'abord', 'error');
-                return;
-            }
-            
-            try {
-                const redirectUrl = window.location.origin + window.location.pathname;
-
-                const { error } = await db.auth.resetPasswordForEmail(email, {
-                    redirectTo: redirectUrl
-                });
-
-                if (error) {
-                    setLoginStatus('Erreur: ' + error.message, 'error');
-                } else {
-                    setLoginStatus('Email de réinitialisation envoyé ! Vérifiez votre boîte mail (et spam).', 'success');
-                }
-            } catch (err) {
-                setLoginStatus('Erreur lors de l\'envoi', 'error');
+                // No session - redirect to auth
+                console.log('No session, redirecting to /auth');
+                window.location.href = '/auth';
             }
         }
 
-        // ═══ SET NEW PASSWORD (from password recovery link) ═══
-        async function setNewPassword() {
-            const newPass = document.getElementById('newPasswordInput').value;
-            const confirmPass = document.getElementById('confirmPasswordInput').value;
-            const statusEl = document.getElementById('passwordResetStatus');
-
-            // Validation
-            if (!newPass || newPass.length < 6) {
-                statusEl.style.display = 'block';
-                statusEl.style.background = 'rgba(239,68,68,0.2)';
-                statusEl.style.border = '1px solid rgba(239,68,68,0.5)';
-                statusEl.style.color = '#ef4444';
-                statusEl.textContent = 'Le mot de passe doit contenir au moins 6 caractères';
-                return;
-            }
-
-            if (newPass !== confirmPass) {
-                statusEl.style.display = 'block';
-                statusEl.style.background = 'rgba(239,68,68,0.2)';
-                statusEl.style.border = '1px solid rgba(239,68,68,0.5)';
-                statusEl.style.color = '#ef4444';
-                statusEl.textContent = 'Les mots de passe ne correspondent pas';
-                return;
-            }
-
-            statusEl.style.display = 'block';
-            statusEl.style.background = 'rgba(59,130,246,0.2)';
-            statusEl.style.border = '1px solid rgba(59,130,246,0.5)';
-            statusEl.style.color = '#3b82f6';
-            statusEl.textContent = 'Mise à jour en cours...';
-
-            try {
-                const { error } = await db.auth.updateUser({ password: newPass });
-
-                if (error) {
-                    statusEl.style.background = 'rgba(239,68,68,0.2)';
-                    statusEl.style.border = '1px solid rgba(239,68,68,0.5)';
-                    statusEl.style.color = '#ef4444';
-                    statusEl.textContent = 'Erreur: ' + error.message;
-                    return;
-                }
-
-                statusEl.style.background = 'rgba(16,185,129,0.2)';
-                statusEl.style.border = '1px solid rgba(16,185,129,0.5)';
-                statusEl.style.color = '#10b981';
-                statusEl.textContent = 'Mot de passe mis à jour avec succès !';
-
-                // Reset the recovery flag
-                isPasswordRecovery = false;
-
-                // Clear the input fields
-                document.getElementById('newPasswordInput').value = '';
-                document.getElementById('confirmPasswordInput').value = '';
-
-                // Sign out to force fresh login with new password
-                localStorage.removeItem('supabase.auth.token');
-                await db.auth.signOut();
-
-                // Change the update button to a "Se connecter" button
-                const updateBtn = document.querySelector('#passwordResetScreen button[onclick="setNewPassword()"]');
-                if (updateBtn) {
-                    updateBtn.textContent = 'Se connecter';
-                    updateBtn.onclick = goToLoginFromPasswordReset;
-                }
-
-                // Hide the cancel button
-                const cancelBtn = document.querySelector('#passwordResetScreen button[onclick="cancelPasswordReset()"]');
-                if (cancelBtn) {
-                    cancelBtn.style.display = 'none';
-                }
-
-            } catch (err) {
-                console.error('❌ Password update exception:', err);
-                statusEl.style.background = 'rgba(239,68,68,0.2)';
-                statusEl.style.border = '1px solid rgba(239,68,68,0.5)';
-                statusEl.style.color = '#ef4444';
-                statusEl.textContent = 'Erreur lors de la mise à jour';
-            }
-        }
-
-        // ═══ GO TO LOGIN FROM PASSWORD RESET ═══
-        function goToLoginFromPasswordReset() {
-            document.getElementById('passwordResetScreen').classList.remove('active');
-            document.getElementById('loginScreen').classList.add('active');
-
-            // Reset the password reset screen for next use
-            const statusEl = document.getElementById('passwordResetStatus');
-            statusEl.style.display = 'none';
-
-            const updateBtn = document.querySelector('#passwordResetScreen button[onclick="goToLoginFromPasswordReset()"]');
-            if (updateBtn) {
-                updateBtn.textContent = 'Mettre à jour le mot de passe';
-                updateBtn.onclick = setNewPassword;
-            }
-
-            const cancelBtn = document.querySelector('#passwordResetScreen button[onclick="cancelPasswordReset()"]');
-            if (cancelBtn) {
-                cancelBtn.style.display = '';
-            }
-        }
-
-        // ═══ CANCEL PASSWORD RESET ═══
-        function cancelPasswordReset() {
-            isPasswordRecovery = false;
-            localStorage.removeItem('supabase.auth.token');
-            db.auth.signOut();
-
-            // Hide password reset screen and show login
-            document.getElementById('passwordResetScreen').classList.remove('active');
-            document.getElementById('pendingScreen').classList.remove('active');
-            document.getElementById('emailConfirmScreen').classList.remove('active');
-            document.getElementById('mainApp').classList.remove('active');
-            document.getElementById('loginScreen').classList.add('active');
-
-            // Clear inputs
-            document.getElementById('newPasswordInput').value = '';
-            document.getElementById('confirmPasswordInput').value = '';
-            document.getElementById('passwordResetStatus').style.display = 'none';
-        }
-
-        // LOGIN STEPS
-        async function nextLoginStep() {
-            const btn = document.getElementById('loginBtn');
-
-            if (loginStep === 0) {
-                // Step 0: Check email
-                const email = document.getElementById('loginEmail').value.trim();
-
-                if (!email.includes('@')) { 
-                    setLoginStatus('Veuillez entrer un email valide', 'error');
-                    return; 
-                }
-                
-                // Check if Supabase is available
-                if (!db) {
-                    setLoginStatus('Erreur de connexion. Rafraîchissez la page.', 'error');
-                    return;
-                }
-                
-                clearLoginStatus();
-                btn.disabled = true;
-                btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
-                
-                try {
-                    // Wait for Supabase to be ready
-                    await waitForSupabase();
-                    
-                    // SIMPLIFIED: Only check public.users table
-                    // If user is in public.users = existing user
-                    // If not = new user (will handle auth conflicts during signup)
-                    const { data: publicUser, error: publicError } = await safeQuery(() => 
-                        db.from('users')
-                          .select('id, first_name, status, role')
-                          .eq('email', email)
-                          .maybeSingle()
-                    );
-                    
-                    // FIRST: Check if there was an error (timeout, network, etc)
-                    if (publicError) {
-                        console.error('Email check failed with error:', publicError);
-                        setLoginStatus('Problème de connexion. Veuillez réessayer.', 'error');
-                        return;
-                    }
-
-                    // THEN: Check if user exists (only if no error)
-                    if (publicUser && publicUser.id) {
-                        // User exists - check role
-                        if (publicUser.role && publicUser.role !== 'technician') {
-                            // Wrong role - redirect to appropriate app
-                            if (publicUser.role === 'admin' || publicUser.role === 'owner') {
-                                setLoginStatus('Ce compte est un compte admin. Redirection...', 'info');
-                                setTimeout(() => { window.location.replace('https://go.fixair.ai/admin'); }, 1500);
-                            } else if (publicUser.role === 'manager') {
-                                setLoginStatus('Ce compte est un compte manager. Redirection...', 'info');
-                                setTimeout(() => { window.location.replace('https://go.fixair.ai/manager'); }, 1500);
-                            } else {
-                                setLoginStatus('Ce compte n\'est pas un compte technicien', 'error');
-                            }
-                            return;
-                        }
-
-                        isNewUser = false;
-                        existingUserName = publicUser.first_name || '';
-
-                        if (existingUserName) {
-                            setLoginStatus('Bienvenue ' + existingUserName + ' !', 'success');
-                        } else {
-                            setLoginStatus('Bienvenue !', 'success');
-                        }
-
-                        loginStep = 1;
-                        updateLoginUI();
-                    } else {
-                        // No error AND no user = genuinely new user, redirect to signup
-                        console.log('User not found in database, redirecting to signup');
-                        setLoginStatus('Redirection vers la page d\'inscription...', 'info');
-                        setTimeout(() => {
-                            window.location.href = 'https://go.fixair.ai/auth?email=' + encodeURIComponent(email) + '&from=technician';
-                        }, 1000);
-                    }
-
-                } catch (error) {
-                    console.error('❌ Check email exception:', error);
-                    setLoginStatus('Erreur de connexion. Réessayez.', 'error');
-                } finally {
-                    btn.disabled = false;
-                    btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
-                }
-                
-            } else if (loginStep === 1) {
-                // Step 1: Password - login existing user only
-                const email = document.getElementById('loginEmail').value.trim();
-                const password = document.getElementById('loginPassword').value;
-
-                if (!password) {
-                    setLoginStatus('Veuillez entrer votre mot de passe', 'error');
-                    return;
-                }
-
-                btn.disabled = true;
-                btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
-                setLoginStatus('Connexion...', 'info');
-
-                try {
-                    const { data, error } = await db.auth.signInWithPassword({
-                        email: email,
-                        password: password
-                    });
-
-                    if (error) {
-                        setLoginStatus('Mot de passe incorrect', 'error', true);
-                        return;
-                    }
-
-                    clearLoginStatus();
-                    supabaseUser = data.user;
-
-                    // Load user profile
-                    const profile = await loadUserProfile(data.user.id);
-
-                    if (profile) {
-                        currentUser = profile;
-
-                        // Check approval status
-                        if (profile.status !== 'approved' && profile.status !== 'active') {
-                            showPendingScreen(profile.email);
-                            return;
-                        }
-
-                        // User is approved
-                        document.getElementById('userName').textContent = profile.first_name;
-                        document.getElementById('profileFirstName').value = profile.first_name;
-                        if (profile.email) document.getElementById('profileEmail').value = profile.email;
-                        if (profile.phone) document.getElementById('profilePhone').value = profile.phone;
-
-                        // Check onboarding status from localStorage OR database
-                        const onboardingDoneLocal = localStorage.getItem('fixair_onboarding_done');
-                        const onboardingDoneDB = profile.onboarding_done;
-                        if (onboardingDoneLocal || onboardingDoneDB) {
-                            onboardingComplete = true;
-                            document.querySelector('.onboarding-section').classList.add('hidden');
-                            document.getElementById('homepageContent').classList.add('active');
-                            // Sync localStorage if DB has the flag but local doesn't
-                            if (onboardingDoneDB && !onboardingDoneLocal) {
-                                localStorage.setItem('fixair_onboarding_done', 'true');
-                            }
-                        }
-
-                        toast('Bienvenue ' + profile.first_name + ' !');
-                        doLogin();
-                    } else {
-                        setLoginStatus('Erreur: profil non trouvé', 'error');
-                    }
-                } catch (error) {
-                    setLoginStatus('Erreur de connexion au serveur', 'error');
-                    console.error('Login error:', error);
-                } finally {
-                    btn.disabled = false;
-                    btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
-                }
-            }
-        }
-
-        function updateLoginUI() {
-            document.getElementById('loginSlider').style.transform = `translateX(-${loginStep * 100}%)`;
-            document.getElementById('loginSphere').style.display = loginStep === 0 ? 'flex' : 'none';
-            document.getElementById('loginBack').style.display = loginStep === 0 ? 'none' : 'flex';
-        }
-
-        function prevLoginStep() {
-            if (loginStep > 0) {
-                loginStep--;
-                clearLoginStatus();
-                updateLoginUI();
-            }
-        }
-
-        // ═══ SCREEN HELPER FUNCTIONS ═══
-        function showEmailConfirmScreen(email) {
-            clearLoginStatus();
-            document.getElementById('confirmEmail').textContent = email;
-            document.getElementById('loginScreen').classList.remove('active');
-            document.getElementById('mainApp').classList.remove('active');
-            document.getElementById('pendingScreen').classList.remove('active');
-            document.getElementById('emailConfirmScreen').classList.add('active');
-        }
-
-        function showPendingScreen(email) {
-            clearLoginStatus();
-            document.getElementById('pendingEmail').textContent = email;
-            document.getElementById('loginScreen').classList.remove('active');
-            document.getElementById('mainApp').classList.remove('active');
-            document.getElementById('emailConfirmScreen').classList.remove('active');
-            document.getElementById('pendingScreen').classList.add('active');
-        }
-
-        // ═══ CONNECTION ERROR SCREEN (not pending - network issue) ═══
-        let connectionRetryCount = 0;
-        const MAX_CONNECTION_RETRIES = 3;
-        let connectionRetryUser = null;
-
-        function showConnectionError(user) {
-            connectionRetryUser = user;
-            connectionRetryCount = 0;
-            clearLoginStatus();
-            document.getElementById('loginScreen').classList.remove('active');
-            document.getElementById('mainApp').classList.remove('active');
-            document.getElementById('emailConfirmScreen').classList.remove('active');
-            document.getElementById('pendingScreen').classList.remove('active');
-            document.getElementById('connectionErrorScreen').classList.add('active');
-            updateConnectionRetryUI();
-            // Auto-retry after 3 seconds
-            setTimeout(retryConnection, 3000);
-        }
-
-        function updateConnectionRetryUI() {
-            const retryText = document.getElementById('connectionRetryText');
-            if (retryText) {
-                retryText.textContent = `Tentative ${connectionRetryCount + 1}/${MAX_CONNECTION_RETRIES}...`;
-            }
-        }
-
-        async function retryConnection() {
-            if (!connectionRetryUser) return;
-
-            connectionRetryCount++;
-            updateConnectionRetryUI();
-
-            const result = await loadUserProfile(connectionRetryUser.id);
-            if (result.data) {
-                // Success - hide error screen and proceed
-                document.getElementById('connectionErrorScreen').classList.remove('active');
-                const user = connectionRetryUser;
-                connectionRetryUser = null;
-                await loadUserAndShowApp(user);
-                return;
-            }
-
-            if (connectionRetryCount >= MAX_CONNECTION_RETRIES) {
-                // Max retries reached - show login screen with error
-                document.getElementById('connectionErrorScreen').classList.remove('active');
-                document.getElementById('loginScreen').classList.add('active');
-                toast('Impossible de se connecter. Veuillez réessayer.');
-                connectionRetryUser = null;
-                return;
-            }
-
-            // Try again after delay
-            setTimeout(retryConnection, 3000);
-        }
-
-        function cancelConnectionRetry() {
-            connectionRetryUser = null;
-            document.getElementById('connectionErrorScreen').classList.remove('active');
-            document.getElementById('loginScreen').classList.add('active');
-        }
-
-        async function checkApprovalStatus() {
-            const btn = document.getElementById('checkStatusBtn');
-            const originalText = btn.textContent;
-            btn.disabled = true;
-            btn.textContent = 'Vérification...';
-
-            try {
-                const { data: { user } } = await db.auth.getUser();
-                if (!user) {
-                    btn.disabled = false;
-                    btn.textContent = originalText;
-                    toast('Session expirée, veuillez vous reconnecter');
-                    logoutFromPending();
-                    return;
-                }
-
-                const result = await loadUserProfile(user.id);
-                const profile = result.data;
-                if (profile && (profile.status === 'approved' || profile.status === 'active')) {
-                    currentUser = profile;
-                    supabaseUser = user;
-                    // Cache approval status
-                    localStorage.setItem('fixair_user_approved', 'true');
-                    localStorage.setItem('fixair_cached_profile', JSON.stringify(profile));
-                    toast('Accès approuvé ! Bienvenue ' + (profile.first_name || 'Technicien') + ' !');
-                    doLogin();
-                } else if (result.isTimeout) {
-                    toast('Erreur de connexion, veuillez réessayer');
-                    btn.disabled = false;
-                    btn.textContent = originalText;
-                } else {
-                    toast('Votre compte est toujours en attente de validation');
-                    btn.disabled = false;
-                    btn.textContent = originalText;
-                }
-            } catch (err) {
-                console.error('Check status error:', err);
-                toast('Erreur lors de la vérification');
-                btn.disabled = false;
-                btn.textContent = originalText;
-            }
-        }
-
-        async function resendConfirmation() {
-            const email = document.getElementById('confirmEmail').textContent;
-            try {
-                const { error } = await db.auth.resend({
-                    type: 'signup',
-                    email: email
-                });
-                if (error) {
-                    toast('Erreur: ' + error.message);
-                } else {
-                    toast('Email renvoyé !');
-                }
-            } catch (err) {
-                toast('Erreur lors de l\'envoi');
-            }
-        }
-
-        function backToLogin() {
-            clearLoginStatus();
-            document.getElementById('emailConfirmScreen').classList.remove('active');
-            document.getElementById('pendingScreen').classList.remove('active');
-            document.getElementById('loginScreen').classList.add('active');
-
-            loginStep = 0;
-            document.getElementById('loginEmail').value = '';
-            document.getElementById('loginPassword').value = '';
-            updateLoginUI();
-        }
-
-        async function logoutFromPending() {
-            stopLiveStatusTracking();
-            await db.auth.signOut();
-            localStorage.removeItem('supabase.auth.token');
-            // Clear approval cache on logout
-            localStorage.removeItem('fixair_user_approved');
-            localStorage.removeItem('fixair_cached_profile');
-            supabaseUser = null;
-            currentUser = null;
-            isPasswordRecovery = false;
-            localStorage.removeItem('fixair_onboarding_done');
-            clearLoginStatus();
-            
-            document.getElementById('pendingScreen').classList.remove('active');
-            document.getElementById('emailConfirmScreen').classList.remove('active');
-            document.getElementById('loginScreen').classList.add('active');
-            
-            loginStep = 0;
-            document.getElementById('loginEmail').value = '';
-            document.getElementById('loginPassword').value = '';
-            updateLoginUI();
-
-            toast('Déconnecté');
-        }
-
-        async function doLogin() {
-            document.getElementById('loginScreen').classList.remove('active');
-            document.getElementById('emailConfirmScreen').classList.remove('active');
-            document.getElementById('pendingScreen').classList.remove('active');
+        // ═══ SHOW MAIN APP ═══
+        function showMainApp() {
             document.getElementById('mainApp').classList.add('active');
 
-            await loadProjectsListAndCheckOnboarding();
+            // Load app data
+            loadProjectsListAndCheckOnboarding();
             initGamification();
             prefetchApiKeys();
-
-            // Start live status tracking
             initLiveStatusTracking();
+
+            console.log('App loaded successfully');
         }
 
-        async function logout() {
-            // Set offline before logging out
-            await stopLiveStatusTracking();
 
+        // ═══ SIMPLE LOGOUT ═══
+        async function logout() {
+            await stopLiveStatusTracking();
             await db.auth.signOut();
-            localStorage.removeItem('supabase.auth.token');
-            // Clear approval cache on logout
-            localStorage.removeItem('fixair_user_approved');
-            localStorage.removeItem('fixair_cached_profile');
+            localStorage.removeItem('fixair-auth');
             supabaseUser = null;
             currentUser = null;
-            isPasswordRecovery = false;
-            loginStep = 0;
             onboardingComplete = false;
             localStorage.removeItem('fixair_onboarding_done');
-            clearLoginStatus();
-
-            document.getElementById('profileView').classList.remove('active');
-            document.querySelector('.onboarding-section').classList.remove('hidden');
-            document.getElementById('homepageContent').classList.remove('active');
-
-            document.getElementById('loginEmail').value = '';
-            document.getElementById('loginPassword').value = '';
-            updateLoginUI();
-
-            document.getElementById('mainApp').classList.remove('active');
-            document.getElementById('loginScreen').classList.add('active');
-
-            toast('Déconnecté');
+            window.location.href = '/auth';
         }
+
+        // ═══ INITIALIZE APP ON PAGE LOAD ═══
+        setTimeout(() => init(), 300);
 
         // ═══ LIVE STATUS TRACKING ═══
         const IDLE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
