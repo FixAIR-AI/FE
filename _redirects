@@ -1,0 +1,7 @@
+# Cloudflare Pages SPA routing
+# Serve index.html for all dynamic sub-paths
+
+/technician/*  /technician/index.html  200
+/admin/*  /admin/index.html  200
+/manager/*  /manager/index.html  200
+/master/*  /master/index.html  200

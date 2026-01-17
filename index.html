@@ -5961,37 +5961,13 @@
         // Safe query wrapper that handles AbortError with timeout
         // STANDARDIZED: 30s timeout with exponential backoff (1s, 2s, 4s)
         async function safeQuery(queryFn, retries = 3, timeoutMs = 30000) {
-            await waitForSupabase();
-
-            for (let attempt = 0; attempt < retries; attempt++) {
-                try {
-                    // Add timeout to prevent infinite hang
-                    const timeoutPromise = new Promise((_, reject) =>
-                        setTimeout(() => reject(new Error('Query timeout')), timeoutMs)
-                    );
-
-                    const result = await Promise.race([queryFn(), timeoutPromise]);
-
-                    // Check if result has AbortError
-                    if (result.error && result.error.message && result.error.message.includes('AbortError')) {
-                        const delay = 1000 * Math.pow(2, attempt); // Exponential: 1s, 2s, 4s
-                        console.log(`Query AbortError, retrying in ${delay}ms (attempt ${attempt + 1}/${retries})`);
-                        await new Promise(r => setTimeout(r, delay));
-                        continue;
-                    }
-                    return result;
-                } catch (err) {
-                    if ((err.message.includes('AbortError') || err.message.includes('timeout')) && attempt < retries - 1) {
-                        const delay = 1000 * Math.pow(2, attempt); // Exponential: 1s, 2s, 4s
-                        console.log(`Query error, retrying in ${delay}ms (attempt ${attempt + 1}/${retries})`);
-                        await new Promise(r => setTimeout(r, delay));
-                        continue;
-                    }
-                    // Don't throw, return error object
-                    return { data: null, error: { message: err.message } };
-                }
+            // Direct execution - no timeout/retry logic that causes issues
+            try {
+                return await queryFn();
+            } catch (error) {
+                console.error('Query error:', error);
+                return { data: null, error: { message: error.message } };
             }
-            return { data: null, error: { message: 'Query failed after retries' } };
         }
         
         // ═══ TOAST UTILITY (needed early for error handling) ═══

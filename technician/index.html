@@ -4937,13 +4937,13 @@
         </defs>
     </svg>
 
-    <!-- LOGIN -->
+    <!-- LOGIN SCREEN -->
     <div class="screen login-screen active" id="loginScreen">
         <div class="scan-line"></div>
         <div class="login-container">
             <div class="login-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
             <h1 class="login-title">Bienvenue</h1>
-            <p class="login-sub">Assistant IA pour techniciens HVAC</p>
+            <p class="login-sub">Portail Technicien FixAIR</p>
             <div class="login-bar">
                 <div class="login-icon-slot">
                     <div class="login-mini" id="loginSphere"><div class="glass-sphere"><div class="sphere-fog-container"><div class="sphere-fog"></div><div class="sphere-fog-2"></div></div></div></div>
@@ -4962,100 +4962,6 @@
                 <button type="button" class="login-btn" id="loginBtn" onclick="nextLoginStep()"><span class="icon"><svg><use href="#icon-arrow-right"/></svg></span></button>
             </div>
             <div class="login-status" id="loginStatus"></div>
-        </div>
-    </div>
-
-    <!-- EMAIL CONFIRMATION SCREEN -->
-    <div class="screen pending-screen" id="emailConfirmScreen">
-        <div class="scan-line"></div>
-        <div class="pending-container">
-            <div class="pending-logo">
-                <svg viewBox="0 0 235 48" style="height: 40px; color: var(--copilot);"><use href="#icon-fixair-logo"/></svg>
-            </div>
-            <div class="pending-icon" style="font-size: 48px; margin: 16px 0;">&#9993;</div>
-            <h1 class="pending-title">Vérifiez votre email</h1>
-            <p class="pending-subtitle">
-                Un email de confirmation a été envoyé à votre adresse (vérifiez vos spams). Cliquez sur le lien pour activer votre compte.
-            </p>
-            <div class="pending-email" id="confirmEmail"></div>
-            <button class="pending-logout" onclick="resendConfirmation()" style="margin-top: 8px; border-color: var(--copilot); color: var(--copilot);">
-                Renvoyer l'email
-            </button>
-            <button class="pending-logout" onclick="backToLogin()">
-                Retour à la connexion
-            </button>
-        </div>
-    </div>
-
-    <!-- PENDING APPROVAL SCREEN -->
-    <div class="screen pending-screen" id="pendingScreen">
-        <div class="scan-line"></div>
-        <div class="pending-container">
-            <div class="pending-logo">
-                <svg viewBox="0 0 235 48" style="height: 40px; color: var(--copilot);"><use href="#icon-fixair-logo"/></svg>
-            </div>
-            <div class="pending-icon" style="font-size: 48px; margin: 16px 0;">&#9203;</div>
-            <h1 class="pending-title">Demande en attente</h1>
-            <p class="pending-subtitle">
-                Votre email a été confirmé ! Un administrateur va valider votre accès dans les plus brefs délais.
-            </p>
-            <div class="pending-email" id="pendingEmail"></div>
-            <button class="pending-logout" onclick="checkApprovalStatus()" style="margin-top: 8px; background: var(--copilot); color: white; border: none;" id="checkStatusBtn">
-                Vérifier le statut
-            </button>
-            <button class="pending-logout" onclick="logoutFromPending()">
-                Se déconnecter
-            </button>
-        </div>
-    </div>
-
-    <!-- CONNECTION ERROR SCREEN -->
-    <div class="screen pending-screen" id="connectionErrorScreen">
-        <div class="scan-line"></div>
-        <div class="pending-container">
-            <div class="pending-logo">
-                <svg viewBox="0 0 235 48" style="height: 40px; color: var(--copilot);"><use href="#icon-fixair-logo"/></svg>
-            </div>
-            <div class="pending-icon" style="font-size: 48px; margin: 16px 0;">&#128268;</div>
-            <h1 class="pending-title">Erreur de connexion</h1>
-            <p class="pending-subtitle">
-                Connexion au serveur en cours...
-            </p>
-            <div class="pending-email" id="connectionRetryText" style="color: var(--copilot);">Tentative 1/3...</div>
-            <div class="connection-spinner" style="margin: 16px 0;">
-                <div style="width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--copilot); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
-            </div>
-            <button class="pending-logout" onclick="cancelConnectionRetry()" style="margin-top: 8px;">
-                Annuler
-            </button>
-        </div>
-    </div>
-
-    <!-- PASSWORD RESET SCREEN -->
-    <div class="screen pending-screen" id="passwordResetScreen">
-        <div class="scan-line"></div>
-        <div class="pending-container">
-            <div class="pending-logo">
-                <svg viewBox="0 0 235 48" style="height: 40px; color: var(--copilot);"><use href="#icon-fixair-logo"/></svg>
-            </div>
-            <h1 class="pending-title">Nouveau mot de passe</h1>
-            <p class="pending-subtitle">
-                Créez un nouveau mot de passe pour votre compte.
-            </p>
-            <div style="width: 100%; max-width: 300px; margin: 20px auto;">
-                <input type="password" id="newPasswordInput" placeholder="Nouveau mot de passe (min 6 caractères)"
-                    style="width: 100%; padding: 12px 16px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; margin-bottom: 12px;">
-                <input type="password" id="confirmPasswordInput" placeholder="Confirmer le mot de passe"
-                    style="width: 100%; padding: 12px 16px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; margin-bottom: 12px;">
-                <div id="passwordResetStatus" style="margin-bottom: 12px; padding: 8px; border-radius: 6px; font-size: 13px; display: none;"></div>
-                <button onclick="setNewPassword()"
-                    style="width: 100%; padding: 12px 16px; background: var(--copilot); border: none; border-radius: 8px; color: #000; font-size: 14px; font-weight: 600; cursor: pointer;">
-                    Mettre à jour le mot de passe
-                </button>
-            </div>
-            <button class="pending-logout" onclick="cancelPasswordReset()" style="margin-top: 8px;">
-                Annuler
-            </button>
         </div>
     </div>
 
@@ -5313,7 +5219,7 @@
         <nav class="nav">
             <div class="nav-inner">
                 <div class="nav-item active" id="navHome" onclick="goToHome()"><span class="icon nav-icon"><svg><use href="#icon-home"/></svg></span><span class="nav-label">Accueil</span></div>
-                <div class="nav-item" id="navProjects" onclick="showPage('projects')"><span class="icon nav-icon"><svg><use href="#icon-folder"/></svg></span><span class="nav-label">Projets</span></div>
+                <div class="nav-item" id="navProjects" onclick="Router.navigate({page:'projects'})"><span class="icon nav-icon"><svg><use href="#icon-folder"/></svg></span><span class="nav-label">Projets</span></div>
                 <div class="nav-item" id="navConnect" onclick="openConnect()"><span class="icon nav-icon"><svg><use href="#icon-connect"/></svg></span><span class="nav-label">Connect</span></div>
                 <div class="nav-item nav-hotline" onclick="openHotline()">
                     <div class="nav-hotline-waves">
@@ -5333,7 +5239,7 @@
     <!-- PROFILE VIEW -->
     <div class="profile-view" id="profileView">
         <div class="profile-header">
-            <button class="profile-back" onclick="closeProfile()"><span class="icon"><svg viewBox="0 0 24 24"><use href="#icon-arrow-left"/></svg></span></button>
+            <button class="profile-back" onclick="goToHome()"><span class="icon"><svg viewBox="0 0 24 24"><use href="#icon-arrow-left"/></svg></span></button>
             <div class="profile-info">
                 <div class="profile-title" data-i18n="profile.title">Votre profil</div>
                 <div class="profile-subtitle" data-i18n="profile.subtitle">Informations personnelles</div>
@@ -5397,7 +5303,7 @@
     <div class="chat-view single" id="chatView">
         <div class="panel copilot" id="panelCopilot" style="flex-basis:50%;">
             <header class="panel-header">
-                <button class="panel-back" onclick="closeChat()"><span class="icon"><svg><use href="#icon-arrow-left"/></svg></span></button>
+                <button class="panel-back" onclick="closeChat(); goToHome()"><span class="icon"><svg><use href="#icon-arrow-left"/></svg></span></button>
                 <div class="panel-info">
                     <div class="panel-title">FixAIR Copilot</div>
                     <div class="panel-separator"></div>
@@ -5508,7 +5414,7 @@
 
         <div class="panel assistant" id="panelAssistant" style="display:none;flex-basis:50%;">
             <header class="panel-header">
-                <button class="panel-back" onclick="closeChat()"><span class="icon"><svg><use href="#icon-arrow-left"/></svg></span></button>
+                <button class="panel-back" onclick="closeChat(); goToHome()"><span class="icon"><svg><use href="#icon-arrow-left"/></svg></span></button>
                 <div class="panel-info">
                     <div class="panel-title">FixAIR Assistant</div>
                     <div class="panel-separator"></div>
@@ -5706,7 +5612,7 @@
 
     <!-- HOTLINE VIEW -->
     <div class="hotline-view" id="hotlineView">
-        <button class="hotline-close" onclick="closeHotline()"><span class="icon"><svg><use href="#icon-x"/></svg></span></button>
+        <button class="hotline-close" onclick="closeHotline(); goToHome()"><span class="icon"><svg><use href="#icon-x"/></svg></span></button>
         <div class="hotline-widget" id="hotlineWidget">
             <div class="pulse-sphere" id="pulseSphere" onclick="toggleHotline()">
                 <div class="pulse-atmosphere"></div>
@@ -5745,63 +5651,6 @@
 
     <script>
         // ═══════════════════════════════════════════════════════════════
-        // CLEAR CORRUPTED AUTH TOKENS ON LOAD
-        // This fixes "Invalid Refresh Token" errors from corrupted state
-        // ═══════════════════════════════════════════════════════════════
-        (function clearCorruptedTokens() {
-            // Check if we should clear (only if there's evidence of corruption)
-            const urlParams = new URLSearchParams(window.location.search);
-            const forceReset = urlParams.get('reset') === 'auth';
-
-            // Look for signs of corruption
-            const authKey = 'fixair-auth';
-            const storedAuth = localStorage.getItem(authKey);
-            let isCorrupted = false;
-
-            if (storedAuth) {
-                try {
-                    const parsed = JSON.parse(storedAuth);
-                    // Check for invalid/expired tokens
-                    if (!parsed.access_token || !parsed.refresh_token) {
-                        isCorrupted = true;
-                    }
-                    // Check if tokens are expired
-                    if (parsed.expires_at && parsed.expires_at * 1000 < Date.now()) {
-                        isCorrupted = true;
-                    }
-                } catch (e) {
-                    isCorrupted = true;
-                }
-            }
-
-            if (forceReset || isCorrupted) {
-                console.log('Clearing corrupted auth state...');
-                // Clear all auth-related keys
-                const keysToRemove = [];
-                for (let i = 0; i < localStorage.length; i++) {
-                    const key = localStorage.key(i);
-                    if (key && (key.includes('supabase') || key.includes('auth') || key.includes('fixair'))) {
-                        keysToRemove.push(key);
-                    }
-                }
-                keysToRemove.forEach(key => {
-                    console.log('Removing:', key);
-                    localStorage.removeItem(key);
-                });
-                sessionStorage.clear();
-
-                // Remove ?reset=auth from URL
-                if (forceReset) {
-                    urlParams.delete('reset');
-                    const newUrl = urlParams.toString()
-                        ? window.location.pathname + '?' + urlParams.toString()
-                        : window.location.pathname;
-                    window.history.replaceState({}, '', newUrl);
-                }
-            }
-        })();
-
-    // ═══════════════════════════════════════════════════════════════
         // PRODUCTION MODE - Set to false for debugging
         // ═══════════════════════════════════════════════════════════════
         const PRODUCTION_MODE = true;
@@ -6088,7 +5937,6 @@
         document.addEventListener('DOMContentLoaded', initSettings);
         
         // Onboarding state
-        let loginStep = 0;
         let onboardingStep = 1;
         let onboardingComplete = false;
         let step3Done = false;
@@ -6216,79 +6064,35 @@
         }
 
         // ═══ SUPABASE CLIENT INITIALIZATION ═══
-        // Simplified initialization - let Supabase handle session management
-
-        // Check for password recovery link in URL hash
-        const initialHash = window.location.hash;
-        const isRecoveryLink = initialHash && initialHash.includes('type=recovery');
-        const hasAccessToken = initialHash && initialHash.includes('access_token=');
-
         if (window.supabase && window.supabase.createClient) {
             db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
                 auth: {
-                    lock: false,              // Prevent AbortError on tab locks
-                    persistSession: true,     // Store session in localStorage
-                    autoRefreshToken: true,   // Auto-refresh expired tokens
-                    detectSessionInUrl: true, // Let Supabase handle URL tokens
-                    storageKey: 'fixair-auth'
+                    persistSession: true,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: false,
+                    storageKey: 'fixair-tech-auth',
+                    flowType: 'implicit',
+                    lock: false  // CRITICAL: Prevents AbortError
                 }
             });
-
             supabaseReady = true;
         } else {
             console.error('Supabase library not loaded!');
             alert('Erreur: Supabase non chargé. Veuillez rafraîchir la page.');
         }
-        
-        // Helper function to wait for Supabase to be ready
+
+        // Helper to wait for Supabase to be ready
         async function waitForSupabase() {
-            if (supabaseReady) return true;
+            if (supabaseReady && db) return db;
             let attempts = 0;
-            while (!supabaseReady && attempts < 20) {
+            while ((!supabaseReady || !db) && attempts < 20) {
                 await new Promise(r => setTimeout(r, 100));
                 attempts++;
             }
-            return supabaseReady;
+            return db;
         }
-        
-        // Safe query wrapper that handles AbortError with timeout
-        async function safeQuery(queryFn, retries = 3, timeoutMs = 30000) {
-            await waitForSupabase();
 
-            for (let attempt = 0; attempt < retries; attempt++) {
-                try {
-                    // Add timeout to prevent infinite hang
-                    const timeoutPromise = new Promise((_, reject) =>
-                        setTimeout(() => reject(new Error('Query timeout')), timeoutMs)
-                    );
-
-                    const result = await Promise.race([queryFn(), timeoutPromise]);
-
-                    // Check if result has AbortError
-                    if (result.error && result.error.message && result.error.message.includes('AbortError')) {
-                        // Exponential backoff: 1s, 2s, 4s
-                        const delay = 1000 * Math.pow(2, attempt);
-                        console.log(`Query AbortError, retrying in ${delay}ms (attempt ${attempt + 1}/${retries})`);
-                        await new Promise(r => setTimeout(r, delay));
-                        continue;
-                    }
-                    return result;
-                } catch (err) {
-                    if ((err.message.includes('AbortError') || err.message.includes('timeout')) && attempt < retries - 1) {
-                        // Exponential backoff: 1s, 2s, 4s
-                        const delay = 1000 * Math.pow(2, attempt);
-                        console.log(`Query timeout, retrying in ${delay}ms (attempt ${attempt + 1}/${retries})`);
-                        await new Promise(r => setTimeout(r, delay));
-                        continue;
-                    }
-                    // Don't throw, return error object
-                    return { data: null, error: { message: err.message } };
-                }
-            }
-            return { data: null, error: { message: 'Query failed after retries' } };
-        }
-        
-        // ═══ TOAST UTILITY (needed early for error handling) ═══
+        // ═══ TOAST UTILITY ═══
         let toastTimeout = null;
         function toast(m) {
             const t = document.getElementById('toast');
@@ -6301,16 +6105,12 @@
                 toastTimeout = null;
             }, 2000);
         }
-        
-        // Auth state
+
+        // App state
         const API_BASE = 'https://cherhabil.app.n8n.cloud/webhook';
-        let isNewUser = false;
-        let authToken = null;
         let currentUser = null;
         let supabaseUser = null;
-        let isPasswordRecovery = false;  // Track if user is in password recovery flow
-        let isReady = false;  // Prevents duplicate handling
-        
+
         const colors = {carrier:'#3B82F6', daikin:'#10B981', mitsubishi:'#E60012'};
         const names = {carrier:'Carrier', daikin:'Daikin', mitsubishi:'Mitsubishi'};
 
@@ -6343,694 +6143,242 @@
             await getApiKey('elevenlabs_api_key');
         }
 
-        // ═══ GET CURRENT USER FROM PUBLIC.USERS TABLE ═══
-        // Returns { data, error, isTimeout } to distinguish timeout from other errors
-        async function loadUserProfile(authId) {
-            try {
-                // Use 30 second timeout with 3 retries for profile loading
-                // Total max wait: 30s + 30s + 30s + backoff delays = ~97s
-                const { data, error } = await safeQuery(() =>
-                    db.from('users')
-                      .select('*')
-                      .eq('id', authId)
-                      .single(),
-                    3,      // retries
-                    30000   // 30 second timeout
-                );
+        // ═══════════════════════════════════════════════════════════════
+        // URL ROUTER - Full path routing with query strings
+        // ═══════════════════════════════════════════════════════════════
+        // URL Structure:
+        // /technician                                    → Login prompt
+        // /technician/?user=[userId]                     → Dashboard (home)
+        // /technician/?user=[userId]&page=copilot        → Copilot AI
+        // /technician/?user=[userId]&page=assistant      → Assistant/Reports
+        // /technician/?user=[userId]&page=hotline        → Hotline voice
+        // /technician/?user=[userId]&page=profile        → User profile
+        // /technician/?user=[userId]&page=settings       → Settings
+        // /technician/?user=[userId]&page=projects       → Projects list
+        // /technician/?user=[userId]&page=project&id=[projectId] → Project detail
+        // /technician/?user=[userId]&page=calendar       → Calendar
+        // /technician/?user=[userId]&page=connect        → Connect jobs
 
-                if (error) {
-                    const isTimeout = error.message && (
-                        error.message.includes('timeout') ||
-                        error.message.includes('AbortError') ||
-                        error.message.includes('failed after retries')
-                    );
-                    console.error('Error loading user profile:', error);
-                    return { data: null, error, isTimeout };
-                }
-                return { data, error: null, isTimeout: false };
-            } catch (err) {
-                const isTimeout = err.message && (
-                    err.message.includes('timeout') ||
-                    err.message.includes('AbortError')
-                );
-                console.error('Exception loading user profile:', err);
-                return { data: null, error: err, isTimeout };
-            }
-        }
+        const Router = {
+            // Parse current URL and return route object
+            getRoute() {
+                const params = new URLSearchParams(window.location.search);
+                return {
+                    user: params.get('user') || params.get('id'),
+                    page: params.get('page') || 'home',
+                    projectId: params.get('project') || params.get('id'),
+                    chatId: params.get('chat'),
+                    mode: params.get('mode') // copilot or assistant
+                };
+            },
 
-        // ═══ HELPER: Background verification when using cached access ═══
-        async function verifyApprovalInBackground(user) {
-            try {
-                const result = await loadUserProfile(user.id);
-                if (result.data) {
-                    // Update currentUser with fresh data
-                    currentUser = result.data;
-                    // Check if user is no longer approved
-                    if (result.data.status !== 'approved' && result.data.status !== 'active') {
-                        // User was revoked - clear cache and show pending
-                        localStorage.removeItem('fixair_user_approved');
-                        localStorage.removeItem('fixair_cached_profile');
-                        showPendingScreen(user.email);
-                        toast('Votre accès a été révoqué');
-                    } else {
-                        // Update cache with fresh data
-                        localStorage.setItem('fixair_cached_profile', JSON.stringify(result.data));
-                    }
-                }
-            } catch (err) {
-                // Background verification failed silently
-            }
-        }
+            // Navigate to a new route (updates URL and shows page)
+            navigate(options = {}) {
+                const current = this.getRoute();
+                const userId = options.user || current.user;
 
-        // ═══ HELPER: Load user and show appropriate screen ═══
-        async function loadUserAndShowApp(user) {
-            if (!user) {
-                return;
-            }
-
-            supabaseUser = user;
-
-            // Load user profile from public.users
-            const result = await loadUserProfile(user.id);
-            let profile = result.data;
-            const isTimeout = result.isTimeout;
-            const hasError = result.error;
-
-            // On timeout/network error, check localStorage cache
-            if (!profile && (isTimeout || hasError)) {
-                const wasApproved = localStorage.getItem('fixair_user_approved') === 'true';
-                const cachedProfile = localStorage.getItem('fixair_cached_profile');
-
-                if (wasApproved && cachedProfile) {
-                    // User was previously approved - let them in with cached data
-                    try {
-                        profile = JSON.parse(cachedProfile);
-                        toast('Connexion lente - utilisation des données en cache');
-                        // Verify in background after letting them in
-                        setTimeout(() => verifyApprovalInBackground(user), 2000);
-                    } catch (e) {
-                        profile = null;
-                    }
-                }
-
-                // If still no profile and it was a timeout, show connection error
-                if (!profile && isTimeout) {
-                    showConnectionError(user);
+                if (!userId) {
+                    console.warn('Router.navigate: No user ID');
                     return;
                 }
-            }
 
-            if (profile) {
-                // Sync missing user data from auth metadata to public.users
-                const authMeta = user.user_metadata || {};
-                const needsUpdate = {};
+                // Build new URL
+                const params = new URLSearchParams();
+                params.set('user', userId);
 
-                if (!profile.first_name && authMeta.first_name) {
-                    needsUpdate.first_name = authMeta.first_name;
+                if (options.page && options.page !== 'home') {
+                    params.set('page', options.page);
                 }
-                if (!profile.phone && authMeta.phone) {
-                    needsUpdate.phone = authMeta.phone;
+                if (options.projectId) {
+                    params.set('project', options.projectId);
                 }
-                if (!profile.email && user.email) {
-                    needsUpdate.email = user.email;
+                if (options.chatId) {
+                    params.set('chat', options.chatId);
+                }
+                if (options.mode) {
+                    params.set('mode', options.mode);
                 }
 
-                // Update public.users if we have missing data from auth
-                if (Object.keys(needsUpdate).length > 0) {
-                    try {
-                        needsUpdate.updated_at = new Date().toISOString();
-                        const { data: updatedProfile } = await db
-                            .from('users')
-                            .update(needsUpdate)
-                            .eq('id', user.id)
-                            .select()
-                            .single();
+                const newUrl = '/technician/?' + params.toString();
 
-                        if (updatedProfile) {
-                            profile = updatedProfile;
+                // Only push if URL actually changed
+                if (newUrl !== window.location.pathname + window.location.search) {
+                    history.pushState({ route: options }, '', newUrl);
+                }
+
+                // Handle the route change
+                this.handleRouteChange(options.page || 'home', options);
+            },
+
+            // Handle route changes (show correct page/panel)
+            handleRouteChange(page, options = {}) {
+                console.log('Router: handleRouteChange', page, options);
+
+                // Close all overlays first
+                closeChat();
+                closeProfile();
+                document.getElementById('hotlineView')?.classList.remove('active');
+                document.getElementById('connectView')?.classList.remove('active');
+
+                switch(page) {
+                    case 'home':
+                    case 'dashboard':
+                        showPage('home');
+                        break;
+
+                    case 'projects':
+                        showPage('projects');
+                        break;
+
+                    case 'project':
+                        // Open specific project (from URL bookmark/refresh)
+                        if (options.projectId && typeof loadProject === 'function') {
+                            loadProject(options.projectId);
+                        } else {
+                            showPage('projects');
                         }
-                    } catch (e) {
-                        // Silently handle sync error
+                        break;
+
+                    case 'copilot':
+                        showPage('home');
+                        // Start fresh copilot chat
+                        if (typeof switchMode === 'function') {
+                            switchMode('copilot');
+                        }
+                        break;
+
+                    case 'assistant':
+                        showPage('home');
+                        if (typeof switchMode === 'function') {
+                            switchMode('assistant');
+                        }
+                        break;
+
+                    case 'hotline':
+                        showPage('home');
+                        document.getElementById('hotlineView')?.classList.add('active');
+                        break;
+
+                    case 'profile':
+                        showPage('home');
+                        document.getElementById('profileView')?.classList.add('active');
+                        break;
+
+                    case 'settings':
+                        showPage('home');
+                        document.getElementById('profileView')?.classList.add('active');
+                        // TODO: scroll to settings section
+                        break;
+
+                    case 'calendar':
+                        showPage('home');
+                        // Show calendar if it exists
+                        if (typeof showTechCalendar === 'function') {
+                            showTechCalendar();
+                        }
+                        break;
+
+                    case 'connect':
+                        showPage('connect');
+                        break;
+
+                    default:
+                        showPage('home');
+                }
+            },
+
+            // Initialize router (call once on page load)
+            init() {
+                // Handle browser back/forward
+                window.addEventListener('popstate', (e) => {
+                    console.log('Router: popstate', e.state);
+                    const route = this.getRoute();
+                    if (route.user) {
+                        this.handleRouteChange(route.page, route);
                     }
+                });
+            }
+        };
+
+        // ═══ APP INITIALIZATION ═══
+        async function init() {
+            console.log('=== TECHNICIAN APP INIT ===');
+
+            // Initialize router for back/forward support
+            Router.init();
+
+            // Get route from URL
+            const route = Router.getRoute();
+            console.log('Initial route:', route);
+
+            // Check for user ID (query string is primary method)
+            let userId = route.user;
+
+            // Fallback: Path-based /technician/[uuid] (for old URLs)
+            if (!userId) {
+                const pathParts = window.location.pathname.split('/').filter(Boolean);
+                if (pathParts.length >= 2 && pathParts[0] === 'technician') {
+                    userId = pathParts[1];
+                    console.log('User ID from path (legacy):', userId);
                 }
+            }
 
-                currentUser = profile;
+            // Fallback: Hash /technician/#[uuid]
+            if (!userId && window.location.hash) {
+                userId = window.location.hash.replace('#', '').replace('/', '');
+                if (userId) console.log('User ID from hash (legacy):', userId);
+            }
 
-                // Check role and redirect to correct app if needed
-                if (profile.role === 'admin' || profile.role === 'owner') {
-                    window.location.replace('/admin');
-                    return;
-                } else if (profile.role === 'manager') {
-                    window.location.replace('/manager');
-                    return;
+            // Check if we have a valid userId (UUIDs are 36 chars, but accept 10+ to be safe)
+            if (userId && userId.length > 10) {
+                await loadUserDashboard(userId);
+
+                // After loading dashboard, handle the requested page
+                if (route.page && route.page !== 'home') {
+                    // Small delay to ensure UI is ready
+                    setTimeout(() => {
+                        Router.handleRouteChange(route.page, route);
+                    }, 100);
                 }
-
-                // Check approval status
-                if (profile.status !== 'approved' && profile.status !== 'active') {
-                    // Clear any stale approval cache
-                    localStorage.removeItem('fixair_user_approved');
-                    localStorage.removeItem('fixair_cached_profile');
-                    showPendingScreen(profile.email);
-                    return;
-                }
-
-                // User is approved - cache for offline/timeout access
-                localStorage.setItem('fixair_user_approved', 'true');
-                localStorage.setItem('fixair_cached_profile', JSON.stringify(profile));
-
-                // User is approved - proceed to app
-                document.getElementById('userName').textContent = profile.first_name || 'Utilisateur';
-                document.getElementById('profileFirstName').value = profile.first_name || '';
-                document.getElementById('profileLastName').value = profile.last_name || '';
-                if (profile.email) document.getElementById('profileEmail').value = profile.email;
-                if (profile.phone) document.getElementById('profilePhone').value = profile.phone;
-
-                // Load language preference from database
-                if (profile.language && (profile.language === 'fr' || profile.language === 'en')) {
-                    setLanguage(profile.language);
-                }
-
-                // Check onboarding status from localStorage OR database
-                const onboardingDoneLocal = localStorage.getItem('fixair_onboarding_done');
-                const onboardingDoneDB = profile.onboarding_done;
-                if (onboardingDoneLocal || onboardingDoneDB) {
-                    onboardingComplete = true;
-                    document.querySelector('.onboarding-section').classList.add('hidden');
-                    document.getElementById('homepageContent').classList.add('active');
-                    // Sync localStorage if DB has the flag but local doesn't
-                    if (onboardingDoneDB && !onboardingDoneLocal) {
-                        localStorage.setItem('fixair_onboarding_done', 'true');
-                    }
-                }
-
-                document.getElementById('loginScreen').classList.remove('active');
-                document.getElementById('passwordResetScreen')?.classList.remove('active');
-                document.getElementById('mainApp').classList.add('active');
-
-                // Load projects and check if user should skip onboarding
-                await loadProjectsListAndCheckOnboarding();
-                initGamification();
-                prefetchApiKeys();
             } else {
-                showPendingScreen(user.email);
+                showLoginScreen();
             }
         }
 
-        // ═══ HELPER: Show password reset screen ═══
-        function showPasswordResetScreen() {
-            document.getElementById('loginScreen').classList.remove('active');
-            document.getElementById('pendingScreen')?.classList.remove('active');
-            document.getElementById('emailConfirmScreen')?.classList.remove('active');
+        // ═══════════════════════════════════════════════════════════════
+        // LOGIN SCREEN MANAGEMENT
+        // ═══════════════════════════════════════════════════════════════
+        let loginStep = 0;
+        let existingUserData = null;
+
+        function showLoginScreen() {
+            document.getElementById('loginScreen').classList.add('active');
             document.getElementById('mainApp').classList.remove('active');
-            document.getElementById('passwordResetScreen').classList.add('active');
+            // Reset login state
+            loginStep = 0;
+            existingUserData = null;
+            updateLoginUI();
+            clearLoginStatus();
         }
 
-        // ═══ CHECK SUPABASE AUTH SESSION ON LOAD ═══
-        async function initAuth() {
-            // Check if email passed in URL (from redirect)
-            const urlParams = new URLSearchParams(window.location.search);
-            const emailParam = urlParams.get('email');
-            if (emailParam) {
-                const emailInput = document.getElementById('loginEmail');
-                if (emailInput) {
-                    emailInput.value = decodeURIComponent(emailParam);
-                }
-                // Clean URL
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }
+        // showMainApp is defined below at main app section
 
-            // Set recovery flag if URL indicates password recovery
-            if (isRecoveryLink) {
-                isPasswordRecovery = true;
-            }
-
-            // Check for existing session
-            // Supabase will auto-handle URL tokens via detectSessionInUrl: true
-            try {
-                const { data, error } = await db.auth.getSession();
-
-                if (error) {
-                    console.error('Session check error:', error);
-                    // Clear corrupted session
-                    if (error.message && error.message.includes('Refresh Token')) {
-                        localStorage.removeItem('fixair-auth');
-                        localStorage.removeItem('supabase.auth.token');
-                    }
-                    isReady = true;
-                    return;
-                }
-
-                if (data.session) {
-                    // Session exists - persist to localStorage for page reload
-                    localStorage.setItem('supabase.auth.token', JSON.stringify({
-                        currentSession: data.session,
-                        expiresAt: data.session.expires_at
-                    }));
-
-                    // Handle password recovery
-                    if (isRecoveryLink || isPasswordRecovery) {
-                        isReady = true;
-                        showPasswordResetScreen();
-                        return;
-                    }
-
-                    // Load user app
-                    isReady = true;
-                    await loadUserAndShowApp(data.session.user);
-                } else {
-                    // No session - try to restore from manual localStorage backup
-                    try {
-                        const stored = localStorage.getItem('supabase.auth.token');
-                        if (stored) {
-                            const parsed = JSON.parse(stored);
-                            if (parsed.currentSession && parsed.currentSession.access_token) {
-                                const { data: restored, error: restoreError } = await db.auth.setSession({
-                                    access_token: parsed.currentSession.access_token,
-                                    refresh_token: parsed.currentSession.refresh_token
-                                });
-
-                                if (!restoreError && restored.session) {
-                                    isReady = true;
-                                    await loadUserAndShowApp(restored.session.user);
-                                    return;
-                                }
-                            }
-                        }
-                    } catch (e) {
-                        // Restore failed - clear stale data
-                        localStorage.removeItem('supabase.auth.token');
-                    }
-
-                    // No valid session
-                    isReady = true;
-                }
-            } catch (err) {
-                console.error('Auth init error:', err);
-                isReady = true;
-            }
-        }
-
-        // Listen for auth state changes
-        let authHandled = false;
-        db.auth.onAuthStateChange(async (event, session) => {
-            // Handle PASSWORD_RECOVERY event
-            if (event === 'PASSWORD_RECOVERY') {
-                isPasswordRecovery = true;
-                isReady = true;
-                showPasswordResetScreen();
-                return;
-            }
-
-            // Handle USER_UPDATED event (after password change)
-            if (event === 'USER_UPDATED') {
-                // Don't auto-load app - the setNewPassword function handles the flow
-                // by signing out and showing a "Se connecter" button
-                isReady = true;
-                return;
-            }
-
-            // Handle SIGNED_IN event
-            if (event === 'SIGNED_IN' && session) {
-                // If we're in password recovery mode, stay on reset form
-                if (isPasswordRecovery) {
-                    showPasswordResetScreen();
-                    return;
-                }
-
-                // Persist session to localStorage for page reload persistence
-                localStorage.setItem('supabase.auth.token', JSON.stringify({
-                    currentSession: session,
-                    expiresAt: session.expires_at
-                }));
-
-                supabaseUser = session.user;
-
-                // Only process if we don't have currentUser yet and not already in app
-                if (!currentUser && !document.getElementById('mainApp').classList.contains('active')) {
-                    authHandled = true;
-                    isReady = true;
-                    await loadUserAndShowApp(session.user);
-                }
-                return;
-            }
-
-            // Handle INITIAL_SESSION event
-            if (event === 'INITIAL_SESSION') {
-                // Skip if we already handled or if we're processing URL tokens manually
-                if (authHandled || hasAccessToken) {
-                    return;
-                }
-
-                if (session && session.user && !isPasswordRecovery) {
-                    supabaseUser = session.user;
-                    authHandled = true;
-                    isReady = true;
-                    await loadUserAndShowApp(session.user);
-                }
-                return;
-            }
-
-            // Handle SIGNED_OUT event
-            if (event === 'SIGNED_OUT') {
-                supabaseUser = null;
-                currentUser = null;
-                isPasswordRecovery = false;
-                authHandled = false;
-                isReady = true;
-            }
-        });
-
-        // Initialize auth on page load (reduced timeout since we handle manually)
-        setTimeout(() => initAuth(), 300);
-
-        // ═══ LOGIN STATUS MESSAGES ═══
-        let existingUserName = '';
-        
         function setLoginStatus(message, type = 'info', showReset = false) {
             const statusEl = document.getElementById('loginStatus');
             if (!statusEl) return;
-            
             statusEl.className = 'login-status ' + type;
-            
             if (showReset) {
                 statusEl.innerHTML = message + ' <a onclick="resetPassword()">Réinitialiser</a>';
             } else {
                 statusEl.textContent = message;
             }
         }
-        
+
         function clearLoginStatus() {
             const statusEl = document.getElementById('loginStatus');
             if (statusEl) {
                 statusEl.textContent = '';
                 statusEl.className = 'login-status';
-            }
-        }
-        
-        async function resetPassword() {
-            const email = document.getElementById('loginEmail').value.trim();
-            if (!email.includes('@')) {
-                setLoginStatus('Entrez votre email d\'abord', 'error');
-                return;
-            }
-            
-            try {
-                const redirectUrl = window.location.origin + window.location.pathname;
-
-                const { error } = await db.auth.resetPasswordForEmail(email, {
-                    redirectTo: redirectUrl
-                });
-
-                if (error) {
-                    setLoginStatus('Erreur: ' + error.message, 'error');
-                } else {
-                    setLoginStatus('Email de réinitialisation envoyé ! Vérifiez votre boîte mail (et spam).', 'success');
-                }
-            } catch (err) {
-                setLoginStatus('Erreur lors de l\'envoi', 'error');
-            }
-        }
-
-        // ═══ SET NEW PASSWORD (from password recovery link) ═══
-        async function setNewPassword() {
-            const newPass = document.getElementById('newPasswordInput').value;
-            const confirmPass = document.getElementById('confirmPasswordInput').value;
-            const statusEl = document.getElementById('passwordResetStatus');
-
-            // Validation
-            if (!newPass || newPass.length < 6) {
-                statusEl.style.display = 'block';
-                statusEl.style.background = 'rgba(239,68,68,0.2)';
-                statusEl.style.border = '1px solid rgba(239,68,68,0.5)';
-                statusEl.style.color = '#ef4444';
-                statusEl.textContent = 'Le mot de passe doit contenir au moins 6 caractères';
-                return;
-            }
-
-            if (newPass !== confirmPass) {
-                statusEl.style.display = 'block';
-                statusEl.style.background = 'rgba(239,68,68,0.2)';
-                statusEl.style.border = '1px solid rgba(239,68,68,0.5)';
-                statusEl.style.color = '#ef4444';
-                statusEl.textContent = 'Les mots de passe ne correspondent pas';
-                return;
-            }
-
-            statusEl.style.display = 'block';
-            statusEl.style.background = 'rgba(59,130,246,0.2)';
-            statusEl.style.border = '1px solid rgba(59,130,246,0.5)';
-            statusEl.style.color = '#3b82f6';
-            statusEl.textContent = 'Mise à jour en cours...';
-
-            try {
-                const { error } = await db.auth.updateUser({ password: newPass });
-
-                if (error) {
-                    statusEl.style.background = 'rgba(239,68,68,0.2)';
-                    statusEl.style.border = '1px solid rgba(239,68,68,0.5)';
-                    statusEl.style.color = '#ef4444';
-                    statusEl.textContent = 'Erreur: ' + error.message;
-                    return;
-                }
-
-                statusEl.style.background = 'rgba(16,185,129,0.2)';
-                statusEl.style.border = '1px solid rgba(16,185,129,0.5)';
-                statusEl.style.color = '#10b981';
-                statusEl.textContent = 'Mot de passe mis à jour avec succès !';
-
-                // Reset the recovery flag
-                isPasswordRecovery = false;
-
-                // Clear the input fields
-                document.getElementById('newPasswordInput').value = '';
-                document.getElementById('confirmPasswordInput').value = '';
-
-                // Sign out to force fresh login with new password
-                localStorage.removeItem('supabase.auth.token');
-                await db.auth.signOut();
-
-                // Change the update button to a "Se connecter" button
-                const updateBtn = document.querySelector('#passwordResetScreen button[onclick="setNewPassword()"]');
-                if (updateBtn) {
-                    updateBtn.textContent = 'Se connecter';
-                    updateBtn.onclick = goToLoginFromPasswordReset;
-                }
-
-                // Hide the cancel button
-                const cancelBtn = document.querySelector('#passwordResetScreen button[onclick="cancelPasswordReset()"]');
-                if (cancelBtn) {
-                    cancelBtn.style.display = 'none';
-                }
-
-            } catch (err) {
-                console.error('❌ Password update exception:', err);
-                statusEl.style.background = 'rgba(239,68,68,0.2)';
-                statusEl.style.border = '1px solid rgba(239,68,68,0.5)';
-                statusEl.style.color = '#ef4444';
-                statusEl.textContent = 'Erreur lors de la mise à jour';
-            }
-        }
-
-        // ═══ GO TO LOGIN FROM PASSWORD RESET ═══
-        function goToLoginFromPasswordReset() {
-            document.getElementById('passwordResetScreen').classList.remove('active');
-            document.getElementById('loginScreen').classList.add('active');
-
-            // Reset the password reset screen for next use
-            const statusEl = document.getElementById('passwordResetStatus');
-            statusEl.style.display = 'none';
-
-            const updateBtn = document.querySelector('#passwordResetScreen button[onclick="goToLoginFromPasswordReset()"]');
-            if (updateBtn) {
-                updateBtn.textContent = 'Mettre à jour le mot de passe';
-                updateBtn.onclick = setNewPassword;
-            }
-
-            const cancelBtn = document.querySelector('#passwordResetScreen button[onclick="cancelPasswordReset()"]');
-            if (cancelBtn) {
-                cancelBtn.style.display = '';
-            }
-        }
-
-        // ═══ CANCEL PASSWORD RESET ═══
-        function cancelPasswordReset() {
-            isPasswordRecovery = false;
-            localStorage.removeItem('supabase.auth.token');
-            db.auth.signOut();
-
-            // Hide password reset screen and show login
-            document.getElementById('passwordResetScreen').classList.remove('active');
-            document.getElementById('pendingScreen').classList.remove('active');
-            document.getElementById('emailConfirmScreen').classList.remove('active');
-            document.getElementById('mainApp').classList.remove('active');
-            document.getElementById('loginScreen').classList.add('active');
-
-            // Clear inputs
-            document.getElementById('newPasswordInput').value = '';
-            document.getElementById('confirmPasswordInput').value = '';
-            document.getElementById('passwordResetStatus').style.display = 'none';
-        }
-
-        // LOGIN STEPS
-        async function nextLoginStep() {
-            const btn = document.getElementById('loginBtn');
-
-            if (loginStep === 0) {
-                // Step 0: Check email
-                const email = document.getElementById('loginEmail').value.trim();
-
-                if (!email.includes('@')) { 
-                    setLoginStatus('Veuillez entrer un email valide', 'error');
-                    return; 
-                }
-                
-                // Check if Supabase is available
-                if (!db) {
-                    setLoginStatus('Erreur de connexion. Rafraîchissez la page.', 'error');
-                    return;
-                }
-                
-                clearLoginStatus();
-                btn.disabled = true;
-                btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
-                
-                try {
-                    // Wait for Supabase to be ready
-                    await waitForSupabase();
-                    
-                    // SIMPLIFIED: Only check public.users table
-                    // If user is in public.users = existing user
-                    // If not = new user (will handle auth conflicts during signup)
-                    const { data: publicUser, error: publicError } = await safeQuery(() => 
-                        db.from('users')
-                          .select('id, first_name, status, role')
-                          .eq('email', email)
-                          .maybeSingle()
-                    );
-                    
-                    // FIRST: Check if there was an error (timeout, network, etc)
-                    if (publicError) {
-                        console.error('Email check failed with error:', publicError);
-                        setLoginStatus('Problème de connexion. Veuillez réessayer.', 'error');
-                        return;
-                    }
-
-                    // THEN: Check if user exists (only if no error)
-                    if (publicUser && publicUser.id) {
-                        // User exists - check role
-                        if (publicUser.role && publicUser.role !== 'technician') {
-                            // Wrong role - redirect to appropriate app
-                            if (publicUser.role === 'admin' || publicUser.role === 'owner') {
-                                setLoginStatus('Ce compte est un compte admin. Redirection...', 'info');
-                                setTimeout(() => { window.location.replace('https://go.fixair.ai/admin'); }, 1500);
-                            } else if (publicUser.role === 'manager') {
-                                setLoginStatus('Ce compte est un compte manager. Redirection...', 'info');
-                                setTimeout(() => { window.location.replace('https://go.fixair.ai/manager'); }, 1500);
-                            } else {
-                                setLoginStatus('Ce compte n\'est pas un compte technicien', 'error');
-                            }
-                            return;
-                        }
-
-                        isNewUser = false;
-                        existingUserName = publicUser.first_name || '';
-
-                        if (existingUserName) {
-                            setLoginStatus('Bienvenue ' + existingUserName + ' !', 'success');
-                        } else {
-                            setLoginStatus('Bienvenue !', 'success');
-                        }
-
-                        loginStep = 1;
-                        updateLoginUI();
-                    } else {
-                        // No error AND no user = genuinely new user, redirect to signup
-                        console.log('User not found in database, redirecting to signup');
-                        setLoginStatus('Redirection vers la page d\'inscription...', 'info');
-                        setTimeout(() => {
-                            window.location.href = 'https://go.fixair.ai/auth?email=' + encodeURIComponent(email) + '&from=technician';
-                        }, 1000);
-                    }
-
-                } catch (error) {
-                    console.error('❌ Check email exception:', error);
-                    setLoginStatus('Erreur de connexion. Réessayez.', 'error');
-                } finally {
-                    btn.disabled = false;
-                    btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
-                }
-                
-            } else if (loginStep === 1) {
-                // Step 1: Password - login existing user only
-                const email = document.getElementById('loginEmail').value.trim();
-                const password = document.getElementById('loginPassword').value;
-
-                if (!password) {
-                    setLoginStatus('Veuillez entrer votre mot de passe', 'error');
-                    return;
-                }
-
-                btn.disabled = true;
-                btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
-                setLoginStatus('Connexion...', 'info');
-
-                try {
-                    const { data, error } = await db.auth.signInWithPassword({
-                        email: email,
-                        password: password
-                    });
-
-                    if (error) {
-                        setLoginStatus('Mot de passe incorrect', 'error', true);
-                        return;
-                    }
-
-                    clearLoginStatus();
-                    supabaseUser = data.user;
-
-                    // Load user profile
-                    const profile = await loadUserProfile(data.user.id);
-
-                    if (profile) {
-                        currentUser = profile;
-
-                        // Check approval status
-                        if (profile.status !== 'approved' && profile.status !== 'active') {
-                            showPendingScreen(profile.email);
-                            return;
-                        }
-
-                        // User is approved
-                        document.getElementById('userName').textContent = profile.first_name;
-                        document.getElementById('profileFirstName').value = profile.first_name;
-                        if (profile.email) document.getElementById('profileEmail').value = profile.email;
-                        if (profile.phone) document.getElementById('profilePhone').value = profile.phone;
-
-                        // Check onboarding status from localStorage OR database
-                        const onboardingDoneLocal = localStorage.getItem('fixair_onboarding_done');
-                        const onboardingDoneDB = profile.onboarding_done;
-                        if (onboardingDoneLocal || onboardingDoneDB) {
-                            onboardingComplete = true;
-                            document.querySelector('.onboarding-section').classList.add('hidden');
-                            document.getElementById('homepageContent').classList.add('active');
-                            // Sync localStorage if DB has the flag but local doesn't
-                            if (onboardingDoneDB && !onboardingDoneLocal) {
-                                localStorage.setItem('fixair_onboarding_done', 'true');
-                            }
-                        }
-
-                        toast('Bienvenue ' + profile.first_name + ' !');
-                        doLogin();
-                    } else {
-                        setLoginStatus('Erreur: profil non trouvé', 'error');
-                    }
-                } catch (error) {
-                    setLoginStatus('Erreur de connexion au serveur', 'error');
-                    console.error('Login error:', error);
-                } finally {
-                    btn.disabled = false;
-                    btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
-                }
             }
         }
 
@@ -7048,227 +6396,295 @@
             }
         }
 
-        // ═══ SCREEN HELPER FUNCTIONS ═══
-        function showEmailConfirmScreen(email) {
-            clearLoginStatus();
-            document.getElementById('confirmEmail').textContent = email;
-            document.getElementById('loginScreen').classList.remove('active');
-            document.getElementById('mainApp').classList.remove('active');
-            document.getElementById('pendingScreen').classList.remove('active');
-            document.getElementById('emailConfirmScreen').classList.add('active');
-        }
+        async function nextLoginStep() {
+            const btn = document.getElementById('loginBtn');
 
-        function showPendingScreen(email) {
-            clearLoginStatus();
-            document.getElementById('pendingEmail').textContent = email;
-            document.getElementById('loginScreen').classList.remove('active');
-            document.getElementById('mainApp').classList.remove('active');
-            document.getElementById('emailConfirmScreen').classList.remove('active');
-            document.getElementById('pendingScreen').classList.add('active');
-        }
+            if (loginStep === 0) {
+                // Step 0: Check email
+                const email = document.getElementById('loginEmail').value.trim().toLowerCase();
 
-        // ═══ CONNECTION ERROR SCREEN (not pending - network issue) ═══
-        let connectionRetryCount = 0;
-        const MAX_CONNECTION_RETRIES = 3;
-        let connectionRetryUser = null;
-
-        function showConnectionError(user) {
-            connectionRetryUser = user;
-            connectionRetryCount = 0;
-            clearLoginStatus();
-            document.getElementById('loginScreen').classList.remove('active');
-            document.getElementById('mainApp').classList.remove('active');
-            document.getElementById('emailConfirmScreen').classList.remove('active');
-            document.getElementById('pendingScreen').classList.remove('active');
-            document.getElementById('connectionErrorScreen').classList.add('active');
-            updateConnectionRetryUI();
-            // Auto-retry after 3 seconds
-            setTimeout(retryConnection, 3000);
-        }
-
-        function updateConnectionRetryUI() {
-            const retryText = document.getElementById('connectionRetryText');
-            if (retryText) {
-                retryText.textContent = `Tentative ${connectionRetryCount + 1}/${MAX_CONNECTION_RETRIES}...`;
-            }
-        }
-
-        async function retryConnection() {
-            if (!connectionRetryUser) return;
-
-            connectionRetryCount++;
-            updateConnectionRetryUI();
-
-            const result = await loadUserProfile(connectionRetryUser.id);
-            if (result.data) {
-                // Success - hide error screen and proceed
-                document.getElementById('connectionErrorScreen').classList.remove('active');
-                const user = connectionRetryUser;
-                connectionRetryUser = null;
-                await loadUserAndShowApp(user);
-                return;
-            }
-
-            if (connectionRetryCount >= MAX_CONNECTION_RETRIES) {
-                // Max retries reached - show login screen with error
-                document.getElementById('connectionErrorScreen').classList.remove('active');
-                document.getElementById('loginScreen').classList.add('active');
-                toast('Impossible de se connecter. Veuillez réessayer.');
-                connectionRetryUser = null;
-                return;
-            }
-
-            // Try again after delay
-            setTimeout(retryConnection, 3000);
-        }
-
-        function cancelConnectionRetry() {
-            connectionRetryUser = null;
-            document.getElementById('connectionErrorScreen').classList.remove('active');
-            document.getElementById('loginScreen').classList.add('active');
-        }
-
-        async function checkApprovalStatus() {
-            const btn = document.getElementById('checkStatusBtn');
-            const originalText = btn.textContent;
-            btn.disabled = true;
-            btn.textContent = 'Vérification...';
-
-            try {
-                const { data: { user } } = await db.auth.getUser();
-                if (!user) {
-                    btn.disabled = false;
-                    btn.textContent = originalText;
-                    toast('Session expirée, veuillez vous reconnecter');
-                    logoutFromPending();
+                if (!email.includes('@')) {
+                    setLoginStatus('Veuillez entrer un email valide', 'error');
                     return;
                 }
 
-                const result = await loadUserProfile(user.id);
-                const profile = result.data;
-                if (profile && (profile.status === 'approved' || profile.status === 'active')) {
-                    currentUser = profile;
-                    supabaseUser = user;
-                    // Cache approval status
-                    localStorage.setItem('fixair_user_approved', 'true');
-                    localStorage.setItem('fixair_cached_profile', JSON.stringify(profile));
-                    toast('Accès approuvé ! Bienvenue ' + (profile.first_name || 'Technicien') + ' !');
-                    doLogin();
-                } else if (result.isTimeout) {
-                    toast('Erreur de connexion, veuillez réessayer');
+                clearLoginStatus();
+                btn.disabled = true;
+                btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
+
+                try {
+                    // Check if user exists in users table
+                    const { data: user, error } = await db
+                        .from('users')
+                        .select('id, email, first_name, status, role')
+                        .eq('email', email)
+                        .maybeSingle();
+
+                    console.log('User lookup:', { user, error });
+
+                    if (error || !user) {
+                        // User not found - redirect to /auth for signup
+                        setLoginStatus('Compte non trouvé. Redirection vers inscription...', 'info');
+                        setTimeout(() => {
+                            window.location.href = '/auth?email=' + encodeURIComponent(email) + '&from=technician';
+                        }, 1000);
+                        return;
+                    }
+
+                    // Check if user is a technician
+                    if (user.role !== 'technician') {
+                        setLoginStatus('Ce portail est réservé aux techniciens. Utilisez le portail ' + user.role + '.', 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+                        return;
+                    }
+
+                    // Check status
+                    if (user.status === 'pending') {
+                        setLoginStatus('⏳ Votre compte est en attente de validation par un administrateur.', 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+                        return;
+                    }
+
+                    if (user.status === 'rejected' || user.status === 'suspended') {
+                        setLoginStatus('❌ Votre compte a été désactivé. Contactez le support.', 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+                        return;
+                    }
+
+                    // User approved - save data and show password step
+                    existingUserData = user;
+                    if (user.first_name) {
+                        setLoginStatus('Bienvenue ' + user.first_name + ' !', 'info');
+                    } else {
+                        setLoginStatus('Bienvenue !', 'info');
+                    }
+                    loginStep = 1;
+                    updateLoginUI();
+
+                } catch (err) {
+                    console.error('Email check error:', err);
+                    setLoginStatus('Erreur de connexion. Réessayez.', 'error');
+                } finally {
                     btn.disabled = false;
-                    btn.textContent = originalText;
-                } else {
-                    toast('Votre compte est toujours en attente de validation');
-                    btn.disabled = false;
-                    btn.textContent = originalText;
+                    btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
                 }
-            } catch (err) {
-                console.error('Check status error:', err);
-                toast('Erreur lors de la vérification');
-                btn.disabled = false;
-                btn.textContent = originalText;
+
+            } else if (loginStep === 1) {
+                // Step 1: Password login
+                const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+                const password = document.getElementById('loginPassword').value;
+
+                if (password.length < 6) {
+                    setLoginStatus('Mot de passe: 6 caractères minimum', 'error');
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
+
+                try {
+                    const { data, error } = await db.auth.signInWithPassword({
+                        email: email,
+                        password: password
+                    });
+
+                    if (error) {
+                        console.error('Login error:', error);
+
+                        // Handle specific error types
+                        if (error.message.includes('Email not confirmed')) {
+                            setLoginStatusWithResend(email, '📧 Veuillez confirmer votre email en cliquant sur le lien envoyé.');
+                        } else if (error.message.includes('Invalid login credentials')) {
+                            setLoginStatus('Mot de passe incorrect', 'error', true);
+                        } else {
+                            setLoginStatus('Erreur: ' + error.message, 'error');
+                        }
+
+                        btn.disabled = false;
+                        btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+                        return;
+                    }
+
+                    // Login successful - redirect to user dashboard
+                    clearLoginStatus();
+                    setLoginStatus('Connexion réussie !', 'success');
+
+                    // Get user ID from our users table
+                    const userId = existingUserData?.id;
+                    if (userId) {
+                        setTimeout(() => {
+                            window.location.href = '/technician/?user=' + userId;
+                        }, 500);
+                    } else {
+                        // Fallback: get user from session
+                        const { data: profile } = await db
+                            .from('users')
+                            .select('id')
+                            .eq('email', email)
+                            .single();
+                        if (profile) {
+                            window.location.href = '/technician/?user=' + profile.id;
+                        } else {
+                            setLoginStatus('Erreur: profil non trouvé', 'error');
+                        }
+                    }
+
+                } catch (err) {
+                    console.error('Login exception:', err);
+                    setLoginStatus('Erreur de connexion au serveur', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+                }
             }
         }
 
-        async function resendConfirmation() {
-            const email = document.getElementById('confirmEmail').textContent;
+        async function resetPassword() {
+            const email = document.getElementById('loginEmail').value.trim();
+            if (!email.includes('@')) {
+                setLoginStatus('Entrez votre email d\'abord', 'error');
+                return;
+            }
+
+            try {
+                const { error } = await db.auth.resetPasswordForEmail(email, {
+                    redirectTo: window.location.origin + '/auth'
+                });
+                if (error) {
+                    setLoginStatus('Erreur: ' + error.message, 'error');
+                } else {
+                    setLoginStatus('Email de réinitialisation envoyé !', 'success');
+                }
+            } catch (err) {
+                setLoginStatus('Erreur lors de l\'envoi', 'error');
+            }
+        }
+
+        function setLoginStatusWithResend(email, message) {
+            const statusEl = document.getElementById('loginStatus');
+            if (!statusEl) return;
+            statusEl.className = 'login-status error';
+            statusEl.innerHTML = `
+                ${message}
+                <br><br>
+                <a onclick="resendConfirmation('${email}')" style="color: var(--copilot); cursor: pointer; text-decoration: underline;">
+                    Renvoyer l'email de confirmation
+                </a>
+            `;
+        }
+
+        async function resendConfirmation(email) {
             try {
                 const { error } = await db.auth.resend({
                     type: 'signup',
                     email: email
                 });
                 if (error) {
-                    toast('Erreur: ' + error.message);
+                    setLoginStatus('Erreur: ' + error.message, 'error');
                 } else {
-                    toast('Email renvoyé !');
+                    setLoginStatus('✅ Email de confirmation renvoyé ! Vérifiez votre boîte mail.', 'success');
                 }
             } catch (err) {
-                toast('Erreur lors de l\'envoi');
+                setLoginStatus('Erreur lors de l\'envoi', 'error');
             }
         }
 
-        function backToLogin() {
-            clearLoginStatus();
-            document.getElementById('emailConfirmScreen').classList.remove('active');
-            document.getElementById('pendingScreen').classList.remove('active');
-            document.getElementById('loginScreen').classList.add('active');
+        async function loadUserDashboard(userSlug) {
+            console.log('Loading dashboard for:', userSlug);
 
-            loginStep = 0;
-            document.getElementById('loginEmail').value = '';
-            document.getElementById('loginPassword').value = '';
-            updateLoginUI();
+            try {
+                // Load user profile by ID
+                const { data: user, error } = await db
+                    .from('users')
+                    .select('*')
+                    .eq('id', userSlug)
+                    .single();
+
+                if (error || !user) {
+                    console.error('User not found:', error);
+                    document.body.innerHTML = `
+                        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#0a0a0a;color:white;font-family:system-ui;">
+                            <h1 style="color:#FF6B35;">Utilisateur non trouvé</h1>
+                            <p style="color:#888;margin:20px 0;">L'ID utilisateur n'existe pas.</p>
+                            <a href="/technician" style="color:#FF6B35;margin-top:20px;">← Retour à la connexion</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                console.log('User loaded:', user.email);
+
+                // Set global user variables
+                currentUser = user;
+                supabaseUser = user;
+
+                // Populate UI
+                document.getElementById('userName').textContent = user.first_name || 'Utilisateur';
+                document.getElementById('profileFirstName').value = user.first_name || '';
+                document.getElementById('profileLastName').value = user.last_name || '';
+                if (user.email) document.getElementById('profileEmail').value = user.email;
+                if (user.phone) document.getElementById('profilePhone').value = user.phone;
+
+                // Load language preference
+                if (user.language && (user.language === 'fr' || user.language === 'en')) {
+                    setLanguage(user.language);
+                }
+
+                // Check onboarding status
+                const onboardingDoneLocal = localStorage.getItem('fixair_onboarding_done');
+                const onboardingDoneDB = user.onboarding_done;
+                if (onboardingDoneLocal || onboardingDoneDB) {
+                    onboardingComplete = true;
+                    document.querySelector('.onboarding-section')?.classList.add('hidden');
+                    document.getElementById('homepageContent')?.classList.add('active');
+                }
+
+                // Show main app
+                showMainApp();
+
+            } catch (err) {
+                console.error('Dashboard load error:', err);
+                document.body.innerHTML = `
+                    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#0a0a0a;color:white;font-family:system-ui;">
+                        <h1 style="color:#FF6B35;">Erreur</h1>
+                        <p style="color:#888;margin:20px 0;">${err.message}</p>
+                        <button onclick="location.reload()" style="margin-top:20px;padding:10px 20px;background:#FF6B35;color:white;border:none;border-radius:5px;cursor:pointer;">Réessayer</button>
+                    </div>
+                `;
+            }
         }
 
-        async function logoutFromPending() {
-            stopLiveStatusTracking();
-            await db.auth.signOut();
-            localStorage.removeItem('supabase.auth.token');
-            // Clear approval cache on logout
-            localStorage.removeItem('fixair_user_approved');
-            localStorage.removeItem('fixair_cached_profile');
-            supabaseUser = null;
-            currentUser = null;
-            isPasswordRecovery = false;
-            localStorage.removeItem('fixair_onboarding_done');
-            clearLoginStatus();
-            
-            document.getElementById('pendingScreen').classList.remove('active');
-            document.getElementById('emailConfirmScreen').classList.remove('active');
-            document.getElementById('loginScreen').classList.add('active');
-            
-            loginStep = 0;
-            document.getElementById('loginEmail').value = '';
-            document.getElementById('loginPassword').value = '';
-            updateLoginUI();
-
-            toast('Déconnecté');
-        }
-
-        async function doLogin() {
+        // ═══ SHOW MAIN APP ═══
+        function showMainApp() {
             document.getElementById('loginScreen').classList.remove('active');
-            document.getElementById('emailConfirmScreen').classList.remove('active');
-            document.getElementById('pendingScreen').classList.remove('active');
             document.getElementById('mainApp').classList.add('active');
 
-            await loadProjectsListAndCheckOnboarding();
+            // Load app data
+            loadProjectsListAndCheckOnboarding();
             initGamification();
             prefetchApiKeys();
-
-            // Start live status tracking
             initLiveStatusTracking();
+
+            console.log('App loaded successfully');
         }
 
+        // ═══ LOGOUT ═══
         async function logout() {
-            // Set offline before logging out
             await stopLiveStatusTracking();
-
             await db.auth.signOut();
-            localStorage.removeItem('supabase.auth.token');
-            // Clear approval cache on logout
-            localStorage.removeItem('fixair_user_approved');
-            localStorage.removeItem('fixair_cached_profile');
+            localStorage.removeItem('fixair-tech-auth');
             supabaseUser = null;
             currentUser = null;
-            isPasswordRecovery = false;
-            loginStep = 0;
             onboardingComplete = false;
             localStorage.removeItem('fixair_onboarding_done');
-            clearLoginStatus();
-
-            document.getElementById('profileView').classList.remove('active');
-            document.querySelector('.onboarding-section').classList.remove('hidden');
-            document.getElementById('homepageContent').classList.remove('active');
-
-            document.getElementById('loginEmail').value = '';
-            document.getElementById('loginPassword').value = '';
-            updateLoginUI();
-
-            document.getElementById('mainApp').classList.remove('active');
-            document.getElementById('loginScreen').classList.add('active');
-
-            toast('Déconnecté');
+            // Go back to login prompt (not /auth)
+            window.location.href = '/technician';
         }
+
+        // ═══ INITIALIZE APP ON PAGE LOAD ═══
+        document.addEventListener('DOMContentLoaded', init);
 
         // ═══ LIVE STATUS TRACKING ═══
         const IDLE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
@@ -7362,7 +6778,7 @@
 
         // PROFILE
         function openProfile() {
-            document.getElementById('profileView').classList.add('active');
+            Router.navigate({ page: 'profile' });
         }
 
         function closeProfile() {
@@ -7627,13 +7043,9 @@
         }
 
         function goToHome() {
-            // Close any open views
-            closeChat();
-            closeProfile();
-            document.getElementById('hotlineView').classList.remove('active');
-            // Go to home page
-            showPage('home');
-            
+            // Update URL and show home page (Router handles closing overlays)
+            Router.navigate({ page: 'home' });
+
             // ═══ REFRESH DATA when returning to homepage ═══
             if (currentUserId) {
                 // Reload projects list
@@ -7661,8 +7073,10 @@
         }
 
         function closeBrandDropdown() {
-            document.getElementById('brandPill').classList.remove('open');
-            document.getElementById('brandDropdown').classList.remove('show');
+            const pill = document.getElementById('brandPill');
+            const dropdown = document.getElementById('brandDropdown');
+            if (pill) pill.classList.remove('open');
+            if (dropdown) dropdown.classList.remove('show');
         }
 
         function setBrand(b) {
@@ -8878,6 +8292,16 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
             updateSessionIds(projectId); // Update session IDs for n8n memory
             currentChatId = { assistant: null, copilot: null };
             projectMessageCount = 0;
+
+            // Update URL with project ID (only if not already on this project URL)
+            const route = Router.getRoute();
+            if (route.user && route.projectId !== projectId) {
+                const params = new URLSearchParams();
+                params.set('user', route.user);
+                params.set('page', 'project');
+                params.set('project', projectId);
+                history.pushState({ page: 'project', projectId }, '', '/technician/?' + params.toString());
+            }
             
             // First, check what chats exist for this project to determine mode
             let initialMode = mode || 'copilot';
@@ -13727,7 +13151,7 @@ RÈGLES:
         // ═══════════════════════════════════════════════════════════════
 
         function openHotline() {
-            document.getElementById('hotlineView').classList.add('active');
+            Router.navigate({ page: 'hotline' });
             resetHotline();
         }
 

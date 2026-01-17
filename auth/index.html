@@ -490,63 +490,54 @@
     <!-- Email Confirmation Screen (Technician) -->
     <div class="screen" id="techConfirmScreen">
         <div class="scan-line"></div>
-        <div class="pending-container">
+        <div class="pending-container" style="background: rgba(255,107,53,0.05); border: 1px solid rgba(255,107,53,0.2); border-radius: 20px; padding: 40px 30px; max-width: 420px;">
             <div class="auth-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
-            <div class="pending-icon">&#9993;</div>
-            <h1 class="auth-title">V&eacute;rifiez votre email</h1>
-            <p class="auth-subtitle">
-                Nous avons envoy&eacute; un email de confirmation &agrave; votre adresse.
-                Cliquez sur le lien pour activer votre compte.
+            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #FF6B35, #ff8c5a); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 20px auto;">
+                <svg width="40" height="40" fill="white" viewBox="0 0 24 24">
+                    <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+            </div>
+            <h1 class="auth-title" style="color: #FF6B35;">📧 V&eacute;rifiez votre email</h1>
+            <p class="auth-subtitle" style="margin-bottom: 16px;">
+                Nous avons envoy&eacute; un email de confirmation &agrave; :
             </p>
-            <div class="pending-email" id="techConfirmEmail"></div>
-            <p class="auth-subtitle" style="margin-top: 16px; font-size: 13px;">
+            <div class="pending-email" id="techConfirmEmail" style="font-size: 16px; font-weight: 600; color: white; margin-bottom: 20px;"></div>
+            <p class="auth-subtitle" style="font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.5);">
+                Cliquez sur le lien dans l'email pour activer votre compte.<br>
                 Apr&egrave;s confirmation, votre demande sera examin&eacute;e par notre &eacute;quipe.
             </p>
-            <button class="btn btn-secondary" onclick="goToScreen('loginScreen')" style="margin-top: 16px; max-width: 200px;">
-                Retour &agrave; la connexion
-            </button>
+            <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <a href="/technician/" style="color: #FF6B35; text-decoration: none; font-size: 14px;">
+                    &larr; Retour &agrave; la connexion
+                </a>
+            </div>
         </div>
     </div>
 
     <!-- Email Confirmation Screen (Enterprise) -->
     <div class="screen" id="entConfirmScreen">
         <div class="scan-line"></div>
-        <div class="pending-container">
+        <div class="pending-container" style="background: rgba(255,107,53,0.05); border: 1px solid rgba(255,107,53,0.2); border-radius: 20px; padding: 40px 30px; max-width: 420px;">
             <div class="auth-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
-            <div class="pending-icon">&#9993;</div>
-            <h1 class="auth-title">Demande enregistr&eacute;e</h1>
-            <p class="auth-subtitle">
-                Nous avons envoy&eacute; un email de confirmation &agrave; votre adresse.
+            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #FF6B35, #ff8c5a); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 20px auto;">
+                <svg width="40" height="40" fill="white" viewBox="0 0 24 24">
+                    <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+            </div>
+            <h1 class="auth-title" style="color: #FF6B35;">📧 Demande enregistr&eacute;e</h1>
+            <p class="auth-subtitle" style="margin-bottom: 16px;">
+                Nous avons envoy&eacute; un email de confirmation &agrave; :
             </p>
-            <div class="pending-email" id="entConfirmEmail"></div>
-            <p class="auth-subtitle" style="margin-top: 16px; font-size: 13px;">
+            <div class="pending-email" id="entConfirmEmail" style="font-size: 16px; font-weight: 600; color: white; margin-bottom: 20px;"></div>
+            <p class="auth-subtitle" style="font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.5);">
                 Notre &eacute;quipe examinera votre demande et vous contactera sous 24h
                 pour finaliser la cr&eacute;ation de votre compte entreprise.
             </p>
-            <button class="btn btn-secondary" onclick="goToScreen('loginScreen')" style="margin-top: 16px; max-width: 200px;">
-                Retour &agrave; la connexion
-            </button>
-        </div>
-    </div>
-
-    <!-- Pending Approval Screen -->
-    <div class="screen" id="pendingScreen">
-        <div class="scan-line"></div>
-        <div class="pending-container">
-            <div class="auth-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
-            <div class="pending-icon">&#9203;</div>
-            <h1 class="auth-title">Demande en attente</h1>
-            <p class="auth-subtitle">
-                Votre compte est en attente d'approbation.
-                Vous recevrez un email d&egrave;s que votre acc&egrave;s sera activ&eacute;.
-            </p>
-            <div class="pending-email" id="pendingEmail"></div>
-            <button class="btn btn-primary" onclick="checkApprovalStatus()" style="margin-top: 16px; max-width: 200px;" id="checkStatusBtn">
-                V&eacute;rifier le statut
-            </button>
-            <button class="btn btn-secondary" onclick="logout()" style="margin-top: 8px; max-width: 200px;">
-                Se d&eacute;connecter
-            </button>
+            <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <a href="/technician/" style="color: #FF6B35; text-decoration: none; font-size: 14px;">
+                    &larr; Retour &agrave; la connexion
+                </a>
+            </div>
         </div>
     </div>
 
@@ -633,6 +624,36 @@
                 el.textContent = message;
                 el.className = 'status-message ' + type;
             }
+        }
+
+        // Enhanced inline message for pending/warning states
+        function showInlineMessage(elementId, message, type = 'info') {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+
+            const colors = {
+                error: { bg: 'rgba(239,68,68,0.15)', border: '#ef4444', text: '#ef4444' },
+                warning: { bg: 'rgba(234,179,8,0.15)', border: '#eab308', text: '#eab308' },
+                info: { bg: 'rgba(59,130,246,0.15)', border: '#3b82f6', text: '#3b82f6' },
+                success: { bg: 'rgba(34,197,94,0.15)', border: '#22c55e', text: '#22c55e' }
+            };
+            const c = colors[type] || colors.info;
+
+            el.innerHTML = `
+                <div style="
+                    padding: 14px 18px;
+                    margin: 12px 0;
+                    border-radius: 10px;
+                    font-size: 14px;
+                    line-height: 1.5;
+                    background: ${c.bg};
+                    color: ${c.text};
+                    border: 1px solid ${c.border};
+                    text-align: center;
+                ">
+                    ${message}
+                </div>
+            `;
         }
 
         // ═══════════════════════════════════════════════════════════════
@@ -772,15 +793,18 @@
                         return;
                     }
 
-                    // Check if account is approved
+                    // Check user status
                     if (profile.status === 'pending') {
-                        document.getElementById('pendingEmail').textContent = currentEmail;
-                        goToScreen('pendingScreen');
+                        showInlineMessage('loginStatus', '⏳ Votre compte est en attente de validation par un administrateur. Vous recevrez un email dès que votre accès sera activé.', 'warning');
+                        return;
+                    }
+                    if (profile.status === 'rejected' || profile.status === 'suspended') {
+                        showInlineMessage('loginStatus', '❌ Votre compte a été désactivé. Contactez le support.', 'error');
                         return;
                     }
 
-                    // Redirect based on role
-                    redirectByRole(profile.role);
+                    // Redirect based on role (with user ID)
+                    redirectByRole(profile.role, profile.id);
 
                 } catch (err) {
                     console.error('Login exception:', err);
@@ -826,35 +850,46 @@
                     return;
                 }
 
-                // Check if account is approved
+                // Check user status
                 if (profile.status === 'pending') {
-                    document.getElementById('pendingEmail').textContent = currentEmail;
-                    goToScreen('pendingScreen');
+                    showInlineMessage('loginStatus', '⏳ Votre compte est en attente de validation par un administrateur. Vous recevrez un email dès que votre accès sera activé.', 'warning');
+                    goToScreen('loginScreen');
+                    return;
+                }
+                if (profile.status === 'rejected' || profile.status === 'suspended') {
+                    showInlineMessage('loginStatus', '❌ Votre compte a été désactivé. Contactez le support.', 'error');
+                    goToScreen('loginScreen');
                     return;
                 }
 
-                // Redirect based on role
-                redirectByRole(profile.role);
+                // Redirect based on role (with user ID)
+                redirectByRole(profile.role, profile.id);
 
             } catch (err) {
                 console.error('Login exception:', err);
-                showStatus('passwordStatus', 'Erreur de connexion. Reessayez.', 'error');
+                showStatus('loginStatus', 'Erreur de connexion. Reessayez.', 'error');
             }
         }
 
-        function redirectByRole(role) {
+        function redirectByRole(role, userId) {
+            // Use relative URLs with user ID for proper routing
+            const userParam = userId ? '?user=' + userId : '';
+
             switch (role) {
                 case 'technician':
-                    window.location.href = 'https://go.fixair.ai';
+                    window.location.href = '/technician/' + userParam;
                     break;
                 case 'manager':
-                    window.location.href = 'https://go.fixair.ai/manager';
+                    window.location.href = '/manager/' + userParam;
                     break;
                 case 'admin':
-                    window.location.href = 'https://go.fixair.ai/admin';
+                    window.location.href = '/admin/' + userParam;
+                    break;
+                case 'master':
+                    window.location.href = '/master/' + userParam;
                     break;
                 default:
-                    window.location.href = 'https://go.fixair.ai';
+                    window.location.href = '/technician/' + userParam;
             }
         }
 
@@ -980,7 +1015,20 @@
                 });
 
                 if (authError) {
-                    showStatus('techSignupStatus', authError.message, 'error');
+                    console.error('Signup error details:', authError);
+                    console.error('Error code:', authError.code);
+                    console.error('Error status:', authError.status);
+                    console.error('Error message:', authError.message);
+
+                    // User-friendly error messages
+                    let msg = authError.message;
+                    if (authError.status === 500) {
+                        msg = 'Erreur serveur. Veuillez réessayer dans quelques minutes.';
+                    } else if (authError.message.includes('already registered')) {
+                        msg = 'Cet email est déjà utilisé. Essayez de vous connecter.';
+                    }
+
+                    showStatus('techSignupStatus', msg, 'error');
                     return;
                 }
 
@@ -1068,7 +1116,20 @@
                 });
 
                 if (authError) {
-                    showStatus('entSignupStatus', authError.message, 'error');
+                    console.error('Signup error details:', authError);
+                    console.error('Error code:', authError.code);
+                    console.error('Error status:', authError.status);
+                    console.error('Error message:', authError.message);
+
+                    // User-friendly error messages
+                    let msg = authError.message;
+                    if (authError.status === 500) {
+                        msg = 'Erreur serveur. Veuillez réessayer dans quelques minutes.';
+                    } else if (authError.message.includes('already registered')) {
+                        msg = 'Cet email est déjà utilisé. Essayez de vous connecter.';
+                    }
+
+                    showStatus('entSignupStatus', msg, 'error');
                     return;
                 }
 
@@ -1253,10 +1314,13 @@
 
                     if (profile) {
                         if (profile.status === 'pending') {
-                            document.getElementById('pendingEmail').textContent = profile.email;
-                            goToScreen('pendingScreen');
+                            showInlineMessage('loginStatus', '⏳ Votre compte est en attente de validation par un administrateur. Vous recevrez un email dès que votre accès sera activé.', 'warning');
+                            // Stay on login screen
+                        } else if (profile.status === 'rejected' || profile.status === 'suspended') {
+                            showInlineMessage('loginStatus', '❌ Votre compte a été désactivé. Contactez le support.', 'error');
                         } else {
-                            redirectByRole(profile.role);
+                            // Approved - redirect with user ID
+                            redirectByRole(profile.role, profile.id);
                         }
                         return;
                     }

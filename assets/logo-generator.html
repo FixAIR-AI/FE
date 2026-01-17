@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>FixAIR Logo Generator for Email</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: system-ui, sans-serif;
+            background: #1a1a1a;
+            color: white;
+            padding: 40px;
+            min-height: 100vh;
+        }
+
+        h1 { margin-bottom: 20px; color: #FF6B35; }
+        p { margin-bottom: 30px; color: #888; }
+
+        .logo-container {
+            display: inline-block;
+            margin: 20px 0;
+        }
+
+        /* Logo on transparent background (for dark email backgrounds) */
+        .logo-transparent {
+            padding: 20px 40px;
+            background: transparent;
+            border: 2px dashed #333;
+        }
+
+        /* Logo on white background (for light email backgrounds) */
+        .logo-white {
+            padding: 20px 40px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+
+        /* Logo on dark background */
+        .logo-dark {
+            padding: 20px 40px;
+            background: #0a0a0a;
+            border: 2px solid #333;
+            border-radius: 8px;
+        }
+
+        .logo-svg {
+            height: 40px;
+            width: auto;
+            color: #FF6B35;
+        }
+
+        .logo-svg-white {
+            height: 40px;
+            width: auto;
+            color: white;
+        }
+
+        .section {
+            margin: 40px 0;
+            padding: 20px;
+            background: #111;
+            border-radius: 12px;
+        }
+
+        .section h2 {
+            margin-bottom: 15px;
+            font-size: 16px;
+            color: #888;
+        }
+
+        .instructions {
+            margin-top: 40px;
+            padding: 20px;
+            background: rgba(255,107,53,0.1);
+            border: 1px solid rgba(255,107,53,0.3);
+            border-radius: 12px;
+        }
+
+        .instructions h3 {
+            color: #FF6B35;
+            margin-bottom: 15px;
+        }
+
+        .instructions ol {
+            padding-left: 20px;
+            line-height: 1.8;
+        }
+
+        .instructions code {
+            background: #222;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        /* Canvas for PNG export */
+        #exportCanvas {
+            display: none;
+        }
+
+        .export-btn {
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: #FF6B35;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .export-btn:hover {
+            background: #e55a2b;
+        }
+    </style>
+</head>
+<body>
+    <h1>FixAIR Email Logo Generator</h1>
+    <p>Generate PNG logos for Supabase email templates</p>
+
+    <div class="section">
+        <h2>ORANGE LOGO (for dark backgrounds) - Recommended for emails</h2>
+        <div class="logo-container logo-transparent" id="logoOrange">
+            <svg class="logo-svg" viewBox="0 0 235 48">
+                <path d="M35.1986 6.4H17.4706C15.4226 6.4 13.5666 6.912 11.9026 7.936C10.2386 8.96 8.89463 10.3253 7.87063 12.032C6.88929 13.696 6.39863 15.552 6.39863 17.6V48H-0.00137472V16C-0.00137472 13.7387 0.467959 11.648 1.40663 9.728C2.34529 7.76533 3.62529 6.08 5.24663 4.672C6.91063 3.22133 8.78796 2.09067 10.8786 1.28C12.9693 0.426664 15.1666 -3.8147e-06 17.4706 -3.8147e-06H35.1986V6.4ZM48.8306 4.8C48.8306 6.12266 48.3613 7.25333 47.4226 8.192C46.484 9.13066 45.3533 9.6 44.0306 9.6C42.708 9.6 41.5773 9.13066 40.6386 8.192C39.7 7.25333 39.2306 6.12266 39.2306 4.8C39.2306 3.47733 39.7 2.34666 40.6386 1.408C41.5773 0.46933 42.708 -3.8147e-06 44.0306 -3.8147e-06C45.3533 -3.8147e-06 46.484 0.46933 47.4226 1.408C48.3613 2.34666 48.8306 3.47733 48.8306 4.8ZM47.2306 48H40.8306V22.4H9.59863V16H47.2306V48ZM97.7161 48H88.5641L74.8681 34.752L61.4281 48H52.2761L70.4521 30.464L52.2761 12.8H61.4281L97.7161 48ZM97.7161 12.8L82.4841 27.648L77.8761 23.552L88.5641 12.8H97.7161Z" fill="currentColor"/>
+                <path d="M154.461 48H148.061V35.2H112.285V28.8H148.061V9.6H125.085C122.183 9.6 119.517 10.3253 117.085 11.776C114.653 13.184 112.711 15.104 111.261 17.536C109.853 19.968 109.149 22.656 109.149 25.6V48H102.749V25.6C102.749 22.528 103.325 19.648 104.477 16.96C105.629 14.2293 107.229 11.84 109.277 9.792C111.325 7.70133 113.693 6.08 116.381 4.928C119.111 3.776 122.013 3.2 125.085 3.2H154.461V48ZM171.604 48H165.204V3.2H171.604V48ZM234.041 48H225.401L211.961 35.2H192.313V28.864H218.041C219.833 28.864 221.454 28.4373 222.905 27.584C224.356 26.688 225.508 25.5147 226.361 24.064C227.214 22.5707 227.641 20.9493 227.641 19.2C227.641 17.408 227.214 15.7867 226.361 14.336C225.508 12.8853 224.356 11.7333 222.905 10.88C221.454 10.0267 219.833 9.6 218.041 9.6H188.729V48H182.329V3.2H218.041C220.985 3.2 223.673 3.92533 226.105 5.376C228.537 6.784 230.457 8.704 231.865 11.136C233.316 13.568 234.041 16.256 234.041 19.2C234.041 21.8453 233.444 24.2987 232.249 26.56C231.097 28.8213 229.497 30.6987 227.449 32.192C225.444 33.6427 223.161 34.5813 220.601 35.008L234.041 48Z" fill="currentColor"/>
+            </svg>
+        </div>
+        <br>
+        <button class="export-btn" onclick="exportLogo('orange')">Download PNG (Orange)</button>
+    </div>
+
+    <div class="section">
+        <h2>WHITE LOGO (for colored/dark email backgrounds)</h2>
+        <div class="logo-container logo-dark" id="logoWhite">
+            <svg class="logo-svg-white" viewBox="0 0 235 48">
+                <path d="M35.1986 6.4H17.4706C15.4226 6.4 13.5666 6.912 11.9026 7.936C10.2386 8.96 8.89463 10.3253 7.87063 12.032C6.88929 13.696 6.39863 15.552 6.39863 17.6V48H-0.00137472V16C-0.00137472 13.7387 0.467959 11.648 1.40663 9.728C2.34529 7.76533 3.62529 6.08 5.24663 4.672C6.91063 3.22133 8.78796 2.09067 10.8786 1.28C12.9693 0.426664 15.1666 -3.8147e-06 17.4706 -3.8147e-06H35.1986V6.4ZM48.8306 4.8C48.8306 6.12266 48.3613 7.25333 47.4226 8.192C46.484 9.13066 45.3533 9.6 44.0306 9.6C42.708 9.6 41.5773 9.13066 40.6386 8.192C39.7 7.25333 39.2306 6.12266 39.2306 4.8C39.2306 3.47733 39.7 2.34666 40.6386 1.408C41.5773 0.46933 42.708 -3.8147e-06 44.0306 -3.8147e-06C45.3533 -3.8147e-06 46.484 0.46933 47.4226 1.408C48.3613 2.34666 48.8306 3.47733 48.8306 4.8ZM47.2306 48H40.8306V22.4H9.59863V16H47.2306V48ZM97.7161 48H88.5641L74.8681 34.752L61.4281 48H52.2761L70.4521 30.464L52.2761 12.8H61.4281L97.7161 48ZM97.7161 12.8L82.4841 27.648L77.8761 23.552L88.5641 12.8H97.7161Z" fill="currentColor"/>
+                <path d="M154.461 48H148.061V35.2H112.285V28.8H148.061V9.6H125.085C122.183 9.6 119.517 10.3253 117.085 11.776C114.653 13.184 112.711 15.104 111.261 17.536C109.853 19.968 109.149 22.656 109.149 25.6V48H102.749V25.6C102.749 22.528 103.325 19.648 104.477 16.96C105.629 14.2293 107.229 11.84 109.277 9.792C111.325 7.70133 113.693 6.08 116.381 4.928C119.111 3.776 122.013 3.2 125.085 3.2H154.461V48ZM171.604 48H165.204V3.2H171.604V48ZM234.041 48H225.401L211.961 35.2H192.313V28.864H218.041C219.833 28.864 221.454 28.4373 222.905 27.584C224.356 26.688 225.508 25.5147 226.361 24.064C227.214 22.5707 227.641 20.9493 227.641 19.2C227.641 17.408 227.214 15.7867 226.361 14.336C225.508 12.8853 224.356 11.7333 222.905 10.88C221.454 10.0267 219.833 9.6 218.041 9.6H188.729V48H182.329V3.2H218.041C220.985 3.2 223.673 3.92533 226.105 5.376C228.537 6.784 230.457 8.704 231.865 11.136C233.316 13.568 234.041 16.256 234.041 19.2C234.041 21.8453 233.444 24.2987 232.249 26.56C231.097 28.8213 229.497 30.6987 227.449 32.192C225.444 33.6427 223.161 34.5813 220.601 35.008L234.041 48Z" fill="currentColor"/>
+            </svg>
+        </div>
+        <br>
+        <button class="export-btn" onclick="exportLogo('white')">Download PNG (White)</button>
+    </div>
+
+    <div class="instructions">
+        <h3>How to create the email logo PNG:</h3>
+        <ol>
+            <li>Click the <strong>"Download PNG"</strong> button above for each color variant</li>
+            <li>Save as:
+                <ul>
+                    <li><code>logo-email.png</code> (orange version)</li>
+                    <li><code>logo-email-white.png</code> (white version)</li>
+                </ul>
+            </li>
+            <li>Place files in <code>/assets/</code> folder</li>
+            <li>Commit and push to git</li>
+            <li>Use in Supabase email templates:
+                <pre style="background:#222;padding:10px;border-radius:6px;margin-top:10px;overflow-x:auto;">
+&lt;img src="https://go.fixair.ai/assets/logo-email.png"
+     alt="FixAIR"
+     width="200"
+     style="max-width:200px;height:auto;"&gt;</pre>
+            </li>
+        </ol>
+    </div>
+
+    <canvas id="exportCanvas"></canvas>
+
+    <script>
+        function exportLogo(type) {
+            const canvas = document.getElementById('exportCanvas');
+            const ctx = canvas.getContext('2d');
+
+            // Set canvas size (2x for retina)
+            const width = 400;
+            const height = 80;
+            canvas.width = width;
+            canvas.height = height;
+
+            // Clear canvas (transparent)
+            ctx.clearRect(0, 0, width, height);
+
+            // Get SVG
+            const svgElement = type === 'orange'
+                ? document.querySelector('#logoOrange svg')
+                : document.querySelector('#logoWhite svg');
+
+            // Create image from SVG
+            const svgData = new XMLSerializer().serializeToString(svgElement);
+            const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+            const url = URL.createObjectURL(svgBlob);
+
+            const img = new Image();
+            img.onload = function() {
+                // Calculate centered position
+                const scale = 0.8;
+                const drawWidth = width * scale;
+                const drawHeight = height * scale;
+                const x = (width - drawWidth) / 2;
+                const y = (height - drawHeight) / 2;
+
+                ctx.drawImage(img, x, y, drawWidth, drawHeight);
+                URL.revokeObjectURL(url);
+
+                // Download
+                const link = document.createElement('a');
+                link.download = type === 'orange' ? 'logo-email.png' : 'logo-email-white.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            };
+            img.src = url;
+        }
+    </script>
+</body>
+</html>
