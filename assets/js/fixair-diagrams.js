@@ -182,6 +182,7 @@
         /**
          * Re-render all mermaid diagrams in a container
          * Use this for dynamically added content (e.g., chat messages)
+         * Automatically sanitizes code to fix common AI syntax errors
          * 
          * @param {HTMLElement|string} container - DOM element or selector
          */
@@ -196,17 +197,34 @@
             }
             
             try {
+                // Find all mermaid elements
+                const mermaidEls = el.querySelectorAll('.mermaid:not([data-processed])');
+                
+                // Sanitize each element's code before rendering
+                for (const mermaidEl of mermaidEls) {
+                    const originalCode = mermaidEl.textContent;
+                    const sanitizedCode = this.sanitize(originalCode);
+                    
+                    if (originalCode !== sanitizedCode) {
+                        console.log('[FixAIR Diagrams] Sanitized code:', sanitizedCode);
+                        mermaidEl.textContent = sanitizedCode;
+                    }
+                }
+                
+                // Now render
                 await mermaid.run({
                     nodes: el.querySelectorAll('.mermaid:not([data-processed])')
                 });
                 console.log('[FixAIR Diagrams] Rendered diagrams in container');
             } catch (error) {
                 console.error('[FixAIR Diagrams] Render error:', error);
+                console.error('[FixAIR Diagrams] Failed code might need manual review');
             }
         },
         
         /**
          * Render a single mermaid diagram from code
+         * Automatically sanitizes code to fix AI syntax errors
          * 
          * @param {string} code - Mermaid diagram code
          * @param {HTMLElement} container - Target container element
@@ -215,9 +233,10 @@
          */
         renderCode: async function(code, container, id) {
             const diagramId = id || 'fd-diagram-' + Date.now();
+            const sanitizedCode = this.sanitize(code);
             
             try {
-                const { svg } = await mermaid.render(diagramId, code);
+                const { svg } = await mermaid.render(diagramId, sanitizedCode);
                 
                 if (container) {
                     container.innerHTML = svg;
@@ -226,6 +245,7 @@
                 return svg;
             } catch (error) {
                 console.error('[FixAIR Diagrams] Code render error:', error);
+                console.error('[FixAIR Diagrams] Code that failed:', sanitizedCode);
                 throw error;
             }
         },
@@ -255,6 +275,7 @@
         /**
          * Process a chat message and render any mermaid diagrams
          * Replaces mermaid code blocks with rendered diagrams
+         * Automatically sanitizes code to fix AI syntax errors
          * 
          * @param {HTMLElement} messageElement - Chat message element
          */
@@ -262,7 +283,9 @@
             const mermaidBlocks = messageElement.querySelectorAll('pre code.language-mermaid, .mermaid-code');
             
             for (const block of mermaidBlocks) {
-                const code = block.textContent;
+                const originalCode = block.textContent;
+                const sanitizedCode = this.sanitize(originalCode);
+                
                 const wrapper = document.createElement('div');
                 wrapper.className = 'fd-diagram-box fd-compact';
                 
@@ -271,7 +294,7 @@
                 
                 const mermaidDiv = document.createElement('div');
                 mermaidDiv.className = 'mermaid';
-                mermaidDiv.textContent = code;
+                mermaidDiv.textContent = sanitizedCode; // Use sanitized code
                 
                 content.appendChild(mermaidDiv);
                 wrapper.appendChild(content);
@@ -346,17 +369,90 @@
         },
         
         /**
-         * Sanitize mermaid code to handle special characters
+         * Sanitize mermaid code to fix common syntax errors from AI
+         * This prevents parse errors from AI-generated diagrams
          * 
          * @param {string} code - Raw mermaid code
          * @returns {string} - Sanitized code
          */
         sanitize: function(code) {
-            // Replace problematic characters in labels
-            return code
-                .replace(/"/g, "'")  // Replace double quotes with single
-                .replace(/[<>]/g, '') // Remove angle brackets
-                .replace(/&/g, 'and'); // Replace ampersands
+            let sanitized = code;
+            
+            // 1. Fix subgraph names with accents/special chars
+            // Pattern: subgraph Name With Spaces (and parens)
+            // Replace with: subgraph ID[" Name "]
+            sanitized = sanitized.replace(
+                /subgraph\s+([^[\n]+?)(?=\n)/g,
+                function(match, name) {
+                    // If already has brackets, skip
+                    if (name.includes('[')) return match;
+                    // Create safe ID from name (uppercase, no special chars)
+                    const id = name.trim()
+                        .toUpperCase()
+                        .replace(/[^A-Z0-9]/g, '_')
+                        .substring(0, 20);
+                    // Clean display name (remove/replace problematic chars)
+                    const displayName = name.trim()
+                        .replace(/[()]/g, '')
+                        .replace(/[éèêë]/g, 'e')
+                        .replace(/[àâä]/g, 'a')
+                        .replace(/[ùûü]/g, 'u')
+                        .replace(/[ôö]/g, 'o')
+                        .replace(/[îï]/g, 'i')
+                        .replace(/[ç]/g, 'c')
+                        .replace(/'/g, '');
+                    return `subgraph ${id}[" ${displayName} "]`;
+                }
+            );
+            
+            // 2. Fix edge labels with parentheses: -->|text (with parens)|
+            sanitized = sanitized.replace(
+                /\|([^|"]+\([^)]+\)[^|]*)\|/g,
+                function(match, content) {
+                    const cleanContent = content.replace(/[()]/g, '').trim();
+                    return `|"${cleanContent}"|`;
+                }
+            );
+            
+            // 3. Fix node labels with unquoted parentheses: A[text (parens)]
+            sanitized = sanitized.replace(
+                /\[([^\]"]+\([^)]+\)[^\]]*)\]/g,
+                function(match, content) {
+                    const cleanContent = content.replace(/[()]/g, '').trim();
+                    return `[${cleanContent}]`;
+                }
+            );
+            
+            // 4. Fix slashes in node labels (TB3/TB5 -> TB3-TB5)
+            sanitized = sanitized.replace(
+                /\[([^\]]*?)\/([^\]]*?)\]/g,
+                '[$1-$2]'
+            );
+            
+            // 5. Fix accents in node labels
+            sanitized = sanitized.replace(
+                /\[([^\]]*[éèêëàâäùûüôöîïç][^\]]*)\]/gi,
+                function(match, content) {
+                    const cleaned = content
+                        .replace(/[éèêë]/g, 'e')
+                        .replace(/[àâä]/g, 'a')
+                        .replace(/[ùûü]/g, 'u')
+                        .replace(/[ôö]/g, 'o')
+                        .replace(/[îï]/g, 'i')
+                        .replace(/[ç]/g, 'c');
+                    return `[${cleaned}]`;
+                }
+            );
+            
+            // 6. Remove any "style" commands (CSS handles styling)
+            sanitized = sanitized.replace(/^\s*style\s+.+$/gm, '');
+            sanitized = sanitized.replace(/^\s*classDef\s+.+$/gm, '');
+            
+            // 7. Fix angle brackets and ampersands
+            sanitized = sanitized.replace(/[<>]/g, '');
+            sanitized = sanitized.replace(/&(?!amp;|lt;|gt;|quot;)/g, 'and');
+            
+            return sanitized;
         },
         
         /**
