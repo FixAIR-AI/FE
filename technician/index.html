@@ -4045,6 +4045,22 @@
         .congrats-icon { font-size: 56px; margin-bottom: 12px; }
         .congrats-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
         .congrats-sub { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+
+        /* Onboarding highlight for input fields */
+        .onboarding-highlight-input {
+            animation: pulse-input 2s ease-in-out infinite;
+        }
+        @keyframes pulse-input {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.4);
+                border-color: rgba(255, 107, 53, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 0 6px rgba(255, 107, 53, 0);
+                border-color: #FF6B35;
+            }
+        }
+
         .homepage-content { display: none; }
         .homepage-content.active { display: flex; flex-direction: column; gap: 20px; padding-top: 24px; }
         .homepage-content > * { margin: 0; }
@@ -5942,7 +5958,78 @@
         let step3Done = false;
         let step4Done = false;
         let onboardingBrand = null;
-        
+
+        // ═══ BRAND ERROR EXAMPLES - Visual requesting questions ═══
+        const BRAND_ERROR_EXAMPLES = {
+            'mitsubishi': {
+                code: 'E6',
+                input: 'Code erreur E6 sur Mitsubishi MSZ-AP25VG. Montre-moi le schéma de câblage entre unité intérieure et extérieure pour diagnostiquer le défaut de communication.',
+                placeholder: 'Ex: Code E6 Mitsubishi - défaut communication'
+            },
+            'carrier': {
+                code: '178',
+                input: 'Code erreur 178 sur Carrier 42QHC012DS - surchauffe compresseur. J\'ai besoin du schéma électrique et un flowchart de diagnostic.',
+                placeholder: 'Ex: Code 178 Carrier - surchauffe compresseur'
+            },
+            'daikin': {
+                code: 'U4',
+                input: 'Code erreur U4 sur Daikin FTXM35N. Peux-tu me montrer le schéma de câblage de communication et les étapes de diagnostic visuellement?',
+                placeholder: 'Ex: Code U4 Daikin - défaut communication'
+            }
+        };
+
+        // Get error example for brand (defaults to Mitsubishi)
+        function getErrorExample(brandKey) {
+            const key = brandKey?.toLowerCase() || 'mitsubishi';
+            return BRAND_ERROR_EXAMPLES[key] || BRAND_ERROR_EXAMPLES['mitsubishi'];
+        }
+
+        // Track when user types their own question
+        function setupChatInputTracking() {
+            const chatInput = document.getElementById('copilotInput');
+            if (chatInput) {
+                chatInput.addEventListener('input', function(e) {
+                    if (e.inputType) {
+                        this.dataset.userTyped = 'true';
+                        // Remove highlight when user starts typing
+                        this.classList.remove('onboarding-highlight-input');
+                    }
+                });
+                chatInput.addEventListener('change', function() {
+                    if (this.value.trim() === '') {
+                        this.dataset.userTyped = 'false';
+                    }
+                });
+                chatInput.addEventListener('focus', function() {
+                    // Remove highlight on focus
+                    this.classList.remove('onboarding-highlight-input');
+                });
+            }
+        }
+
+        // Update example when brand changes (if user hasn't typed)
+        function onBrandChangeUpdateExample(newBrand) {
+            const chatInput = document.getElementById('copilotInput');
+            if (!chatInput) return;
+
+            const userHasTyped = chatInput.dataset.userTyped === 'true';
+
+            if (!userHasTyped) {
+                const example = getErrorExample(newBrand);
+                chatInput.value = example.input;
+                chatInput.placeholder = example.placeholder;
+                chatInput.style.height = 'auto';
+                chatInput.style.height = chatInput.scrollHeight + 'px';
+
+                // Visual feedback
+                chatInput.style.transition = 'background 0.3s';
+                chatInput.style.background = 'rgba(255, 107, 53, 0.1)';
+                setTimeout(() => {
+                    chatInput.style.background = '';
+                }, 500);
+            }
+        }
+
         // ═══ SUPABASE CLIENT INITIALIZATION (must be before auth code) ═══
         const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTcyMTksImV4cCI6MjA4MTgzMzIxOX0.8ryQm1tsdx5ox3aFJiiflmwuEGGxxH_PlobGxXMgFuQ';
@@ -6948,7 +7035,10 @@
                 updateBrandContextInHistory();
             }
             // ═══ END FIX ═══
-            
+
+            // ═══ Update Copilot example when brand changes ═══
+            onBrandChangeUpdateExample(b);
+
             setTimeout(() => completeBrandStep(), 300);
         }
 
@@ -6997,17 +7087,31 @@
             // Accessible after brand selection (step 2) or if step4 already done
             if (onboardingStep < 3 && !step4Done) return;
 
+            console.log('Onboarding: Starting Copilot experience');
+
             // Open Copilot with prefilled example question
             openChat('copilot');
 
-            // Prefill with example symptom after a short delay to ensure UI is ready
+            // Get user's selected brand
+            const selectedBrand = onboardingBrand || brand || 'mitsubishi';
+            const example = getErrorExample(selectedBrand);
+
+            // Prefill with brand-specific visual-requesting question
             setTimeout(() => {
                 const input = document.getElementById('copilotInput');
                 if (input) {
-                    input.value = "L'unité affiche un code erreur E3 et ne chauffe plus";
+                    input.value = example.input;
+                    input.placeholder = example.placeholder;
                     input.style.height = 'auto';
                     input.style.height = input.scrollHeight + 'px';
+                    input.dataset.userTyped = 'false';
                     input.focus();
+
+                    // Add pulsing border to draw attention
+                    input.classList.add('onboarding-highlight-input');
+
+                    // Setup tracking for user input
+                    setupChatInputTracking();
                 }
             }, 100);
         }
@@ -7016,14 +7120,253 @@
             // Accessible after brand selection (step 2) or if step3 already done
             if (onboardingStep < 3 && !step3Done) return;
 
+            console.log('Onboarding: Starting Assistant experience');
+
             // Open Assistant
             openChat('assistant');
 
-            // Focus the input after UI is ready
+            // Show photo question flow after UI is ready
             setTimeout(() => {
-                const input = document.getElementById('assistantInput');
-                if (input) input.focus();
-            }, 100);
+                showAssistantOnboardingFlow();
+            }, 300);
+        }
+
+        // ═══ ASSISTANT ONBOARDING FLOW ═══
+        function showAssistantOnboardingFlow() {
+            const chatContainer = document.getElementById('assistantBody');
+            if (!chatContainer) {
+                console.warn('Assistant chat container not found');
+                return;
+            }
+
+            // Get brand for context
+            const selectedBrand = onboardingBrand || brand || 'mitsubishi';
+            const brandNames = {
+                'mitsubishi': 'Mitsubishi Electric',
+                'daikin': 'Daikin',
+                'carrier': 'Carrier'
+            };
+            const brandName = brandNames[selectedBrand] || selectedBrand;
+
+            // Create demo conversation
+            const demoConversation = `
+                <div class="msg ai">
+                    <div class="msg-bubble">
+                        <div class="msg-head">
+                            <div class="msg-avatar"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>
+                            <span class="msg-name">FixAIR Assistant</span>
+                        </div>
+                        <p>Bienvenue dans l'Assistant FixAIR !</p>
+                        <p style="margin-top: 8px;">Je vais vous montrer comment générer un rapport d'intervention en quelques secondes.</p>
+                    </div>
+                </div>
+
+                <div class="msg ai">
+                    <div class="msg-bubble">
+                        <div class="msg-head">
+                            <div class="msg-avatar"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>
+                            <span class="msg-name">FixAIR Assistant</span>
+                        </div>
+                        <p><strong>Rapport en cours de création...</strong></p>
+                        <p style="margin-top: 8px; opacity: 0.7;">Client: <em>Jean Dupont</em></p>
+                        <p style="opacity: 0.7;">Équipement: <em>${brandName} - Climatisation split</em></p>
+                        <p style="opacity: 0.7;">Problème: <em>Code erreur diagnostiqué</em></p>
+                    </div>
+                </div>
+
+                <div class="msg ai photo-question-msg">
+                    <div class="msg-bubble">
+                        <div class="msg-head">
+                            <div class="msg-avatar"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>
+                            <span class="msg-name">FixAIR Assistant</span>
+                        </div>
+                        <p><strong>Avez-vous des photos à ajouter au rapport ?</strong></p>
+                        <p style="margin-top: 8px; opacity: 0.7;">Les photos de l'équipement, des codes erreur ou des réparations seront automatiquement intégrées.</p>
+                        <div class="photo-actions" style="margin-top: 16px; display: flex; gap: 12px; flex-wrap: wrap;">
+                            <button onclick="handleOnboardingAddPhotos()" style="
+                                background: var(--assistant);
+                                color: white;
+                                border: none;
+                                padding: 12px 20px;
+                                border-radius: 10px;
+                                cursor: pointer;
+                                font-weight: 600;
+                                font-size: 13px;
+                                display: flex;
+                                align-items: center;
+                                gap: 8px;
+                            ">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+                                Ajouter des photos
+                            </button>
+                            <button onclick="handleOnboardingSkipPhotos()" style="
+                                background: transparent;
+                                color: var(--text-dim);
+                                border: 1px solid var(--border);
+                                padding: 12px 20px;
+                                border-radius: 10px;
+                                cursor: pointer;
+                                font-size: 13px;
+                            ">
+                                Passer cette étape
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            chatContainer.innerHTML = demoConversation;
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Handle "Add Photos" button click in onboarding
+        function handleOnboardingAddPhotos() {
+            console.log('Onboarding: User wants to add photos');
+
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.multiple = true;
+
+            input.onchange = async (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length > 0) {
+                    console.log('Photos selected:', files.length);
+                    showOnboardingPhotosPreview(files);
+                    setTimeout(() => {
+                        generateOnboardingReportPreview(true, files);
+                    }, 800);
+                }
+            };
+
+            input.click();
+        }
+
+        // Handle "Skip" button click in onboarding
+        function handleOnboardingSkipPhotos() {
+            console.log('Onboarding: User skipped photos');
+
+            const photoQuestion = document.querySelector('.photo-question-msg');
+            if (photoQuestion) {
+                photoQuestion.innerHTML = `
+                    <div class="msg-bubble">
+                        <div class="msg-head">
+                            <div class="msg-avatar"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>
+                            <span class="msg-name">FixAIR Assistant</span>
+                        </div>
+                        <p style="color: var(--assistant);">✓ D'accord, je génère le rapport sans photos.</p>
+                    </div>
+                `;
+            }
+
+            setTimeout(() => {
+                generateOnboardingReportPreview(false, []);
+            }, 400);
+        }
+
+        function showOnboardingPhotosPreview(files) {
+            const chatContainer = document.getElementById('assistantBody');
+            if (!chatContainer) return;
+
+            const photosHtml = files.slice(0, 4).map(file => {
+                const url = URL.createObjectURL(file);
+                return `<img src="${url}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border);">`;
+            }).join('');
+
+            const previewMessage = document.createElement('div');
+            previewMessage.className = 'msg user';
+            previewMessage.innerHTML = `
+                <div class="msg-bubble">
+                    <p style="margin-bottom: 8px;">Photos ajoutées:</p>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        ${photosHtml}
+                    </div>
+                </div>
+            `;
+
+            chatContainer.appendChild(previewMessage);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function generateOnboardingReportPreview(hasPhotos, photos = []) {
+            const chatContainer = document.getElementById('assistantBody');
+            if (!chatContainer) return;
+
+            const selectedBrand = onboardingBrand || brand || 'mitsubishi';
+            const brandNames = {
+                'mitsubishi': 'Mitsubishi Electric',
+                'daikin': 'Daikin',
+                'carrier': 'Carrier'
+            };
+            const brandName = brandNames[selectedBrand] || selectedBrand;
+
+            const today = new Date().toLocaleDateString('fr-FR');
+
+            const reportMessage = document.createElement('div');
+            reportMessage.className = 'msg ai';
+            reportMessage.innerHTML = `
+                <div class="msg-bubble">
+                    <div class="msg-head">
+                        <div class="msg-avatar"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>
+                        <span class="msg-name">FixAIR Assistant</span>
+                    </div>
+                    <p style="color: var(--assistant);"><strong>✅ Rapport généré !</strong></p>
+
+                    <div class="onboarding-report-preview" style="
+                        background: rgba(34, 197, 94, 0.08);
+                        border: 1px solid rgba(34, 197, 94, 0.2);
+                        border-radius: 12px;
+                        padding: 16px;
+                        margin-top: 12px;
+                    ">
+                        <h4 style="color: var(--assistant); margin: 0 0 12px; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8M16 17H8M10 9H8"/></svg>
+                            Rapport d'intervention
+                        </h4>
+
+                        <div style="display: grid; gap: 6px; font-size: 12px; color: var(--text-dim);">
+                            <div><strong style="color: var(--text);">Client:</strong> Jean Dupont</div>
+                            <div><strong style="color: var(--text);">Date:</strong> ${today}</div>
+                            <div><strong style="color: var(--text);">Équipement:</strong> ${brandName} - Split System</div>
+                            <div><strong style="color: var(--text);">Diagnostic:</strong> Code erreur résolu</div>
+                            <div><strong style="color: var(--text);">Actions:</strong> Vérification câblage, réinitialisation</div>
+                            ${hasPhotos ? `<div><strong style="color: var(--text);">Photos:</strong> ${photos.length} photo(s) jointe(s)</div>` : ''}
+                        </div>
+
+                        <button onclick="viewOnboardingFullReport()" style="
+                            background: var(--assistant);
+                            color: white;
+                            border: none;
+                            padding: 10px 16px;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            margin-top: 12px;
+                            font-weight: 600;
+                            font-size: 12px;
+                            width: 100%;
+                        ">
+                            Voir le rapport complet →
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            chatContainer.appendChild(reportMessage);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            // Mark onboarding step complete
+            if (!step4Done) {
+                step4Done = true;
+                completeStep(4);
+                updateOnboardingProgress();
+                checkOnboardingComplete();
+            }
+        }
+
+        function viewOnboardingFullReport() {
+            console.log('Onboarding: Opening full report view');
+            toast('Dans la vraie app, le rapport complet s\'ouvrirait ici!');
+            // In production, this would call openReport() or similar
         }
 
         function completeStep(n) {
@@ -7250,7 +7593,12 @@
             
             // Update chat history with new brand context
             updateBrandContextInHistory();
-            
+
+            // Update Copilot example if on copilot panel
+            if (panel === 'copilot') {
+                onBrandChangeUpdateExample(newBrand);
+            }
+
             // Update database if project exists
             if (currentProjectId) {
                 try {
