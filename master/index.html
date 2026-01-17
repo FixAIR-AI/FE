@@ -10,6 +10,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Mermaid.js for diagrams -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <!-- FixAIR Diagram System -->
+    <link rel="stylesheet" href="/assets/css/fixair-diagrams.css">
     <style>
         :root {
             --copilot: #a78bfa;
@@ -2700,6 +2702,10 @@
 
             // Render any Mermaid diagrams in the chat
             renderMermaidDiagrams(body);
+            // FixAIR Diagram System rendering
+            if (typeof FixAIRDiagrams !== 'undefined') {
+                FixAIRDiagrams.render(body);
+            }
 
             // Try to extract report data from messages
             messages.forEach(m => {
@@ -3834,5 +3840,7 @@
         // ═══ INIT ═══
         document.addEventListener('DOMContentLoaded', initSupabase);
     </script>
+<!-- FixAIR Diagram System JS -->
+<script src="/assets/js/fixair-diagrams.js"></script>
 </body>
 </html>

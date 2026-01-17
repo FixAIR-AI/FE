@@ -4890,6 +4890,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- Mermaid.js for diagrams -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <!-- FixAIR Diagram System -->
+    <link rel="stylesheet" href="/assets/css/fixair-diagrams.css">
 
     <!-- ElevenLabs Conversational AI - ES Module (same as working Mitsubishi page) -->
     <script type="module">
@@ -8008,6 +8010,10 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             // Render any Mermaid diagrams in the message
             if (type === 'ai') {
                 renderMermaidDiagrams(msg);
+                // FixAIR Diagram System rendering
+                if (typeof FixAIRDiagrams !== 'undefined') {
+                    FixAIRDiagrams.render(msg);
+                }
             }
         }
 
@@ -15470,5 +15476,7 @@ RÈGLES:
         </div>
     </div>
 
+<!-- FixAIR Diagram System JS -->
+<script src="/assets/js/fixair-diagrams.js"></script>
 </body>
 </html>
