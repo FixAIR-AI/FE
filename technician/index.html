@@ -6053,6 +6053,17 @@
             alert('Erreur: Supabase non chargé. Veuillez rafraîchir la page.');
         }
 
+        // Helper to wait for Supabase to be ready
+        async function waitForSupabase() {
+            if (supabaseReady && db) return db;
+            let attempts = 0;
+            while ((!supabaseReady || !db) && attempts < 20) {
+                await new Promise(r => setTimeout(r, 100));
+                attempts++;
+            }
+            return db;
+        }
+
         // ═══ TOAST UTILITY ═══
         let toastTimeout = null;
         function toast(m) {
@@ -6691,8 +6702,10 @@
         }
 
         function closeBrandDropdown() {
-            document.getElementById('brandPill').classList.remove('open');
-            document.getElementById('brandDropdown').classList.remove('show');
+            const pill = document.getElementById('brandPill');
+            const dropdown = document.getElementById('brandDropdown');
+            if (pill) pill.classList.remove('open');
+            if (dropdown) dropdown.classList.remove('show');
         }
 
         function setBrand(b) {

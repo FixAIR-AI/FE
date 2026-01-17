@@ -980,7 +980,20 @@
                 });
 
                 if (authError) {
-                    showStatus('techSignupStatus', authError.message, 'error');
+                    console.error('Signup error details:', authError);
+                    console.error('Error code:', authError.code);
+                    console.error('Error status:', authError.status);
+                    console.error('Error message:', authError.message);
+
+                    // User-friendly error messages
+                    let msg = authError.message;
+                    if (authError.status === 500) {
+                        msg = 'Erreur serveur. Veuillez réessayer dans quelques minutes.';
+                    } else if (authError.message.includes('already registered')) {
+                        msg = 'Cet email est déjà utilisé. Essayez de vous connecter.';
+                    }
+
+                    showStatus('techSignupStatus', msg, 'error');
                     return;
                 }
 
@@ -1068,7 +1081,20 @@
                 });
 
                 if (authError) {
-                    showStatus('entSignupStatus', authError.message, 'error');
+                    console.error('Signup error details:', authError);
+                    console.error('Error code:', authError.code);
+                    console.error('Error status:', authError.status);
+                    console.error('Error message:', authError.message);
+
+                    // User-friendly error messages
+                    let msg = authError.message;
+                    if (authError.status === 500) {
+                        msg = 'Erreur serveur. Veuillez réessayer dans quelques minutes.';
+                    } else if (authError.message.includes('already registered')) {
+                        msg = 'Cet email est déjà utilisé. Essayez de vous connecter.';
+                    }
+
+                    showStatus('entSignupStatus', msg, 'error');
                     return;
                 }
 
