@@ -5191,7 +5191,7 @@
         <nav class="nav">
             <div class="nav-inner">
                 <div class="nav-item active" id="navHome" onclick="goToHome()"><span class="icon nav-icon"><svg><use href="#icon-home"/></svg></span><span class="nav-label">Accueil</span></div>
-                <div class="nav-item" id="navProjects" onclick="showPage('projects')"><span class="icon nav-icon"><svg><use href="#icon-folder"/></svg></span><span class="nav-label">Projets</span></div>
+                <div class="nav-item" id="navProjects" onclick="Router.navigate({page:'projects'})"><span class="icon nav-icon"><svg><use href="#icon-folder"/></svg></span><span class="nav-label">Projets</span></div>
                 <div class="nav-item" id="navConnect" onclick="openConnect()"><span class="icon nav-icon"><svg><use href="#icon-connect"/></svg></span><span class="nav-label">Connect</span></div>
                 <div class="nav-item nav-hotline" onclick="openHotline()">
                     <div class="nav-hotline-waves">
@@ -5211,7 +5211,7 @@
     <!-- PROFILE VIEW -->
     <div class="profile-view" id="profileView">
         <div class="profile-header">
-            <button class="profile-back" onclick="closeProfile()"><span class="icon"><svg viewBox="0 0 24 24"><use href="#icon-arrow-left"/></svg></span></button>
+            <button class="profile-back" onclick="goToHome()"><span class="icon"><svg viewBox="0 0 24 24"><use href="#icon-arrow-left"/></svg></span></button>
             <div class="profile-info">
                 <div class="profile-title" data-i18n="profile.title">Votre profil</div>
                 <div class="profile-subtitle" data-i18n="profile.subtitle">Informations personnelles</div>
@@ -5275,7 +5275,7 @@
     <div class="chat-view single" id="chatView">
         <div class="panel copilot" id="panelCopilot" style="flex-basis:50%;">
             <header class="panel-header">
-                <button class="panel-back" onclick="closeChat()"><span class="icon"><svg><use href="#icon-arrow-left"/></svg></span></button>
+                <button class="panel-back" onclick="closeChat(); goToHome()"><span class="icon"><svg><use href="#icon-arrow-left"/></svg></span></button>
                 <div class="panel-info">
                     <div class="panel-title">FixAIR Copilot</div>
                     <div class="panel-separator"></div>
@@ -5386,7 +5386,7 @@
 
         <div class="panel assistant" id="panelAssistant" style="display:none;flex-basis:50%;">
             <header class="panel-header">
-                <button class="panel-back" onclick="closeChat()"><span class="icon"><svg><use href="#icon-arrow-left"/></svg></span></button>
+                <button class="panel-back" onclick="closeChat(); goToHome()"><span class="icon"><svg><use href="#icon-arrow-left"/></svg></span></button>
                 <div class="panel-info">
                     <div class="panel-title">FixAIR Assistant</div>
                     <div class="panel-separator"></div>
@@ -5584,7 +5584,7 @@
 
     <!-- HOTLINE VIEW -->
     <div class="hotline-view" id="hotlineView">
-        <button class="hotline-close" onclick="closeHotline()"><span class="icon"><svg><use href="#icon-x"/></svg></span></button>
+        <button class="hotline-close" onclick="closeHotline(); goToHome()"><span class="icon"><svg><use href="#icon-x"/></svg></span></button>
         <div class="hotline-widget" id="hotlineWidget">
             <div class="pulse-sphere" id="pulseSphere" onclick="toggleHotline()">
                 <div class="pulse-atmosphere"></div>
@@ -6115,42 +6115,203 @@
             await getApiKey('elevenlabs_api_key');
         }
 
-        // ═══ USER-SPECIFIC URL ROUTING ═══
-        // Supports multiple URL formats:
-        // /technician                    → Login prompt
-        // /technician/[userId]           → User's dashboard (requires _redirects)
-        // /technician/?user=[userId]     → User's dashboard (fallback, works without config)
-        // /technician/#[userId]          → User's dashboard (hash fallback)
+        // ═══════════════════════════════════════════════════════════════
+        // URL ROUTER - Full path routing with query strings
+        // ═══════════════════════════════════════════════════════════════
+        // URL Structure:
+        // /technician                                    → Login prompt
+        // /technician/?user=[userId]                     → Dashboard (home)
+        // /technician/?user=[userId]&page=copilot        → Copilot AI
+        // /technician/?user=[userId]&page=assistant      → Assistant/Reports
+        // /technician/?user=[userId]&page=hotline        → Hotline voice
+        // /technician/?user=[userId]&page=profile        → User profile
+        // /technician/?user=[userId]&page=settings       → Settings
+        // /technician/?user=[userId]&page=projects       → Projects list
+        // /technician/?user=[userId]&page=project&id=[projectId] → Project detail
+        // /technician/?user=[userId]&page=calendar       → Calendar
+        // /technician/?user=[userId]&page=connect        → Connect jobs
 
+        const Router = {
+            // Parse current URL and return route object
+            getRoute() {
+                const params = new URLSearchParams(window.location.search);
+                return {
+                    user: params.get('user') || params.get('id'),
+                    page: params.get('page') || 'home',
+                    projectId: params.get('project') || params.get('id'),
+                    chatId: params.get('chat'),
+                    mode: params.get('mode') // copilot or assistant
+                };
+            },
+
+            // Navigate to a new route (updates URL and shows page)
+            navigate(options = {}) {
+                const current = this.getRoute();
+                const userId = options.user || current.user;
+
+                if (!userId) {
+                    console.warn('Router.navigate: No user ID');
+                    return;
+                }
+
+                // Build new URL
+                const params = new URLSearchParams();
+                params.set('user', userId);
+
+                if (options.page && options.page !== 'home') {
+                    params.set('page', options.page);
+                }
+                if (options.projectId) {
+                    params.set('project', options.projectId);
+                }
+                if (options.chatId) {
+                    params.set('chat', options.chatId);
+                }
+                if (options.mode) {
+                    params.set('mode', options.mode);
+                }
+
+                const newUrl = '/technician/?' + params.toString();
+
+                // Only push if URL actually changed
+                if (newUrl !== window.location.pathname + window.location.search) {
+                    history.pushState({ route: options }, '', newUrl);
+                }
+
+                // Handle the route change
+                this.handleRouteChange(options.page || 'home', options);
+            },
+
+            // Handle route changes (show correct page/panel)
+            handleRouteChange(page, options = {}) {
+                console.log('Router: handleRouteChange', page, options);
+
+                // Close all overlays first
+                closeChat();
+                closeProfile();
+                document.getElementById('hotlineView')?.classList.remove('active');
+                document.getElementById('connectView')?.classList.remove('active');
+
+                switch(page) {
+                    case 'home':
+                    case 'dashboard':
+                        showPage('home');
+                        break;
+
+                    case 'projects':
+                        showPage('projects');
+                        break;
+
+                    case 'project':
+                        // Open specific project (from URL bookmark/refresh)
+                        if (options.projectId && typeof loadProject === 'function') {
+                            loadProject(options.projectId);
+                        } else {
+                            showPage('projects');
+                        }
+                        break;
+
+                    case 'copilot':
+                        showPage('home');
+                        // Start fresh copilot chat
+                        if (typeof switchMode === 'function') {
+                            switchMode('copilot');
+                        }
+                        break;
+
+                    case 'assistant':
+                        showPage('home');
+                        if (typeof switchMode === 'function') {
+                            switchMode('assistant');
+                        }
+                        break;
+
+                    case 'hotline':
+                        showPage('home');
+                        document.getElementById('hotlineView')?.classList.add('active');
+                        break;
+
+                    case 'profile':
+                        showPage('home');
+                        document.getElementById('profileView')?.classList.add('active');
+                        break;
+
+                    case 'settings':
+                        showPage('home');
+                        document.getElementById('profileView')?.classList.add('active');
+                        // TODO: scroll to settings section
+                        break;
+
+                    case 'calendar':
+                        showPage('home');
+                        // Show calendar if it exists
+                        if (typeof showTechCalendar === 'function') {
+                            showTechCalendar();
+                        }
+                        break;
+
+                    case 'connect':
+                        showPage('connect');
+                        break;
+
+                    default:
+                        showPage('home');
+                }
+            },
+
+            // Initialize router (call once on page load)
+            init() {
+                // Handle browser back/forward
+                window.addEventListener('popstate', (e) => {
+                    console.log('Router: popstate', e.state);
+                    const route = this.getRoute();
+                    if (route.user) {
+                        this.handleRouteChange(route.page, route);
+                    }
+                });
+            }
+        };
+
+        // ═══ APP INITIALIZATION ═══
         async function init() {
             console.log('=== TECHNICIAN APP INIT ===');
 
-            let userId = null;
+            // Initialize router for back/forward support
+            Router.init();
 
-            // Method 1: Path-based /technician/[uuid]
-            const pathParts = window.location.pathname.split('/').filter(Boolean);
-            console.log('Path parts:', pathParts);
-            if (pathParts.length >= 2 && pathParts[0] === 'technician') {
-                userId = pathParts[1];
-                console.log('User ID from path:', userId);
-            }
+            // Get route from URL
+            const route = Router.getRoute();
+            console.log('Initial route:', route);
 
-            // Method 2: Query string /technician/?user=[uuid]
+            // Check for user ID (query string is primary method)
+            let userId = route.user;
+
+            // Fallback: Path-based /technician/[uuid] (for old URLs)
             if (!userId) {
-                const params = new URLSearchParams(window.location.search);
-                userId = params.get('user') || params.get('id');
-                if (userId) console.log('User ID from query string:', userId);
+                const pathParts = window.location.pathname.split('/').filter(Boolean);
+                if (pathParts.length >= 2 && pathParts[0] === 'technician') {
+                    userId = pathParts[1];
+                    console.log('User ID from path (legacy):', userId);
+                }
             }
 
-            // Method 3: Hash /technician/#[uuid]
+            // Fallback: Hash /technician/#[uuid]
             if (!userId && window.location.hash) {
                 userId = window.location.hash.replace('#', '').replace('/', '');
-                if (userId) console.log('User ID from hash:', userId);
+                if (userId) console.log('User ID from hash (legacy):', userId);
             }
 
             // Check if we have a valid userId (UUIDs are 36 chars, but accept 10+ to be safe)
             if (userId && userId.length > 10) {
                 await loadUserDashboard(userId);
+
+                // After loading dashboard, handle the requested page
+                if (route.page && route.page !== 'home') {
+                    // Small delay to ensure UI is ready
+                    setTimeout(() => {
+                        Router.handleRouteChange(route.page, route);
+                    }, 100);
+                }
             } else {
                 showLoginPrompt();
             }
@@ -6414,7 +6575,7 @@
 
         // PROFILE
         function openProfile() {
-            document.getElementById('profileView').classList.add('active');
+            Router.navigate({ page: 'profile' });
         }
 
         function closeProfile() {
@@ -6679,13 +6840,9 @@
         }
 
         function goToHome() {
-            // Close any open views
-            closeChat();
-            closeProfile();
-            document.getElementById('hotlineView').classList.remove('active');
-            // Go to home page
-            showPage('home');
-            
+            // Update URL and show home page (Router handles closing overlays)
+            Router.navigate({ page: 'home' });
+
             // ═══ REFRESH DATA when returning to homepage ═══
             if (currentUserId) {
                 // Reload projects list
@@ -7932,6 +8089,16 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
             updateSessionIds(projectId); // Update session IDs for n8n memory
             currentChatId = { assistant: null, copilot: null };
             projectMessageCount = 0;
+
+            // Update URL with project ID (only if not already on this project URL)
+            const route = Router.getRoute();
+            if (route.user && route.projectId !== projectId) {
+                const params = new URLSearchParams();
+                params.set('user', route.user);
+                params.set('page', 'project');
+                params.set('project', projectId);
+                history.pushState({ page: 'project', projectId }, '', '/technician/?' + params.toString());
+            }
             
             // First, check what chats exist for this project to determine mode
             let initialMode = mode || 'copilot';
@@ -12781,7 +12948,7 @@ RÈGLES:
         // ═══════════════════════════════════════════════════════════════
 
         function openHotline() {
-            document.getElementById('hotlineView').classList.add('active');
+            Router.navigate({ page: 'hotline' });
             resetHotline();
         }
 
