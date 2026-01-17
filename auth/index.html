@@ -529,27 +529,6 @@
         </div>
     </div>
 
-    <!-- Pending Approval Screen -->
-    <div class="screen" id="pendingScreen">
-        <div class="scan-line"></div>
-        <div class="pending-container">
-            <div class="auth-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
-            <div class="pending-icon">&#9203;</div>
-            <h1 class="auth-title">Demande en attente</h1>
-            <p class="auth-subtitle">
-                Votre compte est en attente d'approbation.
-                Vous recevrez un email d&egrave;s que votre acc&egrave;s sera activ&eacute;.
-            </p>
-            <div class="pending-email" id="pendingEmail"></div>
-            <button class="btn btn-primary" onclick="checkApprovalStatus()" style="margin-top: 16px; max-width: 200px;" id="checkStatusBtn">
-                V&eacute;rifier le statut
-            </button>
-            <button class="btn btn-secondary" onclick="logout()" style="margin-top: 8px; max-width: 200px;">
-                Se d&eacute;connecter
-            </button>
-        </div>
-    </div>
-
     <!-- Password Reset Screen -->
     <div class="screen" id="resetScreen">
         <div class="scan-line"></div>
@@ -633,6 +612,36 @@
                 el.textContent = message;
                 el.className = 'status-message ' + type;
             }
+        }
+
+        // Enhanced inline message for pending/warning states
+        function showInlineMessage(elementId, message, type = 'info') {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+
+            const colors = {
+                error: { bg: 'rgba(239,68,68,0.15)', border: '#ef4444', text: '#ef4444' },
+                warning: { bg: 'rgba(234,179,8,0.15)', border: '#eab308', text: '#eab308' },
+                info: { bg: 'rgba(59,130,246,0.15)', border: '#3b82f6', text: '#3b82f6' },
+                success: { bg: 'rgba(34,197,94,0.15)', border: '#22c55e', text: '#22c55e' }
+            };
+            const c = colors[type] || colors.info;
+
+            el.innerHTML = `
+                <div style="
+                    padding: 14px 18px;
+                    margin: 12px 0;
+                    border-radius: 10px;
+                    font-size: 14px;
+                    line-height: 1.5;
+                    background: ${c.bg};
+                    color: ${c.text};
+                    border: 1px solid ${c.border};
+                    text-align: center;
+                ">
+                    ${message}
+                </div>
+            `;
         }
 
         // ═══════════════════════════════════════════════════════════════
@@ -772,15 +781,18 @@
                         return;
                     }
 
-                    // Check if account is approved
+                    // Check user status
                     if (profile.status === 'pending') {
-                        document.getElementById('pendingEmail').textContent = currentEmail;
-                        goToScreen('pendingScreen');
+                        showInlineMessage('loginStatus', '⏳ Votre compte est en attente de validation par un administrateur. Vous recevrez un email dès que votre accès sera activé.', 'warning');
+                        return;
+                    }
+                    if (profile.status === 'rejected' || profile.status === 'suspended') {
+                        showInlineMessage('loginStatus', '❌ Votre compte a été désactivé. Contactez le support.', 'error');
                         return;
                     }
 
-                    // Redirect based on role
-                    redirectByRole(profile.role);
+                    // Redirect based on role (with user ID)
+                    redirectByRole(profile.role, profile.id);
 
                 } catch (err) {
                     console.error('Login exception:', err);
@@ -826,35 +838,46 @@
                     return;
                 }
 
-                // Check if account is approved
+                // Check user status
                 if (profile.status === 'pending') {
-                    document.getElementById('pendingEmail').textContent = currentEmail;
-                    goToScreen('pendingScreen');
+                    showInlineMessage('loginStatus', '⏳ Votre compte est en attente de validation par un administrateur. Vous recevrez un email dès que votre accès sera activé.', 'warning');
+                    goToScreen('loginScreen');
+                    return;
+                }
+                if (profile.status === 'rejected' || profile.status === 'suspended') {
+                    showInlineMessage('loginStatus', '❌ Votre compte a été désactivé. Contactez le support.', 'error');
+                    goToScreen('loginScreen');
                     return;
                 }
 
-                // Redirect based on role
-                redirectByRole(profile.role);
+                // Redirect based on role (with user ID)
+                redirectByRole(profile.role, profile.id);
 
             } catch (err) {
                 console.error('Login exception:', err);
-                showStatus('passwordStatus', 'Erreur de connexion. Reessayez.', 'error');
+                showStatus('loginStatus', 'Erreur de connexion. Reessayez.', 'error');
             }
         }
 
-        function redirectByRole(role) {
+        function redirectByRole(role, userId) {
+            // Use relative URLs with user ID for proper routing
+            const userParam = userId ? '?user=' + userId : '';
+
             switch (role) {
                 case 'technician':
-                    window.location.href = 'https://go.fixair.ai';
+                    window.location.href = '/technician/' + userParam;
                     break;
                 case 'manager':
-                    window.location.href = 'https://go.fixair.ai/manager';
+                    window.location.href = '/manager/' + userParam;
                     break;
                 case 'admin':
-                    window.location.href = 'https://go.fixair.ai/admin';
+                    window.location.href = '/admin/' + userParam;
+                    break;
+                case 'master':
+                    window.location.href = '/master/' + userParam;
                     break;
                 default:
-                    window.location.href = 'https://go.fixair.ai';
+                    window.location.href = '/technician/' + userParam;
             }
         }
 
@@ -1279,10 +1302,13 @@
 
                     if (profile) {
                         if (profile.status === 'pending') {
-                            document.getElementById('pendingEmail').textContent = profile.email;
-                            goToScreen('pendingScreen');
+                            showInlineMessage('loginStatus', '⏳ Votre compte est en attente de validation par un administrateur. Vous recevrez un email dès que votre accès sera activé.', 'warning');
+                            // Stay on login screen
+                        } else if (profile.status === 'rejected' || profile.status === 'suspended') {
+                            showInlineMessage('loginStatus', '❌ Votre compte a été désactivé. Contactez le support.', 'error');
                         } else {
-                            redirectByRole(profile.role);
+                            // Approved - redirect with user ID
+                            redirectByRole(profile.role, profile.id);
                         }
                         return;
                     }
