@@ -4937,6 +4937,35 @@
         </defs>
     </svg>
 
+    <!-- LOGIN SCREEN -->
+    <div class="screen login-screen active" id="loginScreen">
+        <div class="scan-line"></div>
+        <div class="login-container">
+            <div class="login-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
+            <h1 class="login-title">Bienvenue</h1>
+            <p class="login-sub">Portail Technicien FixAIR</p>
+            <div class="login-bar">
+                <div class="login-icon-slot">
+                    <div class="login-mini" id="loginSphere"><div class="glass-sphere"><div class="sphere-fog-container"><div class="sphere-fog"></div><div class="sphere-fog-2"></div></div></div></div>
+                    <button type="button" class="login-back" id="loginBack" onclick="prevLoginStep()"><svg viewBox="0 0 24 24"><use href="#icon-arrow-left"/></svg></button>
+                </div>
+                <div class="login-input-container">
+                    <div class="login-input-slider" id="loginSlider">
+                        <div class="login-input-slide">
+                            <input type="email" class="login-input" id="loginEmail" placeholder="Quelle est votre adresse email ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
+                        </div>
+                        <div class="login-input-slide">
+                            <input type="password" class="login-input" id="loginPassword" placeholder="Entrez votre mot de passe" onkeypress="if(event.key==='Enter')nextLoginStep()">
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="login-btn" id="loginBtn" onclick="nextLoginStep()"><span class="icon"><svg><use href="#icon-arrow-right"/></svg></span></button>
+            </div>
+            <div class="login-status" id="loginStatus"></div>
+            <p style="margin-top:32px;color:var(--text-dim);font-size:12px;">Pas encore de compte ? <a href="/auth?from=technician" style="color:var(--copilot);">Créer un compte</a></p>
+        </div>
+    </div>
+
     <!-- MAIN APP -->
     <div class="screen main-app" id="mainApp">
         <header class="app-header">
@@ -6313,79 +6342,215 @@
                     }, 100);
                 }
             } else {
-                showLoginPrompt();
+                showLoginScreen();
             }
         }
 
-        function showLoginPrompt() {
-            document.body.innerHTML = `
-                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#0a0a0a;color:white;font-family:system-ui;">
-                    <h1 style="color:#FF6B35;font-size:2.5rem;margin-bottom:10px;">🔧 FixAIR Technician</h1>
-                    <p style="margin:20px 0;color:#888;">Entrez votre email pour accéder à votre tableau de bord</p>
-                    <input type="email" id="emailInput" placeholder="votre@email.com"
-                        style="padding:15px;width:300px;border-radius:8px;border:1px solid #333;background:#111;color:white;font-size:16px;">
-                    <button onclick="findUserAndRedirect()"
-                        style="margin-top:15px;padding:15px 40px;background:#FF6B35;color:white;border:none;border-radius:8px;cursor:pointer;font-size:16px;font-weight:bold;">
-                        Accéder →
-                    </button>
-                    <p id="errorMsg" style="color:#ef4444;margin-top:15px;display:none;"></p>
-                    <p style="margin-top:40px;color:#555;font-size:12px;">Pas encore de compte ? <a href="/auth" style="color:#FF6B35;">Créer un compte</a></p>
-                </div>
-            `;
+        // ═══════════════════════════════════════════════════════════════
+        // LOGIN SCREEN MANAGEMENT
+        // ═══════════════════════════════════════════════════════════════
+        let loginStep = 0;
+        let existingUserData = null;
 
-            // Enter key support
-            document.getElementById('emailInput')?.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') findUserAndRedirect();
-            });
+        function showLoginScreen() {
+            document.getElementById('loginScreen').classList.add('active');
+            document.getElementById('mainApp').classList.remove('active');
+            // Reset login state
+            loginStep = 0;
+            existingUserData = null;
+            updateLoginUI();
+            clearLoginStatus();
         }
 
-        async function findUserAndRedirect() {
-            const email = document.getElementById('emailInput').value.trim().toLowerCase();
-            const errorMsg = document.getElementById('errorMsg');
+        // showMainApp is defined below at main app section
 
-            if (!email) {
-                errorMsg.textContent = 'Veuillez entrer votre email';
-                errorMsg.style.display = 'block';
+        function setLoginStatus(message, type = 'info', showReset = false) {
+            const statusEl = document.getElementById('loginStatus');
+            if (!statusEl) return;
+            statusEl.className = 'login-status ' + type;
+            if (showReset) {
+                statusEl.innerHTML = message + ' <a onclick="resetPassword()">Réinitialiser</a>';
+            } else {
+                statusEl.textContent = message;
+            }
+        }
+
+        function clearLoginStatus() {
+            const statusEl = document.getElementById('loginStatus');
+            if (statusEl) {
+                statusEl.textContent = '';
+                statusEl.className = 'login-status';
+            }
+        }
+
+        function updateLoginUI() {
+            document.getElementById('loginSlider').style.transform = `translateX(-${loginStep * 100}%)`;
+            document.getElementById('loginSphere').style.display = loginStep === 0 ? 'flex' : 'none';
+            document.getElementById('loginBack').style.display = loginStep === 0 ? 'none' : 'flex';
+        }
+
+        function prevLoginStep() {
+            if (loginStep > 0) {
+                loginStep--;
+                clearLoginStatus();
+                updateLoginUI();
+            }
+        }
+
+        async function nextLoginStep() {
+            const btn = document.getElementById('loginBtn');
+
+            if (loginStep === 0) {
+                // Step 0: Check email
+                const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+
+                if (!email.includes('@')) {
+                    setLoginStatus('Veuillez entrer un email valide', 'error');
+                    return;
+                }
+
+                clearLoginStatus();
+                btn.disabled = true;
+                btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
+
+                try {
+                    // Check if user exists in users table
+                    const { data: user, error } = await db
+                        .from('users')
+                        .select('id, email, first_name, status, role')
+                        .eq('email', email)
+                        .maybeSingle();
+
+                    console.log('User lookup:', { user, error });
+
+                    if (error || !user) {
+                        // User not found - redirect to /auth for signup
+                        setLoginStatus('Compte non trouvé. Redirection vers inscription...', 'info');
+                        setTimeout(() => {
+                            window.location.href = '/auth?email=' + encodeURIComponent(email) + '&from=technician';
+                        }, 1000);
+                        return;
+                    }
+
+                    // Check if user is a technician
+                    if (user.role !== 'technician') {
+                        setLoginStatus('Ce portail est réservé aux techniciens. Utilisez le portail ' + user.role + '.', 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+                        return;
+                    }
+
+                    // Check status
+                    if (user.status === 'pending') {
+                        setLoginStatus('⏳ Votre compte est en attente de validation par un administrateur.', 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+                        return;
+                    }
+
+                    if (user.status === 'rejected' || user.status === 'suspended') {
+                        setLoginStatus('❌ Votre compte a été désactivé. Contactez le support.', 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+                        return;
+                    }
+
+                    // User approved - save data and show password step
+                    existingUserData = user;
+                    if (user.first_name) {
+                        setLoginStatus('Bienvenue ' + user.first_name + ' !', 'info');
+                    } else {
+                        setLoginStatus('Bienvenue !', 'info');
+                    }
+                    loginStep = 1;
+                    updateLoginUI();
+
+                } catch (err) {
+                    console.error('Email check error:', err);
+                    setLoginStatus('Erreur de connexion. Réessayez.', 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+                }
+
+            } else if (loginStep === 1) {
+                // Step 1: Password login
+                const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+                const password = document.getElementById('loginPassword').value;
+
+                if (password.length < 6) {
+                    setLoginStatus('Mot de passe: 6 caractères minimum', 'error');
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.innerHTML = '<span class="icon" style="animation: spin 1s linear infinite;"><svg><use href="#icon-arrow-right"/></svg></span>';
+
+                try {
+                    const { data, error } = await db.auth.signInWithPassword({
+                        email: email,
+                        password: password
+                    });
+
+                    if (error) {
+                        console.error('Login error:', error);
+                        setLoginStatus('Mot de passe incorrect', 'error', true);
+                        btn.disabled = false;
+                        btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+                        return;
+                    }
+
+                    // Login successful - redirect to user dashboard
+                    clearLoginStatus();
+                    setLoginStatus('Connexion réussie !', 'success');
+
+                    // Get user ID from our users table
+                    const userId = existingUserData?.id;
+                    if (userId) {
+                        setTimeout(() => {
+                            window.location.href = '/technician/?user=' + userId;
+                        }, 500);
+                    } else {
+                        // Fallback: get user from session
+                        const { data: profile } = await db
+                            .from('users')
+                            .select('id')
+                            .eq('email', email)
+                            .single();
+                        if (profile) {
+                            window.location.href = '/technician/?user=' + profile.id;
+                        } else {
+                            setLoginStatus('Erreur: profil non trouvé', 'error');
+                        }
+                    }
+
+                } catch (err) {
+                    console.error('Login exception:', err);
+                    setLoginStatus('Erreur de connexion au serveur', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
+                }
+            }
+        }
+
+        async function resetPassword() {
+            const email = document.getElementById('loginEmail').value.trim();
+            if (!email.includes('@')) {
+                setLoginStatus('Entrez votre email d\'abord', 'error');
                 return;
             }
 
-            console.log('Looking up user:', email);
-
             try {
-                // Find user by email
-                const { data: user, error } = await db
-                    .from('users')
-                    .select('id, email, first_name, last_name, status, role')
-                    .eq('email', email)
-                    .single();
-
-                console.log('User lookup result:', { user, error });
-
-                if (error || !user) {
-                    errorMsg.textContent = 'Email non trouvé. Veuillez créer un compte.';
-                    errorMsg.style.display = 'block';
-                    return;
+                const { error } = await db.auth.resetPasswordForEmail(email, {
+                    redirectTo: window.location.origin + '/auth'
+                });
+                if (error) {
+                    setLoginStatus('Erreur: ' + error.message, 'error');
+                } else {
+                    setLoginStatus('Email de réinitialisation envoyé !', 'success');
                 }
-
-                if (user.role !== 'technician') {
-                    errorMsg.textContent = 'Cette app est réservée aux techniciens. Votre rôle: ' + user.role;
-                    errorMsg.style.display = 'block';
-                    return;
-                }
-
-                if (user.status !== 'approved' && user.status !== 'active') {
-                    errorMsg.textContent = 'Votre compte est: ' + user.status + '. Veuillez attendre l\'approbation.';
-                    errorMsg.style.display = 'block';
-                    return;
-                }
-
-                // Redirect to user-specific URL (using query string for compatibility)
-                window.location.href = '/technician/?user=' + user.id;
-
             } catch (err) {
-                console.error('Lookup error:', err);
-                errorMsg.textContent = 'Erreur de connexion. Veuillez réessayer.';
-                errorMsg.style.display = 'block';
+                setLoginStatus('Erreur lors de l\'envoi', 'error');
             }
         }
 
@@ -6456,6 +6621,7 @@
 
         // ═══ SHOW MAIN APP ═══
         function showMainApp() {
+            document.getElementById('loginScreen').classList.remove('active');
             document.getElementById('mainApp').classList.add('active');
 
             // Load app data
