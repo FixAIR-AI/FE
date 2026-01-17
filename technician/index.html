@@ -6786,11 +6786,15 @@
         }
 
         async function saveProfile() {
+            console.log('=== SAVING PROFILE ===');
+
             const firstName = document.getElementById('profileFirstName').value.trim();
             const lastName = document.getElementById('profileLastName').value.trim();
             const email = document.getElementById('profileEmail').value.trim();
             const phone = document.getElementById('profilePhone')?.value.trim() || '';
             const language = currentLang || 'fr';
+
+            console.log('Form data:', { firstName, lastName, email, phone, language });
 
             if (!firstName) { toast('Entrez votre prénom'); return; }
 
@@ -6810,11 +6814,17 @@
                 userId = savedUser.id;
             }
 
-            // console.log('saveProfile - userId:', userId);
+            console.log('User ID for save:', userId);
+
+            if (!userId) {
+                console.error('=== NO USER ID AVAILABLE ===');
+                toast('Erreur: utilisateur non identifié');
+                return;
+            }
 
             // ═══ SAVE TO LOCALSTORAGE (ALWAYS WORKS) ═══
             const savedUser = JSON.parse(localStorage.getItem('fixair_user') || '{}');
-            savedUser.id = userId; // Ensure ID is saved
+            savedUser.id = userId;
             savedUser.first_name = firstName;
             savedUser.last_name = lastName;
             if (email) savedUser.email = email;
@@ -6828,16 +6838,22 @@
             // ═══ SAVE TO SUPABASE users table ═══
             if (userId && typeof db !== 'undefined') {
                 try {
+                    // Build update data - only include non-empty values
                     const updateData = {
                         first_name: firstName,
-                        last_name: lastName,
-                        email: email,
-                        phone: phone,
-                        language: language,
                         updated_at: new Date().toISOString()
                     };
 
-                    // console.log('Saving profile to Supabase:', updateData, 'for user:', userId);
+                    // Only add optional fields if they have values
+                    if (lastName) updateData.last_name = lastName;
+                    if (phone) updateData.phone = phone;
+                    if (language) updateData.language = language;
+                    // Don't update email - it's managed by auth
+
+                    console.log('=== SUPABASE UPDATE ===');
+                    console.log('Table: users');
+                    console.log('User ID:', userId);
+                    console.log('Update data:', JSON.stringify(updateData, null, 2));
 
                     const { data, error } = await db
                         .from('users')
@@ -6846,43 +6862,42 @@
                         .select();
 
                     if (error) {
-                        console.error('Profile update error:', error.code, error.message);
+                        console.error('=== PROFILE UPDATE ERROR ===');
+                        console.error('Error code:', error.code);
+                        console.error('Error message:', error.message);
+                        console.error('Error details:', error.details);
+                        console.error('Error hint:', error.hint);
+                        console.error('Full error:', JSON.stringify(error, null, 2));
 
-                        // Try upsert as fallback
-                        const upsertData = {
-                            id: userId,
-                            first_name: firstName,
-                            last_name: lastName,
-                            email: email,
-                            phone: phone,
-                            language: language,
-                            updated_at: new Date().toISOString()
-                        };
-
-                        const { error: upsertError } = await db
-                            .from('users')
-                            .upsert(upsertData);
-
-                        if (!upsertError) {
-                            dbSaveSuccess = true;
-                            // console.log('Profile saved via upsert');
-                        } else {
-                            console.error('Profile upsert error:', upsertError.code, upsertError.message);
-                        }
+                        // Don't try upsert - it will fail on constraints
+                        // Just report the error
+                        toast('Erreur: ' + (error.message || 'Sauvegarde impossible'));
                     } else {
                         dbSaveSuccess = true;
-                        // console.log('Profile saved successfully:', data);
+                        console.log('=== PROFILE SAVED SUCCESSFULLY ===');
+                        console.log('Result:', data);
+
+                        // Update local profile with returned data
+                        if (data && data[0]) {
+                            currentUser = { ...currentUser, ...data[0] };
+                            localStorage.setItem('fixair_user', JSON.stringify(currentUser));
+                        }
                     }
                 } catch (e) {
-                    console.error('Profile save exception:', e);
+                    console.error('=== PROFILE SAVE EXCEPTION ===');
+                    console.error('Exception type:', e.constructor.name);
+                    console.error('Exception message:', e.message);
+                    console.error('Stack:', e.stack);
+                    toast('Erreur inattendue');
                 }
             } else {
-                // console.log('Cannot save to Supabase - no userId or db not available');
+                console.log('Cannot save to Supabase - no userId or db not available');
             }
 
             // ═══ ALSO TRY n8n API (if endpoint exists) ═══
             if (savedUser.id && authToken && !dbSaveSuccess) {
                 try {
+                    console.log('Trying n8n API fallback...');
                     const response = await fetch(`${API_BASE}/auth/update-profile`, {
                         method: 'POST',
                         headers: {
@@ -6893,7 +6908,6 @@
                             user_id: savedUser.id,
                             first_name: firstName,
                             last_name: lastName,
-                            email: email,
                             phone: phone,
                             language: language
                         })
@@ -6901,11 +6915,17 @@
 
                     if (response.ok) {
                         dbSaveSuccess = true;
+                        console.log('Profile saved via n8n API');
+                    } else {
+                        console.log('n8n API response not ok:', response.status);
                     }
                 } catch (error) {
-                    // n8n API not available
+                    console.log('n8n API not available:', error.message);
                 }
             }
+
+            console.log('=== SAVE COMPLETE ===');
+            console.log('DB save success:', dbSaveSuccess);
 
             if (dbSaveSuccess) {
                 toast('Profil enregistré ✓');
