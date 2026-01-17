@@ -6161,24 +6161,45 @@
                     .replace(/&gt;/g, '>')
                     .replace(/&amp;/g, '&');
 
-                // Remove AI-generated style commands (we use CSS instead)
-                code = code.replace(/\n\s*style\s+\w+\s+fill:[^;\n]+;?[^\n]*/g, '');
-                code = code.replace(/\n\s*style\s+\w+\s+[^\n]+/g, '');
-                code = code.replace(/\n\s*classDef\s+[^\n]+/g, '');
-                code = code.replace(/\n\s*class\s+\w+\s+\w+/g, '');
+                // ═══ SANITIZE MERMAID CODE ═══
 
-                // ═══ SANITIZE MERMAID CODE FOR SPECIAL CHARACTERS ═══
-                // Mermaid doesn't handle () / ' inside node labels without quotes
-                // Solution: Wrap labels containing special chars in quotes
+                // Helper: check if text needs quotes (contains special chars)
+                const needsQuotes = (text) => /[()\/']/.test(text) && !text.startsWith('"');
 
-                // Fix node labels: [text with (special) chars] → ["text with (special) chars"]
-                code = code.replace(/\[([^\]"]*[()\/'][^\]"]*)\]/g, '["$1"]');
+                // Helper: add quotes around text, escaping internal quotes
+                const addQuotes = (text) => {
+                    if (needsQuotes(text)) {
+                        return '"' + text.replace(/"/g, "'") + '"';
+                    }
+                    return text;
+                };
 
-                // Fix edge labels: |text with (special) chars| → |"text with (special) chars"|
-                code = code.replace(/\|([^|"]*[()\/'][^|"]*)\|/g, '|"$1"|');
+                // Fix node labels: [text] → ["text"] if contains special chars
+                code = code.replace(/\[([^\]]+)\]/g, (match, content) => {
+                    if (needsQuotes(content)) {
+                        return '[' + addQuotes(content) + ']';
+                    }
+                    return match;
+                });
 
-                // Remove any double-double quotes that might occur
+                // Fix edge labels: |text| → |"text"| if contains special chars
+                code = code.replace(/\|([^|]+)\|/g, (match, content) => {
+                    // Skip if already quoted
+                    if (content.startsWith('"') && content.endsWith('"')) {
+                        return match;
+                    }
+                    if (needsQuotes(content)) {
+                        return '|' + addQuotes(content) + '|';
+                    }
+                    return match;
+                });
+
+                // Clean up double quotes
                 code = code.replace(/""/g, '"');
+
+                // Remove AI-generated style commands (CSS handles styling)
+                code = code.replace(/^\s*style\s+\w+\s+.+$/gm, '');
+                code = code.replace(/^\s*classDef\s+.+$/gm, '');
 
                 try {
                     const id = 'mermaid-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
