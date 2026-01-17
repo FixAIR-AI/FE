@@ -5030,9 +5030,9 @@
                             <span class="onboarding-progress" id="onboardingProgress">0/4</span>
                         </div>
                         <div class="onboarding-steps" id="onboardingSteps">
-                            <div class="onboarding-step active" id="step1" onclick="openProfile()">
+                            <div class="onboarding-step active" id="step1" onclick="handleStep1Click()">
                                 <div class="step-check current" id="step1Check"></div>
-                                <div class="step-content"><span class="step-title">Créer votre compte</span></div>
+                                <div class="step-content"><span class="step-title">Valider vos informations</span></div>
                                 <svg class="step-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
                             </div>
                             <div class="onboarding-step locked" id="step2" onclick="toggleBrandSelect()">
@@ -5048,7 +5048,7 @@
                             <div class="onboarding-step locked" id="step3" onclick="handleStep3Click()">
                                 <div class="step-check pending" id="step3Check"></div>
                                 <div class="step-content">
-                                    <span class="step-title">Premier diagnostic</span>
+                                    <span class="step-title">Essayer le Copilot</span>
                                     <div class="step-divider"></div>
                                     <div class="step-tool">
                                         <svg class="step-tool-icon copilot" viewBox="0 0 200 200" fill="currentColor"><use href="#icon-star"/></svg>
@@ -5060,7 +5060,7 @@
                             <div class="onboarding-step locked" id="step4" onclick="handleStep4Click()">
                                 <div class="step-check pending" id="step4Check"></div>
                                 <div class="step-content">
-                                    <span class="step-title">Créer un rapport</span>
+                                    <span class="step-title">Découvrir l'Assistant</span>
                                     <div class="step-divider"></div>
                                     <div class="step-tool">
                                         <svg class="step-tool-icon assistant" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><use href="#icon-clipboard"/></svg>
@@ -6971,16 +6971,59 @@
         }
 
         // STEP HANDLERS - Allow either order and re-entry
+        function handleStep1Click() {
+            // Check if profile already has first_name (from currentUser or localStorage)
+            const firstName = currentUser?.first_name || '';
+
+            if (firstName && firstName.trim()) {
+                // Profile is valid - auto-complete step 1 and unlock step 2
+                if (onboardingStep === 1) {
+                    completeStep(1);
+                    document.getElementById('step2').classList.remove('locked');
+                    document.getElementById('step2').classList.add('active');
+                    document.getElementById('step2Check').classList.remove('pending');
+                    document.getElementById('step2Check').classList.add('current');
+                    onboardingStep = 2;
+                    updateOnboardingProgress();
+                    toast('Informations validées ✓');
+                }
+            } else {
+                // Profile needs completion - open profile modal
+                openProfile();
+            }
+        }
+
         function handleStep3Click() {
             // Accessible after brand selection (step 2) or if step4 already done
             if (onboardingStep < 3 && !step4Done) return;
+
+            // Open Copilot with prefilled example question
             openChat('copilot');
+
+            // Prefill with example symptom after a short delay to ensure UI is ready
+            setTimeout(() => {
+                const input = document.getElementById('copilotInput');
+                if (input) {
+                    input.value = "L'unité affiche un code erreur E3 et ne chauffe plus";
+                    input.style.height = 'auto';
+                    input.style.height = input.scrollHeight + 'px';
+                    input.focus();
+                }
+            }, 100);
         }
 
         function handleStep4Click() {
             // Accessible after brand selection (step 2) or if step3 already done
             if (onboardingStep < 3 && !step3Done) return;
+
+            // Open Assistant
             openChat('assistant');
+
+            // Focus the input after UI is ready
+            setTimeout(() => {
+                const input = document.getElementById('assistantInput');
+                if (input) input.focus();
+            }, 100);
         }
 
         function completeStep(n) {
