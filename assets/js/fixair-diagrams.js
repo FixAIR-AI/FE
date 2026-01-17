@@ -1,12 +1,12 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
  * FIXAIR DIAGRAM SYSTEM - MERMAID CONFIGURATION
- * Version: 2.2.0 - WITH PLACEHOLDER HANDLING
+ * Version: 2.3.0 - IMPROVED SANITIZATION
  * 
  * FIXES:
  * - Handles .mermaid-placeholder elements with data-mermaid-code attribute
- * - Proper initialization timing
- * - Sanitization of AI-generated code
+ * - Sanitizes parentheses in BOTH [] and {} shapes
+ * - Handles accents, slashes, and special characters
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
@@ -17,76 +17,60 @@
     // MERMAID CONFIGURATION - Premium FixAIR Theme
     // ─────────────────────────────────────────────────────────────────────────────
     const MERMAID_CONFIG = {
-        startOnLoad: false,  // We handle rendering manually
+        startOnLoad: false,
         theme: 'base',
         securityLevel: 'loose',
         fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
         
         themeVariables: {
-            // Backgrounds
             background: 'transparent',
             mainBkg: '#18181b',
             secondaryBkg: '#18181b',
             tertiaryBkg: '#1f1f23',
             
-            // Primary (Nodes)
             primaryColor: '#18181b',
             primaryTextColor: '#fafafa',
             primaryBorderColor: 'rgba(255, 255, 255, 0.12)',
             
-            // Secondary
             secondaryColor: '#18181b',
             secondaryTextColor: '#fafafa',
             secondaryBorderColor: 'rgba(255, 255, 255, 0.1)',
             
-            // Tertiary
             tertiaryColor: '#1f1f23',
             tertiaryTextColor: '#a1a1aa',
             tertiaryBorderColor: 'rgba(255, 255, 255, 0.08)',
             
-            // Node specific
             nodeBorder: 'rgba(255, 255, 255, 0.12)',
             nodeTextColor: '#fafafa',
             
-            // Lines
             lineColor: '#52525b',
-            
-            // Edge labels
             edgeLabelBackground: 'transparent',
             
-            // Clusters
             clusterBkg: 'rgba(255, 255, 255, 0.02)',
             clusterBorder: 'rgba(255, 255, 255, 0.05)',
             
-            // Notes
             noteBkgColor: '#18181b',
             noteBorderColor: 'rgba(255, 255, 255, 0.1)',
             noteTextColor: '#a1a1aa',
             
-            // Sequence - Actors
             actorBkg: '#18181b',
             actorBorder: 'rgba(255, 255, 255, 0.12)',
             actorTextColor: '#fafafa',
             actorLineColor: '#27272a',
             
-            // Sequence - Signals
             signalColor: '#52525b',
             signalTextColor: '#e4e4e7',
             
-            // Sequence - Labels
             labelBoxBkgColor: '#18181b',
             labelBoxBorderColor: 'rgba(255, 255, 255, 0.08)',
             labelTextColor: '#71717a',
             loopTextColor: '#71717a',
             
-            // Sequence - Activation
             activationBkgColor: '#1f1f23',
             activationBorderColor: 'rgba(255, 255, 255, 0.1)',
             
-            // State
             labelBackgroundColor: 'transparent',
             
-            // Typography
             fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
             fontSize: '14px'
         },
@@ -127,7 +111,6 @@
          */
         init: function() {
             if (this.initialized) {
-                console.log('[FixAIR Diagrams] Already initialized');
                 return true;
             }
             
@@ -138,18 +121,45 @@
             
             mermaid.initialize(MERMAID_CONFIG);
             this.initialized = true;
-            console.log('[FixAIR Diagrams] Initialized with premium theme ✓');
+            console.log('[FixAIR Diagrams] Initialized v2.3.0 ✓');
             return true;
         },
         
         /**
-         * Sanitize Mermaid code to fix common AI syntax errors
+         * IMPROVED SANITIZE FUNCTION
+         * Fixes: parentheses in {} and [], accents, slashes, special chars
          */
         sanitize: function(code) {
             if (!code) return '';
             let sanitized = code;
             
-            // 1. Fix subgraph names with accents/special chars
+            // ═══════════════════════════════════════════════════════════════════
+            // 1. FIX DIAMOND SHAPES {} with parentheses
+            //    {Carte inverter (IPM) OK ?} → {Carte inverter IPM OK ?}
+            // ═══════════════════════════════════════════════════════════════════
+            sanitized = sanitized.replace(
+                /\{([^}]*)\(([^)]*)\)([^}]*)\}/g,
+                function(match, before, inside, after) {
+                    // Remove parentheses but keep content
+                    return '{' + before + inside + after + '}';
+                }
+            );
+            
+            // ═══════════════════════════════════════════════════════════════════
+            // 2. FIX SQUARE BRACKETS [] with parentheses (if not already quoted)
+            //    ["text (note)"] is OK, but [text (note)] needs fixing
+            // ═══════════════════════════════════════════════════════════════════
+            sanitized = sanitized.replace(
+                /\[([^\]"]*)\(([^)]*)\)([^\]"]*)\]/g,
+                function(match, before, inside, after) {
+                    // Wrap in quotes to protect special chars
+                    return '["' + before + inside + after + '"]';
+                }
+            );
+            
+            // ═══════════════════════════════════════════════════════════════════
+            // 3. FIX SUBGRAPH names with accents/special chars
+            // ═══════════════════════════════════════════════════════════════════
             sanitized = sanitized.replace(
                 /subgraph\s+([^[\n]+?)(?=\n)/g,
                 function(match, name) {
@@ -171,41 +181,45 @@
                 }
             );
             
-            // 2. Fix edge labels with parentheses
+            // ═══════════════════════════════════════════════════════════════════
+            // 4. FIX EDGE LABELS with parentheses |text (note)|
+            // ═══════════════════════════════════════════════════════════════════
             sanitized = sanitized.replace(
-                /\|([^|"]+\([^)]+\)[^|]*)\|/g,
-                function(match, content) {
-                    return '|"' + content.replace(/[()]/g, '') + '"|';
+                /\|([^|"]*)\(([^)]*)\)([^|"]*)\|/g,
+                function(match, before, inside, after) {
+                    return '|' + before + inside + after + '|';
                 }
             );
             
-            // 3. Fix node labels with unquoted parentheses  
+            // ═══════════════════════════════════════════════════════════════════
+            // 5. FIX SLASHES in labels (can break parsing)
+            //    [TB3/TB5] → ["TB3/TB5"]
+            // ═══════════════════════════════════════════════════════════════════
             sanitized = sanitized.replace(
-                /\[([^\]"]+\([^)]+\)[^\]]*)\]/g,
-                function(match, content) {
-                    return '["' + content + '"]';
-                }
+                /\[([^\]"]*\/[^\]"]*)\]/g,
+                '["$1"]'
             );
             
-            // 4. Fix slashes in node labels
-            sanitized = sanitized.replace(
-                /\[([^\]"]*?)\/([^\]"]*?)\]/g,
-                '["$1/$2"]'
-            );
-            
-            // 5. Remove style commands
+            // ═══════════════════════════════════════════════════════════════════
+            // 6. REMOVE style/classDef commands (we use CSS)
+            // ═══════════════════════════════════════════════════════════════════
             sanitized = sanitized.replace(/^\s*style\s+.+$/gm, '');
             sanitized = sanitized.replace(/^\s*classDef\s+.+$/gm, '');
+            sanitized = sanitized.replace(/^\s*class\s+\w+\s+\w+\s*$/gm, '');
+            
+            // ═══════════════════════════════════════════════════════════════════
+            // 7. FIX remaining problematic characters in {} diamonds
+            //    Handle any ? or special punctuation that might cause issues
+            // ═══════════════════════════════════════════════════════════════════
+            // (keeping ? is usually OK, but if issues persist, can quote)
             
             return sanitized;
         },
         
         /**
          * MAIN RENDER FUNCTION
-         * Handles both .mermaid elements AND .mermaid-placeholder elements
          */
         render: async function(container) {
-            // Ensure initialized
             if (!this.initialized) {
                 this.init();
             }
@@ -221,7 +235,7 @@
             
             try {
                 // ═══════════════════════════════════════════════════════════════
-                // HANDLE .mermaid-placeholder ELEMENTS (from technician app)
+                // HANDLE .mermaid-placeholder ELEMENTS
                 // ═══════════════════════════════════════════════════════════════
                 const placeholders = el.querySelectorAll('.mermaid-placeholder:not(.mermaid-rendered)');
                 
@@ -229,27 +243,20 @@
                     const mermaidCode = placeholder.getAttribute('data-mermaid-code');
                     
                     if (mermaidCode) {
-                        // Decode HTML entities
                         let decodedCode = decodeHtmlEntities(mermaidCode);
-                        
-                        // Sanitize the code
                         const sanitizedCode = this.sanitize(decodedCode);
                         
-                        // Generate unique ID
                         const diagramId = 'mermaid-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
                         
                         try {
-                            // Render with mermaid
                             const { svg } = await mermaid.render(diagramId, sanitizedCode);
-                            
-                            // Insert SVG and mark as rendered
                             placeholder.innerHTML = svg;
                             placeholder.classList.add('mermaid-rendered');
-                            
                             console.log('[FixAIR Diagrams] Rendered placeholder ✓');
                         } catch (renderError) {
-                            console.error('[FixAIR Diagrams] Render error:', renderError);
-                            placeholder.innerHTML = '<div class="mermaid-error" style="color: #ef4444; padding: 16px; background: rgba(239,68,68,0.1); border-radius: 8px; font-size: 12px;">Diagram error: ' + renderError.message + '</div>';
+                            console.error('[FixAIR Diagrams] Render error:', renderError.message);
+                            console.log('[FixAIR Diagrams] Failed code:', sanitizedCode);
+                            placeholder.innerHTML = '<div style="color: #f97316; padding: 16px; background: rgba(249,115,22,0.1); border-radius: 12px; font-size: 13px; font-family: Inter, sans-serif;"><strong>⚠️ Erreur diagramme</strong><br><small>' + renderError.message.substring(0, 100) + '</small></div>';
                             placeholder.classList.add('mermaid-rendered');
                         }
                     }
@@ -265,96 +272,52 @@
                     if (!original || original.trim() === '') continue;
                     
                     const sanitized = this.sanitize(original);
-                    
                     const diagramId = 'mermaid-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
                     
                     try {
                         const { svg } = await mermaid.render(diagramId, sanitized);
                         mermaidEl.innerHTML = svg;
                         mermaidEl.setAttribute('data-processed', 'true');
-                        console.log('[FixAIR Diagrams] Rendered .mermaid element ✓');
                     } catch (renderError) {
-                        console.error('[FixAIR Diagrams] Render error:', renderError);
-                        mermaidEl.innerHTML = '<div class="mermaid-error" style="color: #ef4444; padding: 16px;">Error: ' + renderError.message + '</div>';
+                        console.error('[FixAIR Diagrams] Render error:', renderError.message);
                         mermaidEl.setAttribute('data-processed', 'true');
                     }
                 }
                 
-                // ═══════════════════════════════════════════════════════════════
-                // HANDLE CODE BLOCKS (```mermaid)
-                // ═══════════════════════════════════════════════════════════════
-                const codeBlocks = el.querySelectorAll('pre code.language-mermaid:not([data-processed]), code.mermaid:not([data-processed])');
-                
-                for (const block of codeBlocks) {
-                    const code = block.textContent;
-                    if (!code || code.trim() === '') continue;
-                    
-                    const sanitizedCode = this.sanitize(code);
-                    const diagramId = 'mermaid-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-                    
-                    try {
-                        const { svg } = await mermaid.render(diagramId, sanitizedCode);
-                        
-                        // Create wrapper
-                        const wrapper = document.createElement('div');
-                        wrapper.className = 'mermaid-rendered';
-                        wrapper.innerHTML = svg;
-                        
-                        // Replace code block
-                        const pre = block.closest('pre') || block;
-                        pre.parentNode.replaceChild(wrapper, pre);
-                        
-                        console.log('[FixAIR Diagrams] Rendered code block ✓');
-                    } catch (renderError) {
-                        console.error('[FixAIR Diagrams] Code block error:', renderError);
-                        block.setAttribute('data-processed', 'true');
-                    }
-                }
-                
             } catch (error) {
-                console.error('[FixAIR Diagrams] Render error:', error);
+                console.error('[FixAIR Diagrams] Error:', error);
             }
         },
         
         /**
-         * Render a single diagram from code string
+         * Render code string directly
          */
         renderCode: async function(code, container, id) {
             if (!this.initialized) this.init();
             
-            const diagramId = id || 'fd-diagram-' + Date.now();
+            const diagramId = id || 'fd-' + Date.now();
             const sanitizedCode = this.sanitize(code);
             
             try {
                 const { svg } = await mermaid.render(diagramId, sanitizedCode);
-                if (container) {
-                    container.innerHTML = svg;
-                }
+                if (container) container.innerHTML = svg;
                 return svg;
             } catch (error) {
-                console.error('[FixAIR Diagrams] Code render error:', error);
+                console.error('[FixAIR Diagrams] renderCode error:', error);
                 throw error;
             }
         },
         
-        /**
-         * Get configuration (for debugging)
-         */
         getConfig: function() {
             return { ...MERMAID_CONFIG };
         }
     };
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // AUTO-INITIALIZATION - Run immediately when script loads
+    // AUTO-INIT
     // ─────────────────────────────────────────────────────────────────────────────
     FixAIRDiagrams.init();
-
-    // ─────────────────────────────────────────────────────────────────────────────
-    // EXPORT TO GLOBAL SCOPE
-    // ─────────────────────────────────────────────────────────────────────────────
     window.FixAIRDiagrams = FixAIRDiagrams;
-    
-    console.log('[FixAIR Diagrams] Module loaded v2.2.0 ✓');
+    console.log('[FixAIR Diagrams] Module loaded v2.3.0 ✓');
 
 })();
