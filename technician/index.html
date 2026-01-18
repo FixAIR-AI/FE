@@ -11413,6 +11413,7 @@ INSTRUCTIONS:
             copilot: [],
             assistant: []
         };
+        window.chatHistory = chatHistory;
 
         // ==================== THOUGHT PROCESS SYSTEM ====================
         const thoughtIcons = {
@@ -11545,6 +11546,12 @@ INSTRUCTIONS:
                 return `${count} étape${count > 1 ? 's' : ''} d'analyse`;
             }
         }
+
+        // ==================== EXPOSE TO GLOBAL SCOPE ====================
+        window.thoughtIcons = thoughtIcons;
+        window.ThoughtProcessManager = ThoughtProcessManager;
+        window.ThoughtProcessUI = ThoughtProcessUI;
+        window.thoughtManager = thoughtManager;
 
         // Send message to n8n
         async function sendMsg(panel) {
