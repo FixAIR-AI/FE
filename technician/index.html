@@ -5429,7 +5429,7 @@
                     <button class="h-btn" onclick="toggleSplit()" title="Mode split"><span class="icon"><svg><use href="#icon-columns"/></svg></span></button>
                 </div>
             </header>
-            <div class="chat-body" id="copilotBody"><div class="tp-card tp-hidden" id="tpCopilot"><div class="tp-collapsed" onclick="toggleTP('copilot')"><span class="tp-collapsed-text" id="tpCopilotSummary">Analyzing...</span><svg class="tp-collapsed-chevron" viewBox="0 0 20 20" fill="currentColor"><path d="M14.128 7.165C14.313 6.96 14.63 6.943 14.835 7.128C15.04 7.312 15.057 7.63 14.872 7.835L10.372 12.835C10.288 12.933 10.162 12.993 10.022 12.999C9.882 13.005 9.745 12.953 9.646 12.853L5.128 7.835L5.068 7.753C4.954 7.552 4.975 7.289 5.146 7.128C5.317 6.966 5.61 6.959 5.797 7.097L5.872 7.165L10 11.752L14.128 7.165Z"/></svg></div><div class="tp-expanded-content"><div class="tp-header-row" onclick="toggleTP('copilot')"><div class="tp-header-left"><div class="tp-line tp-invisible"></div><div class="tp-header-icon"><svg class="tp-header-chevron" viewBox="0 0 20 20" fill="currentColor"><path d="M10 7C10.106 7 10.209 7.033 10.294 7.095L10.372 7.165L14.872 12.165C15.057 12.37 15.04 12.687 14.835 12.872C14.63 13.057 14.313 13.04 14.128 12.835L10 8.248L5.872 12.835C5.61 13.041 5.345 13.034 5.165 12.872C4.986 12.711 4.951 12.448 5.068 12.247L5.128 12.165L9.628 7.165C9.723 7.06 9.858 7 10 7Z"/></svg></div><div class="tp-line"></div></div><div class="tp-header-content"><span id="tpCopilotCount">Analyzing...</span></div></div><div id="tpCopilotSteps"></div></div></div></div>
+            <div class="chat-body" id="copilotBody"></div>
             <button class="scroll-bottom-btn" id="scrollBtnCopilot" onclick="scrollToBottom('copilot')">
                 <span class="icon"><svg><use href="#icon-arrow-left"/></svg></span>
             </button>
@@ -5541,7 +5541,7 @@
                     <button class="h-btn" onclick="toggleSplit()" title="Mode split"><span class="icon"><svg><use href="#icon-columns"/></svg></span></button>
                 </div>
             </header>
-            <div class="chat-body" id="assistantBody"><div class="tp-card tp-hidden" id="tpAssistant"><div class="tp-collapsed" onclick="toggleTP('assistant')"><span class="tp-collapsed-text" id="tpAssistantSummary">Generating...</span><svg class="tp-collapsed-chevron" viewBox="0 0 20 20" fill="currentColor"><path d="M14.128 7.165C14.313 6.96 14.63 6.943 14.835 7.128C15.04 7.312 15.057 7.63 14.872 7.835L10.372 12.835C10.288 12.933 10.162 12.993 10.022 12.999C9.882 13.005 9.745 12.953 9.646 12.853L5.128 7.835L5.068 7.753C4.954 7.552 4.975 7.289 5.146 7.128C5.317 6.966 5.61 6.959 5.797 7.097L5.872 7.165L10 11.752L14.128 7.165Z"/></svg></div><div class="tp-expanded-content"><div class="tp-header-row" onclick="toggleTP('assistant')"><div class="tp-header-left"><div class="tp-line tp-invisible"></div><div class="tp-header-icon"><svg class="tp-header-chevron" viewBox="0 0 20 20" fill="currentColor"><path d="M10 7C10.106 7 10.209 7.033 10.294 7.095L10.372 7.165L14.872 12.165C15.057 12.37 15.04 12.687 14.835 12.872C14.63 13.057 14.313 13.04 14.128 12.835L10 8.248L5.872 12.835C5.61 13.041 5.345 13.034 5.165 12.872C4.986 12.711 4.951 12.448 5.068 12.247L5.128 12.165L9.628 7.165C9.723 7.06 9.858 7 10 7Z"/></svg></div><div class="tp-line"></div></div><div class="tp-header-content"><span id="tpAssistantCount">Generating...</span></div></div><div id="tpAssistantSteps"></div></div></div></div>
+            <div class="chat-body" id="assistantBody"></div>
             <button class="scroll-bottom-btn" id="scrollBtnAssistant" onclick="scrollToBottom('assistant')">
                 <span class="icon"><svg><use href="#icon-arrow-left"/></svg></span>
             </button>
@@ -15546,26 +15546,35 @@ if(s.length===0){s.push({icon:'globe',text:'Searching '+b+' knowledge base'});}
 s.push({icon:'bullet',text:m==='assistant'?'Generating report':'Compiling response'});return s;},
 html(st,last){const ic=st.icon==='bullet'?this.icons.bullet:'<svg>'+this.icons[st.icon]+'</svg>';
 return '<div class="tp-step-row tp-loading-step"><div class="tp-step-left"><div class="tp-line"></div><div class="tp-step-icon">'+ic+'</div><div class="tp-line'+(last?' tp-invisible':'')+'"></div></div><div class="tp-step-content"><button class="tp-step-button"><span class="tp-step-text">'+st.text+'</span></button></div></div>';},
+createCard(m){const M=m.charAt(0).toUpperCase()+m.slice(1);
+return `<div class="tp-card tp-expanded" id="tp${M}Dynamic"><div class="tp-collapsed" onclick="toggleTP('${m}')"><span class="tp-collapsed-text" id="tp${M}Summary">Analyzing...</span><svg class="tp-collapsed-chevron" viewBox="0 0 20 20" fill="currentColor"><path d="M14.128 7.165C14.313 6.96 14.63 6.943 14.835 7.128C15.04 7.312 15.057 7.63 14.872 7.835L10.372 12.835C10.288 12.933 10.162 12.993 10.022 12.999C9.882 13.005 9.745 12.953 9.646 12.853L5.128 7.835L5.068 7.753C4.954 7.552 4.975 7.289 5.146 7.128C5.317 6.966 5.61 6.959 5.797 7.097L5.872 7.165L10 11.752L14.128 7.165Z"/></svg></div><div class="tp-expanded-content"><div class="tp-header-row" onclick="toggleTP('${m}')"><div class="tp-header-left"><div class="tp-line tp-invisible"></div><div class="tp-header-icon"><svg class="tp-header-chevron" viewBox="0 0 20 20" fill="currentColor"><path d="M10 7C10.106 7 10.209 7.033 10.294 7.095L10.372 7.165L14.872 12.165C15.057 12.37 15.04 12.687 14.835 12.872C14.63 13.057 14.313 13.04 14.128 12.835L10 8.248L5.872 12.835C5.61 13.041 5.345 13.034 5.165 12.872C4.986 12.711 4.951 12.448 5.068 12.247L5.128 12.165L9.628 7.165C9.723 7.06 9.858 7 10 7Z"/></svg></div><div class="tp-line"></div></div><div class="tp-header-content"><span id="tp${M}Count">Analyzing...</span></div></div><div id="tp${M}Steps"></div></div></div>`;},
 show(m,q){const b=(document.getElementById('copilotSub')||{}).textContent||'equipment';
 const st=this.analyze(q,m,b);this.s[m]=st;this.i[m]=0;
 const M=m.charAt(0).toUpperCase()+m.slice(1);
-const card=document.getElementById('tp'+M);const cont=document.getElementById('tp'+M+'Steps');const cnt=document.getElementById('tp'+M+'Count');
-if(!card||!cont)return;cont.innerHTML='';card.classList.remove('tp-hidden');card.classList.add('tp-expanded');cnt.textContent='Analyzing...';
+// Remove any existing dynamic card
+const existing=document.getElementById('tp'+M+'Dynamic');if(existing)existing.remove();
+// Create and append new card at bottom of chat
+const body=document.getElementById(m+'Body');if(!body)return;
+body.insertAdjacentHTML('beforeend',this.createCard(m));
+const card=document.getElementById('tp'+M+'Dynamic');
+const cont=document.getElementById('tp'+M+'Steps');
+const cnt=document.getElementById('tp'+M+'Count');
+body.scrollTop=body.scrollHeight;
 clearInterval(this.t[m]);this.t[m]=setInterval(()=>{const idx=this.i[m];if(idx<st.length){const prev=cont.querySelector('.tp-loading-bullet');if(prev)prev.classList.remove('tp-loading-bullet');
 const h=this.html(st[idx],idx===st.length-1);cont.insertAdjacentHTML('beforeend',h);const nw=cont.lastElementChild;
 if(st[idx].icon==='bullet'){const bl=nw.querySelector('.tp-bullet');if(bl)bl.classList.add('tp-loading-bullet');}
-requestAnimationFrame(()=>nw.classList.add('tp-visible'));this.i[m]++;cnt.textContent=this.i[m]+' step'+(this.i[m]>1?'s':'');}else{clearInterval(this.t[m]);}},500);},
+requestAnimationFrame(()=>nw.classList.add('tp-visible'));this.i[m]++;cnt.textContent=this.i[m]+' step'+(this.i[m]>1?'s':'');body.scrollTop=body.scrollHeight;}else{clearInterval(this.t[m]);}},500);},
 collapse(m,sum){clearInterval(this.t[m]);const M=m.charAt(0).toUpperCase()+m.slice(1);
-const card=document.getElementById('tp'+M);const sumEl=document.getElementById('tp'+M+'Summary');const cont=document.getElementById('tp'+M+'Steps');
-if(!card)return;cont?.querySelectorAll('.tp-loading-bullet').forEach(e=>e.classList.remove('tp-loading-bullet'));
-if(sumEl)sumEl.textContent=sum||'Analysis complete.';card.classList.remove('tp-expanded');},
+const card=document.getElementById('tp'+M+'Dynamic');if(!card)return;
+// Remove the dynamic card when AI responds
+card.remove();},
 hide(m){clearInterval(this.t[m]);const M=m.charAt(0).toUpperCase()+m.slice(1);
-const card=document.getElementById('tp'+M);if(card){card.classList.add('tp-hidden');card.classList.remove('tp-expanded');}}};
-function toggleTP(m){const M=m.charAt(0).toUpperCase()+m.slice(1);const card=document.getElementById('tp'+M);if(card)card.classList.toggle('tp-expanded');}
+const card=document.getElementById('tp'+M+'Dynamic');if(card)card.remove();}};
+function toggleTP(m){const M=m.charAt(0).toUpperCase()+m.slice(1);const card=document.getElementById('tp'+M+'Dynamic');if(card)card.classList.toggle('tp-expanded');}
 function showThoughtProcess(m,q){try{TP.show(m,q);}catch(e){console.warn('TP show error:',e);}}
 function collapseThoughtProcess(m,s){try{TP.collapse(m,s);}catch(e){console.warn('TP collapse error:',e);}}
 function hideThoughtProcess(m){try{TP.hide(m);}catch(e){console.warn('TP hide error:',e);}}
-console.log('✅ ThoughtProcess V2 loaded');
+console.log('✅ ThoughtProcess V3 loaded');
 </script>
 </body>
 </html>
