@@ -4059,6 +4059,22 @@
         .congrats-icon { font-size: 56px; margin-bottom: 12px; }
         .congrats-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
         .congrats-sub { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+
+        /* Onboarding highlight for input fields */
+        .onboarding-highlight-input {
+            animation: pulse-input 2s ease-in-out infinite;
+        }
+        @keyframes pulse-input {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.4);
+                border-color: rgba(255, 107, 53, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 0 6px rgba(255, 107, 53, 0);
+                border-color: #FF6B35;
+            }
+        }
+
         .homepage-content { display: none; }
         .homepage-content.active { display: flex; flex-direction: column; gap: 20px; padding-top: 24px; }
         .homepage-content > * { margin: 0; }
@@ -5055,6 +5071,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- Mermaid.js for diagrams -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <!-- FixAIR Diagram System -->
+    <link rel="stylesheet" href="/assets/css/fixair-diagrams.css">
 
     <!-- ElevenLabs Conversational AI - ES Module (same as working Mitsubishi page) -->
     <script type="module">
@@ -5211,9 +5229,9 @@
                             <span class="onboarding-progress" id="onboardingProgress">0/4</span>
                         </div>
                         <div class="onboarding-steps" id="onboardingSteps">
-                            <div class="onboarding-step active" id="step1" onclick="openProfile()">
+                            <div class="onboarding-step active" id="step1" onclick="handleStep1Click()">
                                 <div class="step-check current" id="step1Check"></div>
-                                <div class="step-content"><span class="step-title">Créer votre compte</span></div>
+                                <div class="step-content"><span class="step-title">Valider vos informations</span></div>
                                 <svg class="step-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
                             </div>
                             <div class="onboarding-step locked" id="step2" onclick="toggleBrandSelect()">
@@ -5229,7 +5247,7 @@
                             <div class="onboarding-step locked" id="step3" onclick="handleStep3Click()">
                                 <div class="step-check pending" id="step3Check"></div>
                                 <div class="step-content">
-                                    <span class="step-title">Premier diagnostic</span>
+                                    <span class="step-title">Essayer le Copilot</span>
                                     <div class="step-divider"></div>
                                     <div class="step-tool">
                                         <svg class="step-tool-icon copilot" viewBox="0 0 200 200" fill="currentColor"><use href="#icon-star"/></svg>
@@ -5241,7 +5259,7 @@
                             <div class="onboarding-step locked" id="step4" onclick="handleStep4Click()">
                                 <div class="step-check pending" id="step4Check"></div>
                                 <div class="step-content">
-                                    <span class="step-title">Créer un rapport</span>
+                                    <span class="step-title">Découvrir l'Assistant</span>
                                     <div class="step-divider"></div>
                                     <div class="step-tool">
                                         <svg class="step-tool-icon assistant" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><use href="#icon-clipboard"/></svg>
@@ -6123,7 +6141,78 @@
         let step3Done = false;
         let step4Done = false;
         let onboardingBrand = null;
-        
+
+        // ═══ BRAND ERROR EXAMPLES - Visual requesting questions ═══
+        const BRAND_ERROR_EXAMPLES = {
+            'mitsubishi': {
+                code: 'E6',
+                input: 'Code erreur E6 sur Mitsubishi MSZ-AP25VG. Montre-moi le schéma de câblage entre unité intérieure et extérieure pour diagnostiquer le défaut de communication.',
+                placeholder: 'Ex: Code E6 Mitsubishi - défaut communication'
+            },
+            'carrier': {
+                code: '178',
+                input: 'Code erreur 178 sur Carrier 42QHC012DS - surchauffe compresseur. J\'ai besoin du schéma électrique et un flowchart de diagnostic.',
+                placeholder: 'Ex: Code 178 Carrier - surchauffe compresseur'
+            },
+            'daikin': {
+                code: 'U4',
+                input: 'Code erreur U4 sur Daikin FTXM35N. Peux-tu me montrer le schéma de câblage de communication et les étapes de diagnostic visuellement?',
+                placeholder: 'Ex: Code U4 Daikin - défaut communication'
+            }
+        };
+
+        // Get error example for brand (defaults to Mitsubishi)
+        function getErrorExample(brandKey) {
+            const key = brandKey?.toLowerCase() || 'mitsubishi';
+            return BRAND_ERROR_EXAMPLES[key] || BRAND_ERROR_EXAMPLES['mitsubishi'];
+        }
+
+        // Track when user types their own question
+        function setupChatInputTracking() {
+            const chatInput = document.getElementById('copilotInput');
+            if (chatInput) {
+                chatInput.addEventListener('input', function(e) {
+                    if (e.inputType) {
+                        this.dataset.userTyped = 'true';
+                        // Remove highlight when user starts typing
+                        this.classList.remove('onboarding-highlight-input');
+                    }
+                });
+                chatInput.addEventListener('change', function() {
+                    if (this.value.trim() === '') {
+                        this.dataset.userTyped = 'false';
+                    }
+                });
+                chatInput.addEventListener('focus', function() {
+                    // Remove highlight on focus
+                    this.classList.remove('onboarding-highlight-input');
+                });
+            }
+        }
+
+        // Update example when brand changes (if user hasn't typed)
+        function onBrandChangeUpdateExample(newBrand) {
+            const chatInput = document.getElementById('copilotInput');
+            if (!chatInput) return;
+
+            const userHasTyped = chatInput.dataset.userTyped === 'true';
+
+            if (!userHasTyped) {
+                const example = getErrorExample(newBrand);
+                chatInput.value = example.input;
+                chatInput.placeholder = example.placeholder;
+                chatInput.style.height = 'auto';
+                chatInput.style.height = chatInput.scrollHeight + 'px';
+
+                // Visual feedback
+                chatInput.style.transition = 'background 0.3s';
+                chatInput.style.background = 'rgba(255, 107, 53, 0.1)';
+                setTimeout(() => {
+                    chatInput.style.background = '';
+                }, 500);
+            }
+        }
+
         // ═══ SUPABASE CLIENT INITIALIZATION (must be before auth code) ═══
         const SUPABASE_URL = 'https://fwuhzraxqrvmpqxnzpqm.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3dWh6cmF4cXJ2bXBxeG56cHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTcyMTksImV4cCI6MjA4MTgzMzIxOX0.8ryQm1tsdx5ox3aFJiiflmwuEGGxxH_PlobGxXMgFuQ';
@@ -6967,11 +7056,15 @@
         }
 
         async function saveProfile() {
+            console.log('=== SAVING PROFILE ===');
+
             const firstName = document.getElementById('profileFirstName').value.trim();
             const lastName = document.getElementById('profileLastName').value.trim();
             const email = document.getElementById('profileEmail').value.trim();
             const phone = document.getElementById('profilePhone')?.value.trim() || '';
             const language = currentLang || 'fr';
+
+            console.log('Form data:', { firstName, lastName, email, phone, language });
 
             if (!firstName) { toast('Entrez votre prénom'); return; }
 
@@ -6991,11 +7084,17 @@
                 userId = savedUser.id;
             }
 
-            // console.log('saveProfile - userId:', userId);
+            console.log('User ID for save:', userId);
+
+            if (!userId) {
+                console.error('=== NO USER ID AVAILABLE ===');
+                toast('Erreur: utilisateur non identifié');
+                return;
+            }
 
             // ═══ SAVE TO LOCALSTORAGE (ALWAYS WORKS) ═══
             const savedUser = JSON.parse(localStorage.getItem('fixair_user') || '{}');
-            savedUser.id = userId; // Ensure ID is saved
+            savedUser.id = userId;
             savedUser.first_name = firstName;
             savedUser.last_name = lastName;
             if (email) savedUser.email = email;
@@ -7009,16 +7108,22 @@
             // ═══ SAVE TO SUPABASE users table ═══
             if (userId && typeof db !== 'undefined') {
                 try {
+                    // Build update data - only include non-empty values
                     const updateData = {
                         first_name: firstName,
-                        last_name: lastName,
-                        email: email,
-                        phone: phone,
-                        language: language,
                         updated_at: new Date().toISOString()
                     };
 
-                    // console.log('Saving profile to Supabase:', updateData, 'for user:', userId);
+                    // Only add optional fields if they have values
+                    if (lastName) updateData.last_name = lastName;
+                    if (phone) updateData.phone = phone;
+                    if (language) updateData.language = language;
+                    // Don't update email - it's managed by auth
+
+                    console.log('=== SUPABASE UPDATE ===');
+                    console.log('Table: users');
+                    console.log('User ID:', userId);
+                    console.log('Update data:', JSON.stringify(updateData, null, 2));
 
                     const { data, error } = await db
                         .from('users')
@@ -7027,66 +7132,40 @@
                         .select();
 
                     if (error) {
-                        console.error('Profile update error:', error.code, error.message);
+                        console.error('=== PROFILE UPDATE ERROR ===');
+                        console.error('Error code:', error.code);
+                        console.error('Error message:', error.message);
+                        console.error('Error details:', error.details);
+                        console.error('Error hint:', error.hint);
+                        console.error('Full error:', JSON.stringify(error, null, 2));
 
-                        // Try upsert as fallback
-                        const upsertData = {
-                            id: userId,
-                            first_name: firstName,
-                            last_name: lastName,
-                            email: email,
-                            phone: phone,
-                            language: language,
-                            updated_at: new Date().toISOString()
-                        };
-
-                        const { error: upsertError } = await db
-                            .from('users')
-                            .upsert(upsertData);
-
-                        if (!upsertError) {
-                            dbSaveSuccess = true;
-                            // console.log('Profile saved via upsert');
-                        } else {
-                            console.error('Profile upsert error:', upsertError.code, upsertError.message);
-                        }
+                        // Don't try upsert - it will fail on constraints
+                        // Just report the error
+                        toast('Erreur: ' + (error.message || 'Sauvegarde impossible'));
                     } else {
                         dbSaveSuccess = true;
-                        // console.log('Profile saved successfully:', data);
+                        console.log('=== PROFILE SAVED SUCCESSFULLY ===');
+                        console.log('Result:', data);
+
+                        // Update local profile with returned data
+                        if (data && data[0]) {
+                            currentUser = { ...currentUser, ...data[0] };
+                            localStorage.setItem('fixair_user', JSON.stringify(currentUser));
+                        }
                     }
                 } catch (e) {
-                    console.error('Profile save exception:', e);
+                    console.error('=== PROFILE SAVE EXCEPTION ===');
+                    console.error('Exception type:', e.constructor.name);
+                    console.error('Exception message:', e.message);
+                    console.error('Stack:', e.stack);
+                    toast('Erreur inattendue');
                 }
             } else {
-                // console.log('Cannot save to Supabase - no userId or db not available');
+                console.log('Cannot save to Supabase - no userId or db not available');
             }
 
-            // ═══ ALSO TRY n8n API (if endpoint exists) ═══
-            if (savedUser.id && authToken && !dbSaveSuccess) {
-                try {
-                    const response = await fetch(`${API_BASE}/auth/update-profile`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${authToken}`
-                        },
-                        body: JSON.stringify({
-                            user_id: savedUser.id,
-                            first_name: firstName,
-                            last_name: lastName,
-                            email: email,
-                            phone: phone,
-                            language: language
-                        })
-                    });
-
-                    if (response.ok) {
-                        dbSaveSuccess = true;
-                    }
-                } catch (error) {
-                    // n8n API not available
-                }
-            }
+            console.log('=== SAVE COMPLETE ===');
+            console.log('DB save success:', dbSaveSuccess);
 
             if (dbSaveSuccess) {
                 toast('Profil enregistré ✓');
@@ -7139,7 +7218,10 @@
                 updateBrandContextInHistory();
             }
             // ═══ END FIX ═══
-            
+
+            // ═══ Update Copilot example when brand changes ═══
+            onBrandChangeUpdateExample(b);
+
             setTimeout(() => completeBrandStep(), 300);
         }
 
@@ -7162,16 +7244,312 @@
         }
 
         // STEP HANDLERS - Allow either order and re-entry
+        function handleStep1Click() {
+            // Check if profile already has first_name (from currentUser or localStorage)
+            const firstName = currentUser?.first_name || '';
+
+            if (firstName && firstName.trim()) {
+                // Profile is valid - auto-complete step 1 and unlock step 2
+                if (onboardingStep === 1) {
+                    completeStep(1);
+                    document.getElementById('step2').classList.remove('locked');
+                    document.getElementById('step2').classList.add('active');
+                    document.getElementById('step2Check').classList.remove('pending');
+                    document.getElementById('step2Check').classList.add('current');
+                    onboardingStep = 2;
+                    updateOnboardingProgress();
+                    toast('Informations validées ✓');
+                }
+            } else {
+                // Profile needs completion - open profile modal
+                openProfile();
+            }
+        }
+
         function handleStep3Click() {
             // Accessible after brand selection (step 2) or if step4 already done
             if (onboardingStep < 3 && !step4Done) return;
+
+            console.log('Onboarding: Starting Copilot experience');
+
+            // Open Copilot with prefilled example question
             openChat('copilot');
+
+            // Get user's selected brand
+            const selectedBrand = onboardingBrand || brand || 'mitsubishi';
+            const example = getErrorExample(selectedBrand);
+
+            // Prefill with brand-specific visual-requesting question
+            setTimeout(() => {
+                const input = document.getElementById('copilotInput');
+                if (input) {
+                    input.value = example.input;
+                    input.placeholder = example.placeholder;
+                    input.style.height = 'auto';
+                    input.style.height = input.scrollHeight + 'px';
+                    input.dataset.userTyped = 'false';
+                    input.focus();
+
+                    // Add pulsing border to draw attention
+                    input.classList.add('onboarding-highlight-input');
+
+                    // Setup tracking for user input
+                    setupChatInputTracking();
+                }
+            }, 100);
         }
 
         function handleStep4Click() {
             // Accessible after brand selection (step 2) or if step3 already done
             if (onboardingStep < 3 && !step3Done) return;
+
+            console.log('Onboarding: Starting Assistant experience');
+
+            // Open Assistant
             openChat('assistant');
+
+            // Show photo question flow after UI is ready
+            setTimeout(() => {
+                showAssistantOnboardingFlow();
+            }, 300);
+        }
+
+        // ═══ ASSISTANT ONBOARDING FLOW ═══
+        function showAssistantOnboardingFlow() {
+            const chatContainer = document.getElementById('assistantBody');
+            if (!chatContainer) {
+                console.warn('Assistant chat container not found');
+                return;
+            }
+
+            // Get brand for context
+            const selectedBrand = onboardingBrand || brand || 'mitsubishi';
+            const brandNames = {
+                'mitsubishi': 'Mitsubishi Electric',
+                'daikin': 'Daikin',
+                'carrier': 'Carrier'
+            };
+            const brandName = brandNames[selectedBrand] || selectedBrand;
+
+            // Create demo conversation
+            const demoConversation = `
+                <div class="msg ai">
+                    <div class="msg-bubble">
+                        <div class="msg-head">
+                            <div class="msg-avatar"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>
+                            <span class="msg-name">FixAIR Assistant</span>
+                        </div>
+                        <p>Bienvenue dans l'Assistant FixAIR !</p>
+                        <p style="margin-top: 8px;">Je vais vous montrer comment générer un rapport d'intervention en quelques secondes.</p>
+                    </div>
+                </div>
+
+                <div class="msg ai">
+                    <div class="msg-bubble">
+                        <div class="msg-head">
+                            <div class="msg-avatar"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>
+                            <span class="msg-name">FixAIR Assistant</span>
+                        </div>
+                        <p><strong>Rapport en cours de création...</strong></p>
+                        <p style="margin-top: 8px; opacity: 0.7;">Client: <em>Jean Dupont</em></p>
+                        <p style="opacity: 0.7;">Équipement: <em>${brandName} - Climatisation split</em></p>
+                        <p style="opacity: 0.7;">Problème: <em>Code erreur diagnostiqué</em></p>
+                    </div>
+                </div>
+
+                <div class="msg ai photo-question-msg">
+                    <div class="msg-bubble">
+                        <div class="msg-head">
+                            <div class="msg-avatar"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>
+                            <span class="msg-name">FixAIR Assistant</span>
+                        </div>
+                        <p><strong>Avez-vous des photos à ajouter au rapport ?</strong></p>
+                        <p style="margin-top: 8px; opacity: 0.7;">Les photos de l'équipement, des codes erreur ou des réparations seront automatiquement intégrées.</p>
+                        <div class="photo-actions" style="margin-top: 16px; display: flex; gap: 12px; flex-wrap: wrap;">
+                            <button onclick="handleOnboardingAddPhotos()" style="
+                                background: var(--assistant);
+                                color: white;
+                                border: none;
+                                padding: 12px 20px;
+                                border-radius: 10px;
+                                cursor: pointer;
+                                font-weight: 600;
+                                font-size: 13px;
+                                display: flex;
+                                align-items: center;
+                                gap: 8px;
+                            ">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+                                Ajouter des photos
+                            </button>
+                            <button onclick="handleOnboardingSkipPhotos()" style="
+                                background: transparent;
+                                color: var(--text-dim);
+                                border: 1px solid var(--border);
+                                padding: 12px 20px;
+                                border-radius: 10px;
+                                cursor: pointer;
+                                font-size: 13px;
+                            ">
+                                Passer cette étape
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            chatContainer.innerHTML = demoConversation;
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Handle "Add Photos" button click in onboarding
+        function handleOnboardingAddPhotos() {
+            console.log('Onboarding: User wants to add photos');
+
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.multiple = true;
+
+            input.onchange = async (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length > 0) {
+                    console.log('Photos selected:', files.length);
+                    showOnboardingPhotosPreview(files);
+                    setTimeout(() => {
+                        generateOnboardingReportPreview(true, files);
+                    }, 800);
+                }
+            };
+
+            input.click();
+        }
+
+        // Handle "Skip" button click in onboarding
+        function handleOnboardingSkipPhotos() {
+            console.log('Onboarding: User skipped photos');
+
+            const photoQuestion = document.querySelector('.photo-question-msg');
+            if (photoQuestion) {
+                photoQuestion.innerHTML = `
+                    <div class="msg-bubble">
+                        <div class="msg-head">
+                            <div class="msg-avatar"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>
+                            <span class="msg-name">FixAIR Assistant</span>
+                        </div>
+                        <p style="color: var(--assistant);">✓ D'accord, je génère le rapport sans photos.</p>
+                    </div>
+                `;
+            }
+
+            setTimeout(() => {
+                generateOnboardingReportPreview(false, []);
+            }, 400);
+        }
+
+        function showOnboardingPhotosPreview(files) {
+            const chatContainer = document.getElementById('assistantBody');
+            if (!chatContainer) return;
+
+            const photosHtml = files.slice(0, 4).map(file => {
+                const url = URL.createObjectURL(file);
+                return `<img src="${url}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border);">`;
+            }).join('');
+
+            const previewMessage = document.createElement('div');
+            previewMessage.className = 'msg user';
+            previewMessage.innerHTML = `
+                <div class="msg-bubble">
+                    <p style="margin-bottom: 8px;">Photos ajoutées:</p>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        ${photosHtml}
+                    </div>
+                </div>
+            `;
+
+            chatContainer.appendChild(previewMessage);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function generateOnboardingReportPreview(hasPhotos, photos = []) {
+            const chatContainer = document.getElementById('assistantBody');
+            if (!chatContainer) return;
+
+            const selectedBrand = onboardingBrand || brand || 'mitsubishi';
+            const brandNames = {
+                'mitsubishi': 'Mitsubishi Electric',
+                'daikin': 'Daikin',
+                'carrier': 'Carrier'
+            };
+            const brandName = brandNames[selectedBrand] || selectedBrand;
+
+            const today = new Date().toLocaleDateString('fr-FR');
+
+            const reportMessage = document.createElement('div');
+            reportMessage.className = 'msg ai';
+            reportMessage.innerHTML = `
+                <div class="msg-bubble">
+                    <div class="msg-head">
+                        <div class="msg-avatar"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>
+                        <span class="msg-name">FixAIR Assistant</span>
+                    </div>
+                    <p style="color: var(--assistant);"><strong>✅ Rapport généré !</strong></p>
+
+                    <div class="onboarding-report-preview" style="
+                        background: rgba(34, 197, 94, 0.08);
+                        border: 1px solid rgba(34, 197, 94, 0.2);
+                        border-radius: 12px;
+                        padding: 16px;
+                        margin-top: 12px;
+                    ">
+                        <h4 style="color: var(--assistant); margin: 0 0 12px; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8M16 17H8M10 9H8"/></svg>
+                            Rapport d'intervention
+                        </h4>
+
+                        <div style="display: grid; gap: 6px; font-size: 12px; color: var(--text-dim);">
+                            <div><strong style="color: var(--text);">Client:</strong> Jean Dupont</div>
+                            <div><strong style="color: var(--text);">Date:</strong> ${today}</div>
+                            <div><strong style="color: var(--text);">Équipement:</strong> ${brandName} - Split System</div>
+                            <div><strong style="color: var(--text);">Diagnostic:</strong> Code erreur résolu</div>
+                            <div><strong style="color: var(--text);">Actions:</strong> Vérification câblage, réinitialisation</div>
+                            ${hasPhotos ? `<div><strong style="color: var(--text);">Photos:</strong> ${photos.length} photo(s) jointe(s)</div>` : ''}
+                        </div>
+
+                        <button onclick="viewOnboardingFullReport()" style="
+                            background: var(--assistant);
+                            color: white;
+                            border: none;
+                            padding: 10px 16px;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            margin-top: 12px;
+                            font-weight: 600;
+                            font-size: 12px;
+                            width: 100%;
+                        ">
+                            Voir le rapport complet →
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            chatContainer.appendChild(reportMessage);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            // Mark onboarding step complete
+            if (!step4Done) {
+                step4Done = true;
+                completeStep(4);
+                updateOnboardingProgress();
+                checkOnboardingComplete();
+            }
+        }
+
+        function viewOnboardingFullReport() {
+            console.log('Onboarding: Opening full report view');
+            toast('Dans la vraie app, le rapport complet s\'ouvrirait ici!');
+            // In production, this would call openReport() or similar
         }
 
         function completeStep(n) {
@@ -7398,7 +7776,12 @@
             
             // Update chat history with new brand context
             updateBrandContextInHistory();
-            
+
+            // Update Copilot example if on copilot panel
+            if (panel === 'copilot') {
+                onBrandChangeUpdateExample(newBrand);
+            }
+
             // Update database if project exists
             if (currentProjectId) {
                 try {
@@ -7808,6 +8191,10 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             // Render any Mermaid diagrams in the message
             if (type === 'ai') {
                 renderMermaidDiagrams(msg);
+                // FixAIR Diagram System rendering
+                if (typeof FixAIRDiagrams !== 'undefined') {
+                    FixAIRDiagrams.render(msg);
+                }
             }
         }
 
@@ -15418,5 +15805,7 @@ RÈGLES:
         </div>
     </div>
 
+<!-- FixAIR Diagram System JS -->
+<script src="/assets/js/fixair-diagrams.js"></script>
 </body>
 </html>
