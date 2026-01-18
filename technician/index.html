@@ -8755,10 +8755,11 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
             // Open chat view with correct mode
             openChat(initialMode);
             
-            // Show loading indicator in chat
+            // Show loading indicator in chat (preserve TP containers)
             const body = document.getElementById(initialMode + 'Body');
             if (body) {
-                body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);"><div style="margin-bottom:10px;">⏳</div>Chargement...</div>';
+                clearChatBody(initialMode);
+                body.insertAdjacentHTML('beforeend', '<div class="msg" style="text-align:center;padding:40px;color:var(--text-dim);"><div style="margin-bottom:10px;">⏳</div>Chargement...</div>');
             }
             
             try {
@@ -8770,7 +8771,7 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                     .single();
                 
                 if (projectError || !project) {
-                    if (body) body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--hotline);">Erreur de chargement</div>';
+                    if (body) { clearChatBody(initialMode); body.insertAdjacentHTML('beforeend', '<div class="msg" style="text-align:center;padding:40px;color:var(--hotline);">Erreur de chargement</div>'); }
                     return;
                 }
                 
