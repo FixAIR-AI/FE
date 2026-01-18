@@ -1,0 +1,703 @@
+/* ═══════════════════════════════════════════════════════════════════════════════
+   FIXAIR DIAGRAM SYSTEM - PREMIUM STYLES
+   Version: 2.0.0
+   
+   Integration:
+   1. Add this CSS file to your project
+   2. Include Mermaid CDN: <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+   3. Include fixair-diagrams.js AFTER Mermaid
+   4. Use <pre class="mermaid"> for diagrams
+   
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────────────────────────
+   CSS VARIABLES - These use 'fd-' prefix to avoid conflicts with your app
+   ───────────────────────────────────────────────────────────────────────────────── */
+:root {
+    /* Backgrounds */
+    --fd-bg-page: #09090b;
+    --fd-bg-card: #111113;
+    --fd-bg-node: #18181b;
+    --fd-bg-node-alt: #1f1f23;
+    
+    /* Borders */
+    --fd-border-subtle: rgba(255, 255, 255, 0.06);
+    --fd-border-node: rgba(255, 255, 255, 0.1);
+    --fd-border-hover: rgba(255, 255, 255, 0.15);
+    
+    /* Text */
+    --fd-text-white: #fafafa;
+    --fd-text-primary: #e4e4e7;
+    --fd-text-secondary: #71717a;
+    --fd-text-muted: #52525b;
+    
+    /* Lines */
+    --fd-line-color: #3f3f46;
+    --fd-line-light: #27272a;
+    
+    /* Accents */
+    --fd-accent-orange: #f97316;
+    --fd-accent-green: #22c55e;
+    --fd-accent-blue: #3b82f6;
+    --fd-accent-red: #ef4444;
+    --fd-accent-purple: #a855f7;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────────
+   DIAGRAM CONTAINER
+   ───────────────────────────────────────────────────────────────────────────────── */
+.fd-diagram-box {
+    background: var(--fd-bg-card);
+    border: 1px solid var(--fd-border-subtle);
+    border-radius: 24px;
+    padding: 48px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+}
+
+.fd-diagram-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+}
+
+.fd-diagram-box:hover {
+    border-color: var(--fd-border-hover);
+}
+
+/* Extra large variant for sequence diagrams */
+.fd-diagram-box.fd-extra-large {
+    padding: 60px;
+}
+
+.fd-diagram-box.fd-extra-large .fd-diagram-content {
+    min-height: 600px;
+}
+
+/* Compact variant for inline use */
+.fd-diagram-box.fd-compact {
+    padding: 24px;
+    border-radius: 16px;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────────
+   DIAGRAM LABEL
+   ───────────────────────────────────────────────────────────────────────────────── */
+.fd-diagram-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--fd-text-muted);
+    margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.fd-diagram-label::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background: var(--fd-accent-orange);
+    border-radius: 50%;
+    box-shadow: 0 0 12px var(--fd-accent-orange);
+}
+
+/* No indicator variant */
+.fd-diagram-label.fd-no-indicator::before {
+    display: none;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────────
+   DIAGRAM CONTENT WRAPPER
+   ───────────────────────────────────────────────────────────────────────────────── */
+.fd-diagram-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────────
+   MERMAID BASE STYLES
+   ───────────────────────────────────────────────────────────────────────────────── */
+.mermaid {
+    background: transparent !important;
+    width: 100%;
+}
+
+.mermaid svg {
+    max-width: 100%;
+    height: auto;
+    background: transparent !important;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────────
+   NODES - Large, rounded, premium feel with shadows
+   ───────────────────────────────────────────────────────────────────────────────── */
+.mermaid .node rect,
+.mermaid .node polygon {
+    fill: #18181b !important;
+    stroke: rgba(255, 255, 255, 0.1) !important;
+    stroke-width: 1.5px !important;
+    rx: 14px !important;
+    ry: 14px !important;
+    filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.4)) !important;
+}
+
+.mermaid .node circle,
+.mermaid .node ellipse {
+    fill: #18181b !important;
+    stroke: rgba(255, 255, 255, 0.1) !important;
+    stroke-width: 1.5px !important;
+    filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.4)) !important;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────────
+   NODE TEXT - Large and readable
+   ───────────────────────────────────────────────────────────────────────────────── */
+.mermaid .nodeLabel,
+.mermaid .node text,
+.mermaid .label text {
+    fill: #fafafa !important;
+    font-family: 'Inter', -apple-system, sans-serif !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+}
+
+.mermaid .nodeLabel {
+    color: #fafafa !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+}
+
+.mermaid foreignObject > div,
+.mermaid foreignObject div {
+    color: #fafafa !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    font-family: 'Inter', -apple-system, sans-serif !important;
+    line-height: 1.5 !important;
+    padding: 8px 12px !important;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────────
+   CLUSTERS/SUBGRAPHS - Subtle, elegant
+   ───────────────────────────────────────────────────────────────────────────────── */
+.mermaid .cluster rect {
+    fill: rgba(255, 255, 255, 0.02) !important;
+    stroke: rgba(255, 255, 255, 0.05) !important;
+    stroke-width: 1px !important;
+    rx: 20px !important;
+    ry: 20px !important;
+}
+
+.mermaid .cluster text,
+.mermaid .cluster span {
+    fill: #52525b !important;
+    color: #52525b !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 2px !important;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────────
+   EDGES/LINES - Smooth, visible
+   ───────────────────────────────────────────────────────────────────────────────── */
+.mermaid .edgePath path,
+.mermaid .flowchart-link,
+.mermaid path.path {
+    stroke: #3f3f46 !important;
+    stroke-width: 2px !important;
+    stroke-linecap: round !important;
+}
+
+.mermaid marker path {
+    fill: #3f3f46 !important;
+    stroke: #3f3f46 !important;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────────
+   EDGE LABELS - Clear background
+   ───────────────────────────────────────────────────────────────────────────────── */
+.mermaid .edgeLabel {
+    background-color: #09090b !important;
+    padding: 8px 14px !important;
+    border-radius: 8px !important;
+}
+
+.mermaid .edgeLabel rect {
+    fill: #09090b !important;
+    stroke: none !important;
+    rx: 8px !important;
+    opacity: 1 !important;
+}
+
+.mermaid .edgeLabel text,
+.mermaid .edgeLabel span,
+.mermaid .edgeLabel foreignObject div {
+    fill: #71717a !important;
+    color: #71717a !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    background: transparent !important;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────────
+   SEQUENCE DIAGRAM - Extra large, very readable
+   ───────────────────────────────────────────────────────────────────────────────── */
+.mermaid .actor {
+    fill: #18181b !important;
+    stroke: rgba(255, 255, 255, 0.12) !important;
+    stroke-width: 2px !important;
+    rx: 16px !important;
+    filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.4)) !important;
+}
+
+.mermaid .actor-line {
+    stroke: #27272a !important;
+    stroke-width: 2px !important;
+    stroke-dasharray: 8 6 !important;
+}
+
+/* Actor text - HUGE */
+.mermaid text.actor {
+    fill: #fafafa !important;
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    font-family: 'Inter', -apple-system, sans-serif !important;
+}
+
+/* Message lines */
+.mermaid .messageLine0,
+.mermaid .messageLine1 {
+    stroke: #52525b !important;
+    stroke-width: 2px !important;
+}
+
+/* Message text - LARGE */
+.mermaid .messageText {
+    fill: #e4e4e7 !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    font-family: 'Inter', -apple-system, sans-serif !important;
+}
+
+/* Sequence numbers */
+.mermaid .sequenceNumber {
+    fill: #fafafa !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+}
+
+/* Activation boxes */
+.mermaid rect.activation0,
+.mermaid rect.activation1,
+.mermaid rect.activation2 {
+    fill: #1f1f23 !important;
+    stroke: rgba(255, 255, 255, 0.1) !important;
+    stroke-width: 1.5px !important;
+    rx: 8px !important;
+}
+
+/* Notes */
+.mermaid .note {
+    fill: #18181b !important;
+    stroke: rgba(255, 255, 255, 0.1) !important;
+    stroke-width: 1.5px !important;
+    rx: 14px !important;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3)) !important;
+}
+
+.mermaid .noteText {
+    fill: #a1a1aa !important;
+    font-size: 15px !important;
+    font-weight: 500 !important;
+    font-family: 'Inter', -apple-system, sans-serif !important;
+}
+
+/* Loop/Alt boxes */
+.mermaid .loopText,
+.mermaid .loopText tspan {
+    fill: #71717a !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+}
+
+.mermaid .loopLine {
+    stroke: #3f3f46 !important;
+    stroke-width: 1.5px !important;
+}
+
+.mermaid .labelBox {
+    fill: #18181b !important;
+    stroke: rgba(255, 255, 255, 0.08) !important;
+}
+
+.mermaid .labelText,
+.mermaid .labelText tspan {
+    fill: #71717a !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────────
+   STATE DIAGRAM - Transparent transition labels (FIXED!)
+   ───────────────────────────────────────────────────────────────────────────────── */
+.mermaid .stateGroup rect,
+.mermaid g.stateGroup rect {
+    fill: #18181b !important;
+    stroke: rgba(255, 255, 255, 0.1) !important;
+    stroke-width: 1.5px !important;
+    rx: 14px !important;
+    filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.4)) !important;
+}
+
+.mermaid .stateGroup text,
+.mermaid g.stateGroup text {
+    fill: #fafafa !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+}
+
+/* State transitions - TRANSPARENT BACKGROUND */
+.mermaid .transition {
+    stroke: #3f3f46 !important;
+    stroke-width: 2px !important;
+}
+
+.mermaid .stateLabel .box {
+    fill: transparent !important;
+    stroke: none !important;
+}
+
+.mermaid .stateLabel text {
+    fill: #71717a !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+}
+
+/* Transition labels - NO BACKGROUND - IMPORTANT */
+.mermaid g.edgeLabel rect,
+.mermaid .statediagram-state .edgeLabel rect,
+.mermaid [id*="state"] .edgeLabel rect,
+.mermaid .stateDiagram .edgeLabel rect,
+.mermaid .stateDiagram-v2 .edgeLabel rect {
+    fill: transparent !important;
+    stroke: none !important;
+    opacity: 0 !important;
+}
+
+.mermaid [id*="state"] .edgeLabel text,
+.mermaid .stateDiagram .edgeLabel text,
+.mermaid .stateDiagram-v2 .edgeLabel text {
+    fill: #71717a !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+}
+
+/* Start/End states */
+.mermaid .start-state circle {
+    fill: #3f3f46 !important;
+    stroke: #52525b !important;
+    stroke-width: 2px !important;
+}
+
+.mermaid .end-state-outer circle {
+    fill: transparent !important;
+    stroke: #52525b !important;
+    stroke-width: 2px !important;
+}
+
+.mermaid .end-state-inner circle {
+    fill: #71717a !important;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────────
+   ER DIAGRAM - Modern cards
+   ───────────────────────────────────────────────────────────────────────────────── */
+.mermaid .entityBox {
+    fill: #18181b !important;
+    stroke: rgba(255, 255, 255, 0.1) !important;
+    stroke-width: 1.5px !important;
+    filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.4)) !important;
+}
+
+.mermaid .entityLabel {
+    fill: #fafafa !important;
+    font-size: 16px !important;
+    font-weight: 700 !important;
+}
+
+.mermaid .attributeBoxOdd,
+.mermaid .attributeBoxEven {
+    fill: #18181b !important;
+    stroke: none !important;
+}
+
+.mermaid g.attribute text {
+    fill: #a1a1aa !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+}
+
+.mermaid .relationshipLine {
+    stroke: #3f3f46 !important;
+    stroke-width: 2px !important;
+}
+
+.mermaid .relationshipLabelBox {
+    fill: #09090b !important;
+}
+
+.mermaid .relationshipLabel {
+    fill: #71717a !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────────
+   CLASS DIAGRAM
+   ───────────────────────────────────────────────────────────────────────────────── */
+.mermaid .classGroup rect {
+    fill: #18181b !important;
+    stroke: rgba(255, 255, 255, 0.1) !important;
+    stroke-width: 1.5px !important;
+    rx: 12px !important;
+    filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.4)) !important;
+}
+
+.mermaid .classGroup line {
+    stroke: rgba(255, 255, 255, 0.08) !important;
+}
+
+.mermaid .classLabel .label {
+    fill: #fafafa !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+}
+
+.mermaid .classLabel text {
+    fill: #a1a1aa !important;
+    font-size: 13px !important;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────────
+   GANTT CHART
+   ───────────────────────────────────────────────────────────────────────────────── */
+.mermaid .grid .tick line {
+    stroke: #1f1f23 !important;
+}
+
+.mermaid .grid .tick text {
+    fill: #52525b !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+}
+
+.mermaid g.section rect {
+    fill: rgba(255, 255, 255, 0.02) !important;
+}
+
+.mermaid .sectionTitle {
+    fill: #e4e4e7 !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+}
+
+.mermaid .task {
+    fill: #18181b !important;
+    stroke: rgba(255, 255, 255, 0.08) !important;
+    stroke-width: 1.5px !important;
+    rx: 10px !important;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3)) !important;
+}
+
+.mermaid .taskText {
+    fill: #fafafa !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+}
+
+.mermaid .taskTextOutsideRight {
+    fill: #71717a !important;
+}
+
+/* Done tasks - green border */
+.mermaid .done0,
+.mermaid .done1,
+.mermaid .done2,
+.mermaid .done3 {
+    fill: #18181b !important;
+    stroke: #22c55e !important;
+    stroke-width: 2px !important;
+}
+
+/* Active tasks - orange border */
+.mermaid .active0,
+.mermaid .active1,
+.mermaid .active2,
+.mermaid .active3 {
+    fill: #18181b !important;
+    stroke: #f97316 !important;
+    stroke-width: 2px !important;
+}
+
+/* Milestones */
+.mermaid .milestone {
+    fill: #f97316 !important;
+    stroke: #f97316 !important;
+}
+
+.mermaid .milestoneText {
+    fill: #fafafa !important;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────────
+   ASCII DIAGRAMS
+   ───────────────────────────────────────────────────────────────────────────────── */
+.fd-ascii-diagram {
+    font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    background: var(--fd-bg-node);
+    border: 1px solid var(--fd-border-subtle);
+    border-radius: 16px;
+    padding: 32px;
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--fd-text-secondary);
+}
+
+.fd-ascii-diagram .fd-title {
+    color: var(--fd-text-white);
+    font-weight: 700;
+    font-size: 15px;
+}
+
+.fd-ascii-diagram .fd-component {
+    color: var(--fd-accent-orange);
+    font-weight: 600;
+}
+
+.fd-ascii-diagram .fd-signal {
+    color: var(--fd-accent-green);
+}
+
+.fd-ascii-diagram .fd-highlight {
+    color: var(--fd-accent-orange);
+}
+
+.fd-ascii-diagram .fd-label {
+    color: var(--fd-text-primary);
+    font-weight: 600;
+}
+
+.fd-ascii-diagram .fd-error {
+    color: var(--fd-accent-red);
+}
+
+.fd-ascii-diagram .fd-info {
+    color: var(--fd-accent-blue);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────────
+   SPEC TABLES
+   ───────────────────────────────────────────────────────────────────────────────── */
+.fd-spec-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 15px;
+    background: var(--fd-bg-card);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--fd-border-subtle);
+    font-family: 'Inter', -apple-system, sans-serif;
+}
+
+.fd-spec-table th {
+    background: var(--fd-bg-node);
+    padding: 18px 28px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--fd-text-primary);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.fd-spec-table td {
+    padding: 18px 28px;
+    border-top: 1px solid var(--fd-border-subtle);
+    color: var(--fd-text-secondary);
+}
+
+.fd-spec-table tbody tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.fd-spec-table code {
+    background: var(--fd-bg-node);
+    color: var(--fd-accent-orange);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', 'SF Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    border: 1px solid var(--fd-border-subtle);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────────
+   RESPONSIVE
+   ───────────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .fd-diagram-box {
+        padding: 24px;
+        border-radius: 16px;
+    }
+    
+    .fd-diagram-label {
+        font-size: 11px;
+        margin-bottom: 24px;
+    }
+    
+    .fd-diagram-content {
+        min-height: 200px;
+    }
+    
+    .fd-spec-table th,
+    .fd-spec-table td {
+        padding: 12px 16px;
+    }
+    
+    .fd-ascii-diagram {
+        font-size: 12px;
+        padding: 20px;
+    }
+}
