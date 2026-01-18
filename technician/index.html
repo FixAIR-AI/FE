@@ -4896,7 +4896,7 @@
         stroke-width: 12;
         }
 
-        /* ==================== THOUGHT PROCESS COMPONENT ==================== */
+        /* ==================== THOUGHT PROCESS UI ==================== */
         .thought-card {
             border: 0.5px solid var(--thought-border);
             border-radius: 8px;
@@ -11800,6 +11800,7 @@ INSTRUCTIONS:
             copilot: [],
             assistant: []
         };
+        window.chatHistory = chatHistory;
 
         // ==================== THOUGHT PROCESS SYSTEM ====================
         const thoughtIcons = {
@@ -11933,6 +11934,12 @@ INSTRUCTIONS:
             }
         }
 
+        // ==================== EXPOSE TO GLOBAL SCOPE ====================
+        window.thoughtIcons = thoughtIcons;
+        window.ThoughtProcessManager = ThoughtProcessManager;
+        window.ThoughtProcessUI = ThoughtProcessUI;
+        window.thoughtManager = thoughtManager;
+
         // Send message to n8n
         async function sendMsg(panel) {
             const input = document.getElementById(panel + 'Input');
@@ -11967,7 +11974,7 @@ INSTRUCTIONS:
                 console.warn('Supabase save failed (continuing anyway):', e);
             }
             // ═══ END SUPABASE ═══
-            
+
             // Thought Process UI (replaces old loading indicator)
             let thoughtUI = null;
             try {
