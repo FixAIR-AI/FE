@@ -7764,9 +7764,9 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                 
                 updateChatHeader();
                 
-                // Clear body for fresh start
-                document.getElementById('copilotBody').innerHTML = '';
-                document.getElementById('assistantBody').innerHTML = '';
+                // Clear body for fresh start (preserve TP containers)
+                clearChatBody('copilot');
+                clearChatBody('assistant');
                 
                 // Show welcome message
                 const wel = {
@@ -7876,9 +7876,8 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                         .eq('chat_id', existingChat.id)
                         .order('created_at', { ascending: true });
                     
-                    // Clear and reload chat
-                    const body = document.getElementById(m + 'Body');
-                    if (body) body.innerHTML = '';
+                    // Clear and reload chat (preserve TP containers)
+                    clearChatBody(m);
                     chatHistory[m] = [];
                     
                     for (const msg of messages || []) {
@@ -8862,12 +8861,9 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                         continue;
                     }
                     
-                    // Clear existing chat UI
+                    // Clear existing chat UI (preserve TP containers)
                     chatHistory[chat.chat_type] = [];
-                    const body = document.getElementById(chat.chat_type + 'Body');
-                    if (body) {
-                        body.innerHTML = '';
-                    }
+                    clearChatBody(chat.chat_type);
                     
                     // Add messages to UI
                     for (const msg of messages || []) {
@@ -9055,8 +9051,9 @@ INSTRUCTIONS:
             const assistantBody = document.getElementById('assistantBody');
             const copilotBody = document.getElementById('copilotBody');
             
-            if (assistantBody) assistantBody.innerHTML = '';
-            if (copilotBody) copilotBody.innerHTML = '';
+            // Clear bodies (preserve TP containers)
+            clearChatBody('assistant');
+            clearChatBody('copilot');
             
             // Clear project name from header
             updateChatHeader();
@@ -11633,6 +11630,21 @@ INSTRUCTIONS:
         }
         
         // Add loading message
+        // ═══ HELPER: Clear chat body while preserving TP container ═══
+        function clearChatBody(panel) {
+            const body = document.getElementById(panel + 'Body');
+            if (!body) return;
+            // Remove only message elements, keep TP container
+            body.querySelectorAll('.msg').forEach(el => el.remove());
+            // Reset TP container to hidden state
+            const tpId = 'tp' + panel.charAt(0).toUpperCase() + panel.slice(1);
+            const tpCard = document.getElementById(tpId);
+            if (tpCard) {
+                tpCard.classList.add('tp-hidden');
+                tpCard.classList.remove('tp-expanded');
+            }
+        }
+        
         function addLoadingMsg(panel) {
             const body = document.getElementById(panel + 'Body');
             const msg = document.createElement('div');
