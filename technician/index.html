@@ -6200,6 +6200,8 @@
                     // Apply FixAIR premium styling to rendered diagram
                     placeholder.querySelectorAll('rect').forEach(rect => {
                         if (!rect.closest('.edgeLabel')) {
+                            rect.setAttribute('fill', '#18181b');
+                            rect.setAttribute('stroke', 'rgba(255, 255, 255, 0.12)');
                             rect.style.fill = '#18181b';
                             rect.style.stroke = 'rgba(255, 255, 255, 0.12)';
                             rect.style.filter = 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))';
@@ -6208,15 +6210,19 @@
                         }
                     });
                     placeholder.querySelectorAll('polygon').forEach(p => {
+                        p.setAttribute('fill', '#18181b');
+                        p.setAttribute('stroke', 'rgba(255, 255, 255, 0.15)');
                         p.style.fill = '#18181b';
                         p.style.stroke = 'rgba(255, 255, 255, 0.15)';
                         p.style.filter = 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))';
                     });
                     placeholder.querySelectorAll('text, .nodeLabel, foreignObject .nodeLabel').forEach(t => {
+                        t.setAttribute('fill', '#fafafa');
                         t.style.fill = '#fafafa';
                         if (t.style) t.style.color = '#fafafa';
                     });
                     placeholder.querySelectorAll('.edgePath path').forEach(path => {
+                        path.setAttribute('stroke', '#52525b');
                         path.style.stroke = '#52525b';
                         path.style.strokeWidth = '2px';
                     });
