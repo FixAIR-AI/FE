@@ -2218,7 +2218,9 @@
         .msg.ai .msg-bubble th, .msg.ai .msg-bubble td { border: 1px solid var(--border); padding: 8px; text-align: left; }
         .msg.ai .msg-bubble th { background: rgba(255,255,255,0.05); font-weight: 600; }
 
-        /* ═══ MERMAID DIAGRAMS - BASE STYLES ═══ */
+        /* DISABLED - CSS overrides JS styling
+        /* Mermaid Diagrams */
+        /* Clean Mermaid Diagrams */
         .mermaid-placeholder {
             background: #1e1e1e;
             border: 1px solid #333;
@@ -2246,7 +2248,43 @@
             height: auto;
             min-height: 200px;
         }
-        /* ═══ MERMAID ERROR STYLES ═══ */
+        /* Override Mermaid default styles for clarity */
+        .mermaid-rendered .node rect,
+        .mermaid-rendered .node circle,
+        .mermaid-rendered .node ellipse,
+        .mermaid-rendered .node polygon,
+        .mermaid-rendered .node path {
+            fill: #2d2d2d !important;
+            stroke: #888 !important;
+            stroke-width: 2px !important;
+        }
+        .mermaid-rendered .node .label {
+            fill: #fff !important;
+            font-size: 13px !important;
+            font-weight: 500 !important;
+        }
+        .mermaid-rendered .edgeLabel {
+            background-color: #1e1e1e !important;
+            fill: #ccc !important;
+            font-size: 12px !important;
+        }
+        .mermaid-rendered .edgePath .path {
+            stroke: #888 !important;
+            stroke-width: 2px !important;
+        }
+        .mermaid-rendered .arrowheadPath {
+            fill: #888 !important;
+        }
+        /* Subgraph styling */
+        .mermaid-rendered .cluster rect {
+            fill: #252525 !important;
+            stroke: #555 !important;
+            stroke-width: 1px !important;
+        }
+        .mermaid-rendered .cluster .label {
+            fill: #aaa !important;
+            font-size: 12px !important;
+        }
         .mermaid-error {
             background: rgba(239, 68, 68, 0.1);
             border: 1px solid rgba(239, 68, 68, 0.3);
@@ -2277,10 +2315,35 @@
             background: #f5f5f5;
             border-color: #ddd;
         }
-        /* ═══ DISABLED: Mermaid node styles - JS handles styling via setAttribute ═══
-        .mermaid-rendered .node rect, etc - REMOVED to allow JS post-processing
-        ═══════════════════════════════════════════════════════════════════════════ */
-
+        [data-theme="light"] .mermaid-rendered .node rect,
+        [data-theme="light"] .mermaid-rendered .node circle,
+        [data-theme="light"] .mermaid-rendered .node ellipse,
+        [data-theme="light"] .mermaid-rendered .node polygon,
+        [data-theme="light"] .mermaid-rendered .node path {
+            fill: #e8e8e8 !important;
+            stroke: #666 !important;
+        }
+        [data-theme="light"] .mermaid-rendered .node .label {
+            fill: #333 !important;
+        }
+        [data-theme="light"] .mermaid-rendered .edgeLabel {
+            background-color: #f5f5f5 !important;
+            fill: #555 !important;
+        }
+        [data-theme="light"] .mermaid-rendered .edgePath .path {
+            stroke: #666 !important;
+        }
+        [data-theme="light"] .mermaid-rendered .arrowheadPath {
+            fill: #666 !important;
+        }
+        [data-theme="light"] .mermaid-rendered .cluster rect {
+            fill: #f0f0f0 !important;
+            stroke: #ccc !important;
+        }
+        [data-theme="light"] .mermaid-rendered .cluster .label {
+            fill: #666 !important;
+        }
+        END DISABLED */
 
         /* Light theme markdown overrides */
         [data-theme="light"] .msg.ai .msg-bubble h1,
@@ -11996,8 +12059,7 @@ RÈGLES:
 
                 // Remove loading
                 removeLoadingMsg(panel);
-                // Collapse thought process (using TP system)
-                collapseThoughtProcess(panel);
+                if (thoughtUI) { thoughtUI.collapse(thoughtUI.generateSummary(thoughtManager.analyzeQuery(text, {}))); }
 
                 // Parse markdown and add AI response
                 const aiResponse = data.response || data.message || data.output || 'Désolé, une erreur est survenue.';
