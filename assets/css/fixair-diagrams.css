@@ -1,17 +1,16 @@
 /* ═══════════════════════════════════════════════════════════════════════════════
    FIXAIR DIAGRAM SYSTEM - PREMIUM STYLES
-   Version: 2.0.0
+   Version: 2.3.0
    
    Integration:
-   1. Add this CSS file to your project
-   2. Include Mermaid CDN: <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+   1. Include Mermaid CDN: <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+   2. Include this CSS file
    3. Include fixair-diagrams.js AFTER Mermaid
-   4. Use <pre class="mermaid"> for diagrams
    
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 /* ─────────────────────────────────────────────────────────────────────────────────
-   CSS VARIABLES - These use 'fd-' prefix to avoid conflicts with your app
+   CSS VARIABLES - Uses 'fd-' prefix to avoid conflicts
    ───────────────────────────────────────────────────────────────────────────────── */
 :root {
     /* Backgrounds */
@@ -45,87 +44,29 @@
 
 
 /* ─────────────────────────────────────────────────────────────────────────────────
-   DIAGRAM CONTAINER
+   MERMAID PLACEHOLDER (Created by parseMarkdown)
    ───────────────────────────────────────────────────────────────────────────────── */
-.fd-diagram-box {
+.mermaid-placeholder {
     background: var(--fd-bg-card);
     border: 1px solid var(--fd-border-subtle);
-    border-radius: 24px;
-    padding: 48px;
-    margin-bottom: 24px;
-    position: relative;
-    overflow: hidden;
-}
-
-.fd-diagram-box::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-}
-
-.fd-diagram-box:hover {
-    border-color: var(--fd-border-hover);
-}
-
-/* Extra large variant for sequence diagrams */
-.fd-diagram-box.fd-extra-large {
-    padding: 60px;
-}
-
-.fd-diagram-box.fd-extra-large .fd-diagram-content {
-    min-height: 600px;
-}
-
-/* Compact variant for inline use */
-.fd-diagram-box.fd-compact {
-    padding: 24px;
     border-radius: 16px;
-}
-
-
-/* ─────────────────────────────────────────────────────────────────────────────────
-   DIAGRAM LABEL
-   ───────────────────────────────────────────────────────────────────────────────── */
-.fd-diagram-label {
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: var(--fd-text-muted);
-    margin-bottom: 40px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-}
-
-.fd-diagram-label::before {
-    content: '';
-    width: 10px;
-    height: 10px;
-    background: var(--fd-accent-orange);
-    border-radius: 50%;
-    box-shadow: 0 0 12px var(--fd-accent-orange);
-}
-
-/* No indicator variant */
-.fd-diagram-label.fd-no-indicator::before {
-    display: none;
-}
-
-
-/* ─────────────────────────────────────────────────────────────────────────────────
-   DIAGRAM CONTENT WRAPPER
-   ───────────────────────────────────────────────────────────────────────────────── */
-.fd-diagram-content {
+    padding: 32px;
+    min-height: 200px;
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 300px;
+    margin: 16px 0;
+}
+
+.mermaid-placeholder.mermaid-rendered {
+    display: block;
+    padding: 24px;
+}
+
+.mermaid-loading {
+    color: var(--fd-text-secondary);
+    font-size: 14px;
+    font-family: 'Inter', -apple-system, sans-serif;
 }
 
 
@@ -318,7 +259,7 @@
     rx: 8px !important;
 }
 
-/* Notes */
+/* Notes - LARGE */
 .mermaid .note {
     fill: #18181b !important;
     stroke: rgba(255, 255, 255, 0.1) !important;
@@ -361,7 +302,7 @@
 
 
 /* ─────────────────────────────────────────────────────────────────────────────────
-   STATE DIAGRAM - Transparent transition labels (FIXED!)
+   STATE DIAGRAM - Transparent transition labels
    ───────────────────────────────────────────────────────────────────────────────── */
 .mermaid .stateGroup rect,
 .mermaid g.stateGroup rect {
@@ -478,33 +419,6 @@
 
 
 /* ─────────────────────────────────────────────────────────────────────────────────
-   CLASS DIAGRAM
-   ───────────────────────────────────────────────────────────────────────────────── */
-.mermaid .classGroup rect {
-    fill: #18181b !important;
-    stroke: rgba(255, 255, 255, 0.1) !important;
-    stroke-width: 1.5px !important;
-    rx: 12px !important;
-    filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.4)) !important;
-}
-
-.mermaid .classGroup line {
-    stroke: rgba(255, 255, 255, 0.08) !important;
-}
-
-.mermaid .classLabel .label {
-    fill: #fafafa !important;
-    font-size: 15px !important;
-    font-weight: 700 !important;
-}
-
-.mermaid .classLabel text {
-    fill: #a1a1aa !important;
-    font-size: 13px !important;
-}
-
-
-/* ─────────────────────────────────────────────────────────────────────────────────
    GANTT CHART
    ───────────────────────────────────────────────────────────────────────────────── */
 .mermaid .grid .tick line {
@@ -577,99 +491,25 @@
 
 
 /* ─────────────────────────────────────────────────────────────────────────────────
-   ASCII DIAGRAMS
+   ERROR DISPLAY
    ───────────────────────────────────────────────────────────────────────────────── */
-.fd-ascii-diagram {
-    font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Consolas', monospace;
-    font-size: 14px;
-    line-height: 1.6;
-    background: var(--fd-bg-node);
-    border: 1px solid var(--fd-border-subtle);
-    border-radius: 16px;
-    padding: 32px;
-    overflow-x: auto;
-    white-space: pre;
-    color: var(--fd-text-secondary);
-}
-
-.fd-ascii-diagram .fd-title {
-    color: var(--fd-text-white);
-    font-weight: 700;
-    font-size: 15px;
-}
-
-.fd-ascii-diagram .fd-component {
-    color: var(--fd-accent-orange);
-    font-weight: 600;
-}
-
-.fd-ascii-diagram .fd-signal {
-    color: var(--fd-accent-green);
-}
-
-.fd-ascii-diagram .fd-highlight {
-    color: var(--fd-accent-orange);
-}
-
-.fd-ascii-diagram .fd-label {
-    color: var(--fd-text-primary);
-    font-weight: 600;
-}
-
-.fd-ascii-diagram .fd-error {
-    color: var(--fd-accent-red);
-}
-
-.fd-ascii-diagram .fd-info {
-    color: var(--fd-accent-blue);
-}
-
-
-/* ─────────────────────────────────────────────────────────────────────────────────
-   SPEC TABLES
-   ───────────────────────────────────────────────────────────────────────────────── */
-.fd-spec-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 15px;
-    background: var(--fd-bg-card);
-    border-radius: 16px;
-    overflow: hidden;
-    border: 1px solid var(--fd-border-subtle);
+.fd-diagram-error {
+    background: rgba(249, 115, 22, 0.1);
+    border: 1px solid rgba(249, 115, 22, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 13px;
     font-family: 'Inter', -apple-system, sans-serif;
-}
-
-.fd-spec-table th {
-    background: var(--fd-bg-node);
-    padding: 18px 28px;
-    text-align: left;
-    font-weight: 600;
-    color: var(--fd-text-primary);
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.fd-spec-table td {
-    padding: 18px 28px;
-    border-top: 1px solid var(--fd-border-subtle);
-    color: var(--fd-text-secondary);
-}
-
-.fd-spec-table tbody tr:hover td {
-    background: rgba(255, 255, 255, 0.02);
-}
-
-.fd-spec-table code {
-    background: var(--fd-bg-node);
     color: var(--fd-accent-orange);
-    padding: 6px 14px;
-    border-radius: 8px;
-    font-family: 'JetBrains Mono', 'SF Mono', monospace;
-    font-size: 14px;
-    font-weight: 600;
-    border: 1px solid var(--fd-border-subtle);
+}
+
+.fd-diagram-error strong {
+    display: block;
+    margin-bottom: 8px;
+}
+
+.fd-diagram-error small {
+    color: var(--fd-text-secondary);
 }
 
 
@@ -677,27 +517,13 @@
    RESPONSIVE
    ───────────────────────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-    .fd-diagram-box {
-        padding: 24px;
-        border-radius: 16px;
+    .mermaid-placeholder {
+        padding: 16px;
+        border-radius: 12px;
+        min-height: 150px;
     }
     
-    .fd-diagram-label {
-        font-size: 11px;
-        margin-bottom: 24px;
-    }
-    
-    .fd-diagram-content {
-        min-height: 200px;
-    }
-    
-    .fd-spec-table th,
-    .fd-spec-table td {
-        padding: 12px 16px;
-    }
-    
-    .fd-ascii-diagram {
-        font-size: 12px;
-        padding: 20px;
+    .mermaid-placeholder.mermaid-rendered {
+        padding: 16px;
     }
 }
