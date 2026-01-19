@@ -15535,7 +15535,7 @@ RÈGLES:
 
 <script>
 
-/* ===== THOUGHT PROCESS - FIXAIR STYLE ===== */
+/* ===== THOUGHT PROCESS - FIXAIR DYNAMIC v2 ===== */
 /* Replace ENTIRE TP object in your index.html */
 
 const TP = {
@@ -15548,14 +15548,17 @@ const TP = {
     icons: {
         globe: '<svg viewBox="0 0 256 256" fill="currentColor"><path d="M128,24h0A104,104,0,1,0,232,128,104.12,104.12,0,0,0,128,24Zm88,104a87.61,87.61,0,0,1-3.33,24H174.16a157.44,157.44,0,0,0,0-48h38.51A87.61,87.61,0,0,1,216,128ZM102,168H154a115.11,115.11,0,0,1-26,45A115.27,115.27,0,0,1,102,168Zm-3.9-16a140.84,140.84,0,0,1,0-48h59.88a140.84,140.84,0,0,1,0,48ZM40,128a87.61,87.61,0,0,1,3.33-24H81.84a157.44,157.44,0,0,0,0,48H43.33A87.61,87.61,0,0,1,40,128ZM154,88H102a115.11,115.11,0,0,1,26-45A115.27,115.27,0,0,1,154,88Z"/></svg>',
         doc: '<svg viewBox="0 0 256 256" fill="currentColor"><path d="M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Z"/></svg>',
+        search: '<svg viewBox="0 0 256 256" fill="currentColor"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg>',
+        tool: '<svg viewBox="0 0 256 256" fill="currentColor"><path d="M226.76,69a8,8,0,0,0-12.84-2.88l-40.3,37.19-17.23-3.7-3.7-17.23,37.19-40.3A8,8,0,0,0,187,29.24,72,72,0,0,0,88,96a72.34,72.34,0,0,0,2.57,19.41L32.29,166.67a28,28,0,0,0,39.6,39.6l51.26-58.28A72,72,0,0,0,226.76,69ZM160,152a56.14,56.14,0,0,1-27.07-7,8,8,0,0,0-9.92,1.77l-55.28,62.87a12,12,0,0,1-17-17l62.87-55.28a8,8,0,0,0,1.77-9.92,56,56,0,0,1,58.66-82.31l-31.6,34.21a8,8,0,0,0-1.82,6.67l5.32,24.68a8,8,0,0,0,6.27,6.27l24.68,5.32a8,8,0,0,0,6.67-1.82l34.21-31.6A56.06,56.06,0,0,1,160,152Z"/></svg>',
+        brain: '<svg viewBox="0 0 256 256" fill="currentColor"><path d="M248,124a56.11,56.11,0,0,0-32-50.61V72a48,48,0,0,0-88-26.49A48,48,0,0,0,40,72v1.39a56,56,0,0,0,0,101.2V176a48,48,0,0,0,88,26.49A48,48,0,0,0,216,176v-1.41A56.09,56.09,0,0,0,248,124ZM88,208a32,32,0,0,1-31.81-28.56A55.87,55.87,0,0,0,64,180h8a8,8,0,0,0,0-16H64A40,40,0,0,1,50.67,86.27,8,8,0,0,0,56,78.73V72a32,32,0,0,1,64,0v68.26A47.8,47.8,0,0,0,88,128a8,8,0,0,0,0,16,32,32,0,0,1,0,64Zm104-44h-8a8,8,0,0,0,0,16h8a55.87,55.87,0,0,0,7.81-.56A32,32,0,1,1,168,144a8,8,0,0,0,0-16,47.8,47.8,0,0,0-32,12.26V72a32,32,0,0,1,64,0v6.73a8,8,0,0,0,5.33,7.54A40,40,0,0,1,192,164Z"/></svg>',
         chevronDown: '<svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path d="M14.128 7.16482C14.3126 6.95983 14.6298 6.94336 14.835 7.12771C15.0402 7.31242 15.0567 7.62952 14.8721 7.83477L10.372 12.835L10.2939 12.9053C10.2093 12.9667 10.1063 13 9.99995 13C9.85833 12.9999 9.72264 12.9402 9.62788 12.835L5.12778 7.83477L5.0682 7.75273C4.95072 7.55225 4.98544 7.28926 5.16489 7.12771C5.34445 6.96617 5.60969 6.95939 5.79674 7.09744L5.87193 7.16482L9.99995 11.7519L14.128 7.16482Z"/></svg>',
         chevronUp: '<svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path d="M5.87193 12.835C5.68735 13.0402 5.37018 13.0567 5.16489 12.8721C4.9596 12.6874 4.94313 12.3703 5.12778 12.1651L9.62788 7.16504L9.70606 7.09473C9.79073 7.03341 9.89378 7 9.99995 7C10.1416 7.00007 10.2773 7.05978 10.372 7.16504L14.8721 12.1651L14.9317 12.2471C15.0494 12.4476 15.0145 12.7105 14.835 12.8721C14.6555 13.0338 14.3903 13.0406 14.2032 12.9024L14.128 12.835L9.99995 8.24806L5.87193 12.835Z"/></svg>'
     },
     
-    // Mode colors
+    // Mode colors - FixAIR theme
     modeColors: {
-        copilot: '#FF6B35',      // Orange FixAIR
-        assistant: 'rgba(255,255,255,0.4)'  // Gray transparent
+        copilot: '#FF6B35',    // Orange FixAIR Copilot
+        assistant: '#22c55e'   // Green FixAIR Assistant
     },
 
     // CSS colors - transparent theme
@@ -15567,27 +15570,77 @@ const TP = {
         bullet: 'rgba(255,255,255,0.25)'
     },
 
-    // Analyze query and return steps
+    // Check if query is just a greeting (skip thought process)
+    isGreeting(q) {
+        const greetings = /^(salut|bonjour|bonsoir|hello|hi|hey|coucou|yo|cc|bjr|bsr|merci|thanks|ok|oui|non|yes|no|d'accord|super|parfait|cool|nice|top|génial|excellent)[\s!?.]*$/i;
+        return greetings.test(q.trim());
+    },
+
+    // Analyze query and return DYNAMIC FRENCH steps
     analyze(q, m, b) {
         const s = [];
-        b = b || 'equipment';
         const ql = q.toLowerCase();
+        b = b || 'équipement';
         
-        if (/\b([EPFUepfu]?\d{2,5})\b/i.test(q) || /error|code|fault|panne|erreur/i.test(ql)) {
-            s.push({ icon: 'globe', text: 'Searching ' + b + ' error database' });
+        // === COPILOT MODE ===
+        if (m === 'copilot') {
+            // Error code detection
+            if (/\b([EPFUepfu]?\d{2,5})\b/i.test(q) || /error|code|fault|panne|erreur|défaut/i.test(ql)) {
+                s.push({ icon: 'search', text: 'Recherche code erreur ' + b + '...' });
+                s.push({ icon: 'doc', text: 'Consultation documentation technique' });
+            }
+            
+            // Wiring/schema/diagram
+            if (/wiring|diagram|schema|schéma|pinout|câblage|connecteur|cn\d+|branchement/i.test(ql)) {
+                s.push({ icon: 'doc', text: 'Chargement schémas électriques' });
+            }
+            
+            // Pressure/refrigerant/measurements
+            if (/pression|bar|température|temp|froid|chaud|gaz|r32|r410|fluide|frigorigène|charge/i.test(ql)) {
+                s.push({ icon: 'tool', text: 'Analyse paramètres frigorifiques' });
+            }
+            
+            // Installation/mise en service
+            if (/install|mise en service|commissioning|paramétrage|configuration|réglage/i.test(ql)) {
+                s.push({ icon: 'doc', text: 'Consultation procédures installation' });
+            }
+            
+            // Troubleshooting/repair
+            if (/réparer|fix|solution|problème|dépannage|diagnostic|panne|marche pas|fonctionne pas/i.test(ql)) {
+                s.push({ icon: 'brain', text: 'Analyse diagnostic...' });
+                s.push({ icon: 'tool', text: 'Élaboration procédure réparation' });
+            }
+            
+            // General technical question - search knowledge base
+            if (s.length === 0) {
+                s.push({ icon: 'search', text: 'Recherche base ' + b + '...' });
+            }
+            
+            // Always end with compilation
+            s.push({ icon: 'bullet', text: 'Préparation réponse...' });
         }
-        if (/wiring|diagram|schema|schéma|pinout|cn\d+/i.test(ql)) {
-            s.push({ icon: 'doc', text: 'Loading electrical schematics' });
+        
+        // === ASSISTANT MODE ===
+        else if (m === 'assistant') {
+            // Report generation
+            if (/rapport|report|compte.?rendu|cerfa|attestation|document/i.test(ql)) {
+                s.push({ icon: 'doc', text: 'Extraction données diagnostic' });
+                s.push({ icon: 'doc', text: 'Structuration rapport' });
+                s.push({ icon: 'bullet', text: 'Génération document...' });
+            }
+            // Image/OCR related
+            else if (/image|photo|scan|plaque|étiquette|ocr/i.test(ql)) {
+                s.push({ icon: 'search', text: 'Analyse image...' });
+                s.push({ icon: 'doc', text: 'Extraction informations' });
+                s.push({ icon: 'bullet', text: 'Compilation données...' });
+            }
+            // Default assistant
+            else {
+                s.push({ icon: 'brain', text: 'Analyse demande...' });
+                s.push({ icon: 'bullet', text: 'Formulation réponse...' });
+            }
         }
-        if (m === 'assistant') {
-            s.length = 0;
-            s.push({ icon: 'doc', text: 'Extracting diagnostic data' });
-            s.push({ icon: 'bullet', text: 'Mapping to report fields' });
-        }
-        if (s.length === 0) {
-            s.push({ icon: 'globe', text: 'Searching ' + b + ' knowledge base' });
-        }
-        s.push({ icon: 'bullet', text: m === 'assistant' ? 'Generating report' : 'Compiling diagnostic response' });
+        
         return s;
     },
 
@@ -15597,9 +15650,12 @@ const TP = {
         const dotColor = isLoading ? this.modeColors[mode] : c.bullet;
         const dotId = isLoading ? 'tpLoadingDot' + mode : '';
         
-        const iconHtml = st.icon === 'bullet' 
-            ? '<div ' + (dotId ? 'id="' + dotId + '"' : '') + ' style="width:6px;height:6px;border-radius:50%;background:' + dotColor + ';' + (isLoading ? 'animation:tpPulse 1.2s ease infinite;' : '') + '"></div>'
-            : '<div style="width:16px;height:16px;color:' + c.text + ';">' + this.icons[st.icon] + '</div>';
+        let iconHtml;
+        if (st.icon === 'bullet') {
+            iconHtml = '<div ' + (dotId ? 'id="' + dotId + '"' : '') + ' style="width:6px;height:6px;border-radius:50%;background:' + dotColor + ';' + (isLoading ? 'animation:tpPulse 1.2s ease infinite;' : '') + '"></div>';
+        } else {
+            iconHtml = '<div style="width:16px;height:16px;color:' + c.text + ';">' + (this.icons[st.icon] || this.icons.globe) + '</div>';
+        }
         
         return '<div style="display:flex;min-height:34px;opacity:0;transform:translateY(4px);transition:all 0.25s ease;">' +
             '<div style="display:flex;flex-direction:column;align-items:center;padding-left:12px;">' +
@@ -15613,19 +15669,18 @@ const TP = {
         '</div>';
     },
 
-    // Create expanded card with header
+    // Create expanded card with header - max-width 90% like chat bubbles
     createCard(m) {
         const M = m.charAt(0).toUpperCase() + m.slice(1);
         const c = this.colors;
         
-        // Transparent background, max-width like chat bubbles
-        return '<div id="tp' + M + 'Dynamic" style="border:0.5px solid ' + c.border + ';border-radius:8px;margin:12px 0;max-width:90%;align-self:flex-start;">' +
-            // Collapsed view (hidden initially) - shows arrow + line
+        return '<div id="tp' + M + 'Dynamic" class="tp-thought-card" style="border:0.5px solid ' + c.border + ';border-radius:8px;margin:12px 0;max-width:90%;align-self:flex-start;">' +
+            // Collapsed view (hidden initially) - shows chevron up + line
             '<div id="tp' + M + 'Collapsed" style="display:none;">' +
                 '<div style="display:flex;min-height:42px;cursor:pointer;" onclick="TP.toggle(\'' + m + '\')">' +
                     '<div style="display:flex;flex-direction:column;align-items:center;padding-left:12px;">' +
                         '<div style="width:1px;height:8px;background:transparent;"></div>' +
-                        '<div style="display:flex;align-items:center;justify-content:center;width:16px;height:16px;color:' + c.textMuted + ';transition:transform 0.3s;">' + this.icons.chevronUp + '</div>' +
+                        '<div style="display:flex;align-items:center;justify-content:center;width:16px;height:16px;color:' + c.textMuted + ';">' + this.icons.chevronUp + '</div>' +
                         '<div style="width:1px;flex-grow:1;min-height:10px;background:' + c.line + ';"></div>' +
                     '</div>' +
                     '<div style="display:flex;align-items:center;padding:10px 12px;flex:1;">' +
@@ -15639,11 +15694,11 @@ const TP = {
                 '<div style="display:flex;min-height:34px;cursor:pointer;" onclick="TP.toggle(\'' + m + '\')">' +
                     '<div style="display:flex;flex-direction:column;align-items:center;padding-left:12px;">' +
                         '<div style="width:1px;height:8px;background:transparent;"></div>' +
-                        '<div id="tp' + M + 'Chevron" style="display:flex;align-items:center;justify-content:center;width:16px;height:16px;color:' + c.textMuted + ';transition:transform 0.3s;">' + this.icons.chevronDown + '</div>' +
+                        '<div style="display:flex;align-items:center;justify-content:center;width:16px;height:16px;color:' + c.textMuted + ';">' + this.icons.chevronDown + '</div>' +
                         '<div style="width:1px;flex-grow:1;min-height:6px;background:' + c.line + ';"></div>' +
                     '</div>' +
                     '<div style="display:flex;align-items:center;padding:8px 12px;flex:1;">' +
-                        '<span id="tp' + M + 'Count" style="font-size:14px;color:' + c.textMuted + ';">Analyzing...</span>' +
+                        '<span id="tp' + M + 'Count" style="font-size:14px;color:' + c.textMuted + ';">Réflexion...</span>' +
                     '</div>' +
                 '</div>' +
                 // Steps container
@@ -15654,7 +15709,13 @@ const TP = {
 
     // Show thought process
     show(m, q) {
-        const b = (document.getElementById('copilotSub') || {}).textContent || 'equipment';
+        // Skip for greetings
+        if (this.isGreeting(q)) {
+            console.log('TP: Skipping greeting');
+            return;
+        }
+        
+        const b = (document.getElementById('copilotSub') || {}).textContent || 'équipement';
         const st = this.analyze(q, m, b);
         this.s[m] = st;
         this.i[m] = 0;
@@ -15662,9 +15723,11 @@ const TP = {
         
         const M = m.charAt(0).toUpperCase() + m.slice(1);
         
-        // Remove existing
+        // Remove existing dynamic card only (not collapsed ones in history)
         const existing = document.getElementById('tp' + M + 'Dynamic');
-        if (existing) existing.remove();
+        if (existing && !existing.dataset.completed) {
+            existing.remove();
+        }
         
         // Insert card
         const body = document.getElementById(m + 'Body');
@@ -15691,12 +15754,12 @@ const TP = {
                     nw.style.transform = 'translateY(0)';
                 });
                 self.i[m]++;
-                cnt.textContent = self.i[m] + ' step' + (self.i[m] > 1 ? 's' : '');
+                cnt.textContent = self.i[m] + ' étape' + (self.i[m] > 1 ? 's' : '');
                 body.scrollTop = body.scrollHeight;
             } else {
                 clearInterval(self.t[m]);
             }
-        }, 500);
+        }, 400);
     },
 
     // Toggle expand/collapse
@@ -15721,49 +15784,61 @@ const TP = {
         }
     },
 
-    // Collapse when AI responds (show summary) + STOP blinking
+    // Collapse when AI responds - KEEP CARD, just collapse it
     collapse(m, sum) {
         clearInterval(this.t[m]);
         const M = m.charAt(0).toUpperCase() + m.slice(1);
         const card = document.getElementById('tp' + M + 'Dynamic');
         if (!card) return;
         
+        // Mark as completed so it's not removed
+        card.dataset.completed = 'true';
+        
+        // Give unique ID so multiple cards can exist
+        card.id = 'tp' + M + 'Completed' + Date.now();
+        
         // STOP the blinking dot
         const loadingDot = document.getElementById('tpLoadingDot' + m);
         if (loadingDot) {
             loadingDot.style.animation = 'none';
-            loadingDot.style.background = this.colors.bullet; // Reset to static gray
+            loadingDot.style.background = this.colors.bullet;
+            loadingDot.removeAttribute('id'); // Remove ID so next card can use it
         }
         
         // Generate summary
         const steps = this.s[m] || [];
         const summary = sum || (steps.length + ' étape' + (steps.length > 1 ? 's' : '') + ' d\'analyse');
         
-        // Update summary text
-        const summaryEl = document.getElementById('tp' + M + 'Summary');
-        if (summaryEl) summaryEl.textContent = summary;
+        // Get elements (they may have been renamed, so find them in card)
+        const summaryEl = card.querySelector('[id^="tp' + M + 'Summary"]');
+        const countEl = card.querySelector('[id^="tp' + M + 'Count"]');
+        const collapsed = card.querySelector('[id^="tp' + M + 'Collapsed"]');
+        const expanded = card.querySelector('[id^="tp' + M + 'Expanded"]');
         
-        // Update count text
-        const countEl = document.getElementById('tp' + M + 'Count');
-        if (countEl) countEl.textContent = steps.length + ' step' + (steps.length > 1 ? 's' : '');
+        if (summaryEl) summaryEl.textContent = summary;
+        if (countEl) countEl.textContent = steps.length + ' étape' + (steps.length > 1 ? 's' : '');
         
         // Switch to collapsed view
-        const collapsed = document.getElementById('tp' + M + 'Collapsed');
-        const expanded = document.getElementById('tp' + M + 'Expanded');
-        
         if (collapsed && expanded) {
             collapsed.style.display = 'block';
             expanded.style.display = 'none';
             this.expanded[m] = false;
         }
+        
+        // Remove IDs from inner elements to avoid conflicts with next card
+        card.querySelectorAll('[id]').forEach(el => {
+            el.id = el.id + '_' + Date.now();
+        });
     },
 
-    // Hide completely
+    // Hide completely (only if really needed)
     hide(m) {
         clearInterval(this.t[m]);
         const M = m.charAt(0).toUpperCase() + m.slice(1);
         const card = document.getElementById('tp' + M + 'Dynamic');
-        if (card) card.remove();
+        if (card && !card.dataset.completed) {
+            card.remove();
+        }
     }
 };
 
@@ -15790,7 +15865,7 @@ function hideThoughtProcess(m) {
     }
 })();
 
-console.log('✅ ThoughtProcess FixAIR-Style loaded');
+console.log('✅ ThoughtProcess FixAIR Dynamic v2 loaded');
 </script>
 </body>
 </html>
