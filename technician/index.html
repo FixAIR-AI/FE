@@ -15535,7 +15535,7 @@ RÈGLES:
 
 <script>
 
-/* ===== THOUGHT PROCESS - FIXAIR v3 ===== */
+/* ===== THOUGHT PROCESS - FIXAIR v4 ===== */
 /* Replace ENTIRE TP object in your index.html */
 
 const TP = {
@@ -15545,6 +15545,7 @@ const TP = {
     expandedState: {},
     cardCounter: 0,
     currentCardId: { copilot: null, assistant: null },
+    isSimpleMode: { copilot: false, assistant: false },
     
     // SVG Icons
     icons: {
@@ -15553,8 +15554,8 @@ const TP = {
         search: '<svg viewBox="0 0 256 256" fill="currentColor"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg>',
         tool: '<svg viewBox="0 0 256 256" fill="currentColor"><path d="M226.76,69a8,8,0,0,0-12.84-2.88l-40.3,37.19-17.23-3.7-3.7-17.23,37.19-40.3A8,8,0,0,0,187,29.24,72,72,0,0,0,88,96a72.34,72.34,0,0,0,2.57,19.41L32.29,166.67a28,28,0,0,0,39.6,39.6l51.26-58.28A72,72,0,0,0,226.76,69Z"/></svg>',
         brain: '<svg viewBox="0 0 256 256" fill="currentColor"><path d="M248,124a56.11,56.11,0,0,0-32-50.61V72a48,48,0,0,0-88-26.49A48,48,0,0,0,40,72v1.39a56,56,0,0,0,0,101.2V176a48,48,0,0,0,88,26.49A48,48,0,0,0,216,176v-1.41A56.09,56.09,0,0,0,248,124Z"/></svg>',
-        chevronDown: '<svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path d="M14.128 7.16482C14.3126 6.95983 14.6298 6.94336 14.835 7.12771C15.0402 7.31242 15.0567 7.62952 14.8721 7.83477L10.372 12.835L10.2939 12.9053C10.2093 12.9667 10.1063 13 9.99995 13C9.85833 12.9999 9.72264 12.9402 9.62788 12.835L5.12778 7.83477L5.0682 7.75273C4.95072 7.55225 4.98544 7.28926 5.16489 7.12771C5.34445 6.96617 5.60969 6.95939 5.79674 7.09744L5.87193 7.16482L9.99995 11.7519L14.128 7.16482Z"/></svg>',
-        chevronUp: '<svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path d="M5.87193 12.835C5.68735 13.0402 5.37018 13.0567 5.16489 12.8721C4.9596 12.6874 4.94313 12.3703 5.12778 12.1651L9.62788 7.16504L9.70606 7.09473C9.79073 7.03341 9.89378 7 9.99995 7C10.1416 7.00007 10.2773 7.05978 10.372 7.16504L14.8721 12.1651L14.9317 12.2471C15.0494 12.4476 15.0145 12.7105 14.835 12.8721C14.6555 13.0338 14.3903 13.0406 14.2032 12.9024L14.128 12.835L9.99995 8.24806L5.87193 12.835Z"/></svg>'
+        chevronDown: '<svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor"><path d="M14.128 7.16482C14.3126 6.95983 14.6298 6.94336 14.835 7.12771C15.0402 7.31242 15.0567 7.62952 14.8721 7.83477L10.372 12.835L10.2939 12.9053C10.2093 12.9667 10.1063 13 9.99995 13C9.85833 12.9999 9.72264 12.9402 9.62788 12.835L5.12778 7.83477L5.0682 7.75273C4.95072 7.55225 4.98544 7.28926 5.16489 7.12771C5.34445 6.96617 5.60969 6.95939 5.79674 7.09744L5.87193 7.16482L9.99995 11.7519L14.128 7.16482Z"/></svg>',
+        chevronUp: '<svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor"><path d="M5.87193 12.835C5.68735 13.0402 5.37018 13.0567 5.16489 12.8721C4.9596 12.6874 4.94313 12.3703 5.12778 12.1651L9.62788 7.16504L9.70606 7.09473C9.79073 7.03341 9.89378 7 9.99995 7C10.1416 7.00007 10.2773 7.05978 10.372 7.16504L14.8721 12.1651L14.9317 12.2471C15.0494 12.4476 15.0145 12.7105 14.835 12.8721C14.6555 13.0338 14.3903 13.0406 14.2032 12.9024L14.128 12.835L9.99995 8.24806L5.87193 12.835Z"/></svg>'
     },
     
     // Mode colors
@@ -15563,7 +15564,7 @@ const TP = {
         assistant: '#22c55e'
     },
 
-    // CSS colors
+    // CSS colors - TRANSPARENT
     colors: {
         border: 'rgba(255,255,255,0.08)',
         line: 'rgba(255,255,255,0.12)',
@@ -15572,44 +15573,32 @@ const TP = {
         bullet: 'rgba(255,255,255,0.25)'
     },
 
-    // Simple phrases for greetings (rotating)
-    simplePhrases: {
-        copilot: [
-            'Copilot activé...',
-            'Réflexion en cours...',
-            'Préparation de la réponse...',
-            'Je réfléchis...',
-            'Analyse...',
-            'Un instant...'
-        ],
-        assistant: [
-            'Assistant activé...',
-            'Préparation...',
-            'Je réfléchis...',
-            'Analyse de la demande...',
-            'Un moment...'
-        ]
-    },
+    // Simple phrases for greetings
+    simplePhrases: [
+        'FixAIR réfléchit...',
+        'Préparation...',
+        'Un instant...',
+        'Analyse...'
+    ],
 
-    // Check if query is simple (greeting or non-technical)
+    // Check if simple query
     isSimpleQuery(q) {
-        const simple = /^(salut|bonjour|bonsoir|hello|hi|hey|coucou|yo|cc|bjr|bsr|merci|thanks|ok|oui|non|yes|no|d'accord|super|parfait|cool|nice|top|génial|excellent|ça va|ca va|comment vas|quoi de neuf|comment ça va)[\s!?.]*$/i;
-        return simple.test(q.trim()) || q.trim().length < 15;
+        const simple = /^(salut|bonjour|bonsoir|hello|hi|hey|coucou|yo|cc|bjr|bsr|merci|thanks|ok|oui|non|yes|no|d'accord|super|parfait|cool|nice|top|génial|excellent|ça va|ca va|comment vas|quoi de neuf|qui es tu|qui es-tu|que fais tu|que peux tu|c'est quoi|qu'est ce que)[\s!?.]*$/i;
+        return simple.test(q.trim()) || q.trim().length < 20;
     },
 
-    // Check if query needs knowledge base (technical)
+    // Check if technical
     isTechnicalQuery(q) {
-        const technical = /error|code|fault|panne|erreur|défaut|schéma|schema|diagram|wiring|câblage|pression|bar|température|gaz|r32|r410|frigorigène|install|mise en service|réparer|fix|dépannage|diagnostic|problème|cn\d+|pinout|\b[EPFUepfu]?\d{3,5}\b/i;
-        return technical.test(q);
+        const tech = /error|code|fault|panne|erreur|défaut|schéma|schema|diagram|wiring|câblage|pression|bar|température|gaz|r32|r410|frigorigène|install|mise en service|réparer|fix|dépannage|diagnostic|problème|cn\d+|pinout|\b[EPFUepfu]?\d{3,5}\b/i;
+        return tech.test(q);
     },
 
-    // Get random simple phrase
-    getSimplePhrase(m) {
-        const phrases = this.simplePhrases[m] || this.simplePhrases.copilot;
-        return phrases[Math.floor(Math.random() * phrases.length)];
+    // Random phrase
+    getSimplePhrase() {
+        return this.simplePhrases[Math.floor(Math.random() * this.simplePhrases.length)];
     },
 
-    // Analyze query for technical steps
+    // Analyze for technical steps
     analyze(q, m, b) {
         const s = [];
         const ql = q.toLowerCase();
@@ -15626,138 +15615,109 @@ const TP = {
             if (/pression|bar|température|gaz|r32|r410|frigorigène|charge/i.test(ql)) {
                 s.push({ icon: 'tool', text: 'Analyse paramètres frigorifiques' });
             }
-            if (/install|mise en service|paramétrage|configuration/i.test(ql)) {
-                s.push({ icon: 'doc', text: 'Procédures installation' });
-            }
             if (/réparer|fix|dépannage|diagnostic|problème|marche pas/i.test(ql)) {
                 s.push({ icon: 'brain', text: 'Analyse diagnostic...' });
-                s.push({ icon: 'tool', text: 'Élaboration solution' });
             }
-            if (/graph|diagramme|visuel|schéma|courbe/i.test(ql)) {
-                s.push({ icon: 'doc', text: 'Préparation du visuel...' });
+            if (/graph|diagramme|visuel|courbe/i.test(ql)) {
+                s.push({ icon: 'doc', text: 'Préparation visuel...' });
             }
             if (s.length === 0) {
                 s.push({ icon: 'search', text: 'Recherche base ' + b + '...' });
             }
             s.push({ icon: 'bullet', text: 'Formulation réponse...' });
-        } else if (m === 'assistant') {
+        } else {
             if (/rapport|report|compte.?rendu|cerfa|document/i.test(ql)) {
-                s.push({ icon: 'doc', text: 'Extraction données diagnostic' });
-                s.push({ icon: 'doc', text: 'Structuration rapport' });
-                s.push({ icon: 'bullet', text: 'Génération document...' });
+                s.push({ icon: 'doc', text: 'Extraction données' });
+                s.push({ icon: 'bullet', text: 'Génération rapport...' });
             } else if (/image|photo|scan|plaque|ocr/i.test(ql)) {
                 s.push({ icon: 'search', text: 'Analyse image...' });
-                s.push({ icon: 'doc', text: 'Extraction informations' });
-                s.push({ icon: 'bullet', text: 'Compilation...' });
+                s.push({ icon: 'bullet', text: 'Extraction...' });
             } else {
-                s.push({ icon: 'brain', text: 'Analyse demande...' });
-                s.push({ icon: 'bullet', text: 'Préparation réponse...' });
+                s.push({ icon: 'brain', text: 'Analyse...' });
+                s.push({ icon: 'bullet', text: 'Préparation...' });
             }
         }
         return s;
     },
 
-    // Create SIMPLE card (for greetings) - just one line with blinking dot
-    createSimpleCard(m, cardId, phrase) {
-        const c = this.colors;
+    // SIMPLE card - small, disappears after
+    createSimpleCard(cardId, phrase, m) {
         const dotColor = this.modeColors[m];
-        
-        return '<div id="' + cardId + '" class="tp-card" style="border:0.5px solid ' + c.border + ';border-radius:8px;margin:12px 0;max-width:95%;">' +
-            '<div style="display:flex;align-items:center;min-height:38px;padding:8px 14px;">' +
-                '<div id="' + cardId + 'Dot" style="width:6px;height:6px;border-radius:50%;background:' + dotColor + ';margin-right:12px;animation:tpPulse 1.2s ease infinite;"></div>' +
-                '<span id="' + cardId + 'Text" style="font-size:14px;color:' + c.text + ';">' + phrase + '</span>' +
-            '</div>' +
+        return '<div id="' + cardId + '" style="display:flex;align-items:center;margin:8px 0;max-width:70%;">' +
+            '<div id="' + cardId + 'Dot" style="width:6px;height:6px;border-radius:50%;background:' + dotColor + ';margin-right:10px;animation:tpPulse 1.2s ease infinite;flex-shrink:0;"></div>' +
+            '<span style="font-size:13px;color:' + this.colors.text + ';">' + phrase + '</span>' +
         '</div>';
     },
 
-    // Create FULL card (for technical queries)
-    createFullCard(m, cardId) {
+    // FULL card - transparent, compact
+    createFullCard(cardId) {
         const c = this.colors;
-        
-        return '<div id="' + cardId + '" class="tp-card" style="border:0.5px solid ' + c.border + ';border-radius:8px;margin:12px 0;max-width:95%;">' +
-            '<div id="' + cardId + 'Collapsed" style="display:none;">' +
-                '<div style="display:flex;min-height:42px;cursor:pointer;" onclick="TP.toggleCard(\'' + cardId + '\')">' +
-                    '<div style="display:flex;flex-direction:column;align-items:center;padding-left:12px;">' +
-                        '<div style="width:1px;height:8px;background:transparent;"></div>' +
-                        '<div style="display:flex;align-items:center;justify-content:center;width:16px;height:16px;color:' + c.textMuted + ';">' + this.icons.chevronUp + '</div>' +
-                        '<div style="width:1px;flex-grow:1;min-height:10px;background:' + c.line + ';"></div>' +
-                    '</div>' +
-                    '<div style="display:flex;align-items:center;padding:10px 12px;flex:1;">' +
-                        '<span id="' + cardId + 'Summary" style="flex:1;font-size:14px;color:' + c.text + ';">Analyse terminée</span>' +
-                    '</div>' +
+        return '<div id="' + cardId + '" style="border:0.5px solid ' + c.border + ';border-radius:8px;margin:8px 0;max-width:70%;">' +
+            '<div id="' + cardId + 'Collapsed" style="display:none;cursor:pointer;" onclick="TP.toggleCard(\'' + cardId + '\')">' +
+                '<div style="display:flex;align-items:center;padding:6px 10px;min-height:28px;">' +
+                    '<div style="color:' + c.textMuted + ';margin-right:8px;">' + this.icons.chevronUp + '</div>' +
+                    '<span id="' + cardId + 'Summary" style="font-size:13px;color:' + c.text + ';">Analyse terminée</span>' +
                 '</div>' +
             '</div>' +
             '<div id="' + cardId + 'Expanded">' +
-                '<div style="display:flex;min-height:34px;cursor:pointer;" onclick="TP.toggleCard(\'' + cardId + '\')">' +
-                    '<div style="display:flex;flex-direction:column;align-items:center;padding-left:12px;">' +
-                        '<div style="width:1px;height:8px;background:transparent;"></div>' +
-                        '<div style="display:flex;align-items:center;justify-content:center;width:16px;height:16px;color:' + c.textMuted + ';">' + this.icons.chevronDown + '</div>' +
-                        '<div style="width:1px;flex-grow:1;min-height:6px;background:' + c.line + ';"></div>' +
-                    '</div>' +
-                    '<div style="display:flex;align-items:center;padding:8px 12px;flex:1;">' +
-                        '<span id="' + cardId + 'Count" style="font-size:14px;color:' + c.textMuted + ';">Analyse...</span>' +
-                    '</div>' +
+                '<div style="display:flex;align-items:center;padding:6px 10px;min-height:28px;cursor:pointer;" onclick="TP.toggleCard(\'' + cardId + '\')">' +
+                    '<div style="color:' + c.textMuted + ';margin-right:8px;">' + this.icons.chevronDown + '</div>' +
+                    '<span id="' + cardId + 'Count" style="font-size:13px;color:' + c.textMuted + ';">Analyse...</span>' +
                 '</div>' +
-                '<div id="' + cardId + 'Steps"></div>' +
+                '<div id="' + cardId + 'Steps" style="padding-left:20px;"></div>' +
             '</div>' +
         '</div>';
     },
 
-    // Create step HTML
-    stepHtml(st, isLast, isLoading, mode, cardId) {
+    // Step HTML - compact
+    stepHtml(st, isLast, isLoading, m, cardId) {
         const c = this.colors;
-        const dotColor = isLoading ? this.modeColors[mode] : c.bullet;
-        const dotId = isLoading ? cardId + 'LoadingDot' : '';
+        const dotColor = isLoading ? this.modeColors[m] : c.bullet;
+        const dotId = isLoading ? cardId + 'Dot' : '';
         
         let iconHtml;
         if (st.icon === 'bullet') {
-            iconHtml = '<div ' + (dotId ? 'id="' + dotId + '"' : '') + ' style="width:6px;height:6px;border-radius:50%;background:' + dotColor + ';' + (isLoading ? 'animation:tpPulse 1.2s ease infinite;' : '') + '"></div>';
+            iconHtml = '<div ' + (dotId ? 'id="' + dotId + '"' : '') + ' style="width:5px;height:5px;border-radius:50%;background:' + dotColor + ';' + (isLoading ? 'animation:tpPulse 1.2s ease infinite;' : '') + '"></div>';
         } else {
-            iconHtml = '<div style="width:16px;height:16px;color:' + c.text + ';">' + (this.icons[st.icon] || this.icons.globe) + '</div>';
+            iconHtml = '<div style="width:14px;height:14px;color:' + c.text + ';">' + (this.icons[st.icon] || this.icons.globe) + '</div>';
         }
         
-        return '<div style="display:flex;min-height:34px;opacity:0;transform:translateY(4px);transition:all 0.25s ease;">' +
-            '<div style="display:flex;flex-direction:column;align-items:center;padding-left:12px;">' +
-                '<div style="width:1px;flex-grow:1;min-height:9px;background:' + c.line + ';"></div>' +
-                '<div style="display:flex;align-items:center;justify-content:center;width:16px;height:16px;margin:4px 0;">' + iconHtml + '</div>' +
-                '<div style="width:1px;flex-grow:1;min-height:9px;background:' + (isLast ? 'transparent' : c.line) + ';"></div>' +
-            '</div>' +
-            '<div style="display:flex;flex:1;align-items:center;padding:8px 12px;">' +
-                '<span style="font-size:14px;color:' + c.text + ';">' + st.text + '</span>' +
-            '</div>' +
+        return '<div style="display:flex;align-items:center;padding:4px 0;opacity:0;transition:opacity 0.2s;">' +
+            '<div style="width:14px;height:14px;display:flex;align-items:center;justify-content:center;margin-right:8px;">' + iconHtml + '</div>' +
+            '<span style="font-size:13px;color:' + c.text + ';">' + st.text + '</span>' +
         '</div>';
     },
 
-    // MAIN SHOW FUNCTION
+    // SHOW
     show(m, q) {
         const body = document.getElementById(m + 'Body');
         if (!body) return;
         
-        // Generate unique card ID
         this.cardCounter++;
         const cardId = 'tpCard' + this.cardCounter;
         this.currentCardId[m] = cardId;
         this.expandedState[cardId] = true;
         
-        // Decide: simple or technical
-        if (this.isSimpleQuery(q) && !this.isTechnicalQuery(q)) {
-            // SIMPLE MODE - just rotating phrase with blinking dot
-            const phrase = this.getSimplePhrase(m);
-            body.insertAdjacentHTML('beforeend', this.createSimpleCard(m, cardId, phrase));
-            this.s[m] = [{ icon: 'bullet', text: phrase }];
+        // Decide mode
+        const isSimple = this.isSimpleQuery(q) && !this.isTechnicalQuery(q);
+        this.isSimpleMode[m] = isSimple;
+        
+        if (isSimple) {
+            // SIMPLE - just animated text, will disappear
+            body.insertAdjacentHTML('beforeend', this.createSimpleCard(cardId, this.getSimplePhrase(), m));
+            this.s[m] = [];
         } else {
-            // TECHNICAL MODE - full steps
+            // TECHNICAL - full steps, stays in history
             const b = (document.getElementById('copilotSub') || {}).textContent || 'équipement';
             const st = this.analyze(q, m, b);
             this.s[m] = st;
             this.i[m] = 0;
             
-            body.insertAdjacentHTML('beforeend', this.createFullCard(m, cardId));
+            body.insertAdjacentHTML('beforeend', this.createFullCard(cardId));
             
             const cont = document.getElementById(cardId + 'Steps');
             const cnt = document.getElementById(cardId + 'Count');
             
-            // Animate steps
             clearInterval(this.t[m]);
             const self = this;
             this.t[m] = setInterval(function() {
@@ -15768,27 +15728,22 @@ const TP = {
                     const h = self.stepHtml(st[idx], isLast, isLoading, m, cardId);
                     cont.insertAdjacentHTML('beforeend', h);
                     const nw = cont.lastElementChild;
-                    requestAnimationFrame(function() {
-                        nw.style.opacity = '1';
-                        nw.style.transform = 'translateY(0)';
-                    });
+                    requestAnimationFrame(() => nw.style.opacity = '1');
                     self.i[m]++;
                     cnt.textContent = self.i[m] + ' étape' + (self.i[m] > 1 ? 's' : '');
-                    body.scrollTop = body.scrollHeight;
                 } else {
                     clearInterval(self.t[m]);
                 }
-            }, 400);
+            }, 350);
         }
         
         body.scrollTop = body.scrollHeight;
     },
 
-    // Toggle card expand/collapse
+    // TOGGLE
     toggleCard(cardId) {
         const collapsed = document.getElementById(cardId + 'Collapsed');
         const expanded = document.getElementById(cardId + 'Expanded');
-        
         if (!collapsed || !expanded) return;
         
         if (this.expandedState[cardId]) {
@@ -15802,83 +15757,70 @@ const TP = {
         }
     },
 
-    // Collapse when AI responds
+    // COLLAPSE
     collapse(m, sum) {
         clearInterval(this.t[m]);
-        
         const cardId = this.currentCardId[m];
         if (!cardId) return;
         
         const card = document.getElementById(cardId);
         if (!card) return;
         
-        // Stop blinking on simple card
-        const simpleDot = document.getElementById(cardId + 'Dot');
-        if (simpleDot) {
-            simpleDot.style.animation = 'none';
-            simpleDot.style.background = this.colors.bullet;
+        // SIMPLE MODE = REMOVE card completely
+        if (this.isSimpleMode[m]) {
+            card.remove();
+            return;
         }
         
-        // Stop blinking on full card
-        const loadingDot = document.getElementById(cardId + 'LoadingDot');
+        // TECHNICAL MODE = collapse but keep
+        const loadingDot = document.getElementById(cardId + 'Dot');
         if (loadingDot) {
             loadingDot.style.animation = 'none';
             loadingDot.style.background = this.colors.bullet;
         }
         
-        // Update simple card text
-        const simpleText = document.getElementById(cardId + 'Text');
-        if (simpleText) {
-            simpleText.textContent = sum || 'Terminé';
-        }
+        const steps = this.s[m] || [];
+        const summary = sum || (steps.length + ' étape' + (steps.length > 1 ? 's' : ''));
         
-        // Collapse full card
+        const summaryEl = document.getElementById(cardId + 'Summary');
+        if (summaryEl) summaryEl.textContent = summary;
+        
         const collapsed = document.getElementById(cardId + 'Collapsed');
         const expanded = document.getElementById(cardId + 'Expanded');
         
         if (collapsed && expanded) {
-            const steps = this.s[m] || [];
-            const summary = sum || (steps.length + ' étape' + (steps.length > 1 ? 's' : '') + ' d\'analyse');
-            
-            const summaryEl = document.getElementById(cardId + 'Summary');
-            if (summaryEl) summaryEl.textContent = summary;
-            
             collapsed.style.display = 'block';
             expanded.style.display = 'none';
             this.expandedState[cardId] = false;
         }
     },
 
-    // Hide (optional)
     hide(m) {
         clearInterval(this.t[m]);
+        const cardId = this.currentCardId[m];
+        if (cardId) {
+            const card = document.getElementById(cardId);
+            if (card) card.remove();
+        }
     }
 };
 
-// Global functions
-function showThoughtProcess(m, q) {
-    try { TP.show(m, q); } catch(e) { console.warn('TP error:', e); }
-}
-
-function collapseThoughtProcess(m, s) {
-    try { TP.collapse(m, s); } catch(e) { console.warn('TP error:', e); }
-}
-
-function hideThoughtProcess(m) {
-    try { TP.hide(m); } catch(e) { console.warn('TP error:', e); }
-}
+// Global
+function showThoughtProcess(m, q) { try { TP.show(m, q); } catch(e) { console.warn('TP:', e); } }
+function collapseThoughtProcess(m, s) { try { TP.collapse(m, s); } catch(e) { console.warn('TP:', e); } }
+function hideThoughtProcess(m) { try { TP.hide(m); } catch(e) { console.warn('TP:', e); } }
 
 // CSS
 (function() {
     if (!document.getElementById('tp-styles')) {
-        const style = document.createElement('style');
-        style.id = 'tp-styles';
-        style.textContent = '@keyframes tpPulse{0%,100%{opacity:1}50%{opacity:0.4}}';
-        document.head.appendChild(style);
+        const s = document.createElement('style');
+        s.id = 'tp-styles';
+        s.textContent = '@keyframes tpPulse{0%,100%{opacity:1}50%{opacity:0.4}}';
+        document.head.appendChild(s);
     }
 })();
 
-console.log('✅ ThoughtProcess FixAIR v3 loaded');
+console.log('✅ TP FixAIR v4');
 </script>
 </body>
 </html>
