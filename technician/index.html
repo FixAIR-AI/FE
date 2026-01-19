@@ -6175,59 +6175,77 @@
         }
 
         // ═══ SUPABASE CLIENT INITIALIZATION ═══
-        if (window.supabase && window.supabase.createClient) {
-            db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-                auth: {
-                    persistSession: true,
-                    autoRefreshToken: true,
-                    detectSessionInUrl: false,
-                    storageKey: 'fixair-tech-auth',
-                    flowType: 'implicit',
-                    lock: false  // CRITICAL: Prevents AbortError
+        
+        // ═══ PARSE URL HASH FOR AUTH TOKENS ═══
+        // This must happen BEFORE createClient to prevent AbortError in cross-browser scenarios
+        function parseHashParams(hash) {
+            if (!hash || hash.length < 2) return {};
+            const params = {};
+            const hashContent = hash.substring(1); // Remove #
+            const pairs = hashContent.split('&');
+            for (const pair of pairs) {
+                const [key, value] = pair.split('=');
+                if (key && value) {
+                    params[decodeURIComponent(key)] = decodeURIComponent(value);
                 }
-            });
-            supabaseReady = true;
-        } else {
-            console.error('Supabase library not loaded!');
-            alert('Erreur: Supabase non chargé. Veuillez rafraîchir la page.');
+            }
+            return params;
         }
 
-        // Helper to wait for Supabase to be ready (including auth)
-        let supabaseAuthReady = false;
-        async function waitForSupabase() {
-            if (supabaseReady && db) {
-                // Wait for auth to be fully initialized
-                if (!supabaseAuthReady) {
-                    // Give Supabase auth time to initialize internally (prevents AbortError)
-                    await new Promise(r => setTimeout(r, 300));
-                    // Try a test call to verify auth is ready
-                    let authAttempts = 0;
-                    while (authAttempts < 5) {
-                        try {
-                            await db.auth.getSession();
-                            supabaseAuthReady = true;
-                            break;
-                        } catch (e) {
-                            if (e.name === 'AbortError') {
-                                // Auth still initializing, wait and retry
-                                await new Promise(r => setTimeout(r, 200));
-                                authAttempts++;
-                            } else {
-                                // Other error, auth might be ready
-                                supabaseAuthReady = true;
-                                break;
-                            }
-                        }
-                    }
+        // Parse URL hash for tokens BEFORE creating client
+        const initialHash = window.location.hash;
+        const hashParams = parseHashParams(initialHash);
+        const hasAccessToken = !!hashParams.access_token;
+        const hasRefreshToken = !!hashParams.refresh_token;
+        const tokenType = hashParams.type; // 'recovery', 'signup', 'magiclink', etc.
+        const isRecoveryLink = tokenType === 'recovery';
+
+        // CRITICAL: Clean URL hash BEFORE creating Supabase client
+        // This prevents Supabase from internally trying to process the tokens
+        // which causes AbortError in fresh browsers (different browser than signup)
+        if (initialHash) {
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+
+        if (window.supabase && window.supabase.createClient) {
+            // STANDARDIZED CONFIG - same across all FixAIR apps
+            db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                auth: {
+                    lock: false,                // REQUIRED - prevents AbortError from tab lock
+                    persistSession: true,       // REQUIRED - keep session across page loads
+                    autoRefreshToken: true,     // REQUIRED - auto refresh tokens
+                    detectSessionInUrl: false,  // REQUIRED - we handle URL tokens manually
+                    storageKey: 'fixair-auth'   // REQUIRED - same key for ALL FixAIR apps
                 }
-                return db;
-            }
+            });
+
+            // Mark Supabase as ready immediately since we handle auth manually
+            supabaseReady = true;
+        } else {
+            console.error('❌ Supabase library not loaded! window.supabase =', window.supabase);
+            alert('Erreur: Supabase non chargé. Veuillez rafraîchir la page.');
+        }
+        
+        // Helper function to wait for Supabase to be ready
+        async function waitForSupabase() {
+            if (supabaseReady) return true;
             let attempts = 0;
-            while ((!supabaseReady || !db) && attempts < 20) {
+            while (!supabaseReady && attempts < 20) {
                 await new Promise(r => setTimeout(r, 100));
                 attempts++;
             }
-            return db;
+            return supabaseReady;
+        }
+        
+        // Safe query wrapper that handles AbortError
+        async function safeQuery(queryFn, retries = 3, timeoutMs = 30000) {
+            // Direct execution - no timeout/retry logic that causes issues
+            try {
+                return await queryFn();
+            } catch (error) {
+                console.error('Query error:', error);
+                return { data: null, error: { message: error.message } };
+            }
         }
 
         // ═══ TOAST UTILITY ═══
@@ -8214,31 +8232,19 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             // Wait for Supabase to be ready
             await waitForSupabase();
             
-            // Fallback: get from Supabase Auth session with retry for AbortError
-            let retries = 3;
-            while (retries > 0) {
-                try {
-                    const { data: { session } } = await db.auth.getSession();
-                    if (session && session.user) {
-                        const profile = await loadUserProfile(session.user.id);
-                        if (profile) {
-                            currentUser = profile;
-                            currentUserId = profile.id;
-                            return profile.id;
-                        }
-                    }
-                    break; // Success, exit loop
-                } catch (err) {
-                    if (err.name === 'AbortError' && retries > 1) {
-                        // AbortError - wait and retry
-                        console.warn('Supabase auth initializing, retrying...', retries - 1, 'attempts left');
-                        await new Promise(r => setTimeout(r, 500));
-                        retries--;
-                    } else {
-                        console.error('Error getting user ID:', err);
-                        break;
+            // Fallback: get from Supabase Auth session
+            try {
+                const { data: { session } } = await db.auth.getSession();
+                if (session && session.user) {
+                    const profile = await loadUserProfile(session.user.id);
+                    if (profile) {
+                        currentUser = profile;
+                        currentUserId = profile.id;
+                        return profile.id;
                     }
                 }
+            } catch (err) {
+                console.error('Error getting user ID:', err);
             }
             
             // Demo fallback
@@ -15373,12 +15379,8 @@ RÈGLES:
         document.addEventListener('DOMContentLoaded', function() {
             // Wait longer to ensure Supabase is ready
             setTimeout(async function() {
-                try {
-                    await waitForSupabase();
-                    await initTechCalendar();
-                } catch (err) {
-                    console.warn('Calendar init delayed, will retry on user interaction:', err.name);
-                }
+                await waitForSupabase();
+                initTechCalendar();
             }, 1000);
         });
     </script>
