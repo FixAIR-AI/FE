@@ -6077,118 +6077,7 @@
         let db;
         let supabaseReady = false;
 
-        // ═══ MERMAID INITIALIZATION ═══
-        let mermaidReady = false;
-        function initMermaid() {
-            if (typeof mermaid !== 'undefined') {
-                mermaid.initialize({
-                    startOnLoad: false,
-                    theme: 'base',
-                    securityLevel: 'loose',
-                    flowchart: {
-                        useMaxWidth: true,
-                        htmlLabels: true,
-                        curve: 'basis',
-                        nodeSpacing: 50,
-                        rankSpacing: 50,
-                        padding: 15
-                    },
-                    themeVariables: {
-                        primaryColor: '#2d2d2d',
-                        primaryTextColor: '#ffffff',
-                        primaryBorderColor: '#666666',
-                        lineColor: '#888888',
-                        secondaryColor: '#3d3d3d',
-                        tertiaryColor: '#4d4d4d',
-                        background: '#1a1a1a',
-                        mainBkg: '#2d2d2d',
-                        nodeBorder: '#888888',
-                        clusterBkg: '#252525',
-                        clusterBorder: '#666666',
-                        titleColor: '#ffffff',
-                        edgeLabelBackground: 'transparent',
-                        fontFamily: 'system-ui, -apple-system, sans-serif',
-                        fontSize: '14px'
-                    }
-                });
-                mermaidReady = true;
-            } else {
-                setTimeout(initMermaid, 100);
-            }
-        }
-        initMermaid();
-
-        // ═══ RENDER MERMAID DIAGRAMS ═══
-        async function renderMermaidDiagrams(container) {
-            if (!mermaidReady || typeof mermaid === 'undefined') return;
-
-            const placeholders = container.querySelectorAll('.mermaid-placeholder');
-            for (const placeholder of placeholders) {
-                if (placeholder.classList.contains('mermaid-rendered')) continue;
-
-                let code = placeholder.dataset.mermaidCode;
-                if (!code) continue;
-
-                // Decode HTML entities
-                code = code
-                    .replace(/&quot;/g, '"')
-                    .replace(/&lt;/g, '<')
-                    .replace(/&gt;/g, '>')
-                    .replace(/&amp;/g, '&');
-
-                // ═══ SANITIZE MERMAID CODE ═══
-
-                // Helper: check if text needs quotes (contains special chars)
-                const needsQuotes = (text) => /[()\/']/.test(text) && !text.startsWith('"');
-
-                // Helper: add quotes around text, escaping internal quotes
-                const addQuotes = (text) => {
-                    if (needsQuotes(text)) {
-                        return '"' + text.replace(/"/g, "'") + '"';
-                    }
-                    return text;
-                };
-
-                // Fix node labels: [text] → ["text"] if contains special chars
-                code = code.replace(/\[([^\]]+)\]/g, (match, content) => {
-                    if (needsQuotes(content)) {
-                        return '[' + addQuotes(content) + ']';
-                    }
-                    return match;
-                });
-
-                // Fix edge labels: |text| → |"text"| if contains special chars
-                code = code.replace(/\|([^|]+)\|/g, (match, content) => {
-                    // Skip if already quoted
-                    if (content.startsWith('"') && content.endsWith('"')) {
-                        return match;
-                    }
-                    if (needsQuotes(content)) {
-                        return '|' + addQuotes(content) + '|';
-                    }
-                    return match;
-                });
-
-                // Clean up double quotes
-                code = code.replace(/""/g, '"');
-
-                // Remove AI-generated style commands (CSS handles styling)
-                code = code.replace(/^\s*style\s+\w+\s+.+$/gm, '');
-                code = code.replace(/^\s*classDef\s+.+$/gm, '');
-
-                try {
-                    const id = 'mermaid-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-                    const { svg } = await mermaid.render(id, code);
-                    placeholder.innerHTML = svg;
-                    placeholder.classList.add('mermaid-rendered');
-                } catch (error) {
-                    console.error('Mermaid render error:', error);
-                    console.error('Code that failed:', code);
-                    placeholder.innerHTML = '<div class="mermaid-error"><div class="mermaid-error-title">Erreur de rendu diagramme</div><pre>' + code.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre></div>';
-                    placeholder.classList.add('mermaid-error-container');
-                }
-            }
-        }
+        
 
         // ═══ SUPABASE CLIENT INITIALIZATION ═══
         if (window.supabase && window.supabase.createClient) {
@@ -8043,14 +7932,10 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             }
             body.appendChild(msg);
             body.scrollTop = body.scrollHeight;
-
+            
             // Render any Mermaid diagrams in the message
-            if (type === 'ai') {
-                renderMermaidDiagrams(msg);
-                // FixAIR Diagram System rendering
-                if (typeof FixAIRDiagrams !== 'undefined') {
-                    FixAIRDiagrams.render(msg);
-                }
+            if (type === 'ai' && typeof FixAIRDiagrams !== 'undefined') {
+                FixAIRDiagrams.render(msg);
             }
         }
 
