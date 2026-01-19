@@ -2204,6 +2204,10 @@
         .msg.ai .msg-bubble th, .msg.ai .msg-bubble td { border: 1px solid var(--border); padding: 8px; text-align: left; }
         .msg.ai .msg-bubble th { background: rgba(255,255,255,0.05); font-weight: 600; }
 
+        /* ═══════════════════════════════════════════════════════════════
+           DISABLED: Old mermaid CSS - now handled by fixair-diagrams.css
+           ═══════════════════════════════════════════════════════════════
+
         /* Mermaid Diagrams */
         /* Clean Mermaid Diagrams */
         .mermaid-placeholder {
@@ -2328,6 +2332,9 @@
         [data-theme="light"] .mermaid-rendered .cluster .label {
             fill: #666 !important;
         }
+
+           END DISABLED BLOCK
+           ═══════════════════════════════════════════════════════════════ */
 
         /* Light theme markdown overrides */
         [data-theme="light"] .msg.ai .msg-bubble h1,
@@ -6077,6 +6084,10 @@
         let db;
         let supabaseReady = false;
 
+        /* ═══════════════════════════════════════════════════════════════
+           DISABLED: Old initMermaid - now handled by FixAIRDiagrams.init()
+           ═══════════════════════════════════════════════════════════════
+
         // ═══ MERMAID INITIALIZATION ═══
         let mermaidReady = false;
         function initMermaid() {
@@ -6117,6 +6128,13 @@
             }
         }
         initMermaid();
+
+           END DISABLED BLOCK
+           ═══════════════════════════════════════════════════════════════ */
+
+        /* ═══════════════════════════════════════════════════════════════
+           DISABLED: Old renderMermaidDiagrams - now handled by FixAIRDiagrams.render()
+           ═══════════════════════════════════════════════════════════════
 
         // ═══ RENDER MERMAID DIAGRAMS ═══
         async function renderMermaidDiagrams(container) {
@@ -6189,6 +6207,9 @@
                 }
             }
         }
+
+           END DISABLED BLOCK
+           ═══════════════════════════════════════════════════════════════ */
 
         // ═══ SUPABASE CLIENT INITIALIZATION ═══
         if (window.supabase && window.supabase.createClient) {
@@ -8047,7 +8068,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
 
             // Render any Mermaid diagrams in the message
             if (type === 'ai') {
-                renderMermaidDiagrams(msg);
+                // DISABLED: renderMermaidDiagrams(msg); - now handled by FixAIRDiagrams
                 // FixAIR Diagram System rendering
                 if (typeof FixAIRDiagrams !== 'undefined') {
                     FixAIRDiagrams.render(msg);
