@@ -6192,9 +6192,36 @@
             alert('Erreur: Supabase non chargé. Veuillez rafraîchir la page.');
         }
 
-        // Helper to wait for Supabase to be ready
+        // Helper to wait for Supabase to be ready (including auth)
+        let supabaseAuthReady = false;
         async function waitForSupabase() {
-            if (supabaseReady && db) return db;
+            if (supabaseReady && db) {
+                // Wait for auth to be fully initialized
+                if (!supabaseAuthReady) {
+                    // Give Supabase auth time to initialize internally (prevents AbortError)
+                    await new Promise(r => setTimeout(r, 300));
+                    // Try a test call to verify auth is ready
+                    let authAttempts = 0;
+                    while (authAttempts < 5) {
+                        try {
+                            await db.auth.getSession();
+                            supabaseAuthReady = true;
+                            break;
+                        } catch (e) {
+                            if (e.name === 'AbortError') {
+                                // Auth still initializing, wait and retry
+                                await new Promise(r => setTimeout(r, 200));
+                                authAttempts++;
+                            } else {
+                                // Other error, auth might be ready
+                                supabaseAuthReady = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                return db;
+            }
             let attempts = 0;
             while ((!supabaseReady || !db) && attempts < 20) {
                 await new Promise(r => setTimeout(r, 100));
@@ -8187,19 +8214,31 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             // Wait for Supabase to be ready
             await waitForSupabase();
             
-            // Fallback: get from Supabase Auth session
-            try {
-                const { data: { session } } = await db.auth.getSession();
-                if (session && session.user) {
-                    const profile = await loadUserProfile(session.user.id);
-                    if (profile) {
-                        currentUser = profile;
-                        currentUserId = profile.id;
-                        return profile.id;
+            // Fallback: get from Supabase Auth session with retry for AbortError
+            let retries = 3;
+            while (retries > 0) {
+                try {
+                    const { data: { session } } = await db.auth.getSession();
+                    if (session && session.user) {
+                        const profile = await loadUserProfile(session.user.id);
+                        if (profile) {
+                            currentUser = profile;
+                            currentUserId = profile.id;
+                            return profile.id;
+                        }
+                    }
+                    break; // Success, exit loop
+                } catch (err) {
+                    if (err.name === 'AbortError' && retries > 1) {
+                        // AbortError - wait and retry
+                        console.warn('Supabase auth initializing, retrying...', retries - 1, 'attempts left');
+                        await new Promise(r => setTimeout(r, 500));
+                        retries--;
+                    } else {
+                        console.error('Error getting user ID:', err);
+                        break;
                     }
                 }
-            } catch (err) {
-                console.error('Error getting user ID:', err);
             }
             
             // Demo fallback
@@ -15334,8 +15373,12 @@ RÈGLES:
         document.addEventListener('DOMContentLoaded', function() {
             // Wait longer to ensure Supabase is ready
             setTimeout(async function() {
-                await waitForSupabase();
-                initTechCalendar();
+                try {
+                    await waitForSupabase();
+                    await initTechCalendar();
+                } catch (err) {
+                    console.warn('Calendar init delayed, will retry on user interaction:', err.name);
+                }
             }, 1000);
         });
     </script>
