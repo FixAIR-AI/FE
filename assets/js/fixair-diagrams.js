@@ -1,323 +1,545 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
  * FIXAIR DIAGRAM SYSTEM - MERMAID CONFIGURATION
- * Version: 2.3.0 - IMPROVED SANITIZATION
+ * Version: 2.3.0
  * 
- * FIXES:
- * - Handles .mermaid-placeholder elements with data-mermaid-code attribute
- * - Sanitizes parentheses in BOTH [] and {} shapes
- * - Handles accents, slashes, and special characters
+ * This file initializes Mermaid with FixAIR premium styling.
+ * Since Mermaid's CSS selectors don't always match the generated DOM,
+ * we use post-processing to ensure consistent styling.
+ * 
+ * USAGE:
+ * 1. Include Mermaid CDN BEFORE this file
+ * 2. Include this file
+ * 3. Call FixAIRDiagrams.render(element) to render diagrams
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
 (function() {
     'use strict';
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // MERMAID CONFIGURATION - Premium FixAIR Theme
-    // ─────────────────────────────────────────────────────────────────────────────
-    const MERMAID_CONFIG = {
-        startOnLoad: false,
-        theme: 'base',
-        securityLevel: 'loose',
-        fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+    // ═══════════════════════════════════════════════════════════════════════════
+    // STYLE CONFIGURATION
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    const STYLES = {
+        // Node (rectangles, diamonds, etc.)
+        node: {
+            fill: '#18181b',
+            stroke: 'rgba(255, 255, 255, 0.12)',
+            strokeWidth: '1px',
+            rx: '12',
+            ry: '12',
+            filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))'
+        },
         
-        themeVariables: {
-            background: 'transparent',
-            mainBkg: '#18181b',
-            secondaryBkg: '#18181b',
-            tertiaryBkg: '#1f1f23',
-            
-            primaryColor: '#18181b',
-            primaryTextColor: '#fafafa',
-            primaryBorderColor: 'rgba(255, 255, 255, 0.12)',
-            
-            secondaryColor: '#18181b',
-            secondaryTextColor: '#fafafa',
-            secondaryBorderColor: 'rgba(255, 255, 255, 0.1)',
-            
-            tertiaryColor: '#1f1f23',
-            tertiaryTextColor: '#a1a1aa',
-            tertiaryBorderColor: 'rgba(255, 255, 255, 0.08)',
-            
-            nodeBorder: 'rgba(255, 255, 255, 0.12)',
-            nodeTextColor: '#fafafa',
-            
-            lineColor: '#52525b',
-            edgeLabelBackground: 'transparent',
-            
-            clusterBkg: 'rgba(255, 255, 255, 0.02)',
-            clusterBorder: 'rgba(255, 255, 255, 0.05)',
-            
-            noteBkgColor: '#18181b',
-            noteBorderColor: 'rgba(255, 255, 255, 0.1)',
-            noteTextColor: '#a1a1aa',
-            
-            actorBkg: '#18181b',
-            actorBorder: 'rgba(255, 255, 255, 0.12)',
-            actorTextColor: '#fafafa',
-            actorLineColor: '#27272a',
-            
-            signalColor: '#52525b',
-            signalTextColor: '#e4e4e7',
-            
-            labelBoxBkgColor: '#18181b',
-            labelBoxBorderColor: 'rgba(255, 255, 255, 0.08)',
-            labelTextColor: '#71717a',
-            loopTextColor: '#71717a',
-            
-            activationBkgColor: '#1f1f23',
-            activationBorderColor: 'rgba(255, 255, 255, 0.1)',
-            
-            labelBackgroundColor: 'transparent',
-            
-            fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+        // Diamond shapes (decisions)
+        diamond: {
+            fill: '#18181b',
+            stroke: 'rgba(255, 255, 255, 0.15)',
+            strokeWidth: '1px',
+            filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))'
+        },
+        
+        // Text labels
+        text: {
+            fill: '#fafafa',
+            fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            fontWeight: '600',
             fontSize: '14px'
         },
         
-        flowchart: {
-            useMaxWidth: true,
-            htmlLabels: true,
-            curve: 'basis',
-            nodeSpacing: 50,
-            rankSpacing: 60,
-            padding: 20
+        // Edge text (labels on arrows)
+        edgeLabel: {
+            fill: '#a1a1aa',
+            fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            fontWeight: '500',
+            fontSize: '12px'
         },
         
-        sequence: {
-            useMaxWidth: true,
-            actorMargin: 80,
-            showSequenceNumbers: true
+        // Edge label background
+        edgeLabelBg: {
+            fill: 'transparent'
+        },
+        
+        // Lines/Arrows
+        edge: {
+            stroke: '#52525b',
+            strokeWidth: '2px'
+        },
+        
+        // Arrowheads
+        arrowhead: {
+            fill: '#52525b',
+            stroke: '#52525b'
+        },
+        
+        // Clusters/Subgraphs
+        cluster: {
+            fill: 'rgba(255, 255, 255, 0.02)',
+            stroke: 'rgba(255, 255, 255, 0.06)',
+            strokeWidth: '1px',
+            rx: '16',
+            ry: '16'
+        },
+        
+        // Cluster titles
+        clusterLabel: {
+            fill: '#71717a',
+            fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            fontWeight: '600',
+            fontSize: '13px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em'
         }
     };
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // HELPER: Decode HTML entities
-    // ─────────────────────────────────────────────────────────────────────────────
-    function decodeHtmlEntities(text) {
-        const textarea = document.createElement('textarea');
-        textarea.innerHTML = text;
-        return textarea.value;
+    // ═══════════════════════════════════════════════════════════════════════════
+    // MERMAID INITIALIZATION
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    function initMermaid() {
+        if (typeof mermaid === 'undefined') {
+            console.warn('[FixAIR Diagrams] Mermaid not loaded yet');
+            return false;
+        }
+
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'base',
+            securityLevel: 'loose',
+            fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            
+            // Theme variables (Mermaid uses these to generate inline styles)
+            themeVariables: {
+                // Primary colors
+                primaryColor: '#18181b',
+                primaryTextColor: '#fafafa',
+                primaryBorderColor: 'rgba(255, 255, 255, 0.12)',
+                
+                // Secondary/tertiary
+                secondaryColor: '#18181b',
+                secondaryTextColor: '#fafafa',
+                secondaryBorderColor: 'rgba(255, 255, 255, 0.12)',
+                tertiaryColor: '#1f1f23',
+                tertiaryTextColor: '#fafafa',
+                tertiaryBorderColor: 'rgba(255, 255, 255, 0.1)',
+                
+                // Lines
+                lineColor: '#52525b',
+                
+                // Text
+                textColor: '#fafafa',
+                
+                // Background
+                mainBkg: '#18181b',
+                nodeBkg: '#18181b',
+                nodeBorder: 'rgba(255, 255, 255, 0.12)',
+                
+                // Clusters
+                clusterBkg: 'rgba(255, 255, 255, 0.02)',
+                clusterBorder: 'rgba(255, 255, 255, 0.06)',
+                
+                // Edge labels
+                edgeLabelBackground: 'transparent',
+                
+                // Font
+                fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                fontSize: '14px'
+            },
+            
+            // Flowchart specific settings
+            flowchart: {
+                htmlLabels: true,
+                useMaxWidth: true,
+                curve: 'basis',
+                padding: 20,
+                nodeSpacing: 50,
+                rankSpacing: 60,
+                diagramPadding: 20
+            }
+        });
+
+        console.log('[FixAIR Diagrams] Mermaid initialized v2.3.0');
+        return true;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // FIXAIR DIAGRAMS NAMESPACE
-    // ─────────────────────────────────────────────────────────────────────────────
-    const FixAIRDiagrams = {
-        initialized: false,
+    // ═══════════════════════════════════════════════════════════════════════════
+    // SANITIZATION - Fix special characters that break Mermaid
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    function sanitize(code) {
+        if (!code) return code;
         
-        /**
-         * Initialize Mermaid with FixAIR configuration
-         */
-        init: function() {
-            if (this.initialized) {
-                return true;
-            }
-            
-            if (typeof mermaid === 'undefined') {
-                console.error('[FixAIR Diagrams] Mermaid library not found.');
-                return false;
-            }
-            
-            mermaid.initialize(MERMAID_CONFIG);
-            this.initialized = true;
-            console.log('[FixAIR Diagrams] Initialized v2.3.0 ✓');
-            return true;
-        },
-        
-        /**
-         * IMPROVED SANITIZE FUNCTION
-         * Fixes: parentheses in {} and [], accents, slashes, special chars
-         */
-        sanitize: function(code) {
-            if (!code) return '';
-            let sanitized = code;
-            
-            // ═══════════════════════════════════════════════════════════════════
-            // 1. FIX DIAMOND SHAPES {} with parentheses
-            //    {Carte inverter (IPM) OK ?} → {Carte inverter IPM OK ?}
-            // ═══════════════════════════════════════════════════════════════════
-            sanitized = sanitized.replace(
-                /\{([^}]*)\(([^)]*)\)([^}]*)\}/g,
-                function(match, before, inside, after) {
-                    // Remove parentheses but keep content
-                    return '{' + before + inside + after + '}';
-                }
-            );
-            
-            // ═══════════════════════════════════════════════════════════════════
-            // 2. FIX SQUARE BRACKETS [] with parentheses (if not already quoted)
-            //    ["text (note)"] is OK, but [text (note)] needs fixing
-            // ═══════════════════════════════════════════════════════════════════
-            sanitized = sanitized.replace(
-                /\[([^\]"]*)\(([^)]*)\)([^\]"]*)\]/g,
-                function(match, before, inside, after) {
-                    // Wrap in quotes to protect special chars
-                    return '["' + before + inside + after + '"]';
-                }
-            );
-            
-            // ═══════════════════════════════════════════════════════════════════
-            // 3. FIX SUBGRAPH names with accents/special chars
-            // ═══════════════════════════════════════════════════════════════════
-            sanitized = sanitized.replace(
-                /subgraph\s+([^[\n]+?)(?=\n)/g,
-                function(match, name) {
-                    if (name.includes('[')) return match;
-                    const id = name.trim()
-                        .toUpperCase()
-                        .replace(/[^A-Z0-9]/g, '_')
-                        .substring(0, 20);
-                    const displayName = name.trim()
-                        .replace(/[()]/g, '')
-                        .replace(/[éèêë]/g, 'e')
-                        .replace(/[àâä]/g, 'a')
-                        .replace(/[ùûü]/g, 'u')
-                        .replace(/[ôö]/g, 'o')
-                        .replace(/[îï]/g, 'i')
-                        .replace(/[ç]/g, 'c')
-                        .replace(/'/g, '');
-                    return 'subgraph ' + id + '[" ' + displayName + ' "]';
-                }
-            );
-            
-            // ═══════════════════════════════════════════════════════════════════
-            // 4. FIX EDGE LABELS with parentheses |text (note)|
-            // ═══════════════════════════════════════════════════════════════════
-            sanitized = sanitized.replace(
-                /\|([^|"]*)\(([^)]*)\)([^|"]*)\|/g,
-                function(match, before, inside, after) {
-                    return '|' + before + inside + after + '|';
-                }
-            );
-            
-            // ═══════════════════════════════════════════════════════════════════
-            // 5. FIX SLASHES in labels (can break parsing)
-            //    [TB3/TB5] → ["TB3/TB5"]
-            // ═══════════════════════════════════════════════════════════════════
-            sanitized = sanitized.replace(
-                /\[([^\]"]*\/[^\]"]*)\]/g,
-                '["$1"]'
-            );
-            
-            // ═══════════════════════════════════════════════════════════════════
-            // 6. REMOVE style/classDef commands (we use CSS)
-            // ═══════════════════════════════════════════════════════════════════
-            sanitized = sanitized.replace(/^\s*style\s+.+$/gm, '');
-            sanitized = sanitized.replace(/^\s*classDef\s+.+$/gm, '');
-            sanitized = sanitized.replace(/^\s*class\s+\w+\s+\w+\s*$/gm, '');
-            
-            // ═══════════════════════════════════════════════════════════════════
-            // 7. FIX remaining problematic characters in {} diamonds
-            //    Handle any ? or special punctuation that might cause issues
-            // ═══════════════════════════════════════════════════════════════════
-            // (keeping ? is usually OK, but if issues persist, can quote)
-            
-            return sanitized;
-        },
-        
-        /**
-         * MAIN RENDER FUNCTION
-         */
-        render: async function(container) {
-            if (!this.initialized) {
-                this.init();
-            }
-            
-            const el = typeof container === 'string' 
-                ? document.querySelector(container) 
-                : container;
-            
-            if (!el) {
-                console.warn('[FixAIR Diagrams] Container not found');
-                return;
-            }
-            
-            try {
-                // ═══════════════════════════════════════════════════════════════
-                // HANDLE .mermaid-placeholder ELEMENTS
-                // ═══════════════════════════════════════════════════════════════
-                const placeholders = el.querySelectorAll('.mermaid-placeholder:not(.mermaid-rendered)');
-                
-                for (const placeholder of placeholders) {
-                    const mermaidCode = placeholder.getAttribute('data-mermaid-code');
-                    
-                    if (mermaidCode) {
-                        let decodedCode = decodeHtmlEntities(mermaidCode);
-                        const sanitizedCode = this.sanitize(decodedCode);
-                        
-                        const diagramId = 'mermaid-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-                        
-                        try {
-                            const { svg } = await mermaid.render(diagramId, sanitizedCode);
-                            placeholder.innerHTML = svg;
-                            placeholder.classList.add('mermaid-rendered');
-                            console.log('[FixAIR Diagrams] Rendered placeholder ✓');
-                        } catch (renderError) {
-                            console.error('[FixAIR Diagrams] Render error:', renderError.message);
-                            console.log('[FixAIR Diagrams] Failed code:', sanitizedCode);
-                            placeholder.innerHTML = '<div style="color: #f97316; padding: 16px; background: rgba(249,115,22,0.1); border-radius: 12px; font-size: 13px; font-family: Inter, sans-serif;"><strong>⚠️ Erreur diagramme</strong><br><small>' + renderError.message.substring(0, 100) + '</small></div>';
-                            placeholder.classList.add('mermaid-rendered');
-                        }
-                    }
-                }
-                
-                // ═══════════════════════════════════════════════════════════════
-                // HANDLE STANDARD .mermaid ELEMENTS
-                // ═══════════════════════════════════════════════════════════════
-                const mermaidEls = el.querySelectorAll('.mermaid:not([data-processed]):not(.mermaid-placeholder)');
-                
-                for (const mermaidEl of mermaidEls) {
-                    const original = mermaidEl.textContent;
-                    if (!original || original.trim() === '') continue;
-                    
-                    const sanitized = this.sanitize(original);
-                    const diagramId = 'mermaid-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-                    
-                    try {
-                        const { svg } = await mermaid.render(diagramId, sanitized);
-                        mermaidEl.innerHTML = svg;
-                        mermaidEl.setAttribute('data-processed', 'true');
-                    } catch (renderError) {
-                        console.error('[FixAIR Diagrams] Render error:', renderError.message);
-                        mermaidEl.setAttribute('data-processed', 'true');
-                    }
-                }
-                
-            } catch (error) {
-                console.error('[FixAIR Diagrams] Error:', error);
-            }
-        },
-        
-        /**
-         * Render code string directly
-         */
-        renderCode: async function(code, container, id) {
-            if (!this.initialized) this.init();
-            
-            const diagramId = id || 'fd-' + Date.now();
-            const sanitizedCode = this.sanitize(code);
-            
-            try {
-                const { svg } = await mermaid.render(diagramId, sanitizedCode);
-                if (container) container.innerHTML = svg;
-                return svg;
-            } catch (error) {
-                console.error('[FixAIR Diagrams] renderCode error:', error);
-                throw error;
-            }
-        },
-        
-        getConfig: function() {
-            return { ...MERMAID_CONFIG };
+        // Helper: check if content needs quotes
+        function needsQuotes(content) {
+            return /[àâäéèêëïîôùûüç()\/\-:',.]/.test(content);
         }
+        
+        // Helper: add quotes if not already quoted
+        function addQuotes(content) {
+            content = content.trim();
+            if ((content.startsWith('"') && content.endsWith('"')) ||
+                (content.startsWith("'") && content.endsWith("'"))) {
+                return content;
+            }
+            // Escape internal quotes
+            content = content.replace(/"/g, "'");
+            return '"' + content + '"';
+        }
+        
+        // Fix subgraph names with accents: subgraph Name → subgraph Name["Name"]
+        code = code.replace(/^(\s*subgraph\s+)([^\["\n]+)$/gm, (match, prefix, name) => {
+            name = name.trim();
+            if (name.includes('[')) return match;
+            if (needsQuotes(name)) {
+                // Create safe ID and display name
+                const safeId = name.replace(/[^a-zA-Z0-9]/g, '_');
+                return prefix + safeId + '[' + addQuotes(name) + ']';
+            }
+            return match;
+        });
+        
+        // Fix node labels with special chars: A[Label (text)] → A["Label (text)"]
+        code = code.replace(/\[([^\]"]+)\]/g, (match, content) => {
+            if (content.startsWith('"') || content.startsWith("'")) {
+                return match;
+            }
+            if (needsQuotes(content)) {
+                return '[' + addQuotes(content) + ']';
+            }
+            return match;
+        });
+        
+        // Fix diamond labels: {Label} → {"Label"} if has special chars
+        code = code.replace(/\{([^}"]+)\}/g, (match, content) => {
+            if (content.startsWith('"') || content.startsWith("'")) {
+                return match;
+            }
+            if (needsQuotes(content)) {
+                return '{' + addQuotes(content) + '}';
+            }
+            return match;
+        });
+        
+        // Fix edge labels: |text| → |"text"| if has special chars
+        code = code.replace(/\|([^|"]+)\|/g, (match, content) => {
+            if (content.startsWith('"') || content.startsWith("'")) {
+                return match;
+            }
+            if (needsQuotes(content)) {
+                return '|' + addQuotes(content) + '|';
+            }
+            return match;
+        });
+        
+        // Clean up any double quotes that might have been created
+        code = code.replace(/""/g, '"');
+        
+        // Remove style/classDef commands (we handle styling via post-processing)
+        code = code.replace(/^\s*style\s+\w+\s+.+$/gm, '');
+        code = code.replace(/^\s*classDef\s+.+$/gm, '');
+        code = code.replace(/^\s*class\s+.+$/gm, '');
+        
+        return code;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // POST-PROCESSING - Apply FixAIR styling after Mermaid renders
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    function applyStyles(container) {
+        if (!container) return;
+        
+        const svg = container.querySelector('svg');
+        if (!svg) return;
+        
+        // ─────────────────────────────────────────────────────────────────────
+        // Style all rectangles (nodes)
+        // ─────────────────────────────────────────────────────────────────────
+        container.querySelectorAll('rect').forEach(rect => {
+            // Skip edge label backgrounds (they're small rects)
+            const isEdgeLabel = rect.closest('.edgeLabel') || 
+                               rect.classList.contains('labelBox') ||
+                               (rect.getAttribute('width') && parseFloat(rect.getAttribute('width')) < 30);
+            
+            // Check if it's a cluster/subgraph rect
+            const isCluster = rect.closest('.cluster') || rect.classList.contains('cluster');
+            
+            if (isCluster) {
+                // Cluster styling
+                rect.style.fill = STYLES.cluster.fill;
+                rect.style.stroke = STYLES.cluster.stroke;
+                rect.style.strokeWidth = STYLES.cluster.strokeWidth;
+                rect.setAttribute('rx', STYLES.cluster.rx);
+                rect.setAttribute('ry', STYLES.cluster.ry);
+            } else if (isEdgeLabel) {
+                // Edge label background
+                rect.style.fill = STYLES.edgeLabelBg.fill;
+                rect.style.stroke = 'none';
+            } else {
+                // Regular node
+                rect.style.fill = STYLES.node.fill;
+                rect.style.stroke = STYLES.node.stroke;
+                rect.style.strokeWidth = STYLES.node.strokeWidth;
+                rect.style.filter = STYLES.node.filter;
+                rect.setAttribute('rx', STYLES.node.rx);
+                rect.setAttribute('ry', STYLES.node.ry);
+            }
+        });
+        
+        // ─────────────────────────────────────────────────────────────────────
+        // Style diamonds (decision nodes) - polygons
+        // ─────────────────────────────────────────────────────────────────────
+        container.querySelectorAll('polygon').forEach(polygon => {
+            polygon.style.fill = STYLES.diamond.fill;
+            polygon.style.stroke = STYLES.diamond.stroke;
+            polygon.style.strokeWidth = STYLES.diamond.strokeWidth;
+            polygon.style.filter = STYLES.diamond.filter;
+        });
+        
+        // ─────────────────────────────────────────────────────────────────────
+        // Style text labels
+        // ─────────────────────────────────────────────────────────────────────
+        container.querySelectorAll('.nodeLabel, .label text, text.nodeLabel').forEach(text => {
+            text.style.fill = STYLES.text.fill;
+            text.style.fontFamily = STYLES.text.fontFamily;
+            text.style.fontWeight = STYLES.text.fontWeight;
+            text.style.fontSize = STYLES.text.fontSize;
+        });
+        
+        // Also catch text elements directly
+        container.querySelectorAll('text').forEach(text => {
+            // Skip if already styled or if it's an edge label
+            if (text.closest('.edgeLabel') || text.closest('.edgeLabels')) {
+                text.style.fill = STYLES.edgeLabel.fill;
+                text.style.fontFamily = STYLES.edgeLabel.fontFamily;
+                text.style.fontWeight = STYLES.edgeLabel.fontWeight;
+                text.style.fontSize = STYLES.edgeLabel.fontSize;
+            } else if (text.closest('.cluster')) {
+                text.style.fill = STYLES.clusterLabel.fill;
+                text.style.fontFamily = STYLES.clusterLabel.fontFamily;
+                text.style.fontWeight = STYLES.clusterLabel.fontWeight;
+                text.style.fontSize = STYLES.clusterLabel.fontSize;
+            } else {
+                // Regular node text
+                if (!text.style.fill || text.style.fill === 'rgb(0, 0, 0)' || text.style.fill === 'black') {
+                    text.style.fill = STYLES.text.fill;
+                }
+                text.style.fontFamily = STYLES.text.fontFamily;
+            }
+        });
+        
+        // Style foreignObject content (HTML labels)
+        container.querySelectorAll('foreignObject .nodeLabel, foreignObject .label').forEach(label => {
+            label.style.color = STYLES.text.fill;
+            label.style.fontFamily = STYLES.text.fontFamily;
+            label.style.fontWeight = STYLES.text.fontWeight;
+            label.style.fontSize = STYLES.text.fontSize;
+        });
+        
+        // ─────────────────────────────────────────────────────────────────────
+        // Style edges (lines/arrows)
+        // ─────────────────────────────────────────────────────────────────────
+        container.querySelectorAll('.edgePath path, path.path').forEach(path => {
+            path.style.stroke = STYLES.edge.stroke;
+            path.style.strokeWidth = STYLES.edge.strokeWidth;
+        });
+        
+        // ─────────────────────────────────────────────────────────────────────
+        // Style arrowheads
+        // ─────────────────────────────────────────────────────────────────────
+        container.querySelectorAll('marker path, .arrowheadPath').forEach(arrow => {
+            arrow.style.fill = STYLES.arrowhead.fill;
+            arrow.style.stroke = STYLES.arrowhead.stroke;
+        });
+        
+        // Also check defs for markers
+        container.querySelectorAll('defs marker path').forEach(path => {
+            path.setAttribute('fill', STYLES.arrowhead.fill);
+            path.setAttribute('stroke', STYLES.arrowhead.stroke);
+        });
+        
+        // ─────────────────────────────────────────────────────────────────────
+        // Style edge labels
+        // ─────────────────────────────────────────────────────────────────────
+        container.querySelectorAll('.edgeLabel .label, .edgeLabel span').forEach(label => {
+            label.style.color = STYLES.edgeLabel.fill;
+            label.style.fill = STYLES.edgeLabel.fill;
+            label.style.fontFamily = STYLES.edgeLabel.fontFamily;
+            label.style.fontWeight = STYLES.edgeLabel.fontWeight;
+            label.style.fontSize = STYLES.edgeLabel.fontSize;
+            label.style.background = 'transparent';
+        });
+        
+        console.log('[FixAIR Diagrams] Styles applied');
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // MAIN RENDER FUNCTION
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    async function render(placeholder, code) {
+        if (!placeholder) {
+            console.error('[FixAIR Diagrams] No placeholder element provided');
+            return false;
+        }
+        
+        if (!code) {
+            // Try to get code from placeholder's data attribute or text content
+            code = placeholder.getAttribute('data-mermaid') || placeholder.textContent;
+        }
+        
+        if (!code || !code.trim()) {
+            console.error('[FixAIR Diagrams] No mermaid code provided');
+            return false;
+        }
+        
+        // Ensure Mermaid is initialized
+        if (typeof mermaid === 'undefined') {
+            console.error('[FixAIR Diagrams] Mermaid library not loaded');
+            return false;
+        }
+        
+        // Sanitize the code
+        const sanitizedCode = sanitize(code);
+        console.log('[FixAIR Diagrams] Rendering:', sanitizedCode.substring(0, 100) + '...');
+        
+        try {
+            // Generate unique ID
+            const id = `mermaid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            
+            // Render with Mermaid
+            const { svg } = await mermaid.render(id, sanitizedCode);
+            
+            // Insert SVG
+            placeholder.innerHTML = svg;
+
+            // Post-process: Apply FixAIR premium styling
+            placeholder.querySelectorAll('rect').forEach(rect => {
+                if (!rect.closest('.edgeLabel')) {
+                    rect.style.fill = '#18181b';
+                    rect.style.stroke = 'rgba(255, 255, 255, 0.12)';
+                    rect.style.filter = 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))';
+                    rect.setAttribute('rx', '12');
+                    rect.setAttribute('ry', '12');
+                }
+            });
+
+            placeholder.querySelectorAll('polygon').forEach(p => {
+                p.style.fill = '#18181b';
+                p.style.stroke = 'rgba(255, 255, 255, 0.15)';
+                p.style.filter = 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))';
+            });
+
+            placeholder.querySelectorAll('text, .nodeLabel, foreignObject .nodeLabel').forEach(t => {
+                t.style.fill = '#fafafa';
+                t.style.color = '#fafafa';
+                t.style.fontFamily = 'Inter, system-ui, sans-serif';
+                t.style.fontWeight = '600';
+            });
+
+            placeholder.querySelectorAll('.edgePath path').forEach(path => {
+                path.style.stroke = '#52525b';
+                path.style.strokeWidth = '2px';
+            });
+
+            placeholder.querySelectorAll('.edgeLabel').forEach(label => {
+                label.style.background = 'transparent';
+            });
+
+            // Apply FixAIR styling
+            applyStyles(placeholder);
+            
+            // Mark as rendered
+            placeholder.classList.add('mermaid-rendered');
+            
+            console.log('[FixAIR Diagrams] Render complete');
+            return true;
+            
+        } catch (error) {
+            console.error('[FixAIR Diagrams] Render error:', error);
+            console.error('[FixAIR Diagrams] Code that failed:', sanitizedCode);
+            
+            // Show error in placeholder
+            placeholder.innerHTML = `
+                <div class="mermaid-error" style="
+                    background: rgba(220, 38, 38, 0.1);
+                    border: 1px solid rgba(220, 38, 38, 0.3);
+                    border-radius: 12px;
+                    padding: 16px;
+                    color: #fca5a5;
+                    font-family: Inter, sans-serif;
+                ">
+                    <div style="font-weight: 600; margin-bottom: 8px;">⚠️ Diagram Error</div>
+                    <pre style="
+                        font-size: 12px;
+                        overflow-x: auto;
+                        background: rgba(0,0,0,0.2);
+                        padding: 12px;
+                        border-radius: 8px;
+                        margin: 0;
+                    "><code>${sanitizedCode.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>
+                </div>
+            `;
+            
+            return false;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // AUTO-RENDER ALL PLACEHOLDERS
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    async function renderAll() {
+        const placeholders = document.querySelectorAll('.mermaid-placeholder:not(.mermaid-rendered), .mermaid:not(.mermaid-rendered)');
+        
+        console.log(`[FixAIR Diagrams] Found ${placeholders.length} diagrams to render`);
+        
+        for (const placeholder of placeholders) {
+            await render(placeholder);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // RE-STYLE EXISTING DIAGRAMS (for diagrams already rendered)
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    function restyleAll() {
+        const rendered = document.querySelectorAll('.mermaid-rendered, .mermaid-placeholder');
+        
+        console.log(`[FixAIR Diagrams] Restyling ${rendered.length} diagrams`);
+        
+        rendered.forEach(container => {
+            applyStyles(container);
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // INITIALIZE
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    // Initialize Mermaid when this script loads
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initMermaid);
+    } else {
+        initMermaid();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // EXPORT PUBLIC API
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    window.FixAIRDiagrams = {
+        version: '2.3.0',
+        init: initMermaid,
+        render: render,
+        renderAll: renderAll,
+        sanitize: sanitize,
+        applyStyles: applyStyles,
+        restyleAll: restyleAll,
+        STYLES: STYLES  // Expose for customization
     };
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // AUTO-INIT
-    // ─────────────────────────────────────────────────────────────────────────────
-    FixAIRDiagrams.init();
-    window.FixAIRDiagrams = FixAIRDiagrams;
-    console.log('[FixAIR Diagrams] Module loaded v2.3.0 ✓');
+    console.log('[FixAIR Diagrams] Module loaded v2.3.0');
 
 })();

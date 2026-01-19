@@ -38,15 +38,8 @@
             --scrollbar-thumb: rgba(255, 255, 255, 0.15);
             --scrollbar-thumb-hover: rgba(255, 255, 255, 0.25);
             --scrollbar-track: transparent;
-            /* Thought Process UI */
-            --thought-border: rgba(255, 255, 255, 0.1);
-            --thought-line: rgba(255, 255, 255, 0.15);
-            --thought-text: rgba(255, 255, 255, 0.65);
-            --thought-text-muted: rgba(255, 255, 255, 0.4);
-            --thought-bullet: rgba(255, 255, 255, 0.25);
-            --thought-hover: rgba(255, 255, 255, 0.03);
         }
-
+        
         /* LIGHT THEME */
         [data-theme="light"] {
             --bg: #F8FAFC;
@@ -69,15 +62,8 @@
             --scrollbar-thumb: rgba(0, 0, 0, 0.15);
             --scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
             --scrollbar-track: transparent;
-            /* Thought Process UI */
-            --thought-border: rgba(0, 0, 0, 0.08);
-            --thought-line: rgba(0, 0, 0, 0.12);
-            --thought-text: rgba(0, 0, 0, 0.6);
-            --thought-text-muted: rgba(0, 0, 0, 0.4);
-            --thought-bullet: rgba(0, 0, 0, 0.2);
-            --thought-hover: rgba(0, 0, 0, 0.02);
         }
-
+        
         /* ==================== SCROLLBAR STYLING ==================== */
         /* Firefox scrollbar */
         * {
@@ -4897,11 +4883,11 @@
         }
 
 /* ===== THOUGHT PROCESS V2 - SAFE ===== */
-.tp-card{border:1px solid rgba(255,255,255,0.2);border-radius:8px;display:flex;flex-direction:column;overflow:hidden;margin:12px 0;background:rgba(30,30,30,0.95);min-height:60px}
+.tp-card{border:0.5px solid rgba(255,255,255,0.1);border-radius:8px;display:flex;flex-direction:column;overflow:hidden;margin:12px 0;background:transparent}
 .tp-card.tp-hidden{display:none}
 .tp-collapsed{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;gap:16px;cursor:pointer;min-height:42px}
 .tp-collapsed:hover{background:rgba(255,255,255,0.03)}
-.tp-collapsed-text{flex:1;color:rgba(255,255,255,0.85);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp-collapsed-text{flex:1;color:rgba(255,255,255,0.65);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tp-collapsed-chevron{color:rgba(255,255,255,0.65);flex-shrink:0;transition:transform 0.3s ease;width:20px;height:20px}
 .tp-card.tp-expanded .tp-collapsed-chevron{transform:rotate(180deg)}
 .tp-header-row{display:flex;min-height:34px;width:100%;cursor:pointer}
@@ -4912,7 +4898,7 @@
 .tp-header-icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;margin:2px 0;flex-shrink:0}
 .tp-header-chevron{color:rgba(255,255,255,0.4);transition:transform 0.3s ease;width:16px;height:16px}
 .tp-card.tp-expanded .tp-header-chevron{transform:rotate(180deg)}
-.tp-header-content{display:flex;align-items:center;padding:8px 12px;flex:1;font-size:14px;color:rgba(255,255,255,0.7)}
+.tp-header-content{display:flex;align-items:center;padding:8px 12px;flex:1;font-size:14px;color:rgba(255,255,255,0.4)}
 .tp-step-row{display:flex;min-height:34px;flex-shrink:0}
 .tp-step-row:hover{background:rgba(255,255,255,0.03)}
 .tp-step-left{display:flex;flex-direction:column;align-items:center;justify-content:center;padding-left:12px}
@@ -4921,12 +4907,12 @@
 .tp-bullet{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.25)}
 .tp-step-content{display:flex;flex:1;width:100%;min-width:0}
 .tp-step-button{display:flex;flex:1;align-items:center;justify-content:space-between;gap:16px;padding:8px 12px;min-width:0;background:none;border:none;cursor:pointer;text-align:left}
-.tp-step-text{font-size:14px;color:rgba(255,255,255,0.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp-step-text{font-size:14px;color:rgba(255,255,255,0.65);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tp-step-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
 .tp-results-badge{font-size:13px;color:rgba(255,255,255,0.4);padding-left:4px;white-space:nowrap}
 .tp-step-chevron{color:rgba(255,255,255,0.65)}
 .tp-step-chevron svg{width:16px;height:16px}
-.tp-expanded-content{display:none;min-height:50px}
+.tp-expanded-content{display:none}
 .tp-card.tp-expanded .tp-expanded-content{display:block}
 .tp-loading-bullet{animation:tpPulse 1.2s ease infinite}
 @keyframes tpPulse{0%,100%{opacity:1}50%{opacity:0.4}}
@@ -5443,7 +5429,7 @@
                     <button class="h-btn" onclick="toggleSplit()" title="Mode split"><span class="icon"><svg><use href="#icon-columns"/></svg></span></button>
                 </div>
             </header>
-            <div class="chat-body" id="copilotBody"></div>
+            <div class="chat-body" id="copilotBody"><div class="tp-card tp-hidden" id="tpCopilot"><div class="tp-collapsed" onclick="toggleTP('copilot')"><span class="tp-collapsed-text" id="tpCopilotSummary">Analyzing...</span><svg class="tp-collapsed-chevron" viewBox="0 0 20 20" fill="currentColor"><path d="M14.128 7.165C14.313 6.96 14.63 6.943 14.835 7.128C15.04 7.312 15.057 7.63 14.872 7.835L10.372 12.835C10.288 12.933 10.162 12.993 10.022 12.999C9.882 13.005 9.745 12.953 9.646 12.853L5.128 7.835L5.068 7.753C4.954 7.552 4.975 7.289 5.146 7.128C5.317 6.966 5.61 6.959 5.797 7.097L5.872 7.165L10 11.752L14.128 7.165Z"/></svg></div><div class="tp-expanded-content"><div class="tp-header-row" onclick="toggleTP('copilot')"><div class="tp-header-left"><div class="tp-line tp-invisible"></div><div class="tp-header-icon"><svg class="tp-header-chevron" viewBox="0 0 20 20" fill="currentColor"><path d="M10 7C10.106 7 10.209 7.033 10.294 7.095L10.372 7.165L14.872 12.165C15.057 12.37 15.04 12.687 14.835 12.872C14.63 13.057 14.313 13.04 14.128 12.835L10 8.248L5.872 12.835C5.61 13.041 5.345 13.034 5.165 12.872C4.986 12.711 4.951 12.448 5.068 12.247L5.128 12.165L9.628 7.165C9.723 7.06 9.858 7 10 7Z"/></svg></div><div class="tp-line"></div></div><div class="tp-header-content"><span id="tpCopilotCount">Analyzing...</span></div></div><div id="tpCopilotSteps"></div></div></div></div>
             <button class="scroll-bottom-btn" id="scrollBtnCopilot" onclick="scrollToBottom('copilot')">
                 <span class="icon"><svg><use href="#icon-arrow-left"/></svg></span>
             </button>
@@ -5555,7 +5541,7 @@
                     <button class="h-btn" onclick="toggleSplit()" title="Mode split"><span class="icon"><svg><use href="#icon-columns"/></svg></span></button>
                 </div>
             </header>
-            <div class="chat-body" id="assistantBody"></div>
+            <div class="chat-body" id="assistantBody"><div class="tp-card tp-hidden" id="tpAssistant"><div class="tp-collapsed" onclick="toggleTP('assistant')"><span class="tp-collapsed-text" id="tpAssistantSummary">Generating...</span><svg class="tp-collapsed-chevron" viewBox="0 0 20 20" fill="currentColor"><path d="M14.128 7.165C14.313 6.96 14.63 6.943 14.835 7.128C15.04 7.312 15.057 7.63 14.872 7.835L10.372 12.835C10.288 12.933 10.162 12.993 10.022 12.999C9.882 13.005 9.745 12.953 9.646 12.853L5.128 7.835L5.068 7.753C4.954 7.552 4.975 7.289 5.146 7.128C5.317 6.966 5.61 6.959 5.797 7.097L5.872 7.165L10 11.752L14.128 7.165Z"/></svg></div><div class="tp-expanded-content"><div class="tp-header-row" onclick="toggleTP('assistant')"><div class="tp-header-left"><div class="tp-line tp-invisible"></div><div class="tp-header-icon"><svg class="tp-header-chevron" viewBox="0 0 20 20" fill="currentColor"><path d="M10 7C10.106 7 10.209 7.033 10.294 7.095L10.372 7.165L14.872 12.165C15.057 12.37 15.04 12.687 14.835 12.872C14.63 13.057 14.313 13.04 14.128 12.835L10 8.248L5.872 12.835C5.61 13.041 5.345 13.034 5.165 12.872C4.986 12.711 4.951 12.448 5.068 12.247L5.128 12.165L9.628 7.165C9.723 7.06 9.858 7 10 7Z"/></svg></div><div class="tp-line"></div></div><div class="tp-header-content"><span id="tpAssistantCount">Generating...</span></div></div><div id="tpAssistantSteps"></div></div></div></div>
             <button class="scroll-bottom-btn" id="scrollBtnAssistant" onclick="scrollToBottom('assistant')">
                 <span class="icon"><svg><use href="#icon-arrow-left"/></svg></span>
             </button>
@@ -6194,31 +6180,6 @@
                     const id = 'mermaid-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
                     const { svg } = await mermaid.render(id, code);
                     placeholder.innerHTML = svg;
-
-                    // Apply FixAIR premium styling to rendered diagram
-                    placeholder.querySelectorAll('rect').forEach(rect => {
-                        if (!rect.closest('.edgeLabel')) {
-                            rect.style.fill = '#18181b';
-                            rect.style.stroke = 'rgba(255, 255, 255, 0.12)';
-                            rect.style.filter = 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))';
-                            rect.setAttribute('rx', '12');
-                            rect.setAttribute('ry', '12');
-                        }
-                    });
-                    placeholder.querySelectorAll('polygon').forEach(p => {
-                        p.style.fill = '#18181b';
-                        p.style.stroke = 'rgba(255, 255, 255, 0.15)';
-                        p.style.filter = 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))';
-                    });
-                    placeholder.querySelectorAll('text, .nodeLabel, foreignObject .nodeLabel').forEach(t => {
-                        t.style.fill = '#fafafa';
-                        if (t.style) t.style.color = '#fafafa';
-                    });
-                    placeholder.querySelectorAll('.edgePath path').forEach(path => {
-                        path.style.stroke = '#52525b';
-                        path.style.strokeWidth = '2px';
-                    });
-
                     placeholder.classList.add('mermaid-rendered');
                 } catch (error) {
                     console.error('Mermaid render error:', error);
@@ -8082,10 +8043,14 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             }
             body.appendChild(msg);
             body.scrollTop = body.scrollHeight;
-            
+
             // Render any Mermaid diagrams in the message
             if (type === 'ai') {
                 renderMermaidDiagrams(msg);
+                // FixAIR Diagram System rendering
+                if (typeof FixAIRDiagrams !== 'undefined') {
+                    FixAIRDiagrams.render(msg);
+                }
             }
         }
 
@@ -8790,11 +8755,10 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
             // Open chat view with correct mode
             openChat(initialMode);
             
-            // Show loading indicator in chat (preserve TP containers)
+            // Show loading indicator in chat
             const body = document.getElementById(initialMode + 'Body');
             if (body) {
-                clearChatBody(initialMode);
-                body.insertAdjacentHTML('beforeend', '<div class="msg" style="text-align:center;padding:40px;color:var(--text-dim);"><div style="margin-bottom:10px;">⏳</div>Chargement...</div>');
+                body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);"><div style="margin-bottom:10px;">⏳</div>Chargement...</div>';
             }
             
             try {
@@ -8806,7 +8770,7 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                     .single();
                 
                 if (projectError || !project) {
-                    if (body) { clearChatBody(initialMode); body.insertAdjacentHTML('beforeend', '<div class="msg" style="text-align:center;padding:40px;color:var(--hotline);">Erreur de chargement</div>'); }
+                    if (body) body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--hotline);">Erreur de chargement</div>';
                     return;
                 }
                 
@@ -11705,146 +11669,7 @@ INSTRUCTIONS:
             copilot: [],
             assistant: []
         };
-        window.chatHistory = chatHistory;
-
-        // ==================== THOUGHT PROCESS SYSTEM ====================
-        const thoughtIcons = {
-            globe: `<svg viewBox="0 0 256 256" fill="currentColor"><path d="M128,24A104,104,0,1,0,232,128,104.12,104.12,0,0,0,128,24Zm88,104a87.61,87.61,0,0,1-3.33,24H174.16a157.44,157.44,0,0,0,0-48h38.51A87.61,87.61,0,0,1,216,128ZM102,168H154a115.11,115.11,0,0,1-26,45A115.27,115.27,0,0,1,102,168Zm-3.9-16a140.84,140.84,0,0,1,0-48h59.88a140.84,140.84,0,0,1,0,48ZM40,128a87.61,87.61,0,0,1,3.33-24H81.84a157.44,157.44,0,0,0,0,48H43.33A87.61,87.61,0,0,1,40,128ZM154,88H102a115.11,115.11,0,0,1,26-45A115.27,115.27,0,0,1,154,88Z"/></svg>`,
-            doc: `<svg viewBox="0 0 256 256" fill="currentColor"><path d="M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Z"/></svg>`,
-            chat: `<svg viewBox="0 0 256 256" fill="currentColor"><path d="M128,24A104,104,0,0,0,36.18,176.88L24.83,210.93a16,16,0,0,0,20.24,20.24l34.05-11.35A104,104,0,1,0,128,24Zm0,192a87.87,87.87,0,0,1-44.06-11.81,8,8,0,0,0-6.54-.67L40,216,52.47,178.6a8,8,0,0,0-.66-6.54A88,88,0,1,1,128,216Z"/></svg>`,
-            chevronUp: `<svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path d="M9.99997 7C10.1062 7 10.2093 7.03341 10.2939 7.09473L10.372 7.16504L14.8721 12.1651C15.0568 12.3703 15.0402 12.6874 14.835 12.8721C14.6297 13.0567 14.3126 13.0402 14.1279 12.835L9.99997 8.24806L5.872 12.835L5.7968 12.9024C5.60972 13.0406 5.34458 13.0338 5.16496 12.8721C4.98555 12.7105 4.9506 12.4476 5.06828 12.2471L5.12785 12.1651L9.62789 7.16504C9.72265 7.05978 9.85834 7.00007 9.99997 7Z"/></svg>`,
-            chevronDown: `<svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path d="M14.128 7.16482C14.3126 6.95983 14.6298 6.94336 14.835 7.12771C15.0402 7.31242 15.0567 7.62952 14.8721 7.83477L10.372 12.835L10.2939 12.9053C10.2093 12.9667 10.1063 13 9.99995 13C9.85833 12.9999 9.72264 12.9402 9.62788 12.835L5.12778 7.83477L5.0682 7.75273C4.95072 7.55225 4.98544 7.28926 5.16489 7.12771C5.34445 6.96617 5.60969 6.95939 5.79674 7.09744L5.87193 7.16482L9.99995 11.7519L14.128 7.16482Z"/></svg>`
-        };
-
-        class ThoughtProcessManager {
-            analyzeQuery(query, context) {
-                const steps = [];
-                const q = query.toLowerCase();
-                const brand = context.brandName || 'équipement';
-
-                if (q.includes('code') || q.includes('erreur') || q.includes('error') || q.includes('panne')) {
-                    steps.push({ icon: 'doc', text: `Recherche codes erreur ${brand}` });
-                    steps.push({ icon: 'doc', text: 'Analyse documentation technique' });
-                }
-                if (q.includes('schéma') || q.includes('diagram') || q.includes('circuit')) {
-                    steps.push({ icon: 'doc', text: 'Génération schéma technique' });
-                }
-                if (q.includes('répar') || q.includes('fix') || q.includes('solution')) {
-                    steps.push({ icon: 'chat', text: 'Élaboration procédure réparation' });
-                }
-                if (steps.length === 0) {
-                    steps.push({ icon: 'globe', text: `Analyse demande ${brand}` });
-                    steps.push({ icon: 'doc', text: 'Consultation base de connaissances' });
-                }
-                steps.push({ icon: 'chat', text: 'Formulation réponse' });
-                return steps;
-            }
-        }
-
-        const thoughtManager = new ThoughtProcessManager();
-
-        class ThoughtProcessUI {
-            constructor(panelId) {
-                this.panelId = panelId;
-                this.container = null;
-                this.isExpanded = true;
-                this.steps = [];
-            }
-
-            create(steps) {
-                this.steps = steps;
-                const msgContainer = document.getElementById(this.panelId + 'Body');
-
-                this.container = document.createElement('div');
-                this.container.className = 'thought-card expanded';
-                this.container.innerHTML = `
-                    <div class="thought-collapsed" style="display:none;">
-                        <span class="thought-icon">${thoughtIcons.globe}</span>
-                        <span class="thought-label">Réflexion terminée</span>
-                        <span class="thought-chevron">${thoughtIcons.chevronDown}</span>
-                    </div>
-                    <div class="thought-expanded">
-                        <div class="thought-header-row">
-                            <span class="thought-title">Réflexion en cours...</span>
-                            <span class="thought-chevron">${thoughtIcons.chevronUp}</span>
-                        </div>
-                        <div class="thought-steps-container">
-                            ${steps.map(s => `
-                                <div class="thought-step-row">
-                                    <div class="thought-bullet"></div>
-                                    <div class="thought-step-content">
-                                        <div class="thought-step-text">${s.text}</div>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-
-                msgContainer.appendChild(this.container);
-                msgContainer.scrollTop = msgContainer.scrollHeight;
-
-                // Toggle functionality
-                const headerRow = this.container.querySelector('.thought-header-row');
-                const collapsedRow = this.container.querySelector('.thought-collapsed');
-                headerRow.onclick = () => this.toggle();
-                collapsedRow.onclick = () => this.toggle();
-
-                this.animateSteps();
-            }
-
-            animateSteps() {
-                const bullets = this.container.querySelectorAll('.thought-bullet');
-                const texts = this.container.querySelectorAll('.thought-step-text');
-                bullets.forEach((b, i) => {
-                    setTimeout(() => {
-                        b.classList.add('visible');
-                        texts[i].classList.add('visible');
-                    }, i * 400);
-                });
-            }
-
-            toggle() {
-                this.isExpanded = !this.isExpanded;
-                if (this.isExpanded) {
-                    this.container.classList.add('expanded');
-                    this.container.querySelector('.thought-collapsed').style.display = 'none';
-                    this.container.querySelector('.thought-expanded').style.display = 'flex';
-                } else {
-                    this.container.classList.remove('expanded');
-                    this.container.querySelector('.thought-collapsed').style.display = 'flex';
-                    this.container.querySelector('.thought-expanded').style.display = 'none';
-                }
-            }
-
-            collapse(summary) {
-                this.isExpanded = false;
-                this.container.classList.remove('expanded');
-                this.container.querySelector('.thought-collapsed').style.display = 'flex';
-                this.container.querySelector('.thought-expanded').style.display = 'none';
-                this.container.querySelector('.thought-label').textContent = summary || 'Réflexion terminée';
-                this.container.querySelector('.thought-header-row .thought-title').textContent = summary || 'Réflexion terminée';
-            }
-
-            remove() {
-                if (this.container && this.container.parentNode) {
-                    this.container.parentNode.removeChild(this.container);
-                }
-            }
-
-            generateSummary(steps) {
-                if (!steps || steps.length === 0) return 'Analyse terminée';
-                const count = steps.length;
-                return `${count} étape${count > 1 ? 's' : ''} d'analyse`;
-            }
-        }
-
-        // ==================== EXPOSE TO GLOBAL SCOPE ====================
-        window.thoughtIcons = thoughtIcons;
-        window.ThoughtProcessManager = ThoughtProcessManager;
-        window.ThoughtProcessUI = ThoughtProcessUI;
-        window.thoughtManager = thoughtManager;
-
+        
         // Send message to n8n
         async function sendMsg(panel) {
             const input = document.getElementById(panel + 'Input');
@@ -11881,8 +11706,8 @@ INSTRUCTIONS:
             }
             // ═══ END SUPABASE ═══
             
-            // NOTE: Old loading dots removed - now using ThoughtProcess UI
-            // addLoadingMsg(panel); // REPLACED BY showThoughtProcess above
+            // Show loading
+            addLoadingMsg(panel);
             
             try {
                 // Get brand name for display
@@ -12051,8 +11876,7 @@ RÈGLES:
 
                 // Remove loading
                 removeLoadingMsg(panel);
-                if (thoughtUI) { thoughtUI.collapse(thoughtUI.generateSummary(thoughtManager.analyzeQuery(text, {}))); }
-
+                
                 // Parse markdown and add AI response
                 const aiResponse = data.response || data.message || data.output || 'Désolé, une erreur est survenue.';
                 
@@ -15709,315 +15533,38 @@ RÈGLES:
 <script src="/assets/js/fixair-diagrams.js"></script>
 
 <script>
-
-/* ===== THOUGHT PROCESS - FIXAIR v5 ===== */
-/* Logic from v4 + Original styling restored */
-
-const TP = {
-    t: { copilot: null, assistant: null },
-    i: { copilot: 0, assistant: 0 },
-    s: { copilot: [], assistant: [] },
-    expandedState: {},
-    cardCounter: 0,
-    currentCardId: { copilot: null, assistant: null },
-    isSimpleMode: { copilot: false, assistant: false },
-    
-    // SVG Icons - ORIGINAL globe style
-    icons: {
-        globe: '<svg viewBox="0 0 256 256" fill="currentColor"><path d="M128,24h0A104,104,0,1,0,232,128,104.12,104.12,0,0,0,128,24Zm88,104a87.61,87.61,0,0,1-3.33,24H174.16a157.44,157.44,0,0,0,0-48h38.51A87.61,87.61,0,0,1,216,128ZM102,168H154a115.11,115.11,0,0,1-26,45A115.27,115.27,0,0,1,102,168Zm-3.9-16a140.84,140.84,0,0,1,0-48h59.88a140.84,140.84,0,0,1,0,48ZM40,128a87.61,87.61,0,0,1,3.33-24H81.84a157.44,157.44,0,0,0,0,48H43.33A87.61,87.61,0,0,1,40,128ZM154,88H102a115.11,115.11,0,0,1,26-45A115.27,115.27,0,0,1,154,88Zm52.33,0H170.71a135.28,135.28,0,0,0-22.3-45.6A88.29,88.29,0,0,1,206.37,88ZM107.59,42.4A135.28,135.28,0,0,0,85.29,88H49.63A88.29,88.29,0,0,1,107.59,42.4ZM49.63,168H85.29a135.28,135.28,0,0,0,22.3,45.6A88.29,88.29,0,0,1,49.63,168Zm98.78,45.6a135.28,135.28,0,0,0,22.3-45.6h35.66A88.29,88.29,0,0,1,148.41,213.6Z"/></svg>',
-        doc: '<svg viewBox="0 0 256 256" fill="currentColor"><path d="M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Zm-32-80a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,136Zm0,32a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,168Z"/></svg>',
-        search: '<svg viewBox="0 0 256 256" fill="currentColor"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg>',
-        tool: '<svg viewBox="0 0 256 256" fill="currentColor"><path d="M226.76,69a8,8,0,0,0-12.84-2.88l-40.3,37.19-17.23-3.7-3.7-17.23,37.19-40.3A8,8,0,0,0,187,29.24,72,72,0,0,0,88,96a72.34,72.34,0,0,0,2.57,19.41L32.29,166.67a28,28,0,0,0,39.6,39.6l51.26-58.28A72,72,0,0,0,226.76,69ZM160,152a56.14,56.14,0,0,1-27.07-7,8,8,0,0,0-9.92,1.77l-55.28,62.87a12,12,0,0,1-17-17l62.87-55.28a8,8,0,0,0,1.77-9.92,56,56,0,0,1,58.66-82.31l-31.6,34.21a8,8,0,0,0-1.82,6.67l5.32,24.68a8,8,0,0,0,6.27,6.27l24.68,5.32a8,8,0,0,0,6.67-1.82l34.21-31.6A56.06,56.06,0,0,1,160,152Z"/></svg>',
-        brain: '<svg viewBox="0 0 256 256" fill="currentColor"><path d="M248,124a56.11,56.11,0,0,0-32-50.61V72a48,48,0,0,0-88-26.49A48,48,0,0,0,40,72v1.39a56,56,0,0,0,0,101.2V176a48,48,0,0,0,88,26.49A48,48,0,0,0,216,176v-1.41A56.09,56.09,0,0,0,248,124ZM88,208a32,32,0,0,1-31.81-28.56A55.87,55.87,0,0,0,64,180h8a8,8,0,0,0,0-16H64A40,40,0,0,1,50.67,86.27,8,8,0,0,0,56,78.73V72a32,32,0,0,1,64,0v68.26A47.8,47.8,0,0,0,88,128a8,8,0,0,0,0,16,32,32,0,0,1,0,64Zm104-44h-8a8,8,0,0,0,0,16h8a55.87,55.87,0,0,0,7.81-.56A32,32,0,1,1,168,144a8,8,0,0,0,0-16,47.8,47.8,0,0,0-32,12.26V72a32,32,0,0,1,64,0v6.73a8,8,0,0,0,5.33,7.54A40,40,0,0,1,192,164Z"/></svg>',
-        chart: '<svg viewBox="0 0 256 256" fill="currentColor"><path d="M232,208a8,8,0,0,1-8,8H32a8,8,0,0,1-8-8V48a8,8,0,0,1,16,0v94.37L90.73,98a8,8,0,0,1,10.07-.38l58.81,44.11L218.73,90a8,8,0,1,1,10.54,12l-64,56a8,8,0,0,1-10.07.38L96.39,114.29,40,163.63V200H224A8,8,0,0,1,232,208Z"/></svg>',
-        chevronDown: '<svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor"><path d="M14.128 7.16482C14.3126 6.95983 14.6298 6.94336 14.835 7.12771C15.0402 7.31242 15.0567 7.62952 14.8721 7.83477L10.372 12.835L10.2939 12.9053C10.2093 12.9667 10.1063 13 9.99995 13C9.85833 12.9999 9.72264 12.9402 9.62788 12.835L5.12778 7.83477L5.0682 7.75273C4.95072 7.55225 4.98544 7.28926 5.16489 7.12771C5.34445 6.96617 5.60969 6.95939 5.79674 7.09744L5.87193 7.16482L9.99995 11.7519L14.128 7.16482Z"/></svg>',
-        chevronUp: '<svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor"><path d="M5.87193 12.835C5.68735 13.0402 5.37018 13.0567 5.16489 12.8721C4.9596 12.6874 4.94313 12.3703 5.12778 12.1651L9.62788 7.16504L9.70606 7.09473C9.79073 7.03341 9.89378 7 9.99995 7C10.1416 7.00007 10.2773 7.05978 10.372 7.16504L14.8721 12.1651L14.9317 12.2471C15.0494 12.4476 15.0145 12.7105 14.835 12.8721C14.6555 13.0338 14.3903 13.0406 14.2032 12.9024L14.128 12.835L9.99995 8.24806L5.87193 12.835Z"/></svg>'
-    },
-    
-    // Mode colors
-    modeColors: {
-        copilot: '#FF6B35',
-        assistant: '#22c55e'
-    },
-
-    // CSS colors - TRANSPARENT
-    colors: {
-        border: 'rgba(255,255,255,0.08)',
-        line: 'rgba(255,255,255,0.12)',
-        text: 'rgba(255,255,255,0.65)',
-        textMuted: 'rgba(255,255,255,0.4)',
-        bullet: 'rgba(255,255,255,0.25)'
-    },
-
-    // Simple phrases
-    simplePhrases: [
-        'FixAIR réfléchit...',
-        'Préparation...',
-        'Un instant...',
-        'Analyse...'
-    ],
-
-    // Check if simple query
-    isSimpleQuery(q) {
-        const simple = /^(salut|bonjour|bonsoir|hello|hi|hey|coucou|yo|cc|bjr|bsr|merci|thanks|ok|oui|non|yes|no|d'accord|super|parfait|cool|nice|top|génial|excellent|ça va|ca va|comment vas|quoi de neuf|qui es tu|qui es-tu|que fais tu|que peux tu|c'est quoi|qu'est ce que)[\s!?.]*$/i;
-        return simple.test(q.trim()) || q.trim().length < 20;
-    },
-
-    // Check if technical
-    isTechnicalQuery(q) {
-        const tech = /error|code|fault|panne|erreur|défaut|schéma|schema|diagram|wiring|câblage|pression|bar|température|gaz|r32|r410|frigorigène|install|mise en service|réparer|fix|dépannage|diagnostic|problème|cn\d+|pinout|\b[EPFUepfu]?\d{3,5}\b/i;
-        return tech.test(q);
-    },
-
-    getSimplePhrase() {
-        return this.simplePhrases[Math.floor(Math.random() * this.simplePhrases.length)];
-    },
-
-    // Analyze for technical steps - use GLOBE for searches
-    analyze(q, m, b) {
-        const s = [];
-        const ql = q.toLowerCase();
-        b = b || 'équipement';
-        
-        if (m === 'copilot') {
-            if (/\b([EPFUepfu]?\d{2,5})\b/i.test(q) || /error|code|fault|panne|erreur|défaut/i.test(ql)) {
-                s.push({ icon: 'globe', text: 'Recherche code erreur ' + b + '...' });
-                s.push({ icon: 'doc', text: 'Consultation documentation' });
-            }
-            if (/wiring|diagram|schema|schéma|pinout|câblage|connecteur|cn\d+/i.test(ql)) {
-                s.push({ icon: 'doc', text: 'Chargement schémas électriques' });
-            }
-            if (/pression|bar|température|gaz|r32|r410|frigorigène|charge/i.test(ql)) {
-                s.push({ icon: 'tool', text: 'Analyse paramètres frigorifiques' });
-            }
-            if (/réparer|fix|dépannage|diagnostic|problème|marche pas/i.test(ql)) {
-                s.push({ icon: 'brain', text: 'Analyse diagnostic...' });
-            }
-            if (/graph|diagramme|visuel|courbe/i.test(ql)) {
-                s.push({ icon: 'chart', text: 'Préparation visuel...' });
-            }
-            if (s.length === 0) {
-                s.push({ icon: 'globe', text: 'Recherche base ' + b + '...' });
-            }
-            s.push({ icon: 'bullet', text: 'Formulation réponse...' });
-        } else {
-            if (/rapport|report|compte.?rendu|cerfa|document/i.test(ql)) {
-                s.push({ icon: 'doc', text: 'Extraction données' });
-                s.push({ icon: 'bullet', text: 'Génération rapport...' });
-            } else if (/image|photo|scan|plaque|ocr/i.test(ql)) {
-                s.push({ icon: 'globe', text: 'Analyse image...' });
-                s.push({ icon: 'bullet', text: 'Extraction...' });
-            } else {
-                s.push({ icon: 'brain', text: 'Analyse...' });
-                s.push({ icon: 'bullet', text: 'Préparation...' });
-            }
-        }
-        return s;
-    },
-
-    // SIMPLE card - small, disappears
-    createSimpleCard(cardId, phrase, m) {
-        const dotColor = this.modeColors[m];
-        return '<div id="' + cardId + '" style="display:flex;align-items:center;margin:8px 0;max-width:70%;">' +
-            '<div id="' + cardId + 'Dot" style="width:6px;height:6px;border-radius:50%;background:' + dotColor + ';margin-right:10px;animation:tpPulse 1.2s ease infinite;flex-shrink:0;"></div>' +
-            '<span style="font-size:14px;color:' + this.colors.text + ';">' + phrase + '</span>' +
-        '</div>';
-    },
-
-    // FULL card - ORIGINAL STYLE with vertical lines
-    createFullCard(cardId) {
-        const c = this.colors;
-        
-        return '<div id="' + cardId + '" style="border:0.5px solid ' + c.border + ';border-radius:8px;margin:12px 0;max-width:70%;">' +
-            // COLLAPSED VIEW
-            '<div id="' + cardId + 'Collapsed" style="display:none;">' +
-                '<div style="display:flex;min-height:42px;cursor:pointer;" onclick="TP.toggleCard(\'' + cardId + '\')">' +
-                    '<div style="display:flex;flex-direction:column;align-items:center;width:32px;padding-left:8px;">' +
-                        '<div style="width:1px;height:8px;background:transparent;"></div>' +
-                        '<div style="font-size:10px;color:' + c.textMuted + ';">' + this.icons.chevronUp + '</div>' +
-                        '<div style="width:1px;flex-grow:1;min-height:6px;background:' + c.line + ';"></div>' +
-                    '</div>' +
-                    '<div style="display:flex;align-items:center;padding:8px 12px 8px 4px;flex:1;">' +
-                        '<span id="' + cardId + 'Summary" style="font-size:14px;color:' + c.text + ';">Analyse terminée</span>' +
-                    '</div>' +
-                '</div>' +
-            '</div>' +
-            // EXPANDED VIEW
-            '<div id="' + cardId + 'Expanded">' +
-                '<div style="display:flex;min-height:38px;cursor:pointer;" onclick="TP.toggleCard(\'' + cardId + '\')">' +
-                    '<div style="display:flex;flex-direction:column;align-items:center;width:32px;padding-left:8px;">' +
-                        '<div style="width:1px;height:8px;background:transparent;"></div>' +
-                        '<div style="font-size:10px;color:' + c.textMuted + ';">' + this.icons.chevronDown + '</div>' +
-                        '<div style="width:1px;flex-grow:1;min-height:6px;background:' + c.line + ';"></div>' +
-                    '</div>' +
-                    '<div style="display:flex;align-items:center;padding:8px 12px 8px 4px;flex:1;">' +
-                        '<span id="' + cardId + 'Count" style="font-size:14px;color:' + c.textMuted + ';">Analyse...</span>' +
-                    '</div>' +
-                '</div>' +
-                '<div id="' + cardId + 'Steps"></div>' +
-            '</div>' +
-        '</div>';
-    },
-
-    // Step HTML - ORIGINAL STYLE with vertical lines and proper alignment
-    stepHtml(st, isLast, isLoading, m, cardId) {
-        const c = this.colors;
-        const dotColor = isLoading ? this.modeColors[m] : c.bullet;
-        const dotId = isLoading ? cardId + 'Dot' : '';
-        
-        let iconHtml;
-        if (st.icon === 'bullet') {
-            iconHtml = '<div ' + (dotId ? 'id="' + dotId + '"' : '') + ' style="width:6px;height:6px;border-radius:50%;background:' + dotColor + ';' + (isLoading ? 'animation:tpPulse 1.2s ease infinite;' : '') + '"></div>';
-        } else {
-            iconHtml = '<div style="width:16px;height:16px;color:' + c.text + ';">' + (this.icons[st.icon] || this.icons.globe) + '</div>';
-        }
-        
-        return '<div style="display:flex;min-height:36px;opacity:0;transform:translateY(4px);transition:all 0.25s ease;">' +
-            '<div style="display:flex;flex-direction:column;align-items:center;width:32px;padding-left:8px;">' +
-                '<div style="width:1px;height:10px;background:' + c.line + ';"></div>' +
-                '<div style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;">' + iconHtml + '</div>' +
-                '<div style="width:1px;flex-grow:1;min-height:8px;background:' + (isLast ? 'transparent' : c.line) + ';"></div>' +
-            '</div>' +
-            '<div style="display:flex;align-items:center;padding:8px 12px 8px 4px;flex:1;">' +
-                '<span style="font-size:14px;color:' + c.text + ';">' + st.text + '</span>' +
-            '</div>' +
-        '</div>';
-    },
-
-    // SHOW
-    show(m, q) {
-        const body = document.getElementById(m + 'Body');
-        if (!body) return;
-        
-        this.cardCounter++;
-        const cardId = 'tpCard' + this.cardCounter;
-        this.currentCardId[m] = cardId;
-        this.expandedState[cardId] = true;
-        
-        const isSimple = this.isSimpleQuery(q) && !this.isTechnicalQuery(q);
-        this.isSimpleMode[m] = isSimple;
-        
-        if (isSimple) {
-            body.insertAdjacentHTML('beforeend', this.createSimpleCard(cardId, this.getSimplePhrase(), m));
-            this.s[m] = [];
-        } else {
-            const b = (document.getElementById('copilotSub') || {}).textContent || 'équipement';
-            const st = this.analyze(q, m, b);
-            this.s[m] = st;
-            this.i[m] = 0;
-            
-            body.insertAdjacentHTML('beforeend', this.createFullCard(cardId));
-            
-            const cont = document.getElementById(cardId + 'Steps');
-            const cnt = document.getElementById(cardId + 'Count');
-            
-            clearInterval(this.t[m]);
-            const self = this;
-            this.t[m] = setInterval(function() {
-                const idx = self.i[m];
-                if (idx < st.length) {
-                    const isLast = idx === st.length - 1;
-                    const isLoading = st[idx].icon === 'bullet' && isLast;
-                    const h = self.stepHtml(st[idx], isLast, isLoading, m, cardId);
-                    cont.insertAdjacentHTML('beforeend', h);
-                    const nw = cont.lastElementChild;
-                    requestAnimationFrame(function() {
-                        nw.style.opacity = '1';
-                        nw.style.transform = 'translateY(0)';
-                    });
-                    self.i[m]++;
-                    cnt.textContent = self.i[m] + ' étape' + (self.i[m] > 1 ? 's' : '');
-                    body.scrollTop = body.scrollHeight;
-                } else {
-                    clearInterval(self.t[m]);
-                }
-            }, 400);
-        }
-        
-        body.scrollTop = body.scrollHeight;
-    },
-
-    // TOGGLE
-    toggleCard(cardId) {
-        const collapsed = document.getElementById(cardId + 'Collapsed');
-        const expanded = document.getElementById(cardId + 'Expanded');
-        if (!collapsed || !expanded) return;
-        
-        if (this.expandedState[cardId]) {
-            collapsed.style.display = 'block';
-            expanded.style.display = 'none';
-            this.expandedState[cardId] = false;
-        } else {
-            collapsed.style.display = 'none';
-            expanded.style.display = 'block';
-            this.expandedState[cardId] = true;
-        }
-    },
-
-    // COLLAPSE
-    collapse(m, sum) {
-        clearInterval(this.t[m]);
-        const cardId = this.currentCardId[m];
-        if (!cardId) return;
-        
-        const card = document.getElementById(cardId);
-        if (!card) return;
-        
-        // SIMPLE = REMOVE
-        if (this.isSimpleMode[m]) {
-            card.remove();
-            return;
-        }
-        
-        // TECHNICAL = collapse but keep
-        const loadingDot = document.getElementById(cardId + 'Dot');
-        if (loadingDot) {
-            loadingDot.style.animation = 'none';
-            loadingDot.style.background = this.colors.bullet;
-        }
-        
-        const steps = this.s[m] || [];
-        const summary = sum || (steps.length + ' étape' + (steps.length > 1 ? 's' : ''));
-        
-        const summaryEl = document.getElementById(cardId + 'Summary');
-        if (summaryEl) summaryEl.textContent = summary;
-        
-        const collapsed = document.getElementById(cardId + 'Collapsed');
-        const expanded = document.getElementById(cardId + 'Expanded');
-        
-        if (collapsed && expanded) {
-            collapsed.style.display = 'block';
-            expanded.style.display = 'none';
-            this.expandedState[cardId] = false;
-        }
-    },
-
-    hide(m) {
-        clearInterval(this.t[m]);
-        const cardId = this.currentCardId[m];
-        if (cardId) {
-            const card = document.getElementById(cardId);
-            if (card) card.remove();
-        }
-    }
-};
-
-// Global
-function showThoughtProcess(m, q) { try { TP.show(m, q); } catch(e) { console.warn('TP:', e); } }
-function collapseThoughtProcess(m, s) { try { TP.collapse(m, s); } catch(e) { console.warn('TP:', e); } }
-function hideThoughtProcess(m) { try { TP.hide(m); } catch(e) { console.warn('TP:', e); } }
-
-// CSS
-(function() {
-    if (!document.getElementById('tp-styles')) {
-        const s = document.createElement('style');
-        s.id = 'tp-styles';
-        s.textContent = '@keyframes tpPulse{0%,100%{opacity:1}50%{opacity:0.4}}';
-        document.head.appendChild(s);
-    }
-})();
-
-console.log('✅ TP FixAIR v5');
+/* ===== THOUGHT PROCESS V2 - ISOLATED ===== */
+const TP={t:{copilot:null,assistant:null},i:{copilot:0,assistant:0},s:{copilot:[],assistant:[]},
+icons:{globe:'<svg viewBox="0 0 256 256" fill="currentColor"><path d="M128,24A104,104,0,1,0,232,128,104.12,104.12,0,0,0,128,24Zm88,104a87.61,87.61,0,0,1-3.33,24H174.16a157.44,157.44,0,0,0,0-48h38.51A87.61,87.61,0,0,1,216,128Z"/></svg>',
+doc:'<svg viewBox="0 0 256 256" fill="currentColor"><path d="M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Z"/></svg>',
+bullet:'<div class="tp-bullet"></div>'},
+analyze(q,m,b){const s=[];b=b||'equipment';if(/\b([EPFUepfu]?\d{2,5})\b/i.test(q)||/error|code|fault|panne/i.test(q)){s.push({icon:'globe',text:'Searching '+b+' error database'});}
+if(/wiring|diagram|schema|pinout|cn\d+/i.test(q)){s.push({icon:'doc',text:'Loading electrical schematics'});}
+if(m==='assistant'){s.length=0;s.push({icon:'doc',text:'Extracting diagnostic data'},{icon:'bullet',text:'Mapping to report fields'});}
+if(s.length===0){s.push({icon:'globe',text:'Searching '+b+' knowledge base'});}
+s.push({icon:'bullet',text:m==='assistant'?'Generating report':'Compiling response'});return s;},
+html(st,last){const ic=st.icon==='bullet'?this.icons.bullet:'<svg>'+this.icons[st.icon]+'</svg>';
+return '<div class="tp-step-row tp-loading-step"><div class="tp-step-left"><div class="tp-line"></div><div class="tp-step-icon">'+ic+'</div><div class="tp-line'+(last?' tp-invisible':'')+'"></div></div><div class="tp-step-content"><button class="tp-step-button"><span class="tp-step-text">'+st.text+'</span></button></div></div>';},
+show(m,q){const b=(document.getElementById('copilotSub')||{}).textContent||'equipment';
+const st=this.analyze(q,m,b);this.s[m]=st;this.i[m]=0;
+const M=m.charAt(0).toUpperCase()+m.slice(1);
+const card=document.getElementById('tp'+M);const cont=document.getElementById('tp'+M+'Steps');const cnt=document.getElementById('tp'+M+'Count');
+if(!card||!cont)return;cont.innerHTML='';card.classList.remove('tp-hidden');card.classList.add('tp-expanded');cnt.textContent='Analyzing...';
+clearInterval(this.t[m]);this.t[m]=setInterval(()=>{const idx=this.i[m];if(idx<st.length){const prev=cont.querySelector('.tp-loading-bullet');if(prev)prev.classList.remove('tp-loading-bullet');
+const h=this.html(st[idx],idx===st.length-1);cont.insertAdjacentHTML('beforeend',h);const nw=cont.lastElementChild;
+if(st[idx].icon==='bullet'){const bl=nw.querySelector('.tp-bullet');if(bl)bl.classList.add('tp-loading-bullet');}
+requestAnimationFrame(()=>nw.classList.add('tp-visible'));this.i[m]++;cnt.textContent=this.i[m]+' step'+(this.i[m]>1?'s':'');}else{clearInterval(this.t[m]);}},500);},
+collapse(m,sum){clearInterval(this.t[m]);const M=m.charAt(0).toUpperCase()+m.slice(1);
+const card=document.getElementById('tp'+M);const sumEl=document.getElementById('tp'+M+'Summary');const cont=document.getElementById('tp'+M+'Steps');
+if(!card)return;cont?.querySelectorAll('.tp-loading-bullet').forEach(e=>e.classList.remove('tp-loading-bullet'));
+if(sumEl)sumEl.textContent=sum||'Analysis complete.';card.classList.remove('tp-expanded');},
+hide(m){clearInterval(this.t[m]);const M=m.charAt(0).toUpperCase()+m.slice(1);
+const card=document.getElementById('tp'+M);if(card){card.classList.add('tp-hidden');card.classList.remove('tp-expanded');}}};
+function toggleTP(m){const M=m.charAt(0).toUpperCase()+m.slice(1);const card=document.getElementById('tp'+M);if(card)card.classList.toggle('tp-expanded');}
+function showThoughtProcess(m,q){try{TP.show(m,q);}catch(e){console.warn('TP show error:',e);}}
+function collapseThoughtProcess(m,s){try{TP.collapse(m,s);}catch(e){console.warn('TP collapse error:',e);}}
+function hideThoughtProcess(m){try{TP.hide(m);}catch(e){console.warn('TP hide error:',e);}}
+console.log('✅ ThoughtProcess V2 loaded');
 </script>
 </body>
 </html>
