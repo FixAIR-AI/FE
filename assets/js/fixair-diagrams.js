@@ -1,7 +1,7 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
  * FIXAIR DIAGRAM SYSTEM - MERMAID CONFIGURATION
- * Version: 2.2.0
+ * Version: 2.3.0
  * 
  * This file initializes Mermaid with FixAIR premium styling.
  * Since Mermaid's CSS selectors don't always match the generated DOM,
@@ -159,7 +159,7 @@
             }
         });
 
-        console.log('[FixAIR Diagrams] Mermaid initialized v2.2.0');
+        console.log('[FixAIR Diagrams] Mermaid initialized v2.3.0');
         return true;
     }
 
@@ -413,7 +413,40 @@
             
             // Insert SVG
             placeholder.innerHTML = svg;
-            
+
+            // Post-process: Apply FixAIR premium styling
+            placeholder.querySelectorAll('rect').forEach(rect => {
+                if (!rect.closest('.edgeLabel')) {
+                    rect.style.fill = '#18181b';
+                    rect.style.stroke = 'rgba(255, 255, 255, 0.12)';
+                    rect.style.filter = 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))';
+                    rect.setAttribute('rx', '12');
+                    rect.setAttribute('ry', '12');
+                }
+            });
+
+            placeholder.querySelectorAll('polygon').forEach(p => {
+                p.style.fill = '#18181b';
+                p.style.stroke = 'rgba(255, 255, 255, 0.15)';
+                p.style.filter = 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))';
+            });
+
+            placeholder.querySelectorAll('text, .nodeLabel, foreignObject .nodeLabel').forEach(t => {
+                t.style.fill = '#fafafa';
+                t.style.color = '#fafafa';
+                t.style.fontFamily = 'Inter, system-ui, sans-serif';
+                t.style.fontWeight = '600';
+            });
+
+            placeholder.querySelectorAll('.edgePath path').forEach(path => {
+                path.style.stroke = '#52525b';
+                path.style.strokeWidth = '2px';
+            });
+
+            placeholder.querySelectorAll('.edgeLabel').forEach(label => {
+                label.style.background = 'transparent';
+            });
+
             // Apply FixAIR styling
             applyStyles(placeholder);
             
@@ -497,7 +530,7 @@
     // ═══════════════════════════════════════════════════════════════════════════
     
     window.FixAIRDiagrams = {
-        version: '2.2.0',
+        version: '2.3.0',
         init: initMermaid,
         render: render,
         renderAll: renderAll,
@@ -507,6 +540,6 @@
         STYLES: STYLES  // Expose for customization
     };
 
-    console.log('[FixAIR Diagrams] Module loaded v2.2.0');
+    console.log('[FixAIR Diagrams] Module loaded v2.3.0');
 
 })();
