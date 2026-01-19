@@ -6323,6 +6323,31 @@
                     const id = 'mermaid-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
                     const { svg } = await mermaid.render(id, code);
                     placeholder.innerHTML = svg;
+
+                    // Apply FixAIR premium styling to rendered diagram
+                    placeholder.querySelectorAll('rect').forEach(rect => {
+                        if (!rect.closest('.edgeLabel')) {
+                            rect.style.fill = '#18181b';
+                            rect.style.stroke = 'rgba(255, 255, 255, 0.12)';
+                            rect.style.filter = 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))';
+                            rect.setAttribute('rx', '12');
+                            rect.setAttribute('ry', '12');
+                        }
+                    });
+                    placeholder.querySelectorAll('polygon').forEach(p => {
+                        p.style.fill = '#18181b';
+                        p.style.stroke = 'rgba(255, 255, 255, 0.15)';
+                        p.style.filter = 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))';
+                    });
+                    placeholder.querySelectorAll('text, .nodeLabel, foreignObject .nodeLabel').forEach(t => {
+                        t.style.fill = '#fafafa';
+                        if (t.style) t.style.color = '#fafafa';
+                    });
+                    placeholder.querySelectorAll('.edgePath path').forEach(path => {
+                        path.style.stroke = '#52525b';
+                        path.style.strokeWidth = '2px';
+                    });
+
                     placeholder.classList.add('mermaid-rendered');
                 } catch (error) {
                     console.error('Mermaid render error:', error);
