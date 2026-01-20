@@ -11515,7 +11515,7 @@ if (reportDataMatch) {
 
             // Check for JSON embedded in text (intro text + JSON)
             // Match JSON with any report-related fields (client, resultat, resume, travaux, or type:report)
-            const embeddedJsonMatch = trimmed.match(/^([\s\S]*?)\s*(\{[\s\S]*(?:"client"|"resultat"|"resume"|"travaux_effectues"|"type"\s*:\s*"report")[\s\S]*\})\s*$/);
+            const embeddedJsonMatch = trimmed.match(/^([\s\S]*?)\s*(\{[\s\S]*(?:"client"|"resultat"|"resume"|"travaux_effectues"|"tests"|"reserves"|"mesures"|"systeme"|"site"|"intervention"|"type"\s*:\s*"report")[\s\S]*\})\s*$/);
             if (embeddedJsonMatch) {
                 try {
                     const jsonData = JSON.parse(embeddedJsonMatch[2]);
