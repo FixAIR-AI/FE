@@ -11273,11 +11273,26 @@ INSTRUCTIONS:
             
             // Update progress bar
             updateReportProgress();
-            
+
             // Auto-save indicator
             showAutoSaveIndicator();
+
+            // ═══ AUTO-SAVE extracted_data with debounce ═══
+            if (currentProjectId && lastReportData) {
+                clearTimeout(extractedDataSaveTimeout);
+                extractedDataSaveTimeout = setTimeout(async () => {
+                    const { error } = await db.from('projects')
+                        .update({ extracted_data: lastReportData })
+                        .eq('id', currentProjectId);
+                    if (error) {
+                        console.error('[Drawer] Auto-save failed:', error);
+                    } else {
+                        console.log('[Drawer] ✅ extracted_data auto-saved');
+                    }
+                }, 1500);
+            }
         }
-        
+
         // Add a new item to a list field
         function addReportListItem(listName) {
             if (!lastReportData) lastReportData = {};
