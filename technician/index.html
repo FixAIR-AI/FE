@@ -9485,7 +9485,8 @@ INSTRUCTIONS:
         
         // Store last report data for PDF export
         let lastReportData = null;
-        
+        let extractedDataSaveTimeout = null;  // Debounce for extracted_data auto-save
+
         // Brand colors for PDF
         const brandColorsPDF = {
             mitsubishi: { primary: '#E60012', secondary: '#1a1a2e' },
