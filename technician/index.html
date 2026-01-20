@@ -8805,7 +8805,7 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                 // Step 1: Get project details
                 const { data: project, error: projectError } = await db
                     .from('projects')
-                    .select('id, title, brand, original_brand, status, created_at, updated_at')
+                    .select('id, title, brand, original_brand, status, created_at, updated_at, extracted_data')
                     .eq('id', projectId)
                     .single();
                 
@@ -8829,7 +8829,14 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                 // Store project title for header
                 currentProjectTitle = project.title || 'Sans titre';
                 currentProjectTitle = project.title || 'Sans titre';
-                
+
+                // ═══ LOAD extracted_data from project ═══
+                if (project.extracted_data && Object.keys(project.extracted_data).length > 0) {
+                    lastReportData = project.extracted_data;
+                    updateDrawerPreview(lastReportData);
+                    console.log('[Project] ✅ Loaded extracted_data:', Object.keys(lastReportData).length, 'fields');
+                }
+
                 // ═══ FIX: Detect if user selected different brand on main page ═══
                 const projectOriginalBrand = project.brand;
                 const userSelectedBrand = brand; // Current global brand from main page selection
