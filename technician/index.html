@@ -5806,7 +5806,7 @@
         // Safari/iOS specific: handle address bar and keyboard
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', handleKeyboardChange);
-            window.visualViewport.addEventListener('scroll', setViewportHeight);
+            window.visualViewport.addEventListener('scroll', setViewportHeight, { passive: true });
         }
         
         // Handle focus/blur on input fields for keyboard detection
@@ -9109,7 +9109,14 @@ INSTRUCTIONS:
             // Clear bodies (preserve TP containers)
             clearChatBody('assistant');
             clearChatBody('copilot');
-            
+
+            // Reset TP state for new project
+            TP.cardCounter = 0;
+            TP.currentCardId = { copilot: null, assistant: null };
+            TP.expandedState = {};
+            TP.s = { copilot: [], assistant: [] };
+            TP.isSimpleMode = { copilot: false, assistant: false };
+
             // Clear project name from header
             updateChatHeader();
             
@@ -11691,6 +11698,7 @@ INSTRUCTIONS:
             if (!body) return;
             // Remove only message elements, keep TP container
             body.querySelectorAll('.msg').forEach(el => el.remove());
+            body.querySelectorAll('[id^="tpCard"], [id^="tpPersisted"]').forEach(el => el.remove());
             // Reset TP container to hidden state
             const tpId = 'tp' + panel.charAt(0).toUpperCase() + panel.slice(1);
             const tpCard = document.getElementById(tpId);
@@ -12625,7 +12633,7 @@ RÈGLES:
             if (container) {
                 container.addEventListener('scroll', () => {
                     updateScrollButton(panel);
-                });
+                }, { passive: true });
             }
         }
         
@@ -16040,17 +16048,54 @@ function renderPersistedThoughtProcess(panel, steps, summary) {
         const cardId = 'tpPersisted' + (++TP.cardCounter);
         const summaryText = summary || (steps.length + ' étape' + (steps.length > 1 ? 's' : ''));
 
-        // Create collapsed card HTML
-        const html = '<div id="' + cardId + '" style="border:0.5px solid ' + c.border + ';border-radius:8px;margin:12px 0;max-width:70%;">' +
-            '<div style="display:flex;min-height:42px;cursor:pointer;" onclick="TP.toggleCard(\'' + cardId + '\')">' +
+        // Build steps HTML
+        let stepsHtml = '';
+        steps.forEach((step, idx) => {
+            const isLast = idx === steps.length - 1;
+            const iconHtml = step.icon === 'bullet'
+                ? '<div style="width:6px;height:6px;border-radius:50%;background:' + c.bullet + ';"></div>'
+                : '<div style="width:16px;height:16px;color:' + c.text + ';">' + (TP.icons[step.icon] || TP.icons.globe) + '</div>';
+
+            stepsHtml += '<div style="display:flex;min-height:36px;">' +
                 '<div style="display:flex;flex-direction:column;align-items:center;width:32px;padding-left:8px;">' +
-                    '<div style="width:1px;height:8px;background:transparent;"></div>' +
-                    '<div style="font-size:10px;color:' + c.textMuted + ';">' + TP.icons.chevronUp + '</div>' +
-                    '<div style="width:1px;flex-grow:1;min-height:6px;background:' + c.line + ';"></div>' +
+                    '<div style="width:1px;height:10px;background:' + c.line + ';"></div>' +
+                    '<div style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;">' + iconHtml + '</div>' +
+                    '<div style="width:1px;flex-grow:1;min-height:8px;background:' + (isLast ? 'transparent' : c.line) + ';"></div>' +
                 '</div>' +
                 '<div style="display:flex;align-items:center;padding:8px 12px 8px 4px;flex:1;">' +
-                    '<span style="font-size:14px;color:' + c.text + ';">' + summaryText + '</span>' +
+                    '<span style="font-size:14px;color:' + c.text + ';">' + step.text + '</span>' +
                 '</div>' +
+            '</div>';
+        });
+
+        // Create FULL card with both collapsed AND expanded views
+        const html = '<div id="' + cardId + '" style="border:0.5px solid ' + c.border + ';border-radius:8px;margin:12px 0;max-width:70%;">' +
+            // COLLAPSED VIEW (visible by default)
+            '<div id="' + cardId + 'Collapsed" style="display:block;">' +
+                '<div style="display:flex;min-height:42px;cursor:pointer;" onclick="TP.toggleCard(\'' + cardId + '\')">' +
+                    '<div style="display:flex;flex-direction:column;align-items:center;width:32px;padding-left:8px;">' +
+                        '<div style="width:1px;height:8px;background:transparent;"></div>' +
+                        '<div style="font-size:10px;color:' + c.textMuted + ';">' + TP.icons.chevronUp + '</div>' +
+                        '<div style="width:1px;flex-grow:1;min-height:6px;background:' + c.line + ';"></div>' +
+                    '</div>' +
+                    '<div style="display:flex;align-items:center;padding:8px 12px 8px 4px;flex:1;">' +
+                        '<span id="' + cardId + 'Summary" style="font-size:14px;color:' + c.text + ';">' + summaryText + '</span>' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+            // EXPANDED VIEW (hidden by default)
+            '<div id="' + cardId + 'Expanded" style="display:none;">' +
+                '<div style="display:flex;min-height:38px;cursor:pointer;" onclick="TP.toggleCard(\'' + cardId + '\')">' +
+                    '<div style="display:flex;flex-direction:column;align-items:center;width:32px;padding-left:8px;">' +
+                        '<div style="width:1px;height:8px;background:transparent;"></div>' +
+                        '<div style="font-size:10px;color:' + c.textMuted + ';">' + TP.icons.chevronDown + '</div>' +
+                        '<div style="width:1px;flex-grow:1;min-height:6px;background:' + c.line + ';"></div>' +
+                    '</div>' +
+                    '<div style="display:flex;align-items:center;padding:8px 12px 8px 4px;flex:1;">' +
+                        '<span style="font-size:14px;color:' + c.textMuted + ';">' + summaryText + '</span>' +
+                    '</div>' +
+                '</div>' +
+                '<div id="' + cardId + 'Steps">' + stepsHtml + '</div>' +
             '</div>' +
         '</div>';
 
