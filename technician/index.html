@@ -6186,7 +6186,11 @@
                 });
 
                 // Clean up double quotes
-                code = code.replace(/""/g, '"');
+                // Clean up double quotes
+                code = code.replace(/""/g, '"');                  
+                
+                // Fix missing closing pipe in edge labels: |"label" NODE → |"label"| NODE                 
+                code = code.replace(/\|"([^"]+)"\s+(\w+)/g, '|"$1"| $2');
 
                 // Remove AI-generated style commands (CSS handles styling)
                 code = code.replace(/^\s*style\s+\w+\s+.+$/gm, '');
@@ -6200,6 +6204,8 @@
                     // Apply FixAIR premium styling to rendered diagram
                     placeholder.querySelectorAll('rect').forEach(rect => {
                         if (!rect.closest('.edgeLabel')) {
+                            rect.setAttribute('fill', '#18181b');
+                            rect.setAttribute('stroke', 'rgba(255, 255, 255, 0.12)');
                             rect.style.fill = '#18181b';
                             rect.style.stroke = 'rgba(255, 255, 255, 0.12)';
                             rect.style.filter = 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))';
@@ -6208,15 +6214,19 @@
                         }
                     });
                     placeholder.querySelectorAll('polygon').forEach(p => {
+                        p.setAttribute('fill', '#18181b');
+                        p.setAttribute('stroke', 'rgba(255, 255, 255, 0.15)');
                         p.style.fill = '#18181b';
                         p.style.stroke = 'rgba(255, 255, 255, 0.15)';
                         p.style.filter = 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))';
                     });
                     placeholder.querySelectorAll('text, .nodeLabel, foreignObject .nodeLabel').forEach(t => {
+                        t.setAttribute('fill', '#fafafa');
                         t.style.fill = '#fafafa';
                         if (t.style) t.style.color = '#fafafa';
                     });
                     placeholder.querySelectorAll('.edgePath path').forEach(path => {
+                        path.setAttribute('stroke', '#52525b');
                         path.style.stroke = '#52525b';
                         path.style.strokeWidth = '2px';
                     });
@@ -7905,7 +7915,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                     .select()
                     .eq('project_id', currentProjectId)
                     .eq('chat_type', m)
-                    .single();
+                    .maybeSingle();
                 
                 if (existingChat) {
                     currentChatId[m] = existingChat.id;
@@ -7948,7 +7958,9 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                                 } catch (e) {
                                     // Error parsing OCR message
                                 }
-                            } else {
+                            
+                                } else {
+                                
                                 // Regular text message
                                 const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
                                 addMsg(m, role, content);
@@ -7970,8 +7982,17 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                             chatHistory[m].push({ role: msg.role, content: msg.content });
                         }
                     }
+
+                    // ═══ REFRESH DRAWER ON ASSISTANT MODE ═══
+                    if (m === 'assistant' && lastReportData && Object.keys(lastReportData).length > 0) {
+                        setTimeout(() => {
+                            updateDrawerPreview(lastReportData);
+                            console.log('[Mode] ✅ Drawer refreshed on assistant mode');
+                        }, 150);
+                    }
                     return;
                 } else {
+                    
                     // Create new chat in same project
                     const userId = await getCurrentUserId();
                     if (userId && !userId.startsWith('demo-')) {
@@ -7992,6 +8013,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                     }
                 }
             }
+           
             // ═══ END SUPABASE ═══
             
             const body = document.getElementById(m + 'Body');
@@ -8062,7 +8084,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             document.getElementById('reportBackdrop').classList.remove('show');
         }
 
-        function addMsg(panel, type, content) {
+      function addMsg(panel, type, content) {
             const body = document.getElementById(panel + 'Body');
             const msg = document.createElement('div');
             
@@ -8972,7 +8994,15 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                         }
                     }
                 }
-                
+
+                // ═══ ENSURE DRAWER POPULATED AFTER MESSAGES LOAD ═══
+                setTimeout(() => {
+                    if (lastReportData && Object.keys(lastReportData).length > 0) {
+                        updateDrawerPreview(lastReportData);
+                        console.log('[Project] ✅ Drawer refreshed after messages load');
+                    }
+                }, 150);
+
                 // Update chat header with project name
                 updateChatHeader();
                 
@@ -11438,24 +11468,13 @@ INSTRUCTIONS:
         function parseMarkdown(text) {
             if (!text) return '';
             
-            // ═══ FIX: Extract and RENDER [REPORT_DATA] blocks before stripping ═══
-            const reportDataMatch = text.match(/\[REPORT_DATA\]([\s\S]*?)\[\/REPORT_DATA\]/);
-            if (reportDataMatch) {
-                try {
-                    const reportJson = reportDataMatch[1].trim();
-                    const reportData = JSON.parse(reportJson);
-                    if (reportData && (reportData.type === 'report' || reportData.data || reportData.resume || reportData.resultat || reportData.client || reportData.travaux_effectues)) {
-                        // Remove the REPORT_DATA block from text
-                        const remainingText = text.replace(/\[REPORT_DATA\][\s\S]*?\[\/REPORT_DATA\]/g, '').trim();
-                        // Render the report and append any remaining text
-                        const reportHtml = renderReport(reportData.data || reportData);
-                        const remainingHtml = remainingText ? '<p>' + remainingText + '</p>' : '';
-                        return remainingHtml + reportHtml;
-                    }
-                } catch (e) {
-                    console.warn('parseMarkdown: Failed to parse REPORT_DATA:', e);
-                }
-            }
+// ═══ Strip [REPORT_DATA] blocks - report displays in drawer only ═══
+// Tables, lists, and other markdown formatting are preserved
+text = text.replace(/\[REPORT_DATA\][\s\S]*?\[\/REPORT_DATA\]/g, '').trim();
+
+// Also strip any embedded JSON with type:report (legacy format)
+text = text.replace(/\s*\{"type"\s*:\s*"report"[\s\S]*\}\s*$/, '').trim();
+            
             // Strip any unparseable REPORT_DATA blocks
             text = text.replace(/\[REPORT_DATA\][\s\S]*?\[\/REPORT_DATA\]/g, '').trim();
 
