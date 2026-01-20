@@ -4835,43 +4835,6 @@
         stroke-width: 12;
         }
 
-/* ===== THOUGHT PROCESS V2 - SAFE ===== */
-.tp-card{border:1px solid rgba(255,255,255,0.2);border-radius:8px;display:flex;flex-direction:column;overflow:hidden;margin:12px 0;background:rgba(30,30,30,0.95);min-height:60px}
-.tp-card.tp-hidden{display:none}
-.tp-collapsed{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;gap:16px;cursor:pointer;min-height:42px}
-.tp-collapsed:hover{background:rgba(255,255,255,0.03)}
-.tp-collapsed-text{flex:1;color:rgba(255,255,255,0.85);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tp-collapsed-chevron{color:rgba(255,255,255,0.65);flex-shrink:0;transition:transform 0.3s ease;width:20px;height:20px}
-.tp-card.tp-expanded .tp-collapsed-chevron{transform:rotate(180deg)}
-.tp-header-row{display:flex;min-height:34px;width:100%;cursor:pointer}
-.tp-header-row:hover{background:rgba(255,255,255,0.03)}
-.tp-header-left{display:flex;flex-direction:column;align-items:center;padding-left:12px}
-.tp-line{width:1px;background:rgba(255,255,255,0.15);flex-grow:1;min-height:9px}
-.tp-line.tp-invisible{background:transparent}
-.tp-header-icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;margin:2px 0;flex-shrink:0}
-.tp-header-chevron{color:rgba(255,255,255,0.4);transition:transform 0.3s ease;width:16px;height:16px}
-.tp-card.tp-expanded .tp-header-chevron{transform:rotate(180deg)}
-.tp-header-content{display:flex;align-items:center;padding:8px 12px;flex:1;font-size:14px;color:rgba(255,255,255,0.7)}
-.tp-step-row{display:flex;min-height:34px;flex-shrink:0}
-.tp-step-row:hover{background:rgba(255,255,255,0.03)}
-.tp-step-left{display:flex;flex-direction:column;align-items:center;justify-content:center;padding-left:12px}
-.tp-step-icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;margin:4px 0;flex-shrink:0}
-.tp-step-icon svg{width:16px;height:16px;color:rgba(255,255,255,0.65)}
-.tp-bullet{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.25)}
-.tp-step-content{display:flex;flex:1;width:100%;min-width:0}
-.tp-step-button{display:flex;flex:1;align-items:center;justify-content:space-between;gap:16px;padding:8px 12px;min-width:0;background:none;border:none;cursor:pointer;text-align:left}
-.tp-step-text{font-size:14px;color:rgba(255,255,255,0.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tp-step-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
-.tp-results-badge{font-size:13px;color:rgba(255,255,255,0.4);padding-left:4px;white-space:nowrap}
-.tp-step-chevron{color:rgba(255,255,255,0.65)}
-.tp-step-chevron svg{width:16px;height:16px}
-.tp-expanded-content{display:none;min-height:50px}
-.tp-card.tp-expanded .tp-expanded-content{display:block}
-.tp-loading-bullet{animation:tpPulse 1.2s ease infinite}
-@keyframes tpPulse{0%,100%{opacity:1}50%{opacity:0.4}}
-.tp-loading-step{opacity:0;transform:translateY(4px);transition:all 0.25s ease}
-.tp-loading-step.tp-visible{opacity:1;transform:translateY(0)}
-/* ===== END THOUGHT PROCESS CSS ===== */
     </style>
     
     <!-- Supabase Client -->
