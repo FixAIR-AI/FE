@@ -8819,7 +8819,7 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                 // Step 1: Get project details
                 const { data: project, error: projectError } = await db
                     .from('projects')
-                    .select('id, title, brand, original_brand, status, created_at, updated_at')
+                    .select('id, title, brand, original_brand, status, created_at, updated_at, extracted_data')
                     .eq('id', projectId)
                     .single();
                 
@@ -8843,7 +8843,14 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                 // Store project title for header
                 currentProjectTitle = project.title || 'Sans titre';
                 currentProjectTitle = project.title || 'Sans titre';
-                
+
+                // ═══ LOAD extracted_data from project ═══
+                if (project.extracted_data && Object.keys(project.extracted_data).length > 0) {
+                    lastReportData = project.extracted_data;
+                    updateDrawerPreview(lastReportData);
+                    console.log('[Project] ✅ Loaded extracted_data:', Object.keys(lastReportData).length, 'fields');
+                }
+
                 // ═══ FIX: Detect if user selected different brand on main page ═══
                 const projectOriginalBrand = project.brand;
                 const userSelectedBrand = brand; // Current global brand from main page selection
@@ -9499,7 +9506,8 @@ INSTRUCTIONS:
         
         // Store last report data for PDF export
         let lastReportData = null;
-        
+        let extractedDataSaveTimeout = null;  // Debounce for extracted_data auto-save
+
         // Brand colors for PDF
         const brandColorsPDF = {
             mitsubishi: { primary: '#E60012', secondary: '#1a1a2e' },
@@ -11279,11 +11287,26 @@ INSTRUCTIONS:
             
             // Update progress bar
             updateReportProgress();
-            
+
             // Auto-save indicator
             showAutoSaveIndicator();
+
+            // ═══ AUTO-SAVE extracted_data with debounce ═══
+            if (currentProjectId && lastReportData) {
+                clearTimeout(extractedDataSaveTimeout);
+                extractedDataSaveTimeout = setTimeout(async () => {
+                    const { error } = await db.from('projects')
+                        .update({ extracted_data: lastReportData })
+                        .eq('id', currentProjectId);
+                    if (error) {
+                        console.error('[Drawer] Auto-save failed:', error);
+                    } else {
+                        console.log('[Drawer] ✅ extracted_data auto-saved');
+                    }
+                }, 1500);
+            }
         }
-        
+
         // Add a new item to a list field
         function addReportListItem(listName) {
             if (!lastReportData) lastReportData = {};
@@ -12119,6 +12142,20 @@ RÈGLES:
                             
                             // Immediately update preview
                             updateDrawerPreview(lastReportData);
+
+                            // ═══ PERSIST extracted_data to Supabase ═══
+                            if (currentProjectId && lastReportData && Object.keys(lastReportData).length > 0) {
+                                db.from('projects')
+                                    .update({ extracted_data: lastReportData })
+                                    .eq('id', currentProjectId)
+                                    .then(({ error }) => {
+                                        if (error) {
+                                            console.error('[Assistant] Failed to save extracted_data:', error);
+                                        } else {
+                                            console.log('[Assistant] ✅ extracted_data saved to project');
+                                        }
+                                    });
+                            }
                         } catch (e) {
                             // Failed to parse REPORT_DATA
                         }
