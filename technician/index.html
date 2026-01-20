@@ -8332,7 +8332,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
         }
         
         // Save message to Supabase
-        async function saveMessage(chatId, role, content, contentType = 'text') {
+        async function saveMessage(chatId, role, content, contentType = 'text', thoughtProcess = null, thoughtSummary = null) {
             if (!chatId) return null;
             
             const { data, error } = await db
@@ -8341,7 +8341,9 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                     chat_id: chatId,
                     role: role,
                     content: content,
-                    content_type: contentType
+                    content_type: contentType,
+                    thought_process: thoughtProcess,
+                    thought_summary: thoughtSummary
                 })
                 .select()
                 .single();
@@ -8938,6 +8940,15 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                                 }
                             } else {
                                 // Regular text message
+                                // Render persisted thought process for AI messages (collapsed)
+                                if (role === 'ai' && msg.thought_process) {
+                                    try {
+                                        const steps = JSON.parse(msg.thought_process);
+                                        if (steps && steps.length > 0) {
+                                            renderPersistedThoughtProcess(chat.chat_type, steps, msg.thought_summary);
+                                        }
+                                    } catch (e) { /* ignore parse errors */ }
+                                }
                                 const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
                                 addMsg(chat.chat_type, role, content);
                                 
@@ -12096,16 +12107,20 @@ RÈGLES:
                 // Remove the REPORT_DATA block from displayed message (keep it clean for user)
                 const cleanResponse = aiResponse.replace(/\[REPORT_DATA\][\s\S]*?\[\/REPORT_DATA\]/g, '').trim();
                 const parsedResponse = parseMarkdown(cleanResponse);
+                // Capture thought process before collapsing
+                const tpSteps = (typeof TP !== 'undefined' && TP.s && TP.s[panel]) ? JSON.stringify(TP.s[panel]) : null;
+                const tpSummary = (typeof TP !== 'undefined' && TP.s && TP.s[panel]) ? (TP.s[panel].length + ' étapes') : null;
+
                 collapseThoughtProcess(panel);
                 addMsg(panel, 'ai', parsedResponse);
-                
+
                 // Add to history (keep original with data for future reference)
                 chatHistory[panel].push({ role: 'assistant', content: aiResponse });
-                
+
                 // ═══ SUPABASE: Save AI response ═══
                 try {
                     if (currentChatId[panel]) {
-                        await saveMessage(currentChatId[panel], 'assistant', aiResponse);
+                        await saveMessage(currentChatId[panel], 'assistant', aiResponse, 'text', tpSteps, tpSummary);
                         
                         // If this is a report, save it to reports table
                         if (aiResponse.includes('RAPPORT D\'INTERVENTION')) {
@@ -16014,6 +16029,35 @@ const TP = {
 function showThoughtProcess(m, q) { try { TP.show(m, q); } catch(e) { console.warn('TP:', e); } }
 function collapseThoughtProcess(m, s) { try { TP.collapse(m, s); } catch(e) { console.warn('TP:', e); } }
 function hideThoughtProcess(m) { try { TP.hide(m); } catch(e) { console.warn('TP:', e); } }
+
+// Render persisted thought process (collapsed, from database)
+function renderPersistedThoughtProcess(panel, steps, summary) {
+    try {
+        const body = document.getElementById(panel + 'Body');
+        if (!body || !steps || steps.length === 0) return;
+
+        const c = TP.colors;
+        const cardId = 'tpPersisted' + (++TP.cardCounter);
+        const summaryText = summary || (steps.length + ' étape' + (steps.length > 1 ? 's' : ''));
+
+        // Create collapsed card HTML
+        const html = '<div id="' + cardId + '" style="border:0.5px solid ' + c.border + ';border-radius:8px;margin:12px 0;max-width:70%;">' +
+            '<div style="display:flex;min-height:42px;cursor:pointer;" onclick="TP.toggleCard(\'' + cardId + '\')">' +
+                '<div style="display:flex;flex-direction:column;align-items:center;width:32px;padding-left:8px;">' +
+                    '<div style="width:1px;height:8px;background:transparent;"></div>' +
+                    '<div style="font-size:10px;color:' + c.textMuted + ';">' + TP.icons.chevronUp + '</div>' +
+                    '<div style="width:1px;flex-grow:1;min-height:6px;background:' + c.line + ';"></div>' +
+                '</div>' +
+                '<div style="display:flex;align-items:center;padding:8px 12px 8px 4px;flex:1;">' +
+                    '<span style="font-size:14px;color:' + c.text + ';">' + summaryText + '</span>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+
+        body.insertAdjacentHTML('beforeend', html);
+        TP.expandedState[cardId] = false;
+    } catch (e) { console.warn('renderPersistedTP:', e); }
+}
 
 // CSS
 (function() {
