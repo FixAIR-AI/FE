@@ -12117,6 +12117,20 @@ RÈGLES:
                             
                             // Immediately update preview
                             updateDrawerPreview(lastReportData);
+
+                            // ═══ PERSIST extracted_data to Supabase ═══
+                            if (currentProjectId && lastReportData && Object.keys(lastReportData).length > 0) {
+                                db.from('projects')
+                                    .update({ extracted_data: lastReportData })
+                                    .eq('id', currentProjectId)
+                                    .then(({ error }) => {
+                                        if (error) {
+                                            console.error('[Assistant] Failed to save extracted_data:', error);
+                                        } else {
+                                            console.log('[Assistant] ✅ extracted_data saved to project');
+                                        }
+                                    });
+                            }
                         } catch (e) {
                             // Failed to parse REPORT_DATA
                         }
