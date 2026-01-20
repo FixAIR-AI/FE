@@ -2218,7 +2218,9 @@
         .msg.ai .msg-bubble th, .msg.ai .msg-bubble td { border: 1px solid var(--border); padding: 8px; text-align: left; }
         .msg.ai .msg-bubble th { background: rgba(255,255,255,0.05); font-weight: 600; }
 
-        /* ═══ MERMAID DIAGRAMS - BASE STYLES ═══ */
+        /* DISABLED - CSS overrides JS styling
+        /* Mermaid Diagrams */
+        /* Clean Mermaid Diagrams */
         .mermaid-placeholder {
             background: #1e1e1e;
             border: 1px solid #333;
@@ -2246,7 +2248,43 @@
             height: auto;
             min-height: 200px;
         }
-        /* ═══ MERMAID ERROR STYLES ═══ */
+        /* Override Mermaid default styles for clarity */
+        .mermaid-rendered .node rect,
+        .mermaid-rendered .node circle,
+        .mermaid-rendered .node ellipse,
+        .mermaid-rendered .node polygon,
+        .mermaid-rendered .node path {
+            fill: #2d2d2d !important;
+            stroke: #888 !important;
+            stroke-width: 2px !important;
+        }
+        .mermaid-rendered .node .label {
+            fill: #fff !important;
+            font-size: 13px !important;
+            font-weight: 500 !important;
+        }
+        .mermaid-rendered .edgeLabel {
+            background-color: #1e1e1e !important;
+            fill: #ccc !important;
+            font-size: 12px !important;
+        }
+        .mermaid-rendered .edgePath .path {
+            stroke: #888 !important;
+            stroke-width: 2px !important;
+        }
+        .mermaid-rendered .arrowheadPath {
+            fill: #888 !important;
+        }
+        /* Subgraph styling */
+        .mermaid-rendered .cluster rect {
+            fill: #252525 !important;
+            stroke: #555 !important;
+            stroke-width: 1px !important;
+        }
+        .mermaid-rendered .cluster .label {
+            fill: #aaa !important;
+            font-size: 12px !important;
+        }
         .mermaid-error {
             background: rgba(239, 68, 68, 0.1);
             border: 1px solid rgba(239, 68, 68, 0.3);
@@ -2277,10 +2315,35 @@
             background: #f5f5f5;
             border-color: #ddd;
         }
-        /* ═══ DISABLED: Mermaid node styles - JS handles styling via setAttribute ═══
-        .mermaid-rendered .node rect, etc - REMOVED to allow JS post-processing
-        ═══════════════════════════════════════════════════════════════════════════ */
-
+        [data-theme="light"] .mermaid-rendered .node rect,
+        [data-theme="light"] .mermaid-rendered .node circle,
+        [data-theme="light"] .mermaid-rendered .node ellipse,
+        [data-theme="light"] .mermaid-rendered .node polygon,
+        [data-theme="light"] .mermaid-rendered .node path {
+            fill: #e8e8e8 !important;
+            stroke: #666 !important;
+        }
+        [data-theme="light"] .mermaid-rendered .node .label {
+            fill: #333 !important;
+        }
+        [data-theme="light"] .mermaid-rendered .edgeLabel {
+            background-color: #f5f5f5 !important;
+            fill: #555 !important;
+        }
+        [data-theme="light"] .mermaid-rendered .edgePath .path {
+            stroke: #666 !important;
+        }
+        [data-theme="light"] .mermaid-rendered .arrowheadPath {
+            fill: #666 !important;
+        }
+        [data-theme="light"] .mermaid-rendered .cluster rect {
+            fill: #f0f0f0 !important;
+            stroke: #ccc !important;
+        }
+        [data-theme="light"] .mermaid-rendered .cluster .label {
+            fill: #666 !important;
+        }
+        END DISABLED */
 
         /* Light theme markdown overrides */
         [data-theme="light"] .msg.ai .msg-bubble h1,
@@ -4835,6 +4898,43 @@
         stroke-width: 12;
         }
 
+/* ===== THOUGHT PROCESS V2 - SAFE ===== */
+.tp-card{border:1px solid rgba(255,255,255,0.2);border-radius:8px;display:flex;flex-direction:column;overflow:hidden;margin:12px 0;background:rgba(30,30,30,0.95);min-height:60px}
+.tp-card.tp-hidden{display:none}
+.tp-collapsed{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;gap:16px;cursor:pointer;min-height:42px}
+.tp-collapsed:hover{background:rgba(255,255,255,0.03)}
+.tp-collapsed-text{flex:1;color:rgba(255,255,255,0.85);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp-collapsed-chevron{color:rgba(255,255,255,0.65);flex-shrink:0;transition:transform 0.3s ease;width:20px;height:20px}
+.tp-card.tp-expanded .tp-collapsed-chevron{transform:rotate(180deg)}
+.tp-header-row{display:flex;min-height:34px;width:100%;cursor:pointer}
+.tp-header-row:hover{background:rgba(255,255,255,0.03)}
+.tp-header-left{display:flex;flex-direction:column;align-items:center;padding-left:12px}
+.tp-line{width:1px;background:rgba(255,255,255,0.15);flex-grow:1;min-height:9px}
+.tp-line.tp-invisible{background:transparent}
+.tp-header-icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;margin:2px 0;flex-shrink:0}
+.tp-header-chevron{color:rgba(255,255,255,0.4);transition:transform 0.3s ease;width:16px;height:16px}
+.tp-card.tp-expanded .tp-header-chevron{transform:rotate(180deg)}
+.tp-header-content{display:flex;align-items:center;padding:8px 12px;flex:1;font-size:14px;color:rgba(255,255,255,0.7)}
+.tp-step-row{display:flex;min-height:34px;flex-shrink:0}
+.tp-step-row:hover{background:rgba(255,255,255,0.03)}
+.tp-step-left{display:flex;flex-direction:column;align-items:center;justify-content:center;padding-left:12px}
+.tp-step-icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;margin:4px 0;flex-shrink:0}
+.tp-step-icon svg{width:16px;height:16px;color:rgba(255,255,255,0.65)}
+.tp-bullet{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.25)}
+.tp-step-content{display:flex;flex:1;width:100%;min-width:0}
+.tp-step-button{display:flex;flex:1;align-items:center;justify-content:space-between;gap:16px;padding:8px 12px;min-width:0;background:none;border:none;cursor:pointer;text-align:left}
+.tp-step-text{font-size:14px;color:rgba(255,255,255,0.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp-step-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.tp-results-badge{font-size:13px;color:rgba(255,255,255,0.4);padding-left:4px;white-space:nowrap}
+.tp-step-chevron{color:rgba(255,255,255,0.65)}
+.tp-step-chevron svg{width:16px;height:16px}
+.tp-expanded-content{display:none;min-height:50px}
+.tp-card.tp-expanded .tp-expanded-content{display:block}
+.tp-loading-bullet{animation:tpPulse 1.2s ease infinite}
+@keyframes tpPulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.tp-loading-step{opacity:0;transform:translateY(4px);transition:all 0.25s ease}
+.tp-loading-step.tp-visible{opacity:1;transform:translateY(0)}
+/* ===== END THOUGHT PROCESS CSS ===== */
     </style>
     
     <!-- Supabase Client -->
@@ -6138,77 +6238,32 @@
         }
 
         // ═══ SUPABASE CLIENT INITIALIZATION ═══
-        
-        // ═══ PARSE URL HASH FOR AUTH TOKENS ═══
-        // This must happen BEFORE createClient to prevent AbortError in cross-browser scenarios
-        function parseHashParams(hash) {
-            if (!hash || hash.length < 2) return {};
-            const params = {};
-            const hashContent = hash.substring(1); // Remove #
-            const pairs = hashContent.split('&');
-            for (const pair of pairs) {
-                const [key, value] = pair.split('=');
-                if (key && value) {
-                    params[decodeURIComponent(key)] = decodeURIComponent(value);
-                }
-            }
-            return params;
-        }
-
-        // Parse URL hash for tokens BEFORE creating client
-        const initialHash = window.location.hash;
-        const hashParams = parseHashParams(initialHash);
-        const hasAccessToken = !!hashParams.access_token;
-        const hasRefreshToken = !!hashParams.refresh_token;
-        const tokenType = hashParams.type; // 'recovery', 'signup', 'magiclink', etc.
-        const isRecoveryLink = tokenType === 'recovery';
-
-        // CRITICAL: Clean URL hash BEFORE creating Supabase client
-        // This prevents Supabase from internally trying to process the tokens
-        // which causes AbortError in fresh browsers (different browser than signup)
-        if (initialHash) {
-            window.history.replaceState(null, '', window.location.pathname + window.location.search);
-        }
-
         if (window.supabase && window.supabase.createClient) {
-            // STANDARDIZED CONFIG - same across all FixAIR apps
             db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
                 auth: {
-                    lock: false,                // REQUIRED - prevents AbortError from tab lock
-                    persistSession: true,       // REQUIRED - keep session across page loads
-                    autoRefreshToken: true,     // REQUIRED - auto refresh tokens
-                    detectSessionInUrl: false,  // REQUIRED - we handle URL tokens manually
-                    storageKey: 'fixair-auth'   // REQUIRED - same key for ALL FixAIR apps
+                    persistSession: true,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: false,
+                    storageKey: 'fixair-tech-auth',
+                    flowType: 'implicit',
+                    lock: false  // CRITICAL: Prevents AbortError
                 }
             });
-
-            // Mark Supabase as ready immediately since we handle auth manually
             supabaseReady = true;
         } else {
-            console.error('❌ Supabase library not loaded! window.supabase =', window.supabase);
+            console.error('Supabase library not loaded!');
             alert('Erreur: Supabase non chargé. Veuillez rafraîchir la page.');
         }
-        
-        // Helper function to wait for Supabase to be ready
+
+        // Helper to wait for Supabase to be ready
         async function waitForSupabase() {
-            if (supabaseReady) return true;
+            if (supabaseReady && db) return db;
             let attempts = 0;
-            while (!supabaseReady && attempts < 20) {
+            while ((!supabaseReady || !db) && attempts < 20) {
                 await new Promise(r => setTimeout(r, 100));
                 attempts++;
             }
-            return supabaseReady;
-        }
-        
-        // Safe query wrapper that handles AbortError
-        async function safeQuery(queryFn, retries = 3, timeoutMs = 30000) {
-            // Direct execution - no timeout/retry logic that causes issues
-            try {
-                return await queryFn();
-            } catch (error) {
-                console.error('Query error:', error);
-                return { data: null, error: { message: error.message } };
-            }
+            return db;
         }
 
         // ═══ TOAST UTILITY ═══
@@ -12004,8 +12059,7 @@ RÈGLES:
 
                 // Remove loading
                 removeLoadingMsg(panel);
-                // Collapse thought process (using TP system)
-                collapseThoughtProcess(panel);
+                if (thoughtUI) { thoughtUI.collapse(thoughtUI.generateSummary(thoughtManager.analyzeQuery(text, {}))); }
 
                 // Parse markdown and add AI response
                 const aiResponse = data.response || data.message || data.output || 'Désolé, une erreur est survenue.';
@@ -15663,7 +15717,6 @@ RÈGLES:
 <script src="/assets/js/fixair-diagrams.js"></script>
 
 <script>
-alert('TP SCRIPT START');
 
 /* ===== THOUGHT PROCESS - FIXAIR v5 ===== */
 /* Logic from v4 + Original styling restored */
@@ -15973,7 +16026,6 @@ function hideThoughtProcess(m) { try { TP.hide(m); } catch(e) { console.warn('TP
 })();
 
 console.log('✅ TP FixAIR v5');
-alert('TP LOADED: ' + typeof TP);
 </script>
 </body>
 </html>
