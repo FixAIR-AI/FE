@@ -7915,7 +7915,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                     .select()
                     .eq('project_id', currentProjectId)
                     .eq('chat_type', m)
-                    .Single()
+                    .maybeSingle();
                 
                 if (existingChat) {
                     currentChatId[m] = existingChat.id;
