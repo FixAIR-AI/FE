@@ -7983,6 +7983,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                     }
                     return;
                 } else {
+                    
                     // Create new chat in same project
                     const userId = await getCurrentUserId();
                     if (userId && !userId.startsWith('demo-')) {
@@ -8003,6 +8004,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                     }
                 }
             }
+           
             // ═══ END SUPABASE ═══
             
             const body = document.getElementById(m + 'Body');
