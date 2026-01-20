@@ -12053,7 +12053,7 @@ RÈGLES:
 
                 // Remove loading
                 removeLoadingMsg(panel);
-                if (thoughtUI) { thoughtUI.collapse(thoughtUI.generateSummary(thoughtManager.analyzeQuery(text, {}))); }
+                collapseThoughtProcess(panel);
 
                 // Parse markdown and add AI response
                 const aiResponse = data.response || data.message || data.output || 'Désolé, une erreur est survenue.';
