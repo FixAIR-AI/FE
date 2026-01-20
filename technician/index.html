@@ -8072,19 +8072,8 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             document.getElementById('reportBackdrop').classList.remove('show');
         }
 
-       function addMsg(panel, type, content) {
+      function addMsg(panel, type, content) {
             const body = document.getElementById(panel + 'Body');
-            
-            // Clean JSON from old messages that have both [REPORT_DATA] and raw JSON
-            if (type === 'ai' && content) {
-                // Remove trailing JSON after [/REPORT_DATA]
-                if (content.includes('[REPORT_DATA]')) {
-                    content = content.replace(/(\[\/REPORT_DATA\])\s*\{[\s\S]*$/, '$1');
-                }
-                // Remove standalone embedded JSON at end of message
-                content = content.replace(/\s*\{[\s\S]*"(?:client|resultat|resume|travaux_effectues)"[\s\S]*\}\s*$/, '');
-            }
-            
             const msg = document.createElement('div');
             
             // Detect if this is a report message (contains report keywords/headers)
