@@ -11427,7 +11427,7 @@ INSTRUCTIONS:
                 try {
                     const reportJson = reportDataMatch[1].trim();
                     const reportData = JSON.parse(reportJson);
-                    if (reportData && (reportData.type === 'report' || reportData.data || reportData.resume)) {
+                    if (reportData && (reportData.type === 'report' || reportData.data || reportData.resume || reportData.resultat || reportData.client || reportData.travaux_effectues)) {
                         // Remove the REPORT_DATA block from text
                         const remainingText = text.replace(/\[REPORT_DATA\][\s\S]*?\[\/REPORT_DATA\]/g, '').trim();
                         // Render the report and append any remaining text
