@@ -7969,9 +7969,9 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                                     if (rawContent.includes('[REPORT_DATA]')) {
                                         rawContent = rawContent.replace(/(\[\/REPORT_DATA\])\s*\{[\s\S]*$/, '$1');
                                     }
-                                    // Remove standalone JSON with report keys (but not REPORT_DATA blocks)
+                               // Remove standalone JSON with report keys (but not REPORT_DATA blocks)
                                     if (!rawContent.includes('[REPORT_DATA]')) {
-                                        rawContent = rawContent.replace(/\s*\{"(?:type":"report|brand|client|resultat|resume|travaux_effectues)[\s\S]*\}\s*$/, '');
+                                        rawContent = rawContent.replace(/\s*\{[\s\S]*(?:"client"|"resultat"|"resume"|"travaux_effectues")[\s\S]*\}\s*$/, '');
                                     }
                                 }
                                 
