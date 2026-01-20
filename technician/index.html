@@ -7960,22 +7960,10 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                                 }
                             } else {
                                
-                                / Regular text message
-                                let rawContent = msg.content;
-                                
-                                // Clean embedded JSON from old messages
-                                if (role === 'ai' && rawContent) {
-                                    // Remove JSON after [/REPORT_DATA]
-                                    if (rawContent.includes('[REPORT_DATA]')) {
-                                        rawContent = rawContent.replace(/(\[\/REPORT_DATA\])\s*\{[\s\S]*$/, '$1');
-                                    }
-                               // Remove standalone JSON with report keys (but not REPORT_DATA blocks)
-                                    if (!rawContent.includes('[REPORT_DATA]')) {
-                                        rawContent = rawContent.replace(/\s*\{[\s\S]*(?:"client"|"resultat"|"resume"|"travaux_effectues")[\s\S]*\}\s*$/, '');
-                                    }
-                                }
-                                
-                                const content = role === 'ai' ? parseMarkdown(rawContent) : rawContent;
+                                } else {
+                            
+                                // Regular text message
+                                const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
                                 addMsg(m, role, content);
                                 
                                 // ═══ FIX: Extract REPORT_DATA from loaded AI messages to update drawer ═══
