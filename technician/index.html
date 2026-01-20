@@ -11421,7 +11421,25 @@ INSTRUCTIONS:
         function parseMarkdown(text) {
             if (!text) return '';
             
-            // ═══ FIX: Strip [REPORT_DATA] blocks (they were saved to DB but shouldn't display) ═══
+            // ═══ FIX: Extract and RENDER [REPORT_DATA] blocks before stripping ═══
+            const reportDataMatch = text.match(/\[REPORT_DATA\]([\s\S]*?)\[\/REPORT_DATA\]/);
+            if (reportDataMatch) {
+                try {
+                    const reportJson = reportDataMatch[1].trim();
+                    const reportData = JSON.parse(reportJson);
+                    if (reportData && (reportData.type === 'report' || reportData.data || reportData.resume)) {
+                        // Remove the REPORT_DATA block from text
+                        const remainingText = text.replace(/\[REPORT_DATA\][\s\S]*?\[\/REPORT_DATA\]/g, '').trim();
+                        // Render the report and append any remaining text
+                        const reportHtml = renderReport(reportData.data || reportData);
+                        const remainingHtml = remainingText ? '<p>' + remainingText + '</p>' : '';
+                        return remainingHtml + reportHtml;
+                    }
+                } catch (e) {
+                    console.warn('parseMarkdown: Failed to parse REPORT_DATA:', e);
+                }
+            }
+            // Strip any unparseable REPORT_DATA blocks
             text = text.replace(/\[REPORT_DATA\][\s\S]*?\[\/REPORT_DATA\]/g, '').trim();
 
             // ═══ EXTRACT MERMAID DIAGRAMS ═══
