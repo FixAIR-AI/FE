@@ -6186,7 +6186,11 @@
                 });
 
                 // Clean up double quotes
-                code = code.replace(/""/g, '"');
+                // Clean up double quotes
+                code = code.replace(/""/g, '"');                  
+                
+                // Fix missing closing pipe in edge labels: |"label" NODE → |"label"| NODE                 
+                code = code.replace(/\|"([^"]+)"\s+(\w+)/g, '|"$1"| $2');
 
                 // Remove AI-generated style commands (CSS handles styling)
                 code = code.replace(/^\s*style\s+\w+\s+.+$/gm, '');
