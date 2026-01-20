@@ -11429,24 +11429,13 @@ INSTRUCTIONS:
         function parseMarkdown(text) {
             if (!text) return '';
             
-            // ═══ FIX: Extract and RENDER [REPORT_DATA] blocks before stripping ═══
-const reportDataMatch = text.match(/\[REPORT_DATA\]([\s\S]*?)\[\/REPORT_DATA\]/);
-if (reportDataMatch) {
-    try {
-        const reportJson = reportDataMatch[1].trim();
-        const reportData = JSON.parse(reportJson);
-        if (reportData && (reportData.type === 'report' || reportData.data || reportData.resume || reportData.resultat || reportData.client || reportData.travaux_effectues)) {
-            let remainingText = text.replace(/\[REPORT_DATA\][\s\S]*?\[\/REPORT_DATA\]/g, '').trim();
-            // Also strip embedded JSON that appears before REPORT_DATA
-            remainingText = remainingText.replace(/\s*\{"type"\s*:\s*"report"[\s\S]*\}\s*$/, '').trim();
-            const reportHtml = renderReport(reportData.data || reportData);
-            const remainingHtml = remainingText ? '<p>' + remainingText + '</p>' : '';
-            return remainingHtml + reportHtml;
-        }
-    } catch (e) {
-        console.warn('parseMarkdown: Failed to parse REPORT_DATA:', e);
-    }
-}
+// ═══ Strip [REPORT_DATA] blocks - report displays in drawer only ═══
+// Tables, lists, and other markdown formatting are preserved
+text = text.replace(/\[REPORT_DATA\][\s\S]*?\[\/REPORT_DATA\]/g, '').trim();
+
+// Also strip any embedded JSON with type:report (legacy format)
+text = text.replace(/\s*\{"type"\s*:\s*"report"[\s\S]*\}\s*$/, '').trim();
+            
             // Strip any unparseable REPORT_DATA blocks
             text = text.replace(/\[REPORT_DATA\][\s\S]*?\[\/REPORT_DATA\]/g, '').trim();
 
