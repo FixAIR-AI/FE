@@ -7970,6 +7970,14 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                             chatHistory[m].push({ role: msg.role, content: msg.content });
                         }
                     }
+
+                    // ═══ REFRESH DRAWER ON ASSISTANT MODE ═══
+                    if (m === 'assistant' && lastReportData && Object.keys(lastReportData).length > 0) {
+                        setTimeout(() => {
+                            updateDrawerPreview(lastReportData);
+                            console.log('[Mode] ✅ Drawer refreshed on assistant mode');
+                        }, 150);
+                    }
                     return;
                 } else {
                     // Create new chat in same project
@@ -8972,7 +8980,15 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                         }
                     }
                 }
-                
+
+                // ═══ ENSURE DRAWER POPULATED AFTER MESSAGES LOAD ═══
+                setTimeout(() => {
+                    if (lastReportData && Object.keys(lastReportData).length > 0) {
+                        updateDrawerPreview(lastReportData);
+                        console.log('[Project] ✅ Drawer refreshed after messages load');
+                    }
+                }, 150);
+
                 // Update chat header with project name
                 updateChatHeader();
                 
