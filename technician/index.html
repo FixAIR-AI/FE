@@ -5806,7 +5806,7 @@
         // Safari/iOS specific: handle address bar and keyboard
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', handleKeyboardChange);
-            window.visualViewport.addEventListener('scroll', setViewportHeight);
+            window.visualViewport.addEventListener('scroll', setViewportHeight, { passive: true });
         }
         
         // Handle focus/blur on input fields for keyboard detection
@@ -6186,7 +6186,11 @@
                 });
 
                 // Clean up double quotes
-                code = code.replace(/""/g, '"');
+                // Clean up double quotes
+                code = code.replace(/""/g, '"');                  
+                
+                // Fix missing closing pipe in edge labels: |"label" NODE → |"label"| NODE                 
+                code = code.replace(/\|"([^"]+)"\s+(\w+)/g, '|"$1"| $2');
 
                 // Remove AI-generated style commands (CSS handles styling)
                 code = code.replace(/^\s*style\s+\w+\s+.+$/gm, '');
@@ -6200,6 +6204,8 @@
                     // Apply FixAIR premium styling to rendered diagram
                     placeholder.querySelectorAll('rect').forEach(rect => {
                         if (!rect.closest('.edgeLabel')) {
+                            rect.setAttribute('fill', '#18181b');
+                            rect.setAttribute('stroke', 'rgba(255, 255, 255, 0.12)');
                             rect.style.fill = '#18181b';
                             rect.style.stroke = 'rgba(255, 255, 255, 0.12)';
                             rect.style.filter = 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))';
@@ -6208,15 +6214,19 @@
                         }
                     });
                     placeholder.querySelectorAll('polygon').forEach(p => {
+                        p.setAttribute('fill', '#18181b');
+                        p.setAttribute('stroke', 'rgba(255, 255, 255, 0.15)');
                         p.style.fill = '#18181b';
                         p.style.stroke = 'rgba(255, 255, 255, 0.15)';
                         p.style.filter = 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))';
                     });
                     placeholder.querySelectorAll('text, .nodeLabel, foreignObject .nodeLabel').forEach(t => {
+                        t.setAttribute('fill', '#fafafa');
                         t.style.fill = '#fafafa';
                         if (t.style) t.style.color = '#fafafa';
                     });
                     placeholder.querySelectorAll('.edgePath path').forEach(path => {
+                        path.setAttribute('stroke', '#52525b');
                         path.style.stroke = '#52525b';
                         path.style.strokeWidth = '2px';
                     });
@@ -7905,7 +7915,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                     .select()
                     .eq('project_id', currentProjectId)
                     .eq('chat_type', m)
-                    .single();
+                    .maybeSingle();
                 
                 if (existingChat) {
                     currentChatId[m] = existingChat.id;
@@ -7948,7 +7958,9 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                                 } catch (e) {
                                     // Error parsing OCR message
                                 }
-                            } else {
+                            
+                                } else {
+                                
                                 // Regular text message
                                 const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
                                 addMsg(m, role, content);
@@ -7970,8 +7982,17 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                             chatHistory[m].push({ role: msg.role, content: msg.content });
                         }
                     }
+
+                    // ═══ REFRESH DRAWER ON ASSISTANT MODE ═══
+                    if (m === 'assistant' && lastReportData && Object.keys(lastReportData).length > 0) {
+                        setTimeout(() => {
+                            updateDrawerPreview(lastReportData);
+                            console.log('[Mode] ✅ Drawer refreshed on assistant mode');
+                        }, 150);
+                    }
                     return;
                 } else {
+                    
                     // Create new chat in same project
                     const userId = await getCurrentUserId();
                     if (userId && !userId.startsWith('demo-')) {
@@ -7992,6 +8013,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                     }
                 }
             }
+           
             // ═══ END SUPABASE ═══
             
             const body = document.getElementById(m + 'Body');
@@ -8062,7 +8084,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             document.getElementById('reportBackdrop').classList.remove('show');
         }
 
-        function addMsg(panel, type, content) {
+      function addMsg(panel, type, content) {
             const body = document.getElementById(panel + 'Body');
             const msg = document.createElement('div');
             
@@ -8326,7 +8348,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
         }
         
         // Save message to Supabase
-        async function saveMessage(chatId, role, content, contentType = 'text') {
+        async function saveMessage(chatId, role, content, contentType = 'text', thoughtProcess = null, thoughtSummary = null) {
             if (!chatId) return null;
             
             const { data, error } = await db
@@ -8335,7 +8357,9 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                     chat_id: chatId,
                     role: role,
                     content: content,
-                    content_type: contentType
+                    content_type: contentType,
+                    thought_process: thoughtProcess,
+                    thought_summary: thoughtSummary
                 })
                 .select()
                 .single();
@@ -8803,7 +8827,7 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                 // Step 1: Get project details
                 const { data: project, error: projectError } = await db
                     .from('projects')
-                    .select('id, title, brand, original_brand, status, created_at, updated_at')
+                    .select('id, title, brand, original_brand, status, created_at, updated_at, extracted_data')
                     .eq('id', projectId)
                     .single();
                 
@@ -8827,7 +8851,14 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                 // Store project title for header
                 currentProjectTitle = project.title || 'Sans titre';
                 currentProjectTitle = project.title || 'Sans titre';
-                
+
+                // ═══ LOAD extracted_data from project ═══
+                if (project.extracted_data && Object.keys(project.extracted_data).length > 0) {
+                    lastReportData = project.extracted_data;
+                    updateDrawerPreview(lastReportData);
+                    console.log('[Project] ✅ Loaded extracted_data:', Object.keys(lastReportData).length, 'fields');
+                }
+
                 // ═══ FIX: Detect if user selected different brand on main page ═══
                 const projectOriginalBrand = project.brand;
                 const userSelectedBrand = brand; // Current global brand from main page selection
@@ -8932,6 +8963,15 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                                 }
                             } else {
                                 // Regular text message
+                                // Render persisted thought process for AI messages (collapsed)
+                                if (role === 'ai' && msg.thought_process) {
+                                    try {
+                                        const steps = JSON.parse(msg.thought_process);
+                                        if (steps && steps.length > 0) {
+                                            renderPersistedThoughtProcess(chat.chat_type, steps, msg.thought_summary);
+                                        }
+                                    } catch (e) { /* ignore parse errors */ }
+                                }
                                 const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
                                 addMsg(chat.chat_type, role, content);
                                 
@@ -8954,7 +8994,15 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                         }
                     }
                 }
-                
+
+                // ═══ ENSURE DRAWER POPULATED AFTER MESSAGES LOAD ═══
+                setTimeout(() => {
+                    if (lastReportData && Object.keys(lastReportData).length > 0) {
+                        updateDrawerPreview(lastReportData);
+                        console.log('[Project] ✅ Drawer refreshed after messages load');
+                    }
+                }, 150);
+
                 // Update chat header with project name
                 updateChatHeader();
                 
@@ -9092,7 +9140,14 @@ INSTRUCTIONS:
             // Clear bodies (preserve TP containers)
             clearChatBody('assistant');
             clearChatBody('copilot');
-            
+
+            // Reset TP state for new project
+            TP.cardCounter = 0;
+            TP.currentCardId = { copilot: null, assistant: null };
+            TP.expandedState = {};
+            TP.s = { copilot: [], assistant: [] };
+            TP.isSimpleMode = { copilot: false, assistant: false };
+
             // Clear project name from header
             updateChatHeader();
             
@@ -9467,7 +9522,8 @@ INSTRUCTIONS:
         
         // Store last report data for PDF export
         let lastReportData = null;
-        
+        let extractedDataSaveTimeout = null;  // Debounce for extracted_data auto-save
+
         // Brand colors for PDF
         const brandColorsPDF = {
             mitsubishi: { primary: '#E60012', secondary: '#1a1a2e' },
@@ -11247,11 +11303,26 @@ INSTRUCTIONS:
             
             // Update progress bar
             updateReportProgress();
-            
+
             // Auto-save indicator
             showAutoSaveIndicator();
+
+            // ═══ AUTO-SAVE extracted_data with debounce ═══
+            if (currentProjectId && lastReportData) {
+                clearTimeout(extractedDataSaveTimeout);
+                extractedDataSaveTimeout = setTimeout(async () => {
+                    const { error } = await db.from('projects')
+                        .update({ extracted_data: lastReportData })
+                        .eq('id', currentProjectId);
+                    if (error) {
+                        console.error('[Drawer] Auto-save failed:', error);
+                    } else {
+                        console.log('[Drawer] ✅ extracted_data auto-saved');
+                    }
+                }, 1500);
+            }
         }
-        
+
         // Add a new item to a list field
         function addReportListItem(listName) {
             if (!lastReportData) lastReportData = {};
@@ -11397,7 +11468,14 @@ INSTRUCTIONS:
         function parseMarkdown(text) {
             if (!text) return '';
             
-            // ═══ FIX: Strip [REPORT_DATA] blocks (they were saved to DB but shouldn't display) ═══
+// ═══ Strip [REPORT_DATA] blocks - report displays in drawer only ═══
+// Tables, lists, and other markdown formatting are preserved
+text = text.replace(/\[REPORT_DATA\][\s\S]*?\[\/REPORT_DATA\]/g, '').trim();
+
+// Also strip any embedded JSON with type:report (legacy format)
+text = text.replace(/\s*\{"type"\s*:\s*"report"[\s\S]*\}\s*$/, '').trim();
+            
+            // Strip any unparseable REPORT_DATA blocks
             text = text.replace(/\[REPORT_DATA\][\s\S]*?\[\/REPORT_DATA\]/g, '').trim();
 
             // ═══ EXTRACT MERMAID DIAGRAMS ═══
@@ -11464,7 +11542,8 @@ INSTRUCTIONS:
             }
 
             // Check for JSON embedded in text (intro text + JSON)
-            const embeddedJsonMatch = trimmed.match(/^([\s\S]*?)\s*(\{[\s\S]*"type"\s*:\s*"report"[\s\S]*\})\s*$/);
+            // Match JSON with any report-related fields (client, resultat, resume, travaux, or type:report)
+            const embeddedJsonMatch = trimmed.match(/^([\s\S]*?)\s*(\{[\s\S]*(?:"client"|"resultat"|"resume"|"travaux_effectues"|"type"\s*:\s*"report")[\s\S]*\})\s*$/);
             if (embeddedJsonMatch) {
                 try {
                     const jsonData = JSON.parse(embeddedJsonMatch[2]);
@@ -11674,6 +11753,7 @@ INSTRUCTIONS:
             if (!body) return;
             // Remove only message elements, keep TP container
             body.querySelectorAll('.msg').forEach(el => el.remove());
+            body.querySelectorAll('[id^="tpCard"], [id^="tpPersisted"]').forEach(el => el.remove());
             // Reset TP container to hidden state
             const tpId = 'tp' + panel.charAt(0).toUpperCase() + panel.slice(1);
             const tpCard = document.getElementById(tpId);
@@ -12078,6 +12158,20 @@ RÈGLES:
                             
                             // Immediately update preview
                             updateDrawerPreview(lastReportData);
+
+                            // ═══ PERSIST extracted_data to Supabase ═══
+                            if (currentProjectId && lastReportData && Object.keys(lastReportData).length > 0) {
+                                db.from('projects')
+                                    .update({ extracted_data: lastReportData })
+                                    .eq('id', currentProjectId)
+                                    .then(({ error }) => {
+                                        if (error) {
+                                            console.error('[Assistant] Failed to save extracted_data:', error);
+                                        } else {
+                                            console.log('[Assistant] ✅ extracted_data saved to project');
+                                        }
+                                    });
+                            }
                         } catch (e) {
                             // Failed to parse REPORT_DATA
                         }
@@ -12090,16 +12184,20 @@ RÈGLES:
                 // Remove the REPORT_DATA block from displayed message (keep it clean for user)
                 const cleanResponse = aiResponse.replace(/\[REPORT_DATA\][\s\S]*?\[\/REPORT_DATA\]/g, '').trim();
                 const parsedResponse = parseMarkdown(cleanResponse);
+                // Capture thought process before collapsing
+                const tpSteps = (typeof TP !== 'undefined' && TP.s && TP.s[panel]) ? JSON.stringify(TP.s[panel]) : null;
+                const tpSummary = (typeof TP !== 'undefined' && TP.s && TP.s[panel]) ? (TP.s[panel].length + ' étapes') : null;
+
                 collapseThoughtProcess(panel);
                 addMsg(panel, 'ai', parsedResponse);
-                
+
                 // Add to history (keep original with data for future reference)
                 chatHistory[panel].push({ role: 'assistant', content: aiResponse });
-                
+
                 // ═══ SUPABASE: Save AI response ═══
                 try {
                     if (currentChatId[panel]) {
-                        await saveMessage(currentChatId[panel], 'assistant', aiResponse);
+                        await saveMessage(currentChatId[panel], 'assistant', aiResponse, 'text', tpSteps, tpSummary);
                         
                         // If this is a report, save it to reports table
                         if (aiResponse.includes('RAPPORT D\'INTERVENTION')) {
@@ -12604,7 +12702,7 @@ RÈGLES:
             if (container) {
                 container.addEventListener('scroll', () => {
                     updateScrollButton(panel);
-                });
+                }, { passive: true });
             }
         }
         
@@ -16008,6 +16106,72 @@ const TP = {
 function showThoughtProcess(m, q) { try { TP.show(m, q); } catch(e) { console.warn('TP:', e); } }
 function collapseThoughtProcess(m, s) { try { TP.collapse(m, s); } catch(e) { console.warn('TP:', e); } }
 function hideThoughtProcess(m) { try { TP.hide(m); } catch(e) { console.warn('TP:', e); } }
+
+// Render persisted thought process (collapsed, from database)
+function renderPersistedThoughtProcess(panel, steps, summary) {
+    try {
+        const body = document.getElementById(panel + 'Body');
+        if (!body || !steps || steps.length === 0) return;
+
+        const c = TP.colors;
+        const cardId = 'tpPersisted' + (++TP.cardCounter);
+        const summaryText = summary || (steps.length + ' étape' + (steps.length > 1 ? 's' : ''));
+
+        // Build steps HTML
+        let stepsHtml = '';
+        steps.forEach((step, idx) => {
+            const isLast = idx === steps.length - 1;
+            const iconHtml = step.icon === 'bullet'
+                ? '<div style="width:6px;height:6px;border-radius:50%;background:' + c.bullet + ';"></div>'
+                : '<div style="width:16px;height:16px;color:' + c.text + ';">' + (TP.icons[step.icon] || TP.icons.globe) + '</div>';
+
+            stepsHtml += '<div style="display:flex;min-height:36px;">' +
+                '<div style="display:flex;flex-direction:column;align-items:center;width:32px;padding-left:8px;">' +
+                    '<div style="width:1px;height:10px;background:' + c.line + ';"></div>' +
+                    '<div style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;">' + iconHtml + '</div>' +
+                    '<div style="width:1px;flex-grow:1;min-height:8px;background:' + (isLast ? 'transparent' : c.line) + ';"></div>' +
+                '</div>' +
+                '<div style="display:flex;align-items:center;padding:8px 12px 8px 4px;flex:1;">' +
+                    '<span style="font-size:14px;color:' + c.text + ';">' + step.text + '</span>' +
+                '</div>' +
+            '</div>';
+        });
+
+        // Create FULL card with both collapsed AND expanded views
+        const html = '<div id="' + cardId + '" style="border:0.5px solid ' + c.border + ';border-radius:8px;margin:12px 0;max-width:70%;">' +
+            // COLLAPSED VIEW (visible by default)
+            '<div id="' + cardId + 'Collapsed" style="display:block;">' +
+                '<div style="display:flex;min-height:42px;cursor:pointer;" onclick="TP.toggleCard(\'' + cardId + '\')">' +
+                    '<div style="display:flex;flex-direction:column;align-items:center;width:32px;padding-left:8px;">' +
+                        '<div style="width:1px;height:8px;background:transparent;"></div>' +
+                        '<div style="font-size:10px;color:' + c.textMuted + ';">' + TP.icons.chevronUp + '</div>' +
+                        '<div style="width:1px;flex-grow:1;min-height:6px;background:' + c.line + ';"></div>' +
+                    '</div>' +
+                    '<div style="display:flex;align-items:center;padding:8px 12px 8px 4px;flex:1;">' +
+                        '<span id="' + cardId + 'Summary" style="font-size:14px;color:' + c.text + ';">' + summaryText + '</span>' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+            // EXPANDED VIEW (hidden by default)
+            '<div id="' + cardId + 'Expanded" style="display:none;">' +
+                '<div style="display:flex;min-height:38px;cursor:pointer;" onclick="TP.toggleCard(\'' + cardId + '\')">' +
+                    '<div style="display:flex;flex-direction:column;align-items:center;width:32px;padding-left:8px;">' +
+                        '<div style="width:1px;height:8px;background:transparent;"></div>' +
+                        '<div style="font-size:10px;color:' + c.textMuted + ';">' + TP.icons.chevronDown + '</div>' +
+                        '<div style="width:1px;flex-grow:1;min-height:6px;background:' + c.line + ';"></div>' +
+                    '</div>' +
+                    '<div style="display:flex;align-items:center;padding:8px 12px 8px 4px;flex:1;">' +
+                        '<span style="font-size:14px;color:' + c.textMuted + ';">' + summaryText + '</span>' +
+                    '</div>' +
+                '</div>' +
+                '<div id="' + cardId + 'Steps">' + stepsHtml + '</div>' +
+            '</div>' +
+        '</div>';
+
+        body.insertAdjacentHTML('beforeend', html);
+        TP.expandedState[cardId] = false;
+    } catch (e) { console.warn('renderPersistedTP:', e); }
+}
 
 // CSS
 (function() {
