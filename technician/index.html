@@ -5014,8 +5014,8 @@
         <div class="scan-line"></div>
         <div class="login-container">
             <div class="login-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
-            <h1 class="login-title">Bienvenue</h1>
-            <p class="login-sub">Portail Technicien FixAIR</p>
+            <h1 class="login-title" data-i18n="login.welcome">Bienvenue</h1>
+            <p class="login-sub" data-i18n="login.subtitle">Portail Technicien FixAIR</p>
             <div class="login-bar">
                 <div class="login-icon-slot">
                     <div class="login-mini" id="loginSphere"><div class="glass-sphere"><div class="sphere-fog-container"><div class="sphere-fog"></div><div class="sphere-fog-2"></div></div></div></div>
@@ -5024,10 +5024,10 @@
                 <div class="login-input-container">
                     <div class="login-input-slider" id="loginSlider">
                         <div class="login-input-slide">
-                            <input type="email" class="login-input" id="loginEmail" placeholder="Quelle est votre adresse email ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
+                            <input type="email" class="login-input" id="loginEmail" data-placeholder-i18n="login.email_placeholder" placeholder="Quelle est votre adresse email ?" onkeypress="if(event.key==='Enter')nextLoginStep()">
                         </div>
                         <div class="login-input-slide">
-                            <input type="password" class="login-input" id="loginPassword" placeholder="Entrez votre mot de passe" onkeypress="if(event.key==='Enter')nextLoginStep()">
+                            <input type="password" class="login-input" id="loginPassword" data-placeholder-i18n="login.password_placeholder" placeholder="Entrez votre mot de passe" onkeypress="if(event.key==='Enter')nextLoginStep()">
                         </div>
                     </div>
                 </div>
@@ -5834,7 +5834,7 @@
         
         // Theme and Language
         let currentTheme = localStorage.getItem('fixair_theme') || 'dark';
-        let currentLang = localStorage.getItem('fixair_lang') || 'fr';
+        let currentLang = localStorage.getItem('fixair_language') || localStorage.getItem('fixair_lang') || 'fr';
         
         // Translations
         const translations = {
@@ -5887,7 +5887,33 @@
                 // Chat
                 'chat.input_placeholder': 'Posez votre question...',
                 'chat.copilot_title': 'FixAIR Copilot',
-                'chat.assistant_title': 'FixAIR Assistant'
+                'chat.assistant_title': 'FixAIR Assistant',
+                // Auth - Errors
+                'errors.invalidEmail': 'Veuillez entrer un email valide',
+                'errors.enterPassword': 'Veuillez entrer votre mot de passe',
+                'errors.wrongPassword': 'Mot de passe incorrect',
+                'errors.connectionError': 'Erreur de connexion. Réessayez.',
+                'errors.profileNotFound': 'Erreur: profil non trouvé',
+                'errors.serverError': 'Erreur de connexion au serveur',
+                'errors.supabaseNotLoaded': 'Erreur: Supabase non chargé. Veuillez rafraîchir la page.',
+                'errors.passwordTooShort': 'Mot de passe: 6 caractères minimum',
+                'errors.accountNotFound': 'Compte non trouvé. Redirection vers inscription...',
+                'errors.wrongPortal': 'Ce portail est réservé aux techniciens. Utilisez le portail',
+                'errors.confirmEmail': '📧 Veuillez confirmer votre email en cliquant sur le lien envoyé.',
+                'errors.confirmationResent': '✅ Email de confirmation renvoyé ! Vérifiez votre boîte mail.',
+                'errors.sendError': 'Erreur lors de l\'envoi',
+                'errors.enterEmailFirst': 'Entrez votre email d\'abord',
+                'errors.resetSent': 'Email de réinitialisation envoyé !',
+                // Auth - Pending
+                'pending.awaitingValidation': '⏳ Votre compte est en attente de validation par un administrateur.',
+                'pending.resendConfirmation': 'Renvoyer l\'email de confirmation',
+                // Auth - Access Denied
+                'accessDenied.accountDisabled': '❌ Votre compte a été désactivé. Contactez le support.',
+                // Auth - Common
+                'common.connecting': 'Connexion...',
+                'common.welcomeName': 'Bienvenue',
+                'common.welcomeBack': 'Bienvenue !',
+                'common.loginSuccess': 'Connexion réussie !'
             },
             en: {
                 // Profile
@@ -5938,7 +5964,33 @@
                 // Chat
                 'chat.input_placeholder': 'Ask your question...',
                 'chat.copilot_title': 'FixAIR Copilot',
-                'chat.assistant_title': 'FixAIR Assistant'
+                'chat.assistant_title': 'FixAIR Assistant',
+                // Auth - Errors
+                'errors.invalidEmail': 'Please enter a valid email',
+                'errors.enterPassword': 'Please enter your password',
+                'errors.wrongPassword': 'Incorrect password',
+                'errors.connectionError': 'Connection error. Please try again.',
+                'errors.profileNotFound': 'Error: profile not found',
+                'errors.serverError': 'Server connection error',
+                'errors.supabaseNotLoaded': 'Error: Supabase not loaded. Please refresh the page.',
+                'errors.passwordTooShort': 'Password: 6 characters minimum',
+                'errors.accountNotFound': 'Account not found. Redirecting to signup...',
+                'errors.wrongPortal': 'This portal is for technicians only. Use the',
+                'errors.confirmEmail': '📧 Please confirm your email by clicking the link sent.',
+                'errors.confirmationResent': '✅ Confirmation email resent! Check your inbox.',
+                'errors.sendError': 'Error sending',
+                'errors.enterEmailFirst': 'Enter your email first',
+                'errors.resetSent': 'Reset email sent!',
+                // Auth - Pending
+                'pending.awaitingValidation': '⏳ Your account is awaiting admin validation.',
+                'pending.resendConfirmation': 'Resend confirmation email',
+                // Auth - Access Denied
+                'accessDenied.accountDisabled': '❌ Your account has been disabled. Contact support.',
+                // Auth - Common
+                'common.connecting': 'Connecting...',
+                'common.welcomeName': 'Welcome',
+                'common.welcomeBack': 'Welcome!',
+                'common.loginSuccess': 'Login successful!'
             }
         };
         
@@ -5964,14 +6016,28 @@
         // Set language
         function setLanguage(lang) {
             currentLang = lang;
-            localStorage.setItem('fixair_lang', lang);
-            
+            localStorage.setItem('fixair_language', lang);
+            localStorage.setItem('fixair_lang', lang); // Keep legacy key for compatibility
+
             // Update button states
-            document.getElementById('langFR').classList.toggle('active', lang === 'fr');
-            document.getElementById('langEN').classList.toggle('active', lang === 'en');
-            
+            const langFR = document.getElementById('langFR');
+            const langEN = document.getElementById('langEN');
+            if (langFR) langFR.classList.toggle('active', lang === 'fr');
+            if (langEN) langEN.classList.toggle('active', lang === 'en');
+
             // Apply translations
             applyTranslations();
+        }
+
+        // Get translation for key
+        function t(key) {
+            if (translations[currentLang] && translations[currentLang][key]) {
+                return translations[currentLang][key];
+            }
+            if (translations['fr'] && translations['fr'][key]) {
+                return translations['fr'][key];
+            }
+            return key;
         }
         
         // Apply translations to all elements with data-i18n attribute
@@ -5997,11 +6063,25 @@
         // Initialize theme and language on load
         function initSettings() {
             applyTheme(currentTheme);
-            
+
+            // Check if language was previously saved
+            let savedLang = localStorage.getItem('fixair_language') || localStorage.getItem('fixair_lang');
+
+            // If no saved preference, detect from browser
+            if (!savedLang) {
+                const browserLang = navigator.language || navigator.userLanguage;
+                savedLang = browserLang.startsWith('en') ? 'en' : 'fr';
+                localStorage.setItem('fixair_language', savedLang);
+            }
+
+            currentLang = savedLang;
+
             // Set initial language button state
-            document.getElementById('langFR').classList.toggle('active', currentLang === 'fr');
-            document.getElementById('langEN').classList.toggle('active', currentLang === 'en');
-            
+            const langFR = document.getElementById('langFR');
+            const langEN = document.getElementById('langEN');
+            if (langFR) langFR.classList.toggle('active', currentLang === 'fr');
+            if (langEN) langEN.classList.toggle('active', currentLang === 'en');
+
             applyTranslations();
         }
         
@@ -6572,7 +6652,7 @@
                 const email = document.getElementById('loginEmail').value.trim().toLowerCase();
 
                 if (!email.includes('@')) {
-                    setLoginStatus('Veuillez entrer un email valide', 'error');
+                    setLoginStatus(t('errors.invalidEmail'), 'error');
                     return;
                 }
 
@@ -6592,7 +6672,7 @@
 
                     if (error || !user) {
                         // User not found - redirect to /auth for signup
-                        setLoginStatus('Compte non trouvé. Redirection vers inscription...', 'info');
+                        setLoginStatus(t('errors.accountNotFound'), 'info');
                         setTimeout(() => {
                             window.location.href = '/auth?email=' + encodeURIComponent(email) + '&from=technician';
                         }, 1000);
@@ -6601,7 +6681,7 @@
 
                     // Check if user is a technician
                     if (user.role !== 'technician') {
-                        setLoginStatus('Ce portail est réservé aux techniciens. Utilisez le portail ' + user.role + '.', 'error');
+                        setLoginStatus(t('errors.wrongPortal') + ' ' + user.role + '.', 'error');
                         btn.disabled = false;
                         btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
                         return;
@@ -6609,14 +6689,14 @@
 
                     // Check status
                     if (user.status === 'pending') {
-                        setLoginStatus('⏳ Votre compte est en attente de validation par un administrateur.', 'error');
+                        setLoginStatus(t('pending.awaitingValidation'), 'error');
                         btn.disabled = false;
                         btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
                         return;
                     }
 
                     if (user.status === 'rejected' || user.status === 'suspended') {
-                        setLoginStatus('❌ Votre compte a été désactivé. Contactez le support.', 'error');
+                        setLoginStatus(t('accessDenied.accountDisabled'), 'error');
                         btn.disabled = false;
                         btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
                         return;
@@ -6625,16 +6705,16 @@
                     // User approved - save data and show password step
                     existingUserData = user;
                     if (user.first_name) {
-                        setLoginStatus('Bienvenue ' + user.first_name + ' !', 'info');
+                        setLoginStatus(t('common.welcomeName') + ' ' + user.first_name + ' !', 'info');
                     } else {
-                        setLoginStatus('Bienvenue !', 'info');
+                        setLoginStatus(t('common.welcomeBack'), 'info');
                     }
                     loginStep = 1;
                     updateLoginUI();
 
                 } catch (err) {
                     console.error('Email check error:', err);
-                    setLoginStatus('Erreur de connexion. Réessayez.', 'error');
+                    setLoginStatus(t('errors.connectionError'), 'error');
                 } finally {
                     btn.disabled = false;
                     btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
@@ -6646,7 +6726,7 @@
                 const password = document.getElementById('loginPassword').value;
 
                 if (password.length < 6) {
-                    setLoginStatus('Mot de passe: 6 caractères minimum', 'error');
+                    setLoginStatus(t('errors.passwordTooShort'), 'error');
                     return;
                 }
 
@@ -6664,11 +6744,11 @@
 
                         // Handle specific error types
                         if (error.message.includes('Email not confirmed')) {
-                            setLoginStatusWithResend(email, '📧 Veuillez confirmer votre email en cliquant sur le lien envoyé.');
+                            setLoginStatusWithResend(email, t('errors.confirmEmail'));
                         } else if (error.message.includes('Invalid login credentials')) {
-                            setLoginStatus('Mot de passe incorrect', 'error', true);
+                            setLoginStatus(t('errors.wrongPassword'), 'error', true);
                         } else {
-                            setLoginStatus('Erreur: ' + error.message, 'error');
+                            setLoginStatus('Error: ' + error.message, 'error');
                         }
 
                         btn.disabled = false;
@@ -6678,7 +6758,7 @@
 
                     // Login successful - redirect to user dashboard
                     clearLoginStatus();
-                    setLoginStatus('Connexion réussie !', 'success');
+                    setLoginStatus(t('common.loginSuccess'), 'success');
 
                     // Get user ID from our users table
                     const userId = existingUserData?.id;
@@ -6696,13 +6776,13 @@
                         if (profile) {
                             window.location.href = '/technician/?user=' + profile.id;
                         } else {
-                            setLoginStatus('Erreur: profil non trouvé', 'error');
+                            setLoginStatus(t('errors.profileNotFound'), 'error');
                         }
                     }
 
                 } catch (err) {
                     console.error('Login exception:', err);
-                    setLoginStatus('Erreur de connexion au serveur', 'error');
+                    setLoginStatus(t('errors.serverError'), 'error');
                     btn.disabled = false;
                     btn.innerHTML = '<span class="icon"><svg><use href="#icon-arrow-right"/></svg></span>';
                 }
@@ -6712,7 +6792,7 @@
         async function resetPassword() {
             const email = document.getElementById('loginEmail').value.trim();
             if (!email.includes('@')) {
-                setLoginStatus('Entrez votre email d\'abord', 'error');
+                setLoginStatus(t('errors.enterEmailFirst'), 'error');
                 return;
             }
 
@@ -6721,12 +6801,12 @@
                     redirectTo: window.location.origin + '/auth'
                 });
                 if (error) {
-                    setLoginStatus('Erreur: ' + error.message, 'error');
+                    setLoginStatus('Error: ' + error.message, 'error');
                 } else {
-                    setLoginStatus('Email de réinitialisation envoyé !', 'success');
+                    setLoginStatus(t('errors.resetSent'), 'success');
                 }
             } catch (err) {
-                setLoginStatus('Erreur lors de l\'envoi', 'error');
+                setLoginStatus(t('errors.sendError'), 'error');
             }
         }
 
@@ -6738,7 +6818,7 @@
                 ${message}
                 <br><br>
                 <a onclick="resendConfirmation('${email}')" style="color: var(--copilot); cursor: pointer; text-decoration: underline;">
-                    Renvoyer l'email de confirmation
+                    ${t('pending.resendConfirmation')}
                 </a>
             `;
         }
@@ -6750,12 +6830,12 @@
                     email: email
                 });
                 if (error) {
-                    setLoginStatus('Erreur: ' + error.message, 'error');
+                    setLoginStatus('Error: ' + error.message, 'error');
                 } else {
-                    setLoginStatus('✅ Email de confirmation renvoyé ! Vérifiez votre boîte mail.', 'success');
+                    setLoginStatus(t('errors.confirmationResent'), 'success');
                 }
             } catch (err) {
-                setLoginStatus('Erreur lors de l\'envoi', 'error');
+                setLoginStatus(t('errors.sendError'), 'error');
             }
         }
 
