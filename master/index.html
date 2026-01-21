@@ -269,13 +269,7 @@
     <!-- TOAST -->
     <div class="toast" id="toast"></div>
 
-    <!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FixAIR Master</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Dashboard Styles -->
     <style>
         :root {
             --master: #8B5CF6;
@@ -747,6 +741,7 @@
         .msg-bubble pre { background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; overflow-x: auto; margin: 8px 0; }
         .msg-bubble pre code { background: none; padding: 0; }
 
+        /* DISABLED - CSS overrides JS styling
         /* ═══ MERMAID DIAGRAMS ═══ */
         .mermaid-placeholder {
             background: #1e1e1e;
@@ -838,6 +833,7 @@
         .mermaid-error-container {
             border-color: rgba(239, 68, 68, 0.3);
         }
+        END DISABLED */
 
         /* ═══ REPORT CARD IN CHAT ═══ */
         .report-card { background: #1E1E2E; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px 24px 20px 24px; margin-top: 12px; line-height: 1.5; position: relative; }
@@ -1092,8 +1088,7 @@
         .email-toast.error { border-color: var(--danger-border); background: var(--danger-bg); color: var(--danger); }
         @keyframes slideInToast { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
-</head>
-<body>
+
     <div class="home-wrapper" id="homeWrapper">
         <div class="home-main">
             <header class="master-header">
