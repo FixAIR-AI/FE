@@ -10,8 +10,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Mermaid.js for diagrams -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <!-- FixAIR Diagram System -->
-    <link rel="stylesheet" href="/assets/css/fixair-diagrams.css">
     <style>
         :root {
             --copilot: #a78bfa;
@@ -2754,10 +2752,6 @@
 
             // Render any Mermaid diagrams in the chat
             renderMermaidDiagrams(body);
-            // FixAIR Diagram System rendering
-            if (typeof FixAIRDiagrams !== 'undefined') {
-                FixAIRDiagrams.render(body);
-            }
 
             // Try to extract report data from messages
             messages.forEach(m => {
@@ -3595,34 +3589,6 @@
         document.addEventListener('DOMContentLoaded', loadAllData);
     </script>
 
-    <div class="main-app" id="mainApp">
-        <header class="app-header">
-            <div class="app-header-left">
-                <div class="app-header-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
-                <span class="app-header-title">FixAIR Master</span>
-                <span class="app-header-badge">ADMIN</span>
-            </div>
-            <div class="app-header-right">
-                <div class="user-menu">
-                    <div class="user-avatar" id="userAvatar">H</div>
-                    <span class="user-name" id="userName">Admin</span>
-                </div>
-                <button class="logout-btn" onclick="logout()">Deconnexion</button>
-            </div>
-        </header>
-        <main class="app-content">
-            <div class="app-content-inner">
-                <div class="placeholder-content">
-                    <div class="placeholder-icon">&#128272;</div>
-                    <h2 class="placeholder-title">Bienvenue sur FixAIR Master</h2>
-                    <p class="placeholder-subtitle">
-                        Le contenu du tableau de bord Master sera affiche ici. Vous etes connecte en tant qu'administrateur autorise.
-                    </p>
-                </div>
-            </div>
-        </main>
-    </div>
-
     <script>
         // ═══ AUTH - SUPABASE CLIENT ═══
         // Note: SUPABASE_URL and SUPABASE_ANON_KEY are already declared in dashboard script above
@@ -3891,7 +3857,5 @@
         // ═══ INIT ═══
         document.addEventListener('DOMContentLoaded', initSupabase);
     </script>
-<!-- FixAIR Diagram System JS -->
-<script src="/assets/js/fixair-diagrams.js"></script>
 </body>
 </html>
