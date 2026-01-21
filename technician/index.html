@@ -1077,7 +1077,7 @@
         .toggle-card.copilot .toggle-card-icon { background: rgba(255, 255, 255, 0.1); color: var(--copilot); }
         .toggle-card.assistant .toggle-card-icon { background: rgba(255, 255, 255, 0.1); color: var(--assistant); }
         
-        .toggle-card-icon .icon { width: 20px; height: 20px; }
+        .toggle-card-icon .icon { width: 22px; height: 22px; }
         .toggle-card-icon .star-icon { width: 22px; height: 22px; }
         .toggle-card-icon .star-icon svg { fill: currentColor; stroke: none; }
         
@@ -4137,7 +4137,7 @@
             height: 44px; 
             border-radius: 12px; 
         }
-        .toggle-card-icon .icon { width: 22px; height: 22px; }
+        .toggle-card-icon .icon { width: 24px; height: 24px; }
         .toggle-card-icon .star-icon { width: 24px; height: 24px; }
         .toggle-card-title { font-size: 17px; font-weight: 600; }
         .toggle-card-desc { font-size: 13px; }
@@ -6095,29 +6095,52 @@
         let step4Done = false;
         let onboardingBrand = null;
 
-        // ═══ BRAND ERROR EXAMPLES - Visual requesting questions ═══
+        // ═══ BRAND ERROR EXAMPLES - Visual requesting questions (FR/EN) ═══
         const BRAND_ERROR_EXAMPLES = {
             'mitsubishi': {
-                code: 'E6',
-                input: 'Code erreur E6 sur Mitsubishi MSZ-AP25VG. Montre-moi le schéma de câblage entre unité intérieure et extérieure pour diagnostiquer le défaut de communication.',
-                placeholder: 'Ex: Code E6 Mitsubishi - défaut communication'
+                fr: {
+                    code: '1302',
+                    input: 'J\'ai une erreur 1302 sur un PURY-P200YNW-A1. Donne-moi :\n1. Le tableau de diagnostic complet avec les étapes, actions, outils et résultats attendus\n2. Un flowchart de la procédure de test capteur HP et câblage\n3. Les valeurs de résistance/tension à mesurer sur le capteur 63HS1',
+                    placeholder: 'Ex: Erreur 1302 Mitsubishi - diagnostic capteur HP'
+                },
+                en: {
+                    code: '1302',
+                    input: 'I have error 1302 on a PURY-P200YNW-A1. Give me:\n1. Complete diagnostic table with steps, actions, tools and expected results\n2. A flowchart for HP sensor and wiring test procedure\n3. Resistance/voltage values to measure on sensor 63HS1',
+                    placeholder: 'Ex: Error 1302 Mitsubishi - HP sensor diagnostic'
+                }
             },
             'carrier': {
-                code: '178',
-                input: 'Code erreur 178 sur Carrier 42QHC012DS - surchauffe compresseur. J\'ai besoin du schéma électrique et un flowchart de diagnostic.',
-                placeholder: 'Ex: Code 178 Carrier - surchauffe compresseur'
+                fr: {
+                    code: 'XCT7',
+                    input: 'Je suis en mise en service sur un VRF Carrier XCT7. Donne-moi :\n1. La procédure complète avec tous les switchs (SW1, SW2, SW3) dans un tableau\n2. Un flowchart des étapes de mise en service\n3. Les codes switchs pour forcer le mode chaud et froid',
+                    placeholder: 'Ex: Mise en service VRF Carrier XCT7'
+                },
+                en: {
+                    code: 'XCT7',
+                    input: 'I\'m commissioning a Carrier XCT7 VRF system. Give me:\n1. The complete procedure with all switches (SW1, SW2, SW3) in a table\n2. A flowchart of commissioning steps\n3. Switch codes to force heating and cooling modes',
+                    placeholder: 'Ex: Carrier XCT7 VRF commissioning'
+                }
             },
             'daikin': {
-                code: 'U4',
-                input: 'Code erreur U4 sur Daikin FTXM35N. Peux-tu me montrer le schéma de câblage de communication et les étapes de diagnostic visuellement?',
-                placeholder: 'Ex: Code U4 Daikin - défaut communication'
+                fr: {
+                    code: 'Altherma',
+                    input: 'Je dois faire un diagnostic complet sur une PAC Daikin Altherma. Donne-moi :\n1. Le tableau des codes erreur les plus fréquents avec causes et solutions\n2. La procédure de lecture des pressions HP/BP via le menu technicien\n3. Un flowchart de diagnostic pour un défaut de chauffage',
+                    placeholder: 'Ex: Diagnostic PAC Daikin Altherma'
+                },
+                en: {
+                    code: 'Altherma',
+                    input: 'I need to do a complete diagnostic on a Daikin Altherma heat pump. Give me:\n1. A table of the most common error codes with causes and solutions\n2. The procedure to read HP/LP pressures via the technician menu\n3. A diagnostic flowchart for a heating fault',
+                    placeholder: 'Ex: Daikin Altherma heat pump diagnostic'
+                }
             }
         };
 
-        // Get error example for brand (defaults to Mitsubishi)
+        // Get error example for brand (defaults to Mitsubishi) with language support
         function getErrorExample(brandKey) {
             const key = brandKey?.toLowerCase() || 'mitsubishi';
-            return BRAND_ERROR_EXAMPLES[key] || BRAND_ERROR_EXAMPLES['mitsubishi'];
+            const lang = currentLang || 'fr';
+            const brandExamples = BRAND_ERROR_EXAMPLES[key] || BRAND_ERROR_EXAMPLES['mitsubishi'];
+            return brandExamples[lang] || brandExamples['fr'];
         }
 
         // Track when user types their own question
@@ -7041,6 +7064,20 @@
 
         function closeProfile() {
             document.getElementById('profileView').classList.remove('active');
+
+            // Check if we should complete step 1 on returning from profile
+            // (Profile might have been pre-filled or saved earlier)
+            const firstName = currentUser?.first_name || '';
+            if (firstName && firstName.trim() && onboardingStep === 1 && !onboardingComplete) {
+                completeStep(1);
+                document.getElementById('step2').classList.remove('locked');
+                document.getElementById('step2').classList.add('active');
+                document.getElementById('step2Check').classList.remove('pending');
+                document.getElementById('step2Check').classList.add('current');
+                onboardingStep = 2;
+                updateOnboardingProgress();
+                toast('Informations validées ✓');
+            }
         }
 
         async function saveProfile() {
