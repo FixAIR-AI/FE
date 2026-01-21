@@ -288,6 +288,100 @@
             padding: 10px 20px; background: var(--copilot-bg); border-radius: 10px;
         }
 
+        /* Email Confirmation Card - New Design */
+        .email-confirm-card {
+            background: linear-gradient(145deg, #161b22 0%, #0d1117 100%);
+            border: 1px solid rgba(255, 107, 53, 0.2);
+            border-radius: 24px;
+            padding: 48px 40px;
+            max-width: 400px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .email-confirm-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #FF6B35, #22c55e);
+        }
+        .email-confirm-card .logo {
+            margin-bottom: 24px;
+        }
+        .email-confirm-card .logo svg {
+            width: 140px;
+            height: auto;
+            color: var(--copilot);
+        }
+        .check-circle {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: #22c55e;
+            border: 2px solid #22c55e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+        }
+        .check-circle svg {
+            width: 32px;
+            height: 32px;
+            color: #fff;
+            stroke-width: 3;
+        }
+        .email-sent-label {
+            color: #22c55e;
+            font-size: 11px;
+            font-weight: 500;
+            margin-bottom: 24px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .email-confirm-card h2 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #fff;
+        }
+        .spam-notice {
+            color: rgba(255,255,255,0.4);
+            font-size: 13px;
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .email-address {
+            color: #FF6B35;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .email-confirm-card .instructions {
+            color: rgba(255,255,255,0.5);
+            font-size: 14px;
+            line-height: 1.7;
+            margin-bottom: 36px;
+        }
+        .email-confirm-card .divider {
+            width: 60px;
+            height: 1px;
+            background: rgba(255,255,255,0.1);
+            margin: 0 auto 24px;
+        }
+        .email-confirm-card .back-link {
+            color: rgba(255,255,255,0.5);
+            font-size: 14px;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .email-confirm-card .back-link:hover {
+            color: rgba(255,255,255,0.8);
+        }
+
         /* Responsive */
         @media (min-width: 420px) {
             .login-btn { width: 38px; height: 38px; }
@@ -490,54 +584,84 @@
     <!-- Email Confirmation Screen (Technician) -->
     <div class="screen" id="techConfirmScreen">
         <div class="scan-line"></div>
-        <div class="pending-container" style="background: rgba(255,107,53,0.05); border: 1px solid rgba(255,107,53,0.2); border-radius: 20px; padding: 40px 30px; max-width: 420px;">
-            <div class="auth-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
-            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #FF6B35, #ff8c5a); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 20px auto;">
-                <svg width="40" height="40" fill="white" viewBox="0 0 24 24">
-                    <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+        <div class="email-confirm-card">
+            <!-- Logo -->
+            <div class="logo">
+                <svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg>
+            </div>
+
+            <!-- Checkmark circle -->
+            <div class="check-circle">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                 </svg>
             </div>
-            <h1 class="auth-title" style="color: #FF6B35;" data-i18n="emailConfirm.title">📧 V&eacute;rifiez votre email</h1>
-            <p class="auth-subtitle" style="margin-bottom: 16px;" data-i18n="emailConfirm.sentTo">
-                Nous avons envoy&eacute; un email de confirmation &agrave; :
+
+            <!-- Email sent label -->
+            <div class="email-sent-label" data-i18n="emailConfirm.sent">Email sent</div>
+
+            <!-- Title -->
+            <h2 data-i18n="emailConfirm.checkInbox">Check your inbox</h2>
+
+            <!-- Spam notice with separator -->
+            <div class="spam-notice" data-i18n="emailConfirm.spamNotice">(and spam folder)</div>
+
+            <!-- Email address (dynamic) -->
+            <div class="email-address" id="techConfirmEmail"></div>
+
+            <!-- Instructions -->
+            <p class="instructions" data-i18n="emailConfirm.instructions">
+                Click the link in the email to activate your account.
+                After confirmation, your request will be reviewed by our team.
             </p>
-            <div class="pending-email" id="techConfirmEmail" style="font-size: 16px; font-weight: 600; color: white; margin-bottom: 20px;"></div>
-            <p class="auth-subtitle" style="font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.5);" data-i18n="emailConfirm.clickLinkAndReview">
-                Cliquez sur le lien dans l'email pour activer votre compte.<br>
-                Apr&egrave;s confirmation, votre demande sera examin&eacute;e par notre &eacute;quipe.
-            </p>
-            <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
-                <a href="/technician/" style="color: #FF6B35; text-decoration: none; font-size: 14px;" data-i18n="emailConfirm.backToLogin">
-                    &larr; Retour &agrave; la connexion
-                </a>
-            </div>
+
+            <!-- Divider -->
+            <div class="divider"></div>
+
+            <!-- Back link -->
+            <a href="/auth/" class="back-link" onclick="goToScreen('loginScreen'); return false;" data-i18n="emailConfirm.backToLogin">&larr; Back to login</a>
         </div>
     </div>
 
     <!-- Email Confirmation Screen (Enterprise) -->
     <div class="screen" id="entConfirmScreen">
         <div class="scan-line"></div>
-        <div class="pending-container" style="background: rgba(255,107,53,0.05); border: 1px solid rgba(255,107,53,0.2); border-radius: 20px; padding: 40px 30px; max-width: 420px;">
-            <div class="auth-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
-            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #FF6B35, #ff8c5a); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 20px auto;">
-                <svg width="40" height="40" fill="white" viewBox="0 0 24 24">
-                    <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+        <div class="email-confirm-card">
+            <!-- Logo -->
+            <div class="logo">
+                <svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg>
+            </div>
+
+            <!-- Checkmark circle -->
+            <div class="check-circle">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                 </svg>
             </div>
-            <h1 class="auth-title" style="color: #FF6B35;" data-i18n="emailConfirm.titleEnterprise">📧 Demande enregistr&eacute;e</h1>
-            <p class="auth-subtitle" style="margin-bottom: 16px;" data-i18n="emailConfirm.sentTo">
-                Nous avons envoy&eacute; un email de confirmation &agrave; :
+
+            <!-- Email sent label -->
+            <div class="email-sent-label" data-i18n="emailConfirm.sent">Email sent</div>
+
+            <!-- Title -->
+            <h2 data-i18n="emailConfirm.checkInbox">Check your inbox</h2>
+
+            <!-- Spam notice with separator -->
+            <div class="spam-notice" data-i18n="emailConfirm.spamNotice">(and spam folder)</div>
+
+            <!-- Email address (dynamic) -->
+            <div class="email-address" id="entConfirmEmail"></div>
+
+            <!-- Instructions -->
+            <p class="instructions" data-i18n="emailConfirm.instructions">
+                Click the link in the email to activate your account.
+                After confirmation, your request will be reviewed by our team.
             </p>
-            <div class="pending-email" id="entConfirmEmail" style="font-size: 16px; font-weight: 600; color: white; margin-bottom: 20px;"></div>
-            <p class="auth-subtitle" style="font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.5);" data-i18n="emailConfirm.enterpriseInfo">
-                Notre &eacute;quipe examinera votre demande et vous contactera sous 24h
-                pour finaliser la cr&eacute;ation de votre compte entreprise.
-            </p>
-            <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
-                <a href="/technician/" style="color: #FF6B35; text-decoration: none; font-size: 14px;" data-i18n="emailConfirm.backToLogin">
-                    &larr; Retour &agrave; la connexion
-                </a>
-            </div>
+
+            <!-- Divider -->
+            <div class="divider"></div>
+
+            <!-- Back link -->
+            <a href="/auth/" class="back-link" onclick="goToScreen('loginScreen'); return false;" data-i18n="emailConfirm.backToLogin">&larr; Back to login</a>
         </div>
     </div>
 
@@ -635,6 +759,10 @@
                 'emailConfirm.clickLinkAndReview': 'Cliquez sur le lien dans l\'email pour activer votre compte. Après confirmation, votre demande sera examinée par notre équipe.',
                 'emailConfirm.enterpriseInfo': 'Notre équipe examinera votre demande et vous contactera sous 24h pour finaliser la création de votre compte entreprise.',
                 'emailConfirm.backToLogin': '← Retour à la connexion',
+                'emailConfirm.sent': 'Email envoyé',
+                'emailConfirm.checkInbox': 'Vérifiez votre boîte mail',
+                'emailConfirm.spamNotice': '(et dossier spam)',
+                'emailConfirm.instructions': 'Cliquez sur le lien dans l\'email pour activer votre compte. Après confirmation, votre demande sera examinée par notre équipe.',
 
                 // Password Reset
                 'passwordReset.title': 'Réinitialiser le mot de passe',
@@ -735,6 +863,10 @@
                 'emailConfirm.clickLinkAndReview': 'Click the link in the email to activate your account. After confirmation, your request will be reviewed by our team.',
                 'emailConfirm.enterpriseInfo': 'Our team will review your request and contact you within 24h to finalize your enterprise account creation.',
                 'emailConfirm.backToLogin': '← Back to login',
+                'emailConfirm.sent': 'Email sent',
+                'emailConfirm.checkInbox': 'Check your inbox',
+                'emailConfirm.spamNotice': '(and spam folder)',
+                'emailConfirm.instructions': 'Click the link in the email to activate your account. After confirmation, your request will be reviewed by our team.',
 
                 // Password Reset
                 'passwordReset.title': 'Reset password',
