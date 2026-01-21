@@ -833,6 +833,38 @@
         .mermaid-error-container {
             border-color: rgba(239, 68, 68, 0.3);
         }
+        [data-theme="light"] .mermaid-placeholder {
+            background: #f5f5f5;
+            border-color: #ddd;
+        }
+        [data-theme="light"] .mermaid-rendered .node rect,
+        [data-theme="light"] .mermaid-rendered .node circle,
+        [data-theme="light"] .mermaid-rendered .node ellipse,
+        [data-theme="light"] .mermaid-rendered .node polygon,
+        [data-theme="light"] .mermaid-rendered .node path {
+            fill: #e8e8e8 !important;
+            stroke: #666 !important;
+        }
+        [data-theme="light"] .mermaid-rendered .node .label {
+            fill: #333 !important;
+        }
+        [data-theme="light"] .mermaid-rendered .edgeLabel {
+            background-color: #f5f5f5 !important;
+            fill: #555 !important;
+        }
+        [data-theme="light"] .mermaid-rendered .edgePath .path {
+            stroke: #666 !important;
+        }
+        [data-theme="light"] .mermaid-rendered .arrowheadPath {
+            fill: #666 !important;
+        }
+        [data-theme="light"] .mermaid-rendered .cluster rect {
+            fill: #f0f0f0 !important;
+            stroke: #ccc !important;
+        }
+        [data-theme="light"] .mermaid-rendered .cluster .label {
+            fill: #666 !important;
+        }
         END DISABLED */
 
         /* ═══ REPORT CARD IN CHAT ═══ */
@@ -1304,13 +1336,7 @@
                     .replace(/&gt;/g, '>')
                     .replace(/&amp;/g, '&');
 
-                // Remove AI-generated style commands (CSS handles styling)
-                code = code.replace(/^\s*style\s+\w+\s+.+$/gm, '');
-                code = code.replace(/^\s*classDef\s+.+$/gm, '');
-
-                // ═══ SANITIZE MERMAID CODE FOR SPECIAL CHARACTERS ═══
-                // Mermaid doesn't handle () / ' inside node labels without quotes
-                // Solution: Wrap labels containing special chars in quotes
+                // ═══ SANITIZE MERMAID CODE ═══
 
                 // Helper: check if text needs quotes (contains special chars)
                 const needsQuotes = (text) => /[()\/']/.test(text) && !text.startsWith('"');
@@ -1333,6 +1359,7 @@
 
                 // Fix edge labels: |text| → |"text"| if contains special chars
                 code = code.replace(/\|([^|]+)\|/g, (match, content) => {
+                    // Skip if already quoted
                     if (content.startsWith('"') && content.endsWith('"')) {
                         return match;
                     }
@@ -1344,6 +1371,10 @@
 
                 // Clean up double quotes
                 code = code.replace(/""/g, '"');
+
+                // Remove AI-generated style commands (CSS handles styling)
+                code = code.replace(/^\s*style\s+\w+\s+.+$/gm, '');
+                code = code.replace(/^\s*classDef\s+.+$/gm, '');
 
                 try {
                     const id = 'mermaid-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
