@@ -1309,11 +1309,9 @@
                     .replace(/&gt;/g, '>')
                     .replace(/&amp;/g, '&');
 
-                // Remove AI-generated style commands (we use CSS instead)
-                code = code.replace(/\n\s*style\s+\w+\s+fill:[^;\n]+;?[^\n]*/g, '');
-                code = code.replace(/\n\s*style\s+\w+\s+[^\n]+/g, '');
-                code = code.replace(/\n\s*classDef\s+[^\n]+/g, '');
-                code = code.replace(/\n\s*class\s+\w+\s+\w+/g, '');
+                // Remove AI-generated style commands (CSS handles styling)
+                code = code.replace(/^\s*style\s+\w+\s+.+$/gm, '');
+                code = code.replace(/^\s*classDef\s+.+$/gm, '');
 
                 // ═══ SANITIZE MERMAID CODE FOR SPECIAL CHARACTERS ═══
                 // Mermaid doesn't handle () / ' inside node labels without quotes
@@ -1349,10 +1347,38 @@
                     return match;
                 });
 
+                // Clean up double quotes
+                code = code.replace(/""/g, '"');
+
                 try {
                     const id = 'mermaid-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
                     const { svg } = await mermaid.render(id, code);
                     placeholder.innerHTML = svg;
+
+                    // Apply FixAIR premium styling to rendered diagram
+                    placeholder.querySelectorAll('rect').forEach(rect => {
+                        if (!rect.closest('.edgeLabel')) {
+                            rect.style.fill = '#18181b';
+                            rect.style.stroke = 'rgba(255, 255, 255, 0.12)';
+                            rect.style.filter = 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))';
+                            rect.setAttribute('rx', '12');
+                            rect.setAttribute('ry', '12');
+                        }
+                    });
+                    placeholder.querySelectorAll('polygon').forEach(p => {
+                        p.style.fill = '#18181b';
+                        p.style.stroke = 'rgba(255, 255, 255, 0.15)';
+                        p.style.filter = 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))';
+                    });
+                    placeholder.querySelectorAll('text, .nodeLabel, foreignObject .nodeLabel').forEach(t => {
+                        t.style.fill = '#fafafa';
+                        if (t.style) t.style.color = '#fafafa';
+                    });
+                    placeholder.querySelectorAll('.edgePath path').forEach(path => {
+                        path.style.stroke = '#52525b';
+                        path.style.strokeWidth = '2px';
+                    });
+
                     placeholder.classList.add('mermaid-rendered');
                 } catch (error) {
                     console.error('Mermaid render error:', error);
@@ -3542,8 +3568,7 @@
 
         document.addEventListener('DOMContentLoaded', loadAllData);
     </script>
-</body>
-</html>
+
     <div class="main-app" id="mainApp">
         <header class="app-header">
             <div class="app-header-left">
