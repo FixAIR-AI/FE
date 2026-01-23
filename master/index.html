@@ -10,8 +10,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Mermaid.js for diagrams -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <!-- FixAIR Diagram System -->
-    <link rel="stylesheet" href="/assets/css/fixair-diagrams.css">
     <style>
         :root {
             --copilot: #a78bfa;
@@ -269,13 +267,7 @@
     <!-- TOAST -->
     <div class="toast" id="toast"></div>
 
-    <!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FixAIR Master</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Dashboard Styles -->
     <style>
         :root {
             --master: #8B5CF6;
@@ -747,6 +739,7 @@
         .msg-bubble pre { background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; overflow-x: auto; margin: 8px 0; }
         .msg-bubble pre code { background: none; padding: 0; }
 
+        /* DISABLED - CSS overrides JS styling
         /* ═══ MERMAID DIAGRAMS ═══ */
         .mermaid-placeholder {
             background: #1e1e1e;
@@ -838,6 +831,39 @@
         .mermaid-error-container {
             border-color: rgba(239, 68, 68, 0.3);
         }
+        [data-theme="light"] .mermaid-placeholder {
+            background: #f5f5f5;
+            border-color: #ddd;
+        }
+        [data-theme="light"] .mermaid-rendered .node rect,
+        [data-theme="light"] .mermaid-rendered .node circle,
+        [data-theme="light"] .mermaid-rendered .node ellipse,
+        [data-theme="light"] .mermaid-rendered .node polygon,
+        [data-theme="light"] .mermaid-rendered .node path {
+            fill: #e8e8e8 !important;
+            stroke: #666 !important;
+        }
+        [data-theme="light"] .mermaid-rendered .node .label {
+            fill: #333 !important;
+        }
+        [data-theme="light"] .mermaid-rendered .edgeLabel {
+            background-color: #f5f5f5 !important;
+            fill: #555 !important;
+        }
+        [data-theme="light"] .mermaid-rendered .edgePath .path {
+            stroke: #666 !important;
+        }
+        [data-theme="light"] .mermaid-rendered .arrowheadPath {
+            fill: #666 !important;
+        }
+        [data-theme="light"] .mermaid-rendered .cluster rect {
+            fill: #f0f0f0 !important;
+            stroke: #ccc !important;
+        }
+        [data-theme="light"] .mermaid-rendered .cluster .label {
+            fill: #666 !important;
+        }
+        END DISABLED */
 
         /* ═══ REPORT CARD IN CHAT ═══ */
         .report-card { background: #1E1E2E; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px 24px 20px 24px; margin-top: 12px; line-height: 1.5; position: relative; }
@@ -1092,8 +1118,7 @@
         .email-toast.error { border-color: var(--danger-border); background: var(--danger-bg); color: var(--danger); }
         @keyframes slideInToast { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
-</head>
-<body>
+
     <div class="home-wrapper" id="homeWrapper">
         <div class="home-main">
             <header class="master-header">
@@ -1309,15 +1334,7 @@
                     .replace(/&gt;/g, '>')
                     .replace(/&amp;/g, '&');
 
-                // Remove AI-generated style commands (we use CSS instead)
-                code = code.replace(/\n\s*style\s+\w+\s+fill:[^;\n]+;?[^\n]*/g, '');
-                code = code.replace(/\n\s*style\s+\w+\s+[^\n]+/g, '');
-                code = code.replace(/\n\s*classDef\s+[^\n]+/g, '');
-                code = code.replace(/\n\s*class\s+\w+\s+\w+/g, '');
-
-                // ═══ SANITIZE MERMAID CODE FOR SPECIAL CHARACTERS ═══
-                // Mermaid doesn't handle () / ' inside node labels without quotes
-                // Solution: Wrap labels containing special chars in quotes
+                // ═══ SANITIZE MERMAID CODE ═══
 
                 // Helper: check if text needs quotes (contains special chars)
                 const needsQuotes = (text) => /[()\/']/.test(text) && !text.startsWith('"');
@@ -1340,6 +1357,7 @@
 
                 // Fix edge labels: |text| → |"text"| if contains special chars
                 code = code.replace(/\|([^|]+)\|/g, (match, content) => {
+                    // Skip if already quoted
                     if (content.startsWith('"') && content.endsWith('"')) {
                         return match;
                     }
@@ -1349,10 +1367,42 @@
                     return match;
                 });
 
+                // Clean up double quotes
+                code = code.replace(/""/g, '"');
+
+                // Remove AI-generated style commands (CSS handles styling)
+                code = code.replace(/^\s*style\s+\w+\s+.+$/gm, '');
+                code = code.replace(/^\s*classDef\s+.+$/gm, '');
+
                 try {
                     const id = 'mermaid-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
                     const { svg } = await mermaid.render(id, code);
                     placeholder.innerHTML = svg;
+
+                    // Apply FixAIR premium styling to rendered diagram
+                    placeholder.querySelectorAll('rect').forEach(rect => {
+                        if (!rect.closest('.edgeLabel')) {
+                            rect.style.fill = '#18181b';
+                            rect.style.stroke = 'rgba(255, 255, 255, 0.12)';
+                            rect.style.filter = 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))';
+                            rect.setAttribute('rx', '12');
+                            rect.setAttribute('ry', '12');
+                        }
+                    });
+                    placeholder.querySelectorAll('polygon').forEach(p => {
+                        p.style.fill = '#18181b';
+                        p.style.stroke = 'rgba(255, 255, 255, 0.15)';
+                        p.style.filter = 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))';
+                    });
+                    placeholder.querySelectorAll('text, .nodeLabel, foreignObject .nodeLabel').forEach(t => {
+                        t.style.fill = '#fafafa';
+                        if (t.style) t.style.color = '#fafafa';
+                    });
+                    placeholder.querySelectorAll('.edgePath path').forEach(path => {
+                        path.style.stroke = '#52525b';
+                        path.style.strokeWidth = '2px';
+                    });
+
                     placeholder.classList.add('mermaid-rendered');
                 } catch (error) {
                     console.error('Mermaid render error:', error);
@@ -2702,10 +2752,6 @@
 
             // Render any Mermaid diagrams in the chat
             renderMermaidDiagrams(body);
-            // FixAIR Diagram System rendering
-            if (typeof FixAIRDiagrams !== 'undefined') {
-                FixAIRDiagrams.render(body);
-            }
 
             // Try to extract report data from messages
             messages.forEach(m => {
@@ -3542,35 +3588,6 @@
 
         document.addEventListener('DOMContentLoaded', loadAllData);
     </script>
-</body>
-</html>
-    <div class="main-app" id="mainApp">
-        <header class="app-header">
-            <div class="app-header-left">
-                <div class="app-header-logo"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
-                <span class="app-header-title">FixAIR Master</span>
-                <span class="app-header-badge">ADMIN</span>
-            </div>
-            <div class="app-header-right">
-                <div class="user-menu">
-                    <div class="user-avatar" id="userAvatar">H</div>
-                    <span class="user-name" id="userName">Admin</span>
-                </div>
-                <button class="logout-btn" onclick="logout()">Deconnexion</button>
-            </div>
-        </header>
-        <main class="app-content">
-            <div class="app-content-inner">
-                <div class="placeholder-content">
-                    <div class="placeholder-icon">&#128272;</div>
-                    <h2 class="placeholder-title">Bienvenue sur FixAIR Master</h2>
-                    <p class="placeholder-subtitle">
-                        Le contenu du tableau de bord Master sera affiche ici. Vous etes connecte en tant qu'administrateur autorise.
-                    </p>
-                </div>
-            </div>
-        </main>
-    </div>
 
     <script>
         // ═══ AUTH - SUPABASE CLIENT ═══
@@ -3840,7 +3857,5 @@
         // ═══ INIT ═══
         document.addEventListener('DOMContentLoaded', initSupabase);
     </script>
-<!-- FixAIR Diagram System JS -->
-<script src="/assets/js/fixair-diagrams.js"></script>
 </body>
 </html>
