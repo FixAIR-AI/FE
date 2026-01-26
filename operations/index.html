@@ -554,20 +554,6 @@
         .drawer-body::-webkit-scrollbar-track { background: transparent; }
         .drawer-body::-webkit-scrollbar-thumb { background: transparent; border-radius: 3px; }
         .drawer-body:hover::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); }
-        
-        /* Drawer content sections */
-        .drawer-section { margin-bottom: 16px; }
-        .drawer-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-        .drawer-value { font-size: 14px; color: var(--text-primary); }
-        .drawer-progress-bar { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin-top: 8px; }
-        .drawer-progress-fill { height: 100%; background: var(--accent-blue); border-radius: 3px; transition: width 0.3s ease; }
-        .drawer-progress-value { font-size: 12px; color: var(--accent-blue); margin-top: 4px; font-weight: 600; }
-        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
-        .status-badge.completed, .status-badge.done { background: rgba(52, 199, 89, 0.2); color: #34c759; }
-        .status-badge.review { background: rgba(255, 159, 10, 0.2); color: #ff9f0a; }
-        .status-badge.in_progress, .status-badge.active { background: rgba(10, 132, 255, 0.2); color: #0a84ff; }
-        .status-badge.diagnostic { background: rgba(175, 82, 222, 0.2); color: #af52de; }
-        .status-badge.pending { background: rgba(255, 255, 255, 0.1); color: var(--text-muted); }
         .page-content-inner { max-width: 700px; margin: 0 auto; }
 
         .page-header {
@@ -3525,7 +3511,7 @@
             console.log('📊 Stats - Projects:', stats, 'Team:', teamStats);
         }
 
-        // Open project drawer with live data
+        // Open project drawer with live data - USE ORIGINAL V7 DRAWER STRUCTURE
         function openLiveProjectDrawer(projectId) {
             const proj = liveProjectData[projectId];
             if (!proj) {
@@ -3533,14 +3519,48 @@
                 return;
             }
             
-            // Use the correct drawer ID: mapDrawer
+            // Get tech data for chat
+            const tech = liveTeamData[proj.techId] || {
+                initials: proj.tech ? proj.tech.split(' ').map(n => n[0]).join('') : '??',
+                name: proj.tech || 'Non assigné',
+                status: 'offline',
+                messages: []
+            };
+            
+            // Format project data to match V7 structure
+            const formattedProject = {
+                id: proj.id,
+                name: proj.title,
+                tech: proj.tech,
+                techId: proj.techId,
+                manager: tech.manager || 'Manager',
+                equipment: `${proj.equipment} ${proj.model || ''}`.trim(),
+                priority: proj.status === 'review' ? 'Haute' : 'Normale',
+                team: proj.team,
+                address: proj.address || proj.client,
+                progress: {
+                    total: proj.progress.total,
+                    identification: proj.progress.total >= 25 ? 100 : proj.progress.total * 4,
+                    diagnostic: proj.progress.total >= 50 ? 100 : Math.max(0, (proj.progress.total - 25) * 4),
+                    mesures: proj.progress.total >= 75 ? 100 : Math.max(0, (proj.progress.total - 50) * 4),
+                    conclusion: proj.progress.total >= 100 ? 100 : Math.max(0, (proj.progress.total - 75) * 4)
+                },
+                // Report preview data from Supabase
+                reportPreview: {
+                    equipment: `${proj.equipment} ${proj.model || ''}`.trim(),
+                    problem: proj.report.problem || 'En attente de diagnostic...',
+                    diagnostic: proj.report.actions || 'Rapport en cours...'
+                }
+            };
+            
+            // Use original V7 drawer
             const drawer = document.getElementById('mapDrawer');
             if (drawer) {
                 drawer.classList.add('visible');
                 
                 // Update header
                 document.getElementById('mapDTitle').textContent = proj.title;
-                document.getElementById('mapDSubtitle').textContent = `${proj.tech} • ${proj.client || proj.address}`;
+                document.getElementById('mapDSubtitle').textContent = `${proj.tech} • ${proj.client || proj.address || ''}`;
                 
                 // Update badge
                 const badge = document.getElementById('mapDBadge');
@@ -3550,43 +3570,61 @@
                                        proj.team === 'sud' ? 'Équipe Sud' : 'Direct';
                 }
                 
-                // Update drawer content
-                const body = document.getElementById('mapDrawerBody');
-                if (body) {
-                    body.innerHTML = `
-                        <div class="drawer-section">
-                            <div class="drawer-label">Équipement</div>
-                            <div class="drawer-value">${proj.equipment} ${proj.model || ''}</div>
-                        </div>
-                        <div class="drawer-section">
-                            <div class="drawer-label">Statut</div>
-                            <div class="drawer-value"><span class="status-badge ${proj.status}">${proj.badge}</span></div>
-                        </div>
-                        <div class="drawer-section">
-                            <div class="drawer-label">Progression du rapport</div>
-                            <div class="drawer-progress-bar">
-                                <div class="drawer-progress-fill" style="width: ${proj.progress.total}%"></div>
-                            </div>
-                            <div class="drawer-progress-value">${proj.progress.total}%</div>
-                        </div>
-                        <div class="drawer-section">
-                            <div class="drawer-label">Durée</div>
-                            <div class="drawer-value">${proj.duration}</div>
-                        </div>
-                        ${proj.report.problem ? `
-                        <div class="drawer-section">
-                            <div class="drawer-label">Problème</div>
-                            <div class="drawer-value">${proj.report.problem}</div>
-                        </div>
-                        ` : ''}
-                    `;
-                }
+                // Use original buildProjectDrawerContent with formatted data
+                document.getElementById('mapDrawerBody').innerHTML = buildLiveProjectDrawerContent(formattedProject, tech);
                 
-                // Fly to project on map
+                // Fly to project on map if coords exist
                 if (proj.coords && proj.coords[0] && proj.coords[1] && map) {
                     map.flyTo({ center: proj.coords, zoom: 15 });
                 }
             }
+        }
+        
+        // Build drawer content for live project data - SAME STRUCTURE AS V7
+        function buildLiveProjectDrawerContent(p, tech) {
+            const msgs = tech.messages && tech.messages.length ? 
+                tech.messages.map(m => `<div class="msg ${m.type === 'sent' ? 'user' : 'ai'}"><div class="msg-bubble">${m.text}</div><div class="msg-time">${m.time}</div></div>`).join('') : 
+                '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:12px;">Aucun message</div>';
+            
+            return `
+            <div class="info-card">
+                <div class="info-card-title">Informations</div>
+                <div class="info-row"><span class="info-label">Technicien</span><span class="info-value">${p.tech}</span></div>
+                <div class="info-row"><span class="info-label">Manager</span><span class="info-value">${p.manager}</span></div>
+                <div class="info-row"><span class="info-label">Équipement</span><span class="info-value">${p.equipment}</span></div>
+                <div class="info-row"><span class="info-label">Priorité</span><span class="info-value ${p.priority==='Haute'||p.priority==='Urgente'?'orange':''}">${p.priority}</span></div>
+            </div>
+            <div class="info-card">
+                <div class="info-card-title">Progression du rapport</div>
+                <div class="report-sections">
+                    <div class="report-section"><span class="report-section-name">Identification</span><div class="report-section-bar"><div class="report-section-fill" style="width:${p.progress.identification}%"></div></div><span class="report-section-percent">${p.progress.identification}%</span></div>
+                    <div class="report-section"><span class="report-section-name">Diagnostic</span><div class="report-section-bar"><div class="report-section-fill" style="width:${p.progress.diagnostic}%"></div></div><span class="report-section-percent">${p.progress.diagnostic}%</span></div>
+                    <div class="report-section"><span class="report-section-name">Mesures</span><div class="report-section-bar"><div class="report-section-fill" style="width:${p.progress.mesures}%"></div></div><span class="report-section-percent">${p.progress.mesures}%</span></div>
+                    <div class="report-section"><span class="report-section-name">Conclusion</span><div class="report-section-bar"><div class="report-section-fill" style="width:${p.progress.conclusion}%"></div></div><span class="report-section-percent">${p.progress.conclusion}%</span></div>
+                </div>
+            </div>
+            <div class="info-card" style="background:rgba(80,150,255,0.05);border-color:rgba(80,150,255,0.15);">
+                <div class="info-card-title" style="color:var(--accent-blue);">Aperçu du rapport</div>
+                <div style="font-size:12px;color:var(--text-secondary);line-height:1.6;">
+                    <strong>Équipement:</strong> ${p.reportPreview.equipment}<br>
+                    <strong>Problème:</strong> ${p.reportPreview.problem}<br>
+                    <strong>Diagnostic:</strong> ${p.reportPreview.diagnostic}
+                </div>
+            </div>
+            <div class="chat-card">
+                <div class="chat-card-header">
+                    <div class="chat-card-avatar">${tech.initials}</div>
+                    <div class="chat-card-info"><div class="chat-card-name">${tech.name}</div><div class="chat-card-status">${tech.status === 'live' || tech.status === 'active' ? 'En ligne' : tech.status === 'idle' ? 'Inactif' : 'Hors ligne'}</div></div>
+                </div>
+                <div class="chat-messages">${msgs}</div>
+                <div class="chat-input-wrap">
+                    <div class="chat-input-row">
+                        <button class="chat-add-btn"><svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14"><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg></button>
+                        <input type="text" class="chat-input" placeholder="Message...">
+                        <button class="chat-send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+                    </div>
+                </div>
+            </div>`;
         }
 
 
