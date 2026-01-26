@@ -3779,11 +3779,11 @@
 
         // Fly to tech's current project AND open TECH drawer
         function flyToTechProject(techId) {
-            const tech = teamMembers.find(t => t.id === techId);
+            const tech = liveTeamData[techId] || teamMembers.find(t => t.id === techId);
             if (!tech) return;
-            
-            // Find project by tech name
-            const project = projects.find(p => p.tech === tech.name);
+
+            // Find project by tech ID (live data) or tech name (fallback)
+            const project = Object.values(liveProjectData).find(p => p.techId === tech.id) || projects.find(p => p.tech === tech.name);
             
             // Center pin on LEFT side of screen (drawer will be on right)
             if (project && project.coords) {
@@ -3802,14 +3802,23 @@
         }
 
         // Open Tech Map Drawer
-        function openTechMapDrawer(tech) {
+        function openTechMapDrawer(techOrId) {
+            // Handle both ID string and object
+            const tech = typeof techOrId === 'string' || typeof techOrId === 'number'
+                ? (liveTeamData[techOrId] || teamMembers.find(t => t.id === techOrId))
+                : techOrId;
+            if (!tech) {
+                console.error('Tech not found:', techOrId);
+                return;
+            }
+
             // Hide notification and view toggle
             document.getElementById('notificationIcon').style.display = 'none';
             document.getElementById('viewToggle').style.display = 'none';
-            
+
             // Close map drawer if open
             document.getElementById('mapDrawer').classList.remove('visible');
-            
+
             // Populate tech drawer
             document.getElementById('techMDName').textContent = tech.name;
             document.getElementById('techMDRole').textContent = `Technicien • Équipe ${tech.team.charAt(0).toUpperCase() + tech.team.slice(1)}`;
@@ -3829,17 +3838,17 @@
         }
 
         function buildTechMapDrawerContent(tech) {
-            const techProjects = projects.filter(p => p.tech === tech.name);
-            const tc = {nord:'var(--team-nord)',sud:'var(--team-sud)',direct:'var(--team-direct)'};
-            
+            const techProjects = Object.values(liveProjectData).filter(p => p.techId === tech.id);
+            const tc = {nord:'var(--team-nord)',sud:'var(--team-sud)',direct:'var(--team-direct)',externe:'var(--accent-purple)'};
+
             const projectsHtml = techProjects.length ? techProjects.map(p => `
-                <div class="mini-project" onclick="openProjectFromTechDrawer('${p.id}')">
+                <div class="mini-project" onclick="openLiveProjectDrawer('${p.id}')">
                     <div class="mini-project-bar ${p.team}"></div>
                     <div class="mini-project-info">
-                        <div class="mini-project-title">${p.name}</div>
-                        <div class="mini-project-meta">${p.id} • ${p.address.split(',')[0]}</div>
+                        <div class="mini-project-title">${p.title}</div>
+                        <div class="mini-project-meta">${p.id} • ${p.client || p.address || ''}</div>
                     </div>
-                    <div class="mini-project-progress" style="color:${tc[p.team]}">${p.progress.total}%</div>
+                    <div class="mini-project-progress" style="color:${tc[p.team] || tc.direct}">${p.progress.total}%</div>
                 </div>
             `).join('') : '<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:16px;">Aucun projet assigné</div>';
             
@@ -4194,7 +4203,7 @@
         }
 
         function buildProjectDrawerContent(p) {
-            const tech = teamMembers.find(t => t.id === p.techId) || {initials:'??',name:p.tech,messages:[]};
+            const tech = liveTeamData[p.techId] || teamMembers.find(t => t.id === p.techId) || {initials:'??',name:p.tech||'Non assigné',status:'offline',messages:[]};
             const msgs = tech.messages.length ? tech.messages.map(m => `<div class="msg ${m.type === 'sent' ? 'user' : 'ai'}"><div class="msg-bubble">${m.text}</div><div class="msg-time">${m.time}</div></div>`).join('') : '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:12px;">Aucun message</div>';
             
             return `
@@ -4239,11 +4248,11 @@
         }
 
         function buildTechDrawerContent(m) {
-            const techProjects = m.projectIds ? projects.filter(p => m.projectIds.includes(p.id)) : [];
+            const techProjects = Object.values(liveProjectData).filter(p => p.techId === m.id);
             const prjHtml = techProjects.length ? techProjects.map(p => `
-                <div class="mini-project" onclick="openNestedProject('${p.id}')">
+                <div class="mini-project" onclick="openLiveProjectDrawer('${p.id}')">
                     <div class="mini-project-bar ${p.team}"></div>
-                    <div class="mini-project-info"><div class="mini-project-title">${p.name}</div><div class="mini-project-meta">${p.address.split(',')[0]}</div></div>
+                    <div class="mini-project-info"><div class="mini-project-title">${p.title}</div><div class="mini-project-meta">${p.client || p.address || ''}</div></div>
                     <span class="mini-project-progress">${p.progress.total}%</span>
                 </div>
             `).join('') : '<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:16px;">Aucun projet</div>';
@@ -4304,7 +4313,7 @@
         }
 
         function openProjectDetail(id) {
-            const p = projects.find(x => x.id === id);
+            const p = liveProjectData[id] || projects.find(x => x.id === id);
             if (!p) return;
             document.getElementById('dTitle').textContent = p.id;
             document.getElementById('dSubtitle').textContent = `${p.tech} • ${p.address.split(',')[0]}`;
@@ -4317,7 +4326,7 @@
         }
 
         function openMapProjectDetail(id) {
-            const p = projects.find(x => x.id === id);
+            const p = liveProjectData[id] || projects.find(x => x.id === id);
             if (!p) return;
             
             // Hide notification and close tech drawer
@@ -4358,7 +4367,7 @@
 
         function openTechDetail(id) {
             closeNestedDrawer();
-            const m = teamMembers.find(x => x.id === id);
+            const m = liveTeamData[id] || teamMembers.find(x => x.id === id);
             if (!m) return;
             document.getElementById('tName').textContent = m.name;
             document.getElementById('tRole').textContent = (m.role === 'manager' ? 'Manager' : 'Technicien') + ' • Équipe ' + m.team;
@@ -4369,7 +4378,7 @@
         }
 
         function openNestedProject(id) {
-            const p = projects.find(x => x.id === id);
+            const p = liveProjectData[id] || projects.find(x => x.id === id);
             if (!p) return;
             document.getElementById('nestedTitle').textContent = p.id;
             document.getElementById('nestedSubtitle').textContent = `${p.tech} • ${p.address.split(',')[0]}`;
@@ -4497,7 +4506,7 @@
             el.style.borderColor = 'rgba(80,150,255,0.3)';
             
             // Show calendar section
-            const tech = teamMembers.find(t => t.id === techId);
+            const tech = liveTeamData[techId] || teamMembers.find(t => t.id === techId);
             if (tech) {
                 document.getElementById('selectedTechName').textContent = tech.name.toUpperCase();
                 document.getElementById('techCalendarContainer').style.display = 'block';
