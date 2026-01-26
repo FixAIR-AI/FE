@@ -3225,7 +3225,7 @@
                         .select(`
                             *,
                             technician:user_id(id, first_name, last_name),
-                            report:reports(id, status, created_at, progress, report_data)
+                            report:reports(id, status, created_at, report_data)
                         `)
                         .in('user_id', teamTechIds)
                         .order('updated_at', { ascending: false })
@@ -3244,23 +3244,26 @@
                         `${p.technician.first_name || ''} ${p.technician.last_name || ''}`.trim() : 
                         'Non assigné';
                     
-                    // Calculate progress - USE REAL progress from report if available
+                    // Calculate progress from report_data or status
                     const report = p.report?.[0];
                     let progressTotal = 0;
-                    if (report && typeof report.progress === 'number') {
-                        // Use the REAL progress value from the report
-                        progressTotal = report.progress;
-                    } else if (report) {
-                        // Fallback to status-based if no progress number
-                        switch (report.status) {
-                            case 'completed': progressTotal = 100; break;
-                            case 'review': progressTotal = 75; break;
-                            case 'in_progress': progressTotal = 50; break;
-                            case 'draft': progressTotal = 25; break;
-                            default: progressTotal = 10;
+
+                    if (report) {
+                        // Check if report_data has progress info
+                        if (report.report_data?.progress && typeof report.report_data.progress === 'number') {
+                            progressTotal = report.report_data.progress;
+                        } else {
+                            // Fallback to status-based
+                            switch (report.status) {
+                                case 'completed': progressTotal = 100; break;
+                                case 'review': progressTotal = 75; break;
+                                case 'in_progress': progressTotal = 50; break;
+                                case 'draft': progressTotal = 25; break;
+                                default: progressTotal = 10;
+                            }
                         }
                     } else {
-                        // No report yet - check project status
+                        // No report - use project status
                         switch (p.status) {
                             case 'completed': case 'done': progressTotal = 100; break;
                             case 'review': progressTotal = 75; break;
@@ -3290,7 +3293,6 @@
                         report: {
                             id: report?.id || null,
                             status: report?.status || null,
-                            progress: report?.progress || progressTotal,
                             data: report?.report_data || null,
                             client: p.client_name || '',
                             address: p.client_address || '',
