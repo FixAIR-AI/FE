@@ -3284,7 +3284,7 @@
                     .from('availability_shares')
                     .select(`
                         *,
-                        technician:users!technician_id(id, first_name, last_name, email, avatar_url)
+                        technician:users!technician_id(id, first_name, last_name, email)
                     `)
                     .eq('recipient_email', currentAdminProfile.email)
                     .eq('status', 'pending');
@@ -3452,18 +3452,26 @@
             const projects = Object.values(liveProjectData);
             const stats = {
                 total: projects.length,
-                diagnostic: projects.filter(p => p.status === 'diagnostic' || p.status === 'in_progress').length,
-                review: projects.filter(p => p.status === 'review').length,
-                completed: projects.filter(p => p.status === 'completed').length
+                diagnostic: projects.filter(p => ['diagnostic', 'in_progress', 'active'].includes(p.status)).length,
+                review: projects.filter(p => ['review', 'pending_review', 'drafting'].includes(p.status)).length,
+                completed: projects.filter(p => ['completed', 'done', 'closed'].includes(p.status)).length
             };
+            
+            // Log all unique statuses for debugging
+            const uniqueStatuses = [...new Set(projects.map(p => p.status))];
+            console.log('📊 Unique project statuses:', uniqueStatuses);
             
             const techs = Object.values(liveTeamData);
             const teamStats = {
                 total: techs.length,
-                active: techs.filter(t => t.status === 'active' || t.status === 'live').length,
+                active: techs.filter(t => ['active', 'live', 'online'].includes(t.status)).length,
                 internal: techs.filter(t => t.memberType === 'internal').length,
                 external: techs.filter(t => t.memberType === 'external').length
             };
+            
+            // Log all unique tech statuses
+            const uniqueTechStatuses = [...new Set(techs.map(t => t.status))];
+            console.log('📊 Unique tech statuses:', uniqueTechStatuses);
             
             console.log('📊 Stats - Projects:', stats, 'Team:', teamStats);
         }
