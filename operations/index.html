@@ -3244,26 +3244,30 @@
                         `${p.technician.first_name || ''} ${p.technician.last_name || ''}`.trim() : 
                         'Non assigné';
                     
-                    // Calculate progress from report_data or status
+                    // Get progress - prioritize real progress from project, then fallback
                     const report = p.report?.[0];
                     let progressTotal = 0;
 
-                    if (report) {
-                        // Check if report_data has progress info
-                        if (report.report_data?.progress && typeof report.report_data.progress === 'number') {
-                            progressTotal = report.report_data.progress;
-                        } else {
-                            // Fallback to status-based
-                            switch (report.status) {
-                                case 'completed': progressTotal = 100; break;
-                                case 'review': progressTotal = 75; break;
-                                case 'in_progress': progressTotal = 50; break;
-                                case 'draft': progressTotal = 25; break;
-                                default: progressTotal = 10;
-                            }
+                    // Priority 1: Use real progress from projects.progress (saved by tech app)
+                    if (typeof p.progress === 'number' && p.progress > 0) {
+                        progressTotal = p.progress;
+                    }
+                    // Priority 2: Check report_data for progress
+                    else if (report?.report_data?.progress && typeof report.report_data.progress === 'number') {
+                        progressTotal = report.report_data.progress;
+                    }
+                    // Priority 3: Fallback to report status
+                    else if (report) {
+                        switch (report.status) {
+                            case 'completed': progressTotal = 100; break;
+                            case 'review': progressTotal = 75; break;
+                            case 'in_progress': progressTotal = 50; break;
+                            case 'draft': progressTotal = 25; break;
+                            default: progressTotal = 10;
                         }
-                    } else {
-                        // No report - use project status
+                    }
+                    // Priority 4: Fallback to project status
+                    else {
                         switch (p.status) {
                             case 'completed': case 'done': progressTotal = 100; break;
                             case 'review': progressTotal = 75; break;
