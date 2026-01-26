@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FixAIR Operations</title>
+    <title>FixAIR Operations V7</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
@@ -2829,6 +2829,9 @@
 
             // Initialize V7 UI after login
             initV7UI();
+            
+            // Load live data from Supabase
+            loadAllData();
         }
 
         async function logout() {
@@ -3003,11 +3006,521 @@
             await logout();
         }
 
-
+        // ═══════════════════════════════════════════════════════════════
+        // REALTIME SUBSCRIPTIONS (placeholder - will be implemented in Phase 4)
+        // ═══════════════════════════════════════════════════════════════
+        function cleanupSubscriptions() {
+            // Remove all realtime subscriptions
+            realtimeSubscriptions.forEach(sub => {
+                if (sub && typeof sub.unsubscribe === 'function') {
+                    sub.unsubscribe();
+                }
+            });
+            realtimeSubscriptions = [];
+            console.log('🧹 Cleaned up realtime subscriptions');
+        }
 
         // ═══════════════════════════════════════════════════════════════
-        // V7 UI CODE (unchanged)
+        // HELPER FUNCTIONS
         // ═══════════════════════════════════════════════════════════════
+        function getInitials(firstName, lastName) {
+            const f = (firstName || '')[0] || '';
+            const l = (lastName || '')[0] || '';
+            return (f + l).toUpperCase() || '??';
+        }
+
+        function getStatusBadge(status) {
+            const badges = {
+                'live': 'Actif', 'active': 'Actif',
+                'idle': 'Idle', 
+                'offline': 'Hors ligne',
+                'pending': 'En attente',
+                'diagnostic': 'Diagnostic',
+                'drafting': 'Rédaction',
+                'review': 'À valider',
+                'completed': 'Terminé',
+                'in_progress': 'En cours'
+            };
+            return badges[status] || status;
+        }
+
+        function formatTime(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function getProjectDuration(createdAt) {
+            if (!createdAt) return '-';
+            const diff = Date.now() - new Date(createdAt).getTime();
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            if (hours > 0) return `${hours}h ${minutes}m`;
+            return `${minutes}m`;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // DATA LOADING - TEAM MEMBERS
+        // ═══════════════════════════════════════════════════════════════
+        async function loadTeamMembers() {
+            if (!currentUserId) return;
+            
+            try {
+                liveTeamData = {};
+                
+                // 1. Get INTERNE technicians (where manager_id = current user)
+                const { data: internes, error: interneError } = await sb
+                    .from('users')
+                    .select('*')
+                    .eq('manager_id', currentUserId);
+                
+                if (interneError) console.error('Error loading internes:', interneError);
+                
+                for (const tech of internes || []) {
+                    const techId = tech.id;
+                    const initials = getInitials(tech.first_name, tech.last_name);
+                    
+                    // Get technician's projects
+                    const { data: techProjects } = await sb
+                        .from('projects')
+                        .select('id, title, client_name, status, brand')
+                        .eq('user_id', techId)
+                        .order('created_at', { ascending: false })
+                        .limit(10);
+                    
+                    // Get current project
+                    let currentProject = null;
+                    if (tech.current_project_id) {
+                        const { data: proj } = await sb
+                            .from('projects')
+                            .select('id, title, client_name, status, brand')
+                            .eq('id', tech.current_project_id)
+                            .maybeSingle();
+                        currentProject = proj;
+                    } else if (techProjects && techProjects.length > 0) {
+                        currentProject = techProjects[0];
+                    }
+                    
+                    // Get messages between manager and tech
+                    const { data: messages } = await sb
+                        .from('team_messages')
+                        .select('*')
+                        .or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${techId}),and(sender_id.eq.${techId},receiver_id.eq.${currentUserId})`)
+                        .order('created_at', { ascending: true })
+                        .limit(20);
+                    
+                    liveTeamData[techId] = {
+                        id: techId,
+                        name: `${tech.first_name || ''} ${tech.last_name || ''}`.trim() || tech.email,
+                        initials: initials,
+                        email: tech.email,
+                        phone: tech.phone || '',
+                        status: tech.live_status || tech.status || 'offline',
+                        badge: getStatusBadge(tech.live_status || tech.status),
+                        memberType: 'internal',
+                        team: tech.team || 'direct',
+                        currentProject: currentProject ? currentProject.title : 'Aucun projet',
+                        client: currentProject ? currentProject.client_name : '',
+                        stats: { projects: techProjects?.length || 0, completed: 0, avgTime: '-', rate: '-' },
+                        projects: (techProjects || []).map(p => ({
+                            id: p.id,
+                            title: p.title,
+                            client: p.client_name,
+                            status: p.status,
+                            badge: getStatusBadge(p.status)
+                        })),
+                        messages: (messages || []).map(m => ({
+                            type: m.sender_id === currentUserId ? 'sent' : 'received',
+                            text: m.content,
+                            time: formatTime(m.created_at)
+                        }))
+                    };
+                }
+                
+                // 2. Get EXTERNE technicians (via accepted availability_shares)
+                const { data: externes, error: externeError } = await sb
+                    .from('availability_shares')
+                    .select('*, technician:technician_id(*)')
+                    .eq('accepted_by_manager_id', currentUserId)
+                    .eq('status', 'accepted');
+                
+                if (externeError) console.error('Error loading externes:', externeError);
+                
+                for (const share of externes || []) {
+                    const tech = share.technician;
+                    if (!tech) continue;
+                    
+                    const techId = tech.id;
+                    if (liveTeamData[techId]) continue; // Already added as interne
+                    
+                    const initials = getInitials(tech.first_name, tech.last_name);
+                    
+                    liveTeamData[techId] = {
+                        id: techId,
+                        name: `${tech.first_name || ''} ${tech.last_name || ''}`.trim() || tech.email,
+                        initials: initials,
+                        email: tech.email,
+                        phone: tech.phone || '',
+                        status: tech.live_status || tech.status || 'offline',
+                        badge: getStatusBadge(tech.live_status || tech.status),
+                        memberType: 'external',
+                        team: 'externe',
+                        sharedSlots: share.time_slots || [],
+                        currentProject: 'Disponibilité partagée',
+                        client: '',
+                        stats: { projects: 0, completed: 0, avgTime: '-', rate: '-' },
+                        projects: [],
+                        messages: []
+                    };
+                }
+                
+                console.log('✅ Loaded', Object.keys(liveTeamData).length, 'team members (INTERNE + EXTERNE)');
+                updateV7TeamUI();
+                
+            } catch (err) {
+                console.error('Error loading team:', err);
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // DATA LOADING - PROJECTS
+        // ═══════════════════════════════════════════════════════════════
+        async function loadProjects() {
+            if (!currentUserId) return;
+            
+            try {
+                // Get projects from all team technicians (INTERNE)
+                const teamTechIds = Object.keys(liveTeamData).filter(id => 
+                    liveTeamData[id].memberType === 'internal'
+                );
+                
+                // Also include manager's own projects
+                teamTechIds.push(currentUserId);
+                
+                let allProjects = [];
+                
+                if (teamTechIds.length > 0) {
+                    const { data: projects, error } = await sb
+                        .from('projects')
+                        .select(`
+                            *,
+                            technician:user_id(id, first_name, last_name),
+                            report:reports(id, status, created_at)
+                        `)
+                        .in('user_id', teamTechIds)
+                        .order('updated_at', { ascending: false })
+                        .limit(50);
+                    
+                    if (error) {
+                        console.error('Error loading projects:', error);
+                    } else {
+                        allProjects = projects || [];
+                    }
+                }
+                
+                liveProjectData = {};
+                for (const p of allProjects) {
+                    const techName = p.technician ? 
+                        `${p.technician.first_name || ''} ${p.technician.last_name || ''}`.trim() : 
+                        'Non assigné';
+                    
+                    const extractedData = p.extracted_data || {};
+                    
+                    // Calculate progress
+                    let progressTotal = 0;
+                    const progressId = extractedData.clientName ? 100 : 0;
+                    const progressDiag = extractedData.problemDescription ? 100 : 0;
+                    const progressMes = extractedData.measurements ? 100 : 0;
+                    const progressConc = extractedData.solution ? 100 : 0;
+                    progressTotal = Math.round((progressId + progressDiag + progressMes + progressConc) / 4);
+                    
+                    liveProjectData[p.id] = {
+                        id: p.id,
+                        title: p.title || `Projet ${p.brand || ''}`,
+                        tech: techName,
+                        techId: p.user_id,
+                        client: p.client_name || '',
+                        address: p.client_address || '',
+                        equipment: p.brand || '',
+                        model: p.equipment_model || '',
+                        duration: getProjectDuration(p.created_at),
+                        status: p.status || 'in_progress',
+                        badge: getStatusBadge(p.status),
+                        team: liveTeamData[p.user_id]?.team || 'direct',
+                        coords: p.coords ? [p.coords.lng, p.coords.lat] : null,
+                        progress: { 
+                            total: progressTotal,
+                            identification: progressId, 
+                            diagnostic: progressDiag, 
+                            mesures: progressMes, 
+                            conclusion: progressConc 
+                        },
+                        report: {
+                            client: p.client_name || '',
+                            address: p.client_address || '',
+                            equipment: `${p.brand || ''} ${p.equipment_model || ''}`.trim(),
+                            problem: p.problem_description || extractedData.problemDescription || '',
+                            actions: p.solution_summary || extractedData.actions || ''
+                        }
+                    };
+                }
+                
+                console.log('✅ Loaded', Object.keys(liveProjectData).length, 'projects');
+                updateV7ProjectsUI();
+                
+            } catch (err) {
+                console.error('Error loading projects:', err);
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // DATA LOADING - PENDING AVAILABILITY SHARES
+        // ═══════════════════════════════════════════════════════════════
+        async function loadPendingShares() {
+            if (!currentAdminProfile?.email) return;
+            
+            try {
+                const { data: shares, error } = await sb
+                    .from('availability_shares')
+                    .select(`
+                        *,
+                        technician:users!technician_id(id, first_name, last_name, email, avatar_url)
+                    `)
+                    .eq('recipient_email', currentAdminProfile.email)
+                    .eq('status', 'pending');
+                
+                if (error) throw error;
+                
+                livePendingShares = shares || [];
+                console.log('✅ Loaded', livePendingShares.length, 'pending availability shares');
+                
+                // Show notification if any pending
+                if (livePendingShares.length > 0) {
+                    toast(`🔗 ${livePendingShares.length} technicien${livePendingShares.length > 1 ? 's' : ''} souhaite${livePendingShares.length > 1 ? 'nt' : ''} partager leurs disponibilités`);
+                }
+                
+            } catch (err) {
+                console.error('Error loading shares:', err);
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // LOAD ALL DATA (orchestrator)
+        // ═══════════════════════════════════════════════════════════════
+        async function loadAllData() {
+            console.log('📊 Loading all data from Supabase...');
+            await loadTeamMembers();
+            await loadProjects();
+            await loadPendingShares();
+            updateV7DashboardStats();
+            console.log('✅ All data loaded!');
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // V7 UI UPDATE FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════
+        function updateV7TeamUI() {
+            // Update tech list dropdown
+            const techListDropdown = document.getElementById('techListDropdown');
+            if (techListDropdown && Object.keys(liveTeamData).length > 0) {
+                const techHtml = Object.values(liveTeamData).slice(0, 6).map(tech => {
+                    const statusClass = tech.status === 'active' || tech.status === 'live' ? 'online' : 
+                                        tech.status === 'idle' ? 'idle' : 'offline';
+                    const typeTag = tech.memberType === 'external' ? ' [EXT]' : '';
+                    
+                    return `
+                        <div class="map-project-card" onclick="openTechMapDrawer(liveTeamData['${tech.id}'])">
+                            <div class="map-project-avatar">
+                                <div class="avatar-circle ${statusClass}">${tech.initials}</div>
+                            </div>
+                            <div class="map-project-info">
+                                <div class="map-project-title">${tech.name}${typeTag}</div>
+                                <div class="map-project-subtitle">${tech.currentProject}</div>
+                            </div>
+                            <div class="map-project-right">
+                                <span class="status-dot ${statusClass}"></span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                techListDropdown.innerHTML = techHtml;
+            }
+            
+            // Update tech count in main card
+            const techMainCard = document.getElementById('techMainCard');
+            if (techMainCard) {
+                const countEl = techMainCard.querySelector('.count');
+                if (countEl) {
+                    countEl.textContent = Object.keys(liveTeamData).length;
+                }
+                
+                // Update active count
+                const activeCount = Object.values(liveTeamData).filter(t => 
+                    t.status === 'active' || t.status === 'live'
+                ).length;
+                const progressValue = techMainCard.querySelector('.progress-value');
+                if (progressValue) {
+                    progressValue.textContent = activeCount;
+                }
+            }
+        }
+
+        function updateV7ProjectsUI() {
+            // Update map projects list
+            const mapProjectsList = document.getElementById('mapProjectsList');
+            if (mapProjectsList && Object.keys(liveProjectData).length > 0) {
+                const projHtml = Object.values(liveProjectData).slice(0, 6).map(proj => {
+                    const teamColor = proj.team === 'nord' ? 'var(--team-nord)' : 
+                                     proj.team === 'sud' ? 'var(--team-sud)' : 'var(--team-direct)';
+                    
+                    return `
+                        <div class="map-project-card" onclick="openLiveProjectDrawer('${proj.id}')">
+                            <div class="map-project-avatar">
+                                <div class="avatar-circle" style="background: ${teamColor}; font-size: 10px;">${proj.tech.split(' ').map(n => n[0]).join('')}</div>
+                            </div>
+                            <div class="map-project-info">
+                                <div class="map-project-title">${proj.title}</div>
+                                <div class="map-project-subtitle">${proj.client || proj.address}</div>
+                            </div>
+                            <div class="map-project-right">
+                                <div class="progress-bar"><div class="progress-fill" style="width: ${proj.progress.total}%; background: ${teamColor};"></div></div>
+                                <div class="progress-value">${proj.progress.total}%</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                mapProjectsList.innerHTML = projHtml;
+            }
+            
+            // Update project count in main card
+            const mapMainCard = document.getElementById('mapMainCard');
+            if (mapMainCard) {
+                const countEl = mapMainCard.querySelector('.count');
+                if (countEl) {
+                    countEl.textContent = Object.keys(liveProjectData).length;
+                }
+                
+                // Calculate average progress
+                const projects = Object.values(liveProjectData);
+                const avgProgress = projects.length > 0 
+                    ? Math.round(projects.reduce((sum, p) => sum + p.progress.total, 0) / projects.length) 
+                    : 0;
+                
+                const progressValue = mapMainCard.querySelector('.progress-value');
+                if (progressValue) {
+                    progressValue.textContent = avgProgress + '%';
+                }
+                
+                const progressFill = mapMainCard.querySelector('.progress-fill');
+                if (progressFill) {
+                    progressFill.style.width = avgProgress + '%';
+                }
+            }
+            
+            // Update map markers with real data
+            updateMapMarkers();
+        }
+
+        function updateMapMarkers() {
+            if (!map || !map.loaded()) return;
+            
+            // Clear existing markers
+            Object.values(markers).forEach(m => m.remove());
+            markers = {};
+            
+            // Add markers for live projects with coords
+            Object.values(liveProjectData).forEach(proj => {
+                if (proj.coords && proj.coords[0] && proj.coords[1]) {
+                    const teamColor = proj.team === 'nord' ? 'var(--team-nord)' : 
+                                     proj.team === 'sud' ? 'var(--team-sud)' : 'var(--team-direct)';
+                    
+                    const el = document.createElement('div');
+                    el.className = 'map-marker';
+                    const initials = proj.tech.split(' ').map(n => n[0]).join('');
+                    el.innerHTML = `<div class="marker-dot" style="background: ${teamColor};">${initials}</div>`;
+                    el.onclick = () => openLiveProjectDrawer(proj.id);
+                    
+                    markers[proj.id] = new mapboxgl.Marker(el)
+                        .setLngLat(proj.coords)
+                        .addTo(map);
+                }
+            });
+        }
+
+        function updateV7DashboardStats() {
+            // Calculate stats
+            const projects = Object.values(liveProjectData);
+            const stats = {
+                total: projects.length,
+                diagnostic: projects.filter(p => p.status === 'diagnostic' || p.status === 'in_progress').length,
+                review: projects.filter(p => p.status === 'review').length,
+                completed: projects.filter(p => p.status === 'completed').length
+            };
+            
+            const techs = Object.values(liveTeamData);
+            const teamStats = {
+                total: techs.length,
+                active: techs.filter(t => t.status === 'active' || t.status === 'live').length,
+                internal: techs.filter(t => t.memberType === 'internal').length,
+                external: techs.filter(t => t.memberType === 'external').length
+            };
+            
+            console.log('📊 Stats - Projects:', stats, 'Team:', teamStats);
+        }
+
+        // Open project drawer with live data
+        function openLiveProjectDrawer(projectId) {
+            const proj = liveProjectData[projectId];
+            if (!proj) return;
+            
+            // Use existing drawer with live data
+            const drawer = document.getElementById('projectMapDrawer');
+            if (drawer) {
+                drawer.classList.add('active');
+                drawer.querySelector('.drawer-title').textContent = proj.title;
+                drawer.querySelector('.drawer-subtitle').textContent = proj.client || proj.address;
+                
+                // Update drawer content
+                const content = drawer.querySelector('.drawer-content');
+                if (content) {
+                    content.innerHTML = `
+                        <div class="drawer-section">
+                            <div class="drawer-label">Technicien</div>
+                            <div class="drawer-value">${proj.tech}</div>
+                        </div>
+                        <div class="drawer-section">
+                            <div class="drawer-label">Équipement</div>
+                            <div class="drawer-value">${proj.equipment} ${proj.model}</div>
+                        </div>
+                        <div class="drawer-section">
+                            <div class="drawer-label">Statut</div>
+                            <div class="drawer-value"><span class="status-badge ${proj.status}">${proj.badge}</span></div>
+                        </div>
+                        <div class="drawer-section">
+                            <div class="drawer-label">Progression</div>
+                            <div class="drawer-progress">
+                                <div class="progress-item"><span>Identification</span><span>${proj.progress.identification}%</span></div>
+                                <div class="progress-item"><span>Diagnostic</span><span>${proj.progress.diagnostic}%</span></div>
+                                <div class="progress-item"><span>Mesures</span><span>${proj.progress.mesures}%</span></div>
+                                <div class="progress-item"><span>Conclusion</span><span>${proj.progress.conclusion}%</span></div>
+                            </div>
+                        </div>
+                        <div class="drawer-section">
+                            <div class="drawer-label">Durée</div>
+                            <div class="drawer-value">${proj.duration}</div>
+                        </div>
+                    `;
+                }
+                
+                // Fly to project on map
+                if (proj.coords && map) {
+                    map.flyTo({ center: proj.coords, zoom: 15 });
+                }
+            }
+        }
+
+
+
         const projects = [
             {id:'E1-024',name:'Diagnostic VRF',address:'Hôtel Novotel, La Défense',tech:'Jean Jr.',techId:4,manager:'Jean Dupont',team:'nord',progress:{total:45,identification:100,diagnostic:60,mesures:20,conclusion:0},equipment:'Daikin VRV IV',priority:'Haute',coords:[2.2378,48.8924]},
             {id:'E1-025',name:'Maintenance Préventive',address:'Bureaux JLL, Boulogne',tech:'Marie L.',techId:5,manager:'Sophie Martin',team:'sud',progress:{total:78,identification:100,diagnostic:100,mesures:80,conclusion:30},equipment:'Carrier 30XA',priority:'Normale',coords:[2.24,48.84]},
