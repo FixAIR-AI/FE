@@ -1018,6 +1018,8 @@
             z-index: 150;
         }
         .map-drawer.visible { transform: translateX(0); }
+        #techMapDrawer { z-index: 150; }
+        #mapDrawer { z-index: 151; }
 
         /* ═══════════════════════════════════════════════════════════
            CALENDAR VIEW - V3 with Drawer-style colors & rounded corners
@@ -3223,7 +3225,7 @@
                         .select(`
                             *,
                             technician:user_id(id, first_name, last_name),
-                            report:reports(id, status, created_at)
+                            report:reports(id, status, created_at, progress, report_data)
                         `)
                         .in('user_id', teamTechIds)
                         .order('updated_at', { ascending: false })
@@ -3242,11 +3244,14 @@
                         `${p.technician.first_name || ''} ${p.technician.last_name || ''}`.trim() : 
                         'Non assigné';
                     
-                    // Calculate progress based on REPORT status
-                    // Report statuses: draft, in_progress, review, completed
+                    // Calculate progress - USE REAL progress from report if available
                     const report = p.report?.[0];
                     let progressTotal = 0;
-                    if (report) {
+                    if (report && typeof report.progress === 'number') {
+                        // Use the REAL progress value from the report
+                        progressTotal = report.progress;
+                    } else if (report) {
+                        // Fallback to status-based if no progress number
                         switch (report.status) {
                             case 'completed': progressTotal = 100; break;
                             case 'review': progressTotal = 75; break;
@@ -3285,6 +3290,8 @@
                         report: {
                             id: report?.id || null,
                             status: report?.status || null,
+                            progress: report?.progress || progressTotal,
+                            data: report?.report_data || null,
                             client: p.client_name || '',
                             address: p.client_address || '',
                             equipment: `${p.brand || ''} ${p.equipment_model || ''}`.trim(),
@@ -3388,14 +3395,32 @@
                 if (countEl) {
                     countEl.textContent = Object.keys(liveTeamData).length;
                 }
-                
-                // Update active count
-                const activeCount = Object.values(liveTeamData).filter(t => 
-                    t.status === 'active' || t.status === 'live'
+
+                // Calculate interventions from live project data
+                const allProjects = Object.values(liveProjectData);
+                const activeInterventions = allProjects.filter(p =>
+                    ['in_progress', 'active', 'diagnostic', 'drafting'].includes(p.status)
                 ).length;
-                const progressValue = techMainCard.querySelector('.progress-value');
-                if (progressValue) {
-                    progressValue.textContent = activeCount;
+
+                // Update interventions count (inside progress-header)
+                const progressHeader = techMainCard.querySelector('.progress-header .progress-value');
+                if (progressHeader) {
+                    progressHeader.textContent = activeInterventions;
+                }
+
+                // Calculate completion rate for the day
+                const completedToday = allProjects.filter(p => p.status === 'completed' || p.status === 'done').length;
+                const totalActive = activeInterventions + completedToday;
+                const completionRate = totalActive > 0 ? Math.round((completedToday / totalActive) * 100) : 0;
+
+                // Update progress bar and percentage
+                const progressFill = techMainCard.querySelector('.progress-fill');
+                if (progressFill) {
+                    progressFill.style.width = completionRate + '%';
+                }
+                const progressInline = techMainCard.querySelector('.progress-value-inline');
+                if (progressInline) {
+                    progressInline.textContent = completionRate + '%';
                 }
             }
         }
@@ -3606,9 +3631,16 @@
             <div class="info-card" style="background:rgba(80,150,255,0.05);border-color:rgba(80,150,255,0.15);">
                 <div class="info-card-title" style="color:var(--accent-blue);">Aperçu du rapport</div>
                 <div style="font-size:12px;color:var(--text-secondary);line-height:1.6;">
-                    <strong>Équipement:</strong> ${p.reportPreview.equipment}<br>
-                    <strong>Problème:</strong> ${p.reportPreview.problem}<br>
-                    <strong>Diagnostic:</strong> ${p.reportPreview.diagnostic}
+                    ${p.report?.data ? `
+                        <strong>Résumé:</strong> ${p.report.data.resume || p.reportPreview?.problem || 'En cours...'}<br>
+                        <strong>Équipement:</strong> ${p.report.data.systeme?.modele || p.reportPreview?.equipment || p.equipment || ''}<br>
+                        <strong>Codes défaut:</strong> ${p.report.data.codes_defaut?.map(c => c.code).join(', ') || 'Aucun'}<br>
+                        <strong>Travaux:</strong> ${p.report.data.travaux_effectues?.[0]?.description || p.reportPreview?.diagnostic || 'En cours...'}
+                    ` : `
+                        <strong>Équipement:</strong> ${p.reportPreview?.equipment || p.equipment || ''}<br>
+                        <strong>Problème:</strong> ${p.reportPreview?.problem || 'En attente de diagnostic...'}<br>
+                        <strong>Diagnostic:</strong> ${p.reportPreview?.diagnostic || 'Rapport en cours...'}
+                    `}
                 </div>
             </div>
             <div class="chat-card">
@@ -3869,6 +3901,32 @@
                 <div class="info-card">
                     <div class="info-card-title">Projets assignés</div>
                     ${projectsHtml}
+                </div>
+                <div class="chat-card">
+                    <div class="chat-card-header">
+                        <div class="chat-card-avatar">${tech.initials}</div>
+                        <div class="chat-card-info">
+                            <div class="chat-card-name">${tech.name}</div>
+                            <div class="chat-card-status">${tech.status === 'live' || tech.status === 'active' ? 'En ligne' : tech.status === 'idle' ? 'Inactif' : 'Hors ligne'}</div>
+                        </div>
+                    </div>
+                    <div class="chat-messages">
+                        ${tech.messages && tech.messages.length ?
+                            tech.messages.slice(-5).map(m => `
+                                <div class="msg ${m.type === 'sent' ? 'user' : 'ai'}">
+                                    <div class="msg-bubble">${m.text}</div>
+                                    <div class="msg-time">${m.time}</div>
+                                </div>
+                            `).join('') :
+                            '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:12px;">Aucun message</div>'
+                        }
+                    </div>
+                    <div class="chat-input-wrap">
+                        <div class="chat-input-row">
+                            <input type="text" class="chat-input" placeholder="Message...">
+                            <button class="chat-send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+                        </div>
+                    </div>
                 </div>
             `;
         }
