@@ -3320,26 +3320,32 @@
         // V7 UI UPDATE FUNCTIONS
         // ═══════════════════════════════════════════════════════════════
         function updateV7TeamUI() {
-            // Update tech list dropdown
+            // Update tech list dropdown - MATCH V7 HTML STRUCTURE
             const techListDropdown = document.getElementById('techListDropdown');
             if (techListDropdown && Object.keys(liveTeamData).length > 0) {
+                const tc = {nord:'var(--team-nord)',sud:'var(--team-sud)',direct:'var(--team-direct)',externe:'var(--accent-purple)'};
                 const techHtml = Object.values(liveTeamData).slice(0, 6).map(tech => {
-                    const statusClass = tech.status === 'active' || tech.status === 'live' ? 'online' : 
-                                        tech.status === 'idle' ? 'idle' : 'offline';
+                    const teamColor = tc[tech.team] || tc.direct;
+                    const statusColor = tech.status === 'live' || tech.status === 'active' ? 'var(--accent-green)' : 
+                                       tech.status === 'idle' ? 'var(--accent-orange)' : 'var(--text-muted)';
+                    const statusText = tech.status === 'live' || tech.status === 'active' ? 'En ligne' : 
+                                      tech.status === 'idle' ? 'Inactif' : 'Offline';
+                    const statusPercent = tech.status === 'live' || tech.status === 'active' ? 100 : 
+                                         tech.status === 'idle' ? 50 : 0;
                     const typeTag = tech.memberType === 'external' ? ' [EXT]' : '';
                     
                     return `
                         <div class="map-project-card" onclick="openTechMapDrawer(liveTeamData['${tech.id}'])">
-                            <div class="map-project-avatar">
-                                <div class="avatar-circle ${statusClass}">${tech.initials}</div>
+                            <div class="team-bar" style="background:${teamColor}"></div>
+                            <div class="content">
+                                <div class="title">${tech.name}${typeTag}</div>
+                                <div class="tech">${tech.currentProject} • ${statusText}</div>
                             </div>
-                            <div class="map-project-info">
-                                <div class="map-project-title">${tech.name}${typeTag}</div>
-                                <div class="map-project-subtitle">${tech.currentProject}</div>
+                            <div class="progress">
+                                <div class="progress-bar"><div class="progress-fill" style="width:${statusPercent}%;background:${statusColor}"></div></div>
+                                <span class="progress-value" style="color:${statusColor}">${statusText}</span>
                             </div>
-                            <div class="map-project-right">
-                                <span class="status-dot ${statusClass}"></span>
-                            </div>
+                            <span class="id">${tech.initials}</span>
                         </div>
                     `;
                 }).join('');
@@ -3366,26 +3372,26 @@
         }
 
         function updateV7ProjectsUI() {
-            // Update map projects list
+            // Update map projects list - MATCH V7 HTML STRUCTURE
             const mapProjectsList = document.getElementById('mapProjectsList');
             if (mapProjectsList && Object.keys(liveProjectData).length > 0) {
+                const tc = {nord:'var(--team-nord)',sud:'var(--team-sud)',direct:'var(--team-direct)'};
                 const projHtml = Object.values(liveProjectData).slice(0, 6).map(proj => {
-                    const teamColor = proj.team === 'nord' ? 'var(--team-nord)' : 
-                                     proj.team === 'sud' ? 'var(--team-sud)' : 'var(--team-direct)';
+                    const teamColor = tc[proj.team] || tc.direct;
+                    const initials = proj.tech ? proj.tech.split(' ').map(n => n[0]).join('') : '??';
                     
                     return `
                         <div class="map-project-card" onclick="openLiveProjectDrawer('${proj.id}')">
-                            <div class="map-project-avatar">
-                                <div class="avatar-circle" style="background: ${teamColor}; font-size: 10px;">${proj.tech.split(' ').map(n => n[0]).join('')}</div>
+                            <div class="team-bar ${proj.team}" style="background:${teamColor}"></div>
+                            <div class="content">
+                                <div class="title">${proj.title}</div>
+                                <div class="tech">${proj.tech} • ${proj.client || proj.address || ''}</div>
                             </div>
-                            <div class="map-project-info">
-                                <div class="map-project-title">${proj.title}</div>
-                                <div class="map-project-subtitle">${proj.client || proj.address}</div>
+                            <div class="progress">
+                                <div class="progress-bar"><div class="progress-fill" style="width:${proj.progress.total}%;background:${teamColor}"></div></div>
+                                <span class="progress-value" style="color:${teamColor}">${proj.progress.total}%</span>
                             </div>
-                            <div class="map-project-right">
-                                <div class="progress-bar"><div class="progress-fill" style="width: ${proj.progress.total}%; background: ${teamColor};"></div></div>
-                                <div class="progress-value">${proj.progress.total}%</div>
-                            </div>
+                            <span class="id">${initials}</span>
                         </div>
                     `;
                 }).join('');
