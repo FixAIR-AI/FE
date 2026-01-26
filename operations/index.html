@@ -290,6 +290,7 @@
             gap: 6px;
             max-height: calc(100vh - 220px);
             overflow-y: auto;
+            overflow-x: hidden;
             padding: 8px;
             padding-bottom: 12px;
             background: var(--card-bg-transparent);
@@ -297,9 +298,14 @@
             border: 1px solid var(--border-subtle);
             border-bottom: 1px solid var(--border-light);
             border-radius: 14px 14px 0 0;
+            scrollbar-width: thin;
+            scrollbar-color: transparent transparent;
         }
-        .map-projects-list::-webkit-scrollbar { width: 4px; }
-        .map-projects-list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 2px; }
+        .map-projects-list:hover { scrollbar-color: rgba(255, 255, 255, 0.2) transparent; }
+        .map-projects-list::-webkit-scrollbar { width: 4px; background: transparent; }
+        .map-projects-list::-webkit-scrollbar-track { background: transparent; }
+        .map-projects-list::-webkit-scrollbar-thumb { background: transparent; border-radius: 2px; transition: background 0.3s; }
+        .map-projects-list:hover::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); }
         .map-left-panel.expanded .map-projects-list { display: flex; }
 
         /* Main Summary Card - 480px width, 64px height collapsed */
@@ -522,6 +528,18 @@
             display: none;
             flex-direction: column;
         }
+        .full-page::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .full-page > * { position: relative; z-index: 1; }
         .full-page.active { display: flex; }
         .page-layout { display: flex; flex: 1; overflow: hidden; }
         .page-main { flex: 1; display: flex; flex-direction: column; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); min-width: 0; }
@@ -536,6 +554,20 @@
         .drawer-body::-webkit-scrollbar-track { background: transparent; }
         .drawer-body::-webkit-scrollbar-thumb { background: transparent; border-radius: 3px; }
         .drawer-body:hover::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); }
+        
+        /* Drawer content sections */
+        .drawer-section { margin-bottom: 16px; }
+        .drawer-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .drawer-value { font-size: 14px; color: var(--text-primary); }
+        .drawer-progress-bar { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+        .drawer-progress-fill { height: 100%; background: var(--accent-blue); border-radius: 3px; transition: width 0.3s ease; }
+        .drawer-progress-value { font-size: 12px; color: var(--accent-blue); margin-top: 4px; font-weight: 600; }
+        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+        .status-badge.completed, .status-badge.done { background: rgba(52, 199, 89, 0.2); color: #34c759; }
+        .status-badge.review { background: rgba(255, 159, 10, 0.2); color: #ff9f0a; }
+        .status-badge.in_progress, .status-badge.active { background: rgba(10, 132, 255, 0.2); color: #0a84ff; }
+        .status-badge.diagnostic { background: rgba(175, 82, 222, 0.2); color: #af52de; }
+        .status-badge.pending { background: rgba(255, 255, 255, 0.1); color: var(--text-muted); }
         .page-content-inner { max-width: 700px; margin: 0 auto; }
 
         .page-header {
@@ -3224,15 +3256,28 @@
                         `${p.technician.first_name || ''} ${p.technician.last_name || ''}`.trim() : 
                         'Non assigné';
                     
-                    const extractedData = p.extracted_data || {};
-                    
-                    // Calculate progress
+                    // Calculate progress based on REPORT status
+                    // Report statuses: draft, in_progress, review, completed
+                    const report = p.report?.[0];
                     let progressTotal = 0;
-                    const progressId = extractedData.clientName ? 100 : 0;
-                    const progressDiag = extractedData.problemDescription ? 100 : 0;
-                    const progressMes = extractedData.measurements ? 100 : 0;
-                    const progressConc = extractedData.solution ? 100 : 0;
-                    progressTotal = Math.round((progressId + progressDiag + progressMes + progressConc) / 4);
+                    if (report) {
+                        switch (report.status) {
+                            case 'completed': progressTotal = 100; break;
+                            case 'review': progressTotal = 75; break;
+                            case 'in_progress': progressTotal = 50; break;
+                            case 'draft': progressTotal = 25; break;
+                            default: progressTotal = 10;
+                        }
+                    } else {
+                        // No report yet - check project status
+                        switch (p.status) {
+                            case 'completed': case 'done': progressTotal = 100; break;
+                            case 'review': progressTotal = 75; break;
+                            case 'in_progress': case 'active': progressTotal = 50; break;
+                            case 'diagnostic': progressTotal = 30; break;
+                            default: progressTotal = 10;
+                        }
+                    }
                     
                     liveProjectData[p.id] = {
                         id: p.id,
@@ -3249,18 +3294,16 @@
                         team: liveTeamData[p.user_id]?.team || 'direct',
                         coords: p.coords ? [p.coords.lng, p.coords.lat] : null,
                         progress: { 
-                            total: progressTotal,
-                            identification: progressId, 
-                            diagnostic: progressDiag, 
-                            mesures: progressMes, 
-                            conclusion: progressConc 
+                            total: progressTotal
                         },
                         report: {
+                            id: report?.id || null,
+                            status: report?.status || null,
                             client: p.client_name || '',
                             address: p.client_address || '',
                             equipment: `${p.brand || ''} ${p.equipment_model || ''}`.trim(),
-                            problem: p.problem_description || extractedData.problemDescription || '',
-                            actions: p.solution_summary || extractedData.actions || ''
+                            problem: p.problem_description || '',
+                            actions: p.solution_summary || ''
                         }
                     };
                 }
@@ -3485,49 +3528,62 @@
         // Open project drawer with live data
         function openLiveProjectDrawer(projectId) {
             const proj = liveProjectData[projectId];
-            if (!proj) return;
+            if (!proj) {
+                console.error('Project not found:', projectId);
+                return;
+            }
             
-            // Use existing drawer with live data
-            const drawer = document.getElementById('projectMapDrawer');
+            // Use the correct drawer ID: mapDrawer
+            const drawer = document.getElementById('mapDrawer');
             if (drawer) {
-                drawer.classList.add('active');
-                drawer.querySelector('.drawer-title').textContent = proj.title;
-                drawer.querySelector('.drawer-subtitle').textContent = proj.client || proj.address;
+                drawer.classList.add('visible');
+                
+                // Update header
+                document.getElementById('mapDTitle').textContent = proj.title;
+                document.getElementById('mapDSubtitle').textContent = `${proj.tech} • ${proj.client || proj.address}`;
+                
+                // Update badge
+                const badge = document.getElementById('mapDBadge');
+                if (badge) {
+                    badge.className = `drawer-badge ${proj.team}`;
+                    badge.textContent = proj.team === 'nord' ? 'Équipe Nord' : 
+                                       proj.team === 'sud' ? 'Équipe Sud' : 'Direct';
+                }
                 
                 // Update drawer content
-                const content = drawer.querySelector('.drawer-content');
-                if (content) {
-                    content.innerHTML = `
-                        <div class="drawer-section">
-                            <div class="drawer-label">Technicien</div>
-                            <div class="drawer-value">${proj.tech}</div>
-                        </div>
+                const body = document.getElementById('mapDrawerBody');
+                if (body) {
+                    body.innerHTML = `
                         <div class="drawer-section">
                             <div class="drawer-label">Équipement</div>
-                            <div class="drawer-value">${proj.equipment} ${proj.model}</div>
+                            <div class="drawer-value">${proj.equipment} ${proj.model || ''}</div>
                         </div>
                         <div class="drawer-section">
                             <div class="drawer-label">Statut</div>
                             <div class="drawer-value"><span class="status-badge ${proj.status}">${proj.badge}</span></div>
                         </div>
                         <div class="drawer-section">
-                            <div class="drawer-label">Progression</div>
-                            <div class="drawer-progress">
-                                <div class="progress-item"><span>Identification</span><span>${proj.progress.identification}%</span></div>
-                                <div class="progress-item"><span>Diagnostic</span><span>${proj.progress.diagnostic}%</span></div>
-                                <div class="progress-item"><span>Mesures</span><span>${proj.progress.mesures}%</span></div>
-                                <div class="progress-item"><span>Conclusion</span><span>${proj.progress.conclusion}%</span></div>
+                            <div class="drawer-label">Progression du rapport</div>
+                            <div class="drawer-progress-bar">
+                                <div class="drawer-progress-fill" style="width: ${proj.progress.total}%"></div>
                             </div>
+                            <div class="drawer-progress-value">${proj.progress.total}%</div>
                         </div>
                         <div class="drawer-section">
                             <div class="drawer-label">Durée</div>
                             <div class="drawer-value">${proj.duration}</div>
                         </div>
+                        ${proj.report.problem ? `
+                        <div class="drawer-section">
+                            <div class="drawer-label">Problème</div>
+                            <div class="drawer-value">${proj.report.problem}</div>
+                        </div>
+                        ` : ''}
                     `;
                 }
                 
                 // Fly to project on map
-                if (proj.coords && map) {
+                if (proj.coords && proj.coords[0] && proj.coords[1] && map) {
                     map.flyTo({ center: proj.coords, zoom: 15 });
                 }
             }
