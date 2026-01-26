@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FixAIR Operations V7</title>
+    <title>FixAIR Operations</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
@@ -290,7 +290,6 @@
             gap: 6px;
             max-height: calc(100vh - 220px);
             overflow-y: auto;
-            overflow-x: hidden;
             padding: 8px;
             padding-bottom: 12px;
             background: var(--card-bg-transparent);
@@ -298,14 +297,9 @@
             border: 1px solid var(--border-subtle);
             border-bottom: 1px solid var(--border-light);
             border-radius: 14px 14px 0 0;
-            scrollbar-width: thin;
-            scrollbar-color: transparent transparent;
         }
-        .map-projects-list:hover { scrollbar-color: rgba(255, 255, 255, 0.2) transparent; }
-        .map-projects-list::-webkit-scrollbar { width: 4px; background: transparent; }
-        .map-projects-list::-webkit-scrollbar-track { background: transparent; }
-        .map-projects-list::-webkit-scrollbar-thumb { background: transparent; border-radius: 2px; transition: background 0.3s; }
-        .map-projects-list:hover::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); }
+        .map-projects-list::-webkit-scrollbar { width: 4px; }
+        .map-projects-list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 2px; }
         .map-left-panel.expanded .map-projects-list { display: flex; }
 
         /* Main Summary Card - 480px width, 64px height collapsed */
@@ -528,18 +522,6 @@
             display: none;
             flex-direction: column;
         }
-        .full-page::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background-image: 
-                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-            background-size: 40px 40px;
-            pointer-events: none;
-            z-index: 0;
-        }
-        .full-page > * { position: relative; z-index: 1; }
         .full-page.active { display: flex; }
         .page-layout { display: flex; flex: 1; overflow: hidden; }
         .page-main { flex: 1; display: flex; flex-direction: column; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); min-width: 0; }
@@ -3025,8 +3007,109 @@
         }
 
         // ═══════════════════════════════════════════════════════════════
-        // REALTIME SUBSCRIPTIONS (placeholder - will be implemented in Phase 4)
+        // REALTIME SUBSCRIPTIONS - Live updates from Supabase
         // ═══════════════════════════════════════════════════════════════
+        async function setupRealtimeSubscriptions() {
+            if (!currentUserId) return;
+            
+            // 1. Team status changes
+            const teamSub = sb.channel('team-status')
+                .on('postgres_changes', {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'users',
+                    filter: `manager_id=eq.${currentUserId}`
+                }, (payload) => {
+                    console.log('📡 Team update:', payload);
+                    loadTeamMembers();
+                })
+                .subscribe();
+            realtimeSubscriptions.push(teamSub);
+            
+            // 2. Project updates
+            const projectSub = sb.channel('project-updates')
+                .on('postgres_changes', {
+                    event: '*',
+                    schema: 'public',
+                    table: 'projects'
+                }, (payload) => {
+                    const techId = payload.new?.user_id || payload.old?.user_id;
+                    if (techId && (liveTeamData[techId] || techId === currentUserId)) {
+                        console.log('📡 Project update:', payload);
+                        loadProjects();
+                    }
+                })
+                .subscribe();
+            realtimeSubscriptions.push(projectSub);
+            
+            // 3. New messages
+            const messageSub = sb.channel('team-messages')
+                .on('postgres_changes', {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'team_messages',
+                    filter: `receiver_id=eq.${currentUserId}`
+                }, (payload) => {
+                    console.log('📡 New message:', payload);
+                    handleNewMessage(payload.new);
+                })
+                .subscribe();
+            realtimeSubscriptions.push(messageSub);
+            
+            // 4. Availability shares
+            if (currentAdminProfile?.email) {
+                const shareSub = sb.channel('availability-shares')
+                    .on('postgres_changes', {
+                        event: 'INSERT',
+                        schema: 'public',
+                        table: 'availability_shares',
+                        filter: `recipient_email=eq.${currentAdminProfile.email}`
+                    }, (payload) => {
+                        console.log('📡 New share:', payload);
+                        loadPendingShares();
+                        toast('🔗 Nouvelle demande de partage');
+                    })
+                    .subscribe();
+                realtimeSubscriptions.push(shareSub);
+            }
+            
+            console.log('✅ Realtime subscriptions active');
+        }
+        
+        function handleNewMessage(message) {
+            const techId = message.sender_id === currentUserId ? message.receiver_id : message.sender_id;
+            if (liveTeamData[techId]) {
+                liveTeamData[techId].messages.push({
+                    type: message.sender_id === currentUserId ? 'sent' : 'received',
+                    text: message.content,
+                    time: formatTime(message.created_at)
+                });
+            }
+            toast('💬 Nouveau message');
+        }
+        
+        async function sendTeamMessage(receiverId, content) {
+            try {
+                const { error } = await sb.from('team_messages').insert({
+                    sender_id: currentUserId,
+                    receiver_id: receiverId,
+                    content: content,
+                    content_type: 'text'
+                });
+                if (error) throw error;
+                if (liveTeamData[receiverId]) {
+                    liveTeamData[receiverId].messages.push({
+                        type: 'sent', text: content, time: formatTime(new Date().toISOString())
+                    });
+                }
+                return true;
+            } catch (err) {
+                console.error('Error sending message:', err);
+                toast('❌ Erreur envoi');
+                return false;
+            }
+        }
+
         function cleanupSubscriptions() {
             // Remove all realtime subscriptions
             realtimeSubscriptions.forEach(sub => {
@@ -3242,28 +3325,15 @@
                         `${p.technician.first_name || ''} ${p.technician.last_name || ''}`.trim() : 
                         'Non assigné';
                     
-                    // Calculate progress based on REPORT status
-                    // Report statuses: draft, in_progress, review, completed
-                    const report = p.report?.[0];
+                    const extractedData = p.extracted_data || {};
+                    
+                    // Calculate progress
                     let progressTotal = 0;
-                    if (report) {
-                        switch (report.status) {
-                            case 'completed': progressTotal = 100; break;
-                            case 'review': progressTotal = 75; break;
-                            case 'in_progress': progressTotal = 50; break;
-                            case 'draft': progressTotal = 25; break;
-                            default: progressTotal = 10;
-                        }
-                    } else {
-                        // No report yet - check project status
-                        switch (p.status) {
-                            case 'completed': case 'done': progressTotal = 100; break;
-                            case 'review': progressTotal = 75; break;
-                            case 'in_progress': case 'active': progressTotal = 50; break;
-                            case 'diagnostic': progressTotal = 30; break;
-                            default: progressTotal = 10;
-                        }
-                    }
+                    const progressId = extractedData.clientName ? 100 : 0;
+                    const progressDiag = extractedData.problemDescription ? 100 : 0;
+                    const progressMes = extractedData.measurements ? 100 : 0;
+                    const progressConc = extractedData.solution ? 100 : 0;
+                    progressTotal = Math.round((progressId + progressDiag + progressMes + progressConc) / 4);
                     
                     liveProjectData[p.id] = {
                         id: p.id,
@@ -3280,16 +3350,18 @@
                         team: liveTeamData[p.user_id]?.team || 'direct',
                         coords: p.coords ? [p.coords.lng, p.coords.lat] : null,
                         progress: { 
-                            total: progressTotal
+                            total: progressTotal,
+                            identification: progressId, 
+                            diagnostic: progressDiag, 
+                            mesures: progressMes, 
+                            conclusion: progressConc 
                         },
                         report: {
-                            id: report?.id || null,
-                            status: report?.status || null,
                             client: p.client_name || '',
                             address: p.client_address || '',
                             equipment: `${p.brand || ''} ${p.equipment_model || ''}`.trim(),
-                            problem: p.problem_description || '',
-                            actions: p.solution_summary || ''
+                            problem: p.problem_description || extractedData.problemDescription || '',
+                            actions: p.solution_summary || extractedData.actions || ''
                         }
                     };
                 }
@@ -3313,7 +3385,7 @@
                     .from('availability_shares')
                     .select(`
                         *,
-                        technician:users!technician_id(id, first_name, last_name, email)
+                        technician:users!technician_id(id, first_name, last_name, email, avatar_url)
                     `)
                     .eq('recipient_email', currentAdminProfile.email)
                     .eq('status', 'pending');
@@ -3341,40 +3413,35 @@
             await loadTeamMembers();
             await loadProjects();
             await loadPendingShares();
+            await setupRealtimeSubscriptions();
             updateV7DashboardStats();
-            console.log('✅ All data loaded!');
+            console.log('✅ All data loaded + realtime active!');
         }
 
         // ═══════════════════════════════════════════════════════════════
         // V7 UI UPDATE FUNCTIONS
         // ═══════════════════════════════════════════════════════════════
         function updateV7TeamUI() {
-            // Update tech list dropdown - MATCH V7 HTML STRUCTURE
+            // Update tech list dropdown
             const techListDropdown = document.getElementById('techListDropdown');
             if (techListDropdown && Object.keys(liveTeamData).length > 0) {
-                const tc = {nord:'var(--team-nord)',sud:'var(--team-sud)',direct:'var(--team-direct)',externe:'var(--accent-purple)'};
                 const techHtml = Object.values(liveTeamData).slice(0, 6).map(tech => {
-                    const teamColor = tc[tech.team] || tc.direct;
-                    const statusColor = tech.status === 'live' || tech.status === 'active' ? 'var(--accent-green)' : 
-                                       tech.status === 'idle' ? 'var(--accent-orange)' : 'var(--text-muted)';
-                    const statusText = tech.status === 'live' || tech.status === 'active' ? 'En ligne' : 
-                                      tech.status === 'idle' ? 'Inactif' : 'Offline';
-                    const statusPercent = tech.status === 'live' || tech.status === 'active' ? 100 : 
-                                         tech.status === 'idle' ? 50 : 0;
+                    const statusClass = tech.status === 'active' || tech.status === 'live' ? 'online' : 
+                                        tech.status === 'idle' ? 'idle' : 'offline';
                     const typeTag = tech.memberType === 'external' ? ' [EXT]' : '';
                     
                     return `
-                        <div class="map-project-card" onclick="openTechMapDrawer(liveTeamData['${tech.id}'])">
-                            <div class="team-bar" style="background:${teamColor}"></div>
-                            <div class="content">
-                                <div class="title">${tech.name}${typeTag}</div>
-                                <div class="tech">${tech.currentProject} • ${statusText}</div>
+                        <div class="map-project-card" onclick="openTechMapDrawer('${tech.id}')">
+                            <div class="map-project-avatar">
+                                <div class="avatar-circle ${statusClass}">${tech.initials}</div>
                             </div>
-                            <div class="progress">
-                                <div class="progress-bar"><div class="progress-fill" style="width:${statusPercent}%;background:${statusColor}"></div></div>
-                                <span class="progress-value" style="color:${statusColor}">${statusText}</span>
+                            <div class="map-project-info">
+                                <div class="map-project-title">${tech.name}${typeTag}</div>
+                                <div class="map-project-subtitle">${tech.currentProject}</div>
                             </div>
-                            <span class="id">${tech.initials}</span>
+                            <div class="map-project-right">
+                                <span class="status-dot ${statusClass}"></span>
+                            </div>
                         </div>
                     `;
                 }).join('');
@@ -3401,26 +3468,26 @@
         }
 
         function updateV7ProjectsUI() {
-            // Update map projects list - MATCH V7 HTML STRUCTURE
+            // Update map projects list
             const mapProjectsList = document.getElementById('mapProjectsList');
             if (mapProjectsList && Object.keys(liveProjectData).length > 0) {
-                const tc = {nord:'var(--team-nord)',sud:'var(--team-sud)',direct:'var(--team-direct)'};
                 const projHtml = Object.values(liveProjectData).slice(0, 6).map(proj => {
-                    const teamColor = tc[proj.team] || tc.direct;
-                    const initials = proj.tech ? proj.tech.split(' ').map(n => n[0]).join('') : '??';
+                    const teamColor = proj.team === 'nord' ? 'var(--team-nord)' : 
+                                     proj.team === 'sud' ? 'var(--team-sud)' : 'var(--team-direct)';
                     
                     return `
                         <div class="map-project-card" onclick="openLiveProjectDrawer('${proj.id}')">
-                            <div class="team-bar ${proj.team}" style="background:${teamColor}"></div>
-                            <div class="content">
-                                <div class="title">${proj.title}</div>
-                                <div class="tech">${proj.tech} • ${proj.client || proj.address || ''}</div>
+                            <div class="map-project-avatar">
+                                <div class="avatar-circle" style="background: ${teamColor}; font-size: 10px;">${proj.tech.split(' ').map(n => n[0]).join('')}</div>
                             </div>
-                            <div class="progress">
-                                <div class="progress-bar"><div class="progress-fill" style="width:${proj.progress.total}%;background:${teamColor}"></div></div>
-                                <span class="progress-value" style="color:${teamColor}">${proj.progress.total}%</span>
+                            <div class="map-project-info">
+                                <div class="map-project-title">${proj.title}</div>
+                                <div class="map-project-subtitle">${proj.client || proj.address}</div>
                             </div>
-                            <span class="id">${initials}</span>
+                            <div class="map-project-right">
+                                <div class="progress-bar"><div class="progress-fill" style="width: ${proj.progress.total}%; background: ${teamColor};"></div></div>
+                                <div class="progress-value">${proj.progress.total}%</div>
+                            </div>
                         </div>
                     `;
                 }).join('');
@@ -3487,31 +3554,23 @@
             const projects = Object.values(liveProjectData);
             const stats = {
                 total: projects.length,
-                diagnostic: projects.filter(p => ['diagnostic', 'in_progress', 'active'].includes(p.status)).length,
-                review: projects.filter(p => ['review', 'pending_review', 'drafting'].includes(p.status)).length,
-                completed: projects.filter(p => ['completed', 'done', 'closed'].includes(p.status)).length
+                diagnostic: projects.filter(p => p.status === 'diagnostic' || p.status === 'in_progress').length,
+                review: projects.filter(p => p.status === 'review').length,
+                completed: projects.filter(p => p.status === 'completed').length
             };
-            
-            // Log all unique statuses for debugging
-            const uniqueStatuses = [...new Set(projects.map(p => p.status))];
-            console.log('📊 Unique project statuses:', uniqueStatuses);
             
             const techs = Object.values(liveTeamData);
             const teamStats = {
                 total: techs.length,
-                active: techs.filter(t => ['active', 'live', 'online'].includes(t.status)).length,
+                active: techs.filter(t => t.status === 'active' || t.status === 'live').length,
                 internal: techs.filter(t => t.memberType === 'internal').length,
                 external: techs.filter(t => t.memberType === 'external').length
             };
             
-            // Log all unique tech statuses
-            const uniqueTechStatuses = [...new Set(techs.map(t => t.status))];
-            console.log('📊 Unique tech statuses:', uniqueTechStatuses);
-            
             console.log('📊 Stats - Projects:', stats, 'Team:', teamStats);
         }
 
-        // Open project drawer with live data - USE ORIGINAL V7 DRAWER STRUCTURE
+        // Open project drawer with live data
         function openLiveProjectDrawer(projectId) {
             const proj = liveProjectData[projectId];
             if (!proj) {
@@ -3519,7 +3578,7 @@
                 return;
             }
             
-            // Get tech data for chat
+            // Get tech data
             const tech = liveTeamData[proj.techId] || {
                 initials: proj.tech ? proj.tech.split(' ').map(n => n[0]).join('') : '??',
                 name: proj.tech || 'Non assigné',
@@ -3527,33 +3586,7 @@
                 messages: []
             };
             
-            // Format project data to match V7 structure
-            const formattedProject = {
-                id: proj.id,
-                name: proj.title,
-                tech: proj.tech,
-                techId: proj.techId,
-                manager: tech.manager || 'Manager',
-                equipment: `${proj.equipment} ${proj.model || ''}`.trim(),
-                priority: proj.status === 'review' ? 'Haute' : 'Normale',
-                team: proj.team,
-                address: proj.address || proj.client,
-                progress: {
-                    total: proj.progress.total,
-                    identification: proj.progress.total >= 25 ? 100 : proj.progress.total * 4,
-                    diagnostic: proj.progress.total >= 50 ? 100 : Math.max(0, (proj.progress.total - 25) * 4),
-                    mesures: proj.progress.total >= 75 ? 100 : Math.max(0, (proj.progress.total - 50) * 4),
-                    conclusion: proj.progress.total >= 100 ? 100 : Math.max(0, (proj.progress.total - 75) * 4)
-                },
-                // Report preview data from Supabase
-                reportPreview: {
-                    equipment: `${proj.equipment} ${proj.model || ''}`.trim(),
-                    problem: proj.report.problem || 'En attente de diagnostic...',
-                    diagnostic: proj.report.actions || 'Rapport en cours...'
-                }
-            };
-            
-            // Use original V7 drawer
+            // Use correct drawer ID: mapDrawer
             const drawer = document.getElementById('mapDrawer');
             if (drawer) {
                 drawer.classList.add('visible');
@@ -3570,8 +3603,53 @@
                                        proj.team === 'sud' ? 'Équipe Sud' : 'Direct';
                 }
                 
-                // Use original buildProjectDrawerContent with formatted data
-                document.getElementById('mapDrawerBody').innerHTML = buildLiveProjectDrawerContent(formattedProject, tech);
+                // Build messages HTML
+                const msgs = tech.messages && tech.messages.length ? 
+                    tech.messages.slice(-5).map(m => `<div class="msg ${m.type === 'sent' ? 'user' : 'ai'}"><div class="msg-bubble">${m.text}</div><div class="msg-time">${m.time}</div></div>`).join('') : 
+                    '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:12px;">Aucun message</div>';
+                
+                // Update drawer body using V7 structure
+                document.getElementById('mapDrawerBody').innerHTML = `
+                    <div class="info-card">
+                        <div class="info-card-title">Informations</div>
+                        <div class="info-row"><span class="info-label">Technicien</span><span class="info-value">${proj.tech}</span></div>
+                        <div class="info-row"><span class="info-label">Équipement</span><span class="info-value">${proj.equipment} ${proj.model || ''}</span></div>
+                        <div class="info-row"><span class="info-label">Statut</span><span class="info-value">${proj.badge}</span></div>
+                        <div class="info-row"><span class="info-label">Durée</span><span class="info-value">${proj.duration}</span></div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-card-title">Progression du rapport</div>
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <div style="flex:1;height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden;">
+                                <div style="height:100%;background:var(--accent-blue);width:${proj.progress.total}%;border-radius:4px;"></div>
+                            </div>
+                            <span style="font-size:14px;font-weight:600;color:var(--accent-blue);">${proj.progress.total}%</span>
+                        </div>
+                    </div>
+                    <div class="info-card" style="background:rgba(80,150,255,0.05);border-color:rgba(80,150,255,0.15);">
+                        <div class="info-card-title" style="color:var(--accent-blue);">Aperçu du rapport</div>
+                        <div style="font-size:12px;color:var(--text-secondary);line-height:1.5;">
+                            ${proj.report?.data ? 'Rapport disponible - cliquez pour voir les détails' : 'Aucun rapport disponible'}
+                        </div>
+                    </div>
+                    <div class="chat-card">
+                        <div class="chat-card-header">
+                            <div class="chat-card-avatar">${tech.initials}</div>
+                            <div class="chat-card-info">
+                                <div class="chat-card-name">${tech.name}</div>
+                                <div class="chat-card-status">${tech.status === 'live' || tech.status === 'active' ? 'En ligne' : tech.status === 'idle' ? 'Inactif' : 'Hors ligne'}</div>
+                            </div>
+                        </div>
+                        <div class="chat-messages" style="max-height:120px;overflow-y:auto;">${msgs}</div>
+                        <div class="chat-input-wrap">
+                            <div class="chat-input-row">
+                                <button class="chat-add-btn"><svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14"><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg></button>
+                                <input type="text" class="chat-input" placeholder="Message..." id="projChatInput" onkeypress="if(event.key==='Enter')sendMsgFromProj('${proj.techId}')">
+                                <button class="chat-send" onclick="sendMsgFromProj('${proj.techId}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+                            </div>
+                        </div>
+                    </div>
+                `;
                 
                 // Fly to project on map if coords exist
                 if (proj.coords && proj.coords[0] && proj.coords[1] && map) {
@@ -3580,51 +3658,12 @@
             }
         }
         
-        // Build drawer content for live project data - SAME STRUCTURE AS V7
-        function buildLiveProjectDrawerContent(p, tech) {
-            const msgs = tech.messages && tech.messages.length ? 
-                tech.messages.map(m => `<div class="msg ${m.type === 'sent' ? 'user' : 'ai'}"><div class="msg-bubble">${m.text}</div><div class="msg-time">${m.time}</div></div>`).join('') : 
-                '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:12px;">Aucun message</div>';
-            
-            return `
-            <div class="info-card">
-                <div class="info-card-title">Informations</div>
-                <div class="info-row"><span class="info-label">Technicien</span><span class="info-value">${p.tech}</span></div>
-                <div class="info-row"><span class="info-label">Manager</span><span class="info-value">${p.manager}</span></div>
-                <div class="info-row"><span class="info-label">Équipement</span><span class="info-value">${p.equipment}</span></div>
-                <div class="info-row"><span class="info-label">Priorité</span><span class="info-value ${p.priority==='Haute'||p.priority==='Urgente'?'orange':''}">${p.priority}</span></div>
-            </div>
-            <div class="info-card">
-                <div class="info-card-title">Progression du rapport</div>
-                <div class="report-sections">
-                    <div class="report-section"><span class="report-section-name">Identification</span><div class="report-section-bar"><div class="report-section-fill" style="width:${p.progress.identification}%"></div></div><span class="report-section-percent">${p.progress.identification}%</span></div>
-                    <div class="report-section"><span class="report-section-name">Diagnostic</span><div class="report-section-bar"><div class="report-section-fill" style="width:${p.progress.diagnostic}%"></div></div><span class="report-section-percent">${p.progress.diagnostic}%</span></div>
-                    <div class="report-section"><span class="report-section-name">Mesures</span><div class="report-section-bar"><div class="report-section-fill" style="width:${p.progress.mesures}%"></div></div><span class="report-section-percent">${p.progress.mesures}%</span></div>
-                    <div class="report-section"><span class="report-section-name">Conclusion</span><div class="report-section-bar"><div class="report-section-fill" style="width:${p.progress.conclusion}%"></div></div><span class="report-section-percent">${p.progress.conclusion}%</span></div>
-                </div>
-            </div>
-            <div class="info-card" style="background:rgba(80,150,255,0.05);border-color:rgba(80,150,255,0.15);">
-                <div class="info-card-title" style="color:var(--accent-blue);">Aperçu du rapport</div>
-                <div style="font-size:12px;color:var(--text-secondary);line-height:1.6;">
-                    <strong>Équipement:</strong> ${p.reportPreview.equipment}<br>
-                    <strong>Problème:</strong> ${p.reportPreview.problem}<br>
-                    <strong>Diagnostic:</strong> ${p.reportPreview.diagnostic}
-                </div>
-            </div>
-            <div class="chat-card">
-                <div class="chat-card-header">
-                    <div class="chat-card-avatar">${tech.initials}</div>
-                    <div class="chat-card-info"><div class="chat-card-name">${tech.name}</div><div class="chat-card-status">${tech.status === 'live' || tech.status === 'active' ? 'En ligne' : tech.status === 'idle' ? 'Inactif' : 'Hors ligne'}</div></div>
-                </div>
-                <div class="chat-messages">${msgs}</div>
-                <div class="chat-input-wrap">
-                    <div class="chat-input-row">
-                        <button class="chat-add-btn"><svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14"><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg></button>
-                        <input type="text" class="chat-input" placeholder="Message...">
-                        <button class="chat-send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
-                    </div>
-                </div>
-            </div>`;
+        async function sendMsgFromProj(techId) {
+            const input = document.getElementById('projChatInput');
+            const content = input?.value?.trim();
+            if (!content) return;
+            const success = await sendTeamMessage(techId, content);
+            if (success) { input.value = ''; toast('✓ Message envoyé'); }
         }
 
 
@@ -3801,8 +3840,15 @@
             openTechMapDrawer(tech);
         }
 
-        // Open Tech Map Drawer
-        function openTechMapDrawer(tech) {
+        // Open Tech Map Drawer - accepts tech ID or tech object
+        function openTechMapDrawer(techOrId) {
+            // Look up tech if ID was passed
+            const tech = typeof techOrId === 'string' ? liveTeamData[techOrId] : techOrId;
+            if (!tech) {
+                console.error('Tech not found:', techOrId);
+                return;
+            }
+            
             // Hide notification and view toggle
             document.getElementById('notificationIcon').style.display = 'none';
             document.getElementById('viewToggle').style.display = 'none';
@@ -3812,9 +3858,9 @@
             
             // Populate tech drawer
             document.getElementById('techMDName').textContent = tech.name;
-            document.getElementById('techMDRole').textContent = `Technicien • Équipe ${tech.team.charAt(0).toUpperCase() + tech.team.slice(1)}`;
-            document.getElementById('techMDStatus').textContent = tech.status === 'live' ? 'En ligne' : tech.status === 'idle' ? 'Inactif' : 'Hors ligne';
-            document.getElementById('techMDStatus').className = 'drawer-badge ' + tech.status;
+            document.getElementById('techMDRole').textContent = `Technicien • Équipe ${tech.team ? tech.team.charAt(0).toUpperCase() + tech.team.slice(1) : 'Direct'}`;
+            document.getElementById('techMDStatus').textContent = tech.status === 'live' || tech.status === 'active' ? 'En ligne' : tech.status === 'idle' ? 'Inactif' : 'Hors ligne';
+            document.getElementById('techMDStatus').className = 'drawer-badge ' + (tech.status === 'active' ? 'live' : tech.status);
             document.getElementById('techMapDrawerBody').innerHTML = buildTechMapDrawerContent(tech);
             
             // Show drawer
@@ -3829,39 +3875,95 @@
         }
 
         function buildTechMapDrawerContent(tech) {
-            const techProjects = projects.filter(p => p.tech === tech.name);
-            const tc = {nord:'var(--team-nord)',sud:'var(--team-sud)',direct:'var(--team-direct)'};
+            // Use LIVE data from liveProjectData
+            const techProjects = Object.values(liveProjectData).filter(p => p.techId === tech.id);
+            const tc = {nord:'var(--team-nord)',sud:'var(--team-sud)',direct:'var(--team-direct)',externe:'var(--accent-purple)'};
             
+            // Calculate REAL statistics
+            const completedProjects = techProjects.filter(p => p.status === 'completed' || p.status === 'done');
+            const stats = {
+                total: techProjects.length,
+                completed: completedProjects.length,
+                successRate: techProjects.length > 0 ? Math.round((completedProjects.length / techProjects.length) * 100) + '%' : '-'
+            };
+            
+            // Build projects HTML with live data
             const projectsHtml = techProjects.length ? techProjects.map(p => `
-                <div class="mini-project" onclick="openProjectFromTechDrawer('${p.id}')">
-                    <div class="mini-project-bar ${p.team}"></div>
+                <div class="mini-project" onclick="openLiveProjectDrawer('${p.id}')">
+                    <div class="mini-project-bar" style="background:${tc[p.team] || tc.direct}"></div>
                     <div class="mini-project-info">
-                        <div class="mini-project-title">${p.name}</div>
-                        <div class="mini-project-meta">${p.id} • ${p.address.split(',')[0]}</div>
+                        <div class="mini-project-title">${p.title}</div>
+                        <div class="mini-project-meta">${p.client || p.address || 'N/A'}</div>
                     </div>
-                    <div class="mini-project-progress" style="color:${tc[p.team]}">${p.progress.total}%</div>
+                    <div class="mini-project-progress" style="color:${tc[p.team] || tc.direct}">${p.progress.total}%</div>
                 </div>
             `).join('') : '<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:16px;">Aucun projet assigné</div>';
             
+            // Build messages HTML
+            const messages = tech.messages || [];
+            const messagesHtml = messages.length ? messages.slice(-5).map(m => `
+                <div class="msg ${m.type === 'sent' ? 'user' : 'ai'}">
+                    <div class="msg-bubble">${m.text}</div>
+                    <div class="msg-time">${m.time}</div>
+                </div>
+            `).join('') : '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:12px;">Aucun message</div>';
+            
+            const typeTag = tech.memberType === 'external' ? ' <span style="color:var(--accent-purple);font-size:10px;">[EXT]</span>' : '';
+            
             return `
                 <div class="info-card">
-                    <div class="info-card-title">Informations</div>
-                    <div class="info-row"><span class="info-label">Statut</span><span class="info-value ${tech.status === 'live' ? 'green' : tech.status === 'idle' ? 'orange' : ''}">${tech.status === 'live' ? 'En ligne' : tech.status === 'idle' ? 'Inactif' : 'Hors ligne'}</span></div>
-                    <div class="info-row"><span class="info-label">Projet actuel</span><span class="info-value">${tech.currentProject}</span></div>
-                    <div class="info-row"><span class="info-label">Équipe</span><span class="info-value">${tech.team.charAt(0).toUpperCase() + tech.team.slice(1)}</span></div>
+                    <div class="info-card-title">Informations${typeTag}</div>
+                    <div class="info-row"><span class="info-label">Statut</span><span class="info-value ${tech.status === 'live' || tech.status === 'active' ? 'green' : tech.status === 'idle' ? 'orange' : ''}">${tech.status === 'live' || tech.status === 'active' ? 'En ligne' : tech.status === 'idle' ? 'Inactif' : 'Hors ligne'}</span></div>
+                    <div class="info-row"><span class="info-label">Projet actuel</span><span class="info-value">${tech.currentProject || 'Aucun'}</span></div>
+                    <div class="info-row"><span class="info-label">Client</span><span class="info-value">${tech.client || '-'}</span></div>
+                    <div class="info-row"><span class="info-label">Équipe</span><span class="info-value">${tech.team ? tech.team.charAt(0).toUpperCase() + tech.team.slice(1) : 'Direct'}</span></div>
+                    ${tech.email ? `<div class="info-row"><span class="info-label">Email</span><span class="info-value" style="font-size:10px;">${tech.email}</span></div>` : ''}
                 </div>
                 <div class="info-card">
-                    <div class="info-card-title">Statistiques (semaine)</div>
-                    <div class="info-row"><span class="info-label">Interventions</span><span class="info-value">5</span></div>
-                    <div class="info-row"><span class="info-label">Complétées</span><span class="info-value green">4</span></div>
-                    <div class="info-row"><span class="info-label">Temps moyen</span><span class="info-value">3.5h</span></div>
-                    <div class="info-row"><span class="info-label">Taux succès</span><span class="info-value green">92%</span></div>
+                    <div class="info-card-title">Statistiques</div>
+                    <div class="info-row"><span class="info-label">Projets</span><span class="info-value">${stats.total}</span></div>
+                    <div class="info-row"><span class="info-label">Complétés</span><span class="info-value green">${stats.completed}</span></div>
+                    <div class="info-row"><span class="info-label">Taux succès</span><span class="info-value green">${stats.successRate}</span></div>
                 </div>
                 <div class="info-card">
-                    <div class="info-card-title">Projets assignés</div>
-                    ${projectsHtml}
+                    <div class="info-card-title">Projets du technicien (${techProjects.length})</div>
+                    <div style="max-height:180px;overflow-y:auto;">
+                        ${projectsHtml}
+                    </div>
+                </div>
+                <div class="chat-card">
+                    <div class="chat-card-header">
+                        <div class="chat-card-avatar">${tech.initials}</div>
+                        <div class="chat-card-info">
+                            <div class="chat-card-name">${tech.name}</div>
+                            <div class="chat-card-status">${tech.status === 'live' || tech.status === 'active' ? 'En ligne' : tech.status === 'idle' ? 'Inactif' : 'Hors ligne'}</div>
+                        </div>
+                    </div>
+                    <div class="chat-messages" style="max-height:120px;overflow-y:auto;">
+                        ${messagesHtml}
+                    </div>
+                    <div class="chat-input-wrap">
+                        <div class="chat-input-row">
+                            <button class="chat-add-btn"><svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14"><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg></button>
+                            <input type="text" class="chat-input" placeholder="Message..." id="techChatInput" onkeypress="if(event.key==='Enter')sendMsgToTech('${tech.id}')">
+                            <button class="chat-send" onclick="sendMsgToTech('${tech.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+                        </div>
+                    </div>
                 </div>
             `;
+        }
+        
+        async function sendMsgToTech(techId) {
+            const input = document.getElementById('techChatInput');
+            const content = input?.value?.trim();
+            if (!content) return;
+            const success = await sendTeamMessage(techId, content);
+            if (success) {
+                input.value = '';
+                // Refresh drawer
+                const tech = liveTeamData[techId];
+                if (tech) document.getElementById('techMapDrawerBody').innerHTML = buildTechMapDrawerContent(tech);
+            }
         }
 
         // Open project from tech drawer
