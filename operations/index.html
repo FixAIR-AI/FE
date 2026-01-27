@@ -3306,18 +3306,20 @@
                         report: {
                             id: report?.id || null,
                             status: report?.status || null,
-                            type: report?.report_type || 'intervention',
-                            // From reports table
-                            problem_reported: report?.problem_reported || p.problem_description || '',
-                            problem_identified: report?.problem_identified || '',
-                            solution: report?.solution_description || p.solution_summary || '',
-                            error_codes: report?.error_codes || [],
-                            // From projects/reports table
-                            client: report?.client_name || p.client_name || '',
-                            address: p.client_address || '',
-                            equipment_brand: report?.equipment_brand || p.brand || '',
-                            equipment_model: report?.equipment_model || p.equipment_model || '',
-                            technician_name: techName,
+                            type: report?.report_type || p.extracted_data?.type_intervention || 'intervention',
+                            // From reports table OR extracted_data
+                            problem_reported: report?.problem_reported || p.problem_description || p.extracted_data?.resume || p.extracted_data?.probleme?.description || '',
+                            problem_identified: report?.problem_identified || p.extracted_data?.resultat?.description || '',
+                            solution: report?.solution_description || p.solution_summary || p.extracted_data?.rapport_technicien || '',
+                            error_codes: report?.error_codes || p.extracted_data?.codes_defaut || [],
+                            // Client info - check multiple locations
+                            client: report?.client_name || p.client_name || p.extracted_data?.client?.societe || p.extracted_data?.client?.nom || '',
+                            address: p.client_address || p.extracted_data?.site?.adresse || '',
+                            // Equipment - check multiple locations
+                            equipment_brand: report?.equipment_brand || p.brand || p.extracted_data?.systeme?.marque || p.extracted_data?.brand_key || '',
+                            equipment_model: report?.equipment_model || p.equipment_model || p.extracted_data?.systeme?.modele || '',
+                            technician_name: report?.technician_name || techName || p.extracted_data?.technicien?.nom || '',
+                            intervention_date: report?.intervention_date || p.extracted_data?.dates?.debut_date || '',
                             // Extracted data from tech app (JSONB)
                             extracted: p.extracted_data || {}
                         }
@@ -3689,27 +3691,71 @@
             const extracted = p.report?.extracted || {};
             const report = p.report || {};
 
-            const sections = {
-                identification: ['client', 'address', 'technician_name', 'equipment_brand'],
-                diagnostic: ['problem_reported', 'error_codes', 'problem_identified'],
-                mesures: ['extracted.mesures', 'extracted.fluide', 'extracted.systeme'],
-                conclusion: ['solution', 'extracted.resultat', 'extracted.travaux_effectues']
+            // Helper to check if value exists and is non-empty
+            const hasValue = (val) => {
+                if (val === null || val === undefined || val === '') return false;
+                if (Array.isArray(val)) return val.length > 0;
+                if (typeof val === 'object') return Object.keys(val).length > 0;
+                return true;
             };
 
-            const fields = sections[section] || [];
-            if (fields.length === 0) return 0;
+            // Get nested value from object using dot notation
+            const getNestedValue = (obj, path) => {
+                const parts = path.split('.');
+                let val = obj;
+                for (const part of parts) {
+                    val = val?.[part];
+                }
+                return val;
+            };
+
+            // Check multiple possible field locations
+            const checkField = (fieldPaths) => {
+                for (const path of fieldPaths) {
+                    // Check in extracted_data
+                    if (hasValue(getNestedValue(extracted, path))) return true;
+                    // Check in report object (flat)
+                    if (hasValue(report[path])) return true;
+                    // Check last part of path in report
+                    const lastPart = path.split('.').pop();
+                    if (hasValue(report[lastPart])) return true;
+                }
+                return false;
+            };
+
+            const sections = {
+                identification: [
+                    ['client.societe', 'client.nom', 'client'],
+                    ['site.adresse', 'address'],
+                    ['technicien.nom', 'technician_name'],
+                    ['systeme.marque', 'brand_key', 'equipment_brand']
+                ],
+                diagnostic: [
+                    ['resume', 'problem_reported'],
+                    ['codes_defaut', 'error_codes'],
+                    ['resultat.description', 'problem_identified']
+                ],
+                mesures: [
+                    ['systeme.modele', 'equipment_model'],
+                    ['mesures'],
+                    ['fluide']
+                ],
+                conclusion: [
+                    ['rapport_technicien', 'solution'],
+                    ['travaux_effectues'],
+                    ['resultat.status', 'status']
+                ]
+            };
+
+            const fieldGroups = sections[section] || [];
+            if (fieldGroups.length === 0) return 0;
 
             let filled = 0;
-            fields.forEach(field => {
-                if (field.startsWith('extracted.')) {
-                    const key = field.replace('extracted.', '');
-                    if (extracted[key] && Object.keys(extracted[key] || {}).length > 0) filled++;
-                } else if (report[field]) {
-                    if (Array.isArray(report[field]) ? report[field].length > 0 : report[field] !== '') filled++;
-                }
+            fieldGroups.forEach(paths => {
+                if (checkField(paths)) filled++;
             });
 
-            return Math.round((filled / fields.length) * 100);
+            return Math.round((filled / fieldGroups.length) * 100);
         }
 
         // Helper: Build progress bar row
