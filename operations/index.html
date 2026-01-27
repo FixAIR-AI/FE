@@ -875,62 +875,36 @@
         .info-value.blue { color: var(--accent-blue); }
         .info-value.orange { color: var(--accent-orange); }
 
-        /* Full Report Display */
-        .full-report-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid rgba(80, 150, 255, 0.15);
-            border-radius: 14px;
-            overflow: hidden;
+        /* Report Scroll Container - Hide scrollbar by default, show only during scroll */
+        .report-scroll-container {
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE/Edge */
         }
-        .full-report-header {
-            padding: 14px 18px;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .report-scroll-container::-webkit-scrollbar {
+            width: 0;
+            background: transparent;
         }
-        .full-report-title {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--accent-blue);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .full-report-type {
-            background: var(--accent-orange);
-            color: white;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 10px;
-            text-transform: capitalize;
-            font-weight: 500;
-        }
-        .full-report-scroll {
-            flex: 1;
-            overflow-y: auto;
-            padding: 16px 18px;
+        /* Show thin scrollbar only on active scroll via JS class */
+        .report-scroll-container.is-scrolling {
             scrollbar-width: thin;
-            scrollbar-color: transparent transparent;
+            scrollbar-color: rgba(255,255,255,0.3) transparent;
         }
-        .full-report-scroll:hover {
-            scrollbar-color: rgba(255,255,255,0.2) transparent;
-        }
-        .full-report-scroll::-webkit-scrollbar {
+        .report-scroll-container.is-scrolling::-webkit-scrollbar {
             width: 6px;
         }
-        .full-report-scroll::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .full-report-scroll::-webkit-scrollbar-thumb {
-            background: transparent;
+        .report-scroll-container.is-scrolling::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.3);
             border-radius: 3px;
-            transition: background 0.3s;
         }
-        .full-report-scroll:hover::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.2);
+
+        /* Also fix project cards scrollbar */
+        .projects-list-wrapper {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .projects-list-wrapper::-webkit-scrollbar {
+            width: 0;
+            background: transparent;
         }
         .report-section {
             margin-bottom: 20px;
@@ -3995,205 +3969,493 @@
                     <span style="color:var(--accent-blue);font-weight:600;font-size:16px;">${p.progress?.total || 0}%</span>
                 </div>
             </div>
-            <div class="full-report-container" style="height:calc(100vh - 380px);min-height:300px;">
-                <div class="full-report-header">
-                    <span class="full-report-title">📋 Rapport d'intervention</span>
-                    <span class="full-report-type">${getReportField(p, 'type_intervention', 'type') || 'Intervention'}</span>
+            <div class="report-scroll-container" style="background:rgba(80,150,255,0.03);border:1px solid rgba(80,150,255,0.1);border-radius:12px;padding:16px;flex:1;max-height:calc(100vh - 300px);min-height:400px;overflow-y:auto;" onscroll="this.classList.add('is-scrolling');clearTimeout(this._st);this._st=setTimeout(()=>this.classList.remove('is-scrolling'),1500)">
+
+                <div style="color:var(--accent-blue);font-size:11px;font-weight:600;letter-spacing:0.5px;margin-bottom:16px;">APERÇU DU RAPPORT</div>
+
+                <!-- HEADER -->
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.1);">
+                    <div>
+                        <div style="color:var(--accent-blue);font-size:11px;margin-bottom:4px;">${(p.report?.equipment_brand || '').toUpperCase()}</div>
+                        <div style="font-size:18px;font-weight:600;color:var(--text-primary);">Rapport d'intervention</div>
+                        <div style="color:var(--text-muted);font-size:12px;margin-top:4px;">
+                            RÉF: ${getReportField(p, 'reference', 'ref') || 'FX-2025-XXXX'} •
+                            TYPE: ${p.report?.type || 'Intervention'} •
+                            DATE: ${p.report?.intervention_date || getReportField(p, 'date') || '-'}
+                        </div>
+                    </div>
+                    <span style="background:var(--accent-orange);color:white;padding:6px 14px;border-radius:16px;font-size:11px;font-weight:600;">${p.report?.type || 'Intervention'}</span>
                 </div>
-                <div class="full-report-scroll">
-                    ${(() => {
-                        const ext = p.report?.extracted || {};
-                        const rep = p.report || {};
-                        let html = '';
 
-                        // INFORMATIONS CLIENT
-                        const clientSociete = getReportField(p, 'client.societe', 'client_name', 'client');
-                        const clientNom = getReportField(p, 'client.nom');
-                        const clientTel = getReportField(p, 'client.telephone');
-                        const clientEmail = getReportField(p, 'client.email');
-                        if (clientSociete || clientNom || clientTel || clientEmail) {
-                            html += '<div class="report-section"><div class="report-section-title">👤 INFORMATIONS CLIENT</div><div class="report-grid">';
-                            if (clientSociete) html += '<div class="report-field"><span class="report-field-label">Société</span><span class="report-field-value">' + clientSociete + '</span></div>';
-                            if (clientNom) html += '<div class="report-field"><span class="report-field-label">Contact</span><span class="report-field-value">' + clientNom + '</span></div>';
-                            if (clientTel) html += '<div class="report-field"><span class="report-field-label">Téléphone</span><span class="report-field-value">' + clientTel + '</span></div>';
-                            if (clientEmail) html += '<div class="report-field"><span class="report-field-label">Email</span><span class="report-field-value">' + clientEmail + '</span></div>';
-                            html += '</div></div>';
-                        }
-
-                        // INFORMATIONS SITE
-                        const siteAdresse = getReportField(p, 'site.adresse', 'client_address', 'address');
-                        const siteVille = getReportField(p, 'site.ville');
-                        const siteCp = getReportField(p, 'site.code_postal');
-                        const siteAcces = getReportField(p, 'site.acces');
-                        if (siteAdresse || siteVille || siteAcces) {
-                            html += '<div class="report-section"><div class="report-section-title">📍 INFORMATIONS SITE</div>';
-                            if (siteAdresse) html += '<div class="report-field"><span class="report-field-label">Adresse</span><span class="report-field-value">' + siteAdresse + (siteCp ? ', ' + siteCp : '') + (siteVille ? ' ' + siteVille : '') + '</span></div>';
-                            if (siteAcces) html += '<div class="report-field"><span class="report-field-label">Accès</span><span class="report-field-value">' + siteAcces + '</span></div>';
-                            html += '</div>';
-                        }
-
-                        // DATES D'INTERVENTION
-                        const dateDebut = getReportField(p, 'dates.debut', 'intervention_date');
-                        const dateFin = getReportField(p, 'dates.fin');
-                        const duree = getReportField(p, 'dates.duree');
-                        if (dateDebut || dateFin || duree) {
-                            html += '<div class="report-section"><div class="report-section-title">📅 DATES D\'INTERVENTION</div><div class="report-grid">';
-                            if (dateDebut) html += '<div class="report-field"><span class="report-field-label">Début</span><span class="report-field-value">' + dateDebut + '</span></div>';
-                            if (dateFin) html += '<div class="report-field"><span class="report-field-label">Fin</span><span class="report-field-value">' + dateFin + '</span></div>';
-                            if (duree) html += '<div class="report-field"><span class="report-field-label">Durée</span><span class="report-field-value">' + duree + '</span></div>';
-                            html += '</div></div>';
-                        }
-
-                        // TECHNICIEN
-                        const techNom = getReportField(p, 'technicien.nom', 'technician_name') || rep.technician_name;
-                        const techId = getReportField(p, 'technicien.id');
-                        if (techNom) {
-                            html += '<div class="report-section"><div class="report-section-title">👷 TECHNICIEN</div>';
-                            html += '<div class="report-field"><span class="report-field-label">Nom</span><span class="report-field-value">' + techNom + '</span></div>';
-                            if (techId) html += '<div class="report-field"><span class="report-field-label">ID</span><span class="report-field-value">' + techId + '</span></div>';
-                            html += '</div>';
-                        }
-
-                        // SYSTÈME & ÉQUIPEMENT
-                        const sysMarque = getReportField(p, 'systeme.marque', 'equipment_brand', 'brand');
-                        const sysModele = getReportField(p, 'systeme.modele', 'equipment_model', 'model');
-                        const sysNumSerie = getReportField(p, 'systeme.numero_serie');
-                        const sysType = getReportField(p, 'systeme.type');
-                        const sysPuissance = getReportField(p, 'systeme.puissance');
-                        const sysAnnee = getReportField(p, 'systeme.annee_installation');
-                        if (sysMarque || sysModele || sysNumSerie || sysType) {
-                            html += '<div class="report-section"><div class="report-section-title">🔧 SYSTÈME & ÉQUIPEMENT</div><div class="report-grid">';
-                            if (sysMarque) html += '<div class="report-field"><span class="report-field-label">Marque</span><span class="report-field-value">' + sysMarque + '</span></div>';
-                            if (sysModele) html += '<div class="report-field"><span class="report-field-label">Modèle</span><span class="report-field-value">' + sysModele + '</span></div>';
-                            if (sysNumSerie) html += '<div class="report-field"><span class="report-field-label">N° série</span><span class="report-field-value">' + sysNumSerie + '</span></div>';
-                            if (sysType) html += '<div class="report-field"><span class="report-field-label">Type</span><span class="report-field-value">' + sysType + '</span></div>';
-                            if (sysPuissance) html += '<div class="report-field"><span class="report-field-label">Puissance</span><span class="report-field-value">' + sysPuissance + '</span></div>';
-                            if (sysAnnee) html += '<div class="report-field"><span class="report-field-label">Année</span><span class="report-field-value">' + sysAnnee + '</span></div>';
-                            html += '</div></div>';
-                        }
-
-                        // FLUIDE FRIGORIGÈNE
-                        const fluideType = getReportField(p, 'fluide.type');
-                        const fluideCharge = getReportField(p, 'fluide.charge_initiale');
-                        const fluideAjoute = getReportField(p, 'fluide.quantite_ajoutee');
-                        const fluideRecup = getReportField(p, 'fluide.quantite_recuperee');
-                        if (fluideType || fluideCharge || fluideAjoute || fluideRecup) {
-                            html += '<div class="report-section"><div class="report-section-title">❄️ FLUIDE FRIGORIGÈNE</div><div class="report-grid">';
-                            if (fluideType) html += '<div class="report-field"><span class="report-field-label">Type</span><span class="report-field-value">' + fluideType + '</span></div>';
-                            if (fluideCharge) html += '<div class="report-field"><span class="report-field-label">Charge initiale</span><span class="report-field-value">' + fluideCharge + '</span></div>';
-                            if (fluideAjoute) html += '<div class="report-field"><span class="report-field-label">Qté ajoutée</span><span class="report-field-value">' + fluideAjoute + '</span></div>';
-                            if (fluideRecup) html += '<div class="report-field"><span class="report-field-label">Qté récupérée</span><span class="report-field-value">' + fluideRecup + '</span></div>';
-                            html += '</div></div>';
-                        }
-
-                        // PROBLÈME SIGNALÉ
-                        const probleme = getReportField(p, 'resume', 'problem_reported', 'problem_description');
-                        if (probleme) {
-                            html += '<div class="report-section"><div class="report-section-title">⚠️ PROBLÈME SIGNALÉ</div>';
-                            html += '<div class="report-text-block">' + probleme + '</div></div>';
-                        }
-
-                        // CODES ERREUR
-                        const codes = parseErrorCodes(getReportField(p, 'codes_defaut', 'error_codes'));
-                        if (codes.length > 0) {
-                            html += '<div class="report-section"><div class="report-section-title">🚨 CODES ERREUR</div>';
-                            html += '<div class="report-codes">' + codes.map(c => '<span class="report-code-tag">' + c + '</span>').join('') + '</div></div>';
-                        }
-
-                        // DIAGNOSTIC
-                        const diagnostic = getReportField(p, 'resultat.description', 'problem_identified');
-                        const causeIdentifiee = getReportField(p, 'resultat.cause');
-                        if (diagnostic || causeIdentifiee) {
-                            html += '<div class="report-section"><div class="report-section-title">🔍 DIAGNOSTIC</div>';
-                            if (diagnostic) html += '<div class="report-text-block">' + diagnostic + '</div>';
-                            if (causeIdentifiee) html += '<div class="report-field" style="margin-top:10px;"><span class="report-field-label">Cause identifiée</span><span class="report-field-value">' + causeIdentifiee + '</span></div>';
-                            html += '</div>';
-                        }
-
-                        // SOLUTION / TRAVAUX EFFECTUÉS
-                        const solution = getReportField(p, 'rapport_technicien', 'solution_description', 'solution');
-                        const travaux = getReportField(p, 'travaux_effectues');
-                        if (solution || travaux) {
-                            html += '<div class="report-section"><div class="report-section-title">✅ SOLUTION / TRAVAUX EFFECTUÉS</div>';
-                            if (solution) html += '<div class="report-text-block">' + solution + '</div>';
-                            if (travaux && travaux !== solution) html += '<div class="report-text-block" style="margin-top:8px;">' + travaux + '</div>';
-                            html += '</div>';
-                        }
-
-                        // MESURES & RELEVÉS
-                        const mesures = ext.mesures || {};
-                        const tempAspiration = mesures.temperature_aspiration;
-                        const tempRefoulement = mesures.temperature_refoulement;
-                        const pressionHP = mesures.pression_hp;
-                        const pressionBP = mesures.pression_bp;
-                        const surchauffe = mesures.surchauffe;
-                        const sousRefroid = mesures.sous_refroidissement;
-                        const intensite = mesures.intensite;
-                        if (tempAspiration || tempRefoulement || pressionHP || pressionBP || surchauffe || intensite) {
-                            html += '<div class="report-section"><div class="report-section-title">📊 MESURES & RELEVÉS</div><div class="report-grid">';
-                            if (tempAspiration) html += '<div class="report-field"><span class="report-field-label">T° aspiration</span><span class="report-field-value">' + tempAspiration + '</span></div>';
-                            if (tempRefoulement) html += '<div class="report-field"><span class="report-field-label">T° refoulement</span><span class="report-field-value">' + tempRefoulement + '</span></div>';
-                            if (pressionHP) html += '<div class="report-field"><span class="report-field-label">Pression HP</span><span class="report-field-value">' + pressionHP + '</span></div>';
-                            if (pressionBP) html += '<div class="report-field"><span class="report-field-label">Pression BP</span><span class="report-field-value">' + pressionBP + '</span></div>';
-                            if (surchauffe) html += '<div class="report-field"><span class="report-field-label">Surchauffe</span><span class="report-field-value">' + surchauffe + '</span></div>';
-                            if (sousRefroid) html += '<div class="report-field"><span class="report-field-label">Sous-refroid.</span><span class="report-field-value">' + sousRefroid + '</span></div>';
-                            if (intensite) html += '<div class="report-field"><span class="report-field-label">Intensité</span><span class="report-field-value">' + intensite + '</span></div>';
-                            html += '</div></div>';
-                        }
-
-                        // PIÈCES UTILISÉES
-                        const pieces = ext.pieces_utilisees || getReportField(p, 'pieces');
-                        if (pieces && ((Array.isArray(pieces) && pieces.length > 0) || (typeof pieces === 'string' && pieces.trim()))) {
-                            html += '<div class="report-section"><div class="report-section-title">🔩 PIÈCES UTILISÉES</div>';
-                            if (Array.isArray(pieces)) {
-                                html += '<div style="display:flex;flex-direction:column;gap:6px;">';
-                                pieces.forEach(piece => {
-                                    const ref = piece.reference || piece.ref || '';
-                                    const nom = piece.designation || piece.nom || piece.name || piece;
-                                    const qty = piece.quantite || piece.qty || 1;
-                                    html += '<div class="report-field"><span class="report-field-label">' + (ref || 'Pièce') + '</span><span class="report-field-value">' + nom + (qty > 1 ? ' x' + qty : '') + '</span></div>';
-                                });
-                                html += '</div>';
-                            } else {
-                                html += '<div class="report-text-block">' + pieces + '</div>';
-                            }
-                            html += '</div>';
-                        }
-
-                        // RECOMMANDATIONS
-                        const recommandations = getReportField(p, 'recommandations', 'recommendations');
-                        if (recommandations) {
-                            html += '<div class="report-section"><div class="report-section-title">💡 RECOMMANDATIONS</div>';
-                            html += '<div class="report-text-block">' + recommandations + '</div></div>';
-                        }
-
-                        // OBSERVATIONS / COMMENTAIRES
-                        const observations = getReportField(p, 'observations', 'comments');
-                        if (observations) {
-                            html += '<div class="report-section"><div class="report-section-title">📝 OBSERVATIONS</div>';
-                            html += '<div class="report-text-block">' + observations + '</div></div>';
-                        }
-
-                        // VALIDATION
-                        const resultatStatus = getReportField(p, 'resultat.status');
-                        const validation = getReportField(p, 'validation');
-                        const signatureClient = getReportField(p, 'signature_client');
-                        if (resultatStatus || validation || signatureClient) {
-                            html += '<div class="report-section"><div class="report-section-title">✔️ VALIDATION</div>';
-                            if (resultatStatus) html += '<div class="report-field"><span class="report-field-label">Statut</span><span class="report-field-value" style="color:' + (resultatStatus === 'resolu' || resultatStatus === 'termine' ? 'var(--accent-green)' : 'var(--accent-orange)') + ';">' + resultatStatus + '</span></div>';
-                            if (validation) html += '<div class="report-field"><span class="report-field-label">Validation</span><span class="report-field-value">' + validation + '</span></div>';
-                            if (signatureClient) html += '<div class="report-field"><span class="report-field-label">Signature client</span><span class="report-field-value" style="color:var(--accent-green);">✓ Signée</span></div>';
-                            html += '</div>';
-                        }
-
-                        // If no data at all, show placeholder
-                        if (!html) {
-                            html = '<div class="report-empty">📄 Rapport en cours de rédaction...<br><span style="font-size:11px;color:var(--text-muted);margin-top:8px;display:block;">Les données apparaîtront au fur et à mesure que le technicien complète le rapport.</span></div>';
-                        }
-
-                        return html;
-                    })()}
+                <!-- RÉSUMÉ DE L'INTERVENTION -->
+                ${(p.report?.problem_reported || getReportField(p, 'resume', 'description')) ? `
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">RÉSUMÉ DE L'INTERVENTION</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;color:var(--text-primary);font-size:13px;line-height:1.5;">
+                        ${p.report?.problem_reported || getReportField(p, 'resume', 'description') || '-'}
+                    </div>
                 </div>
+                ` : ''}
+
+                <!-- INFORMATIONS SITE + CLIENT (side by side) -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+                    <!-- INFORMATIONS SITE -->
+                    <div>
+                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">INFORMATIONS SITE</div>
+                        <div style="background:var(--card-bg);border-radius:8px;padding:12px;">
+                            <div style="margin-bottom:8px;">
+                                <div style="color:var(--text-muted);font-size:10px;">N° Affaire</div>
+                                <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'site.numero_affaire', 'numero_affaire', 'n_affaire') || '-'}</div>
+                            </div>
+                            <div style="margin-bottom:8px;">
+                                <div style="color:var(--text-muted);font-size:10px;">Lieu</div>
+                                <div style="color:var(--text-primary);font-size:13px;">${p.report?.address || getReportField(p, 'site.adresse', 'adresse', 'lieu') || '-'}</div>
+                            </div>
+                            <div>
+                                <div style="color:var(--text-muted);font-size:10px;">Ville</div>
+                                <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'site.code_postal', 'code_postal') || ''} ${getReportField(p, 'site.ville', 'ville') || '-'}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- INFORMATIONS CLIENT -->
+                    <div>
+                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">INFORMATIONS CLIENT</div>
+                        <div style="background:var(--card-bg);border-radius:8px;padding:12px;">
+                            <div style="margin-bottom:8px;">
+                                <div style="color:var(--text-muted);font-size:10px;">Société</div>
+                                <div style="color:var(--text-primary);font-size:13px;">${p.report?.client || getReportField(p, 'client.societe', 'client.nom', 'societe') || '-'}</div>
+                            </div>
+                            <div style="margin-bottom:8px;">
+                                <div style="color:var(--text-muted);font-size:10px;">Contact</div>
+                                <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'client.contact', 'contact') || '-'}</div>
+                            </div>
+                            <div style="margin-bottom:8px;">
+                                <div style="color:var(--text-muted);font-size:10px;">Téléphone</div>
+                                <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'client.telephone', 'telephone', 'tel') || '-'}</div>
+                            </div>
+                            <div>
+                                <div style="color:var(--text-muted);font-size:10px;">Réf. Client</div>
+                                <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'client.reference', 'reference_client', 'ref_client') || '-'}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DATES D'INTERVENTION -->
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">DATES D'INTERVENTION</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Date début</div>
+                            <div style="color:var(--accent-blue);font-size:13px;font-weight:500;">${p.report?.intervention_date || getReportField(p, 'date', 'dates.debut', 'date_debut') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Date fin</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'dates.fin', 'date_fin') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Heure début</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${p.report?.start_time || getReportField(p, 'dates.heure_debut', 'heure_debut') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Heure fin</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${p.report?.end_time || getReportField(p, 'dates.heure_fin', 'heure_fin') || '-'}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SYSTÈME & ÉQUIPEMENT -->
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">SYSTÈME & ÉQUIPEMENT</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Type système</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'systeme.type', 'type_systeme') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Puissance</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'systeme.puissance', 'puissance') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Modèle</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${p.report?.equipment_model || getReportField(p, 'systeme.modele', 'modele') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Année install.</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'systeme.annee_installation', 'annee', 'annee_install') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">N° Série</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'systeme.numero_serie', 'numero_serie', 'n_serie') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Garantie</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'systeme.garantie', 'garantie') || '-'}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FLUIDE FRIGORIGÈNE -->
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">FLUIDE FRIGORIGÈNE</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Type fluide</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'fluide.type', 'type_fluide') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Type huile</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'fluide.type_huile', 'huile') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Charge initiale</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'fluide.charge_initiale', 'charge_initiale') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Charge totale</div>
+                            <div style="color:var(--accent-green);font-size:13px;font-weight:500;">${getReportField(p, 'fluide.charge_totale', 'charge_totale') || '-'}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ADRESSAGE DU SYSTÈME (table) -->
+                ${(() => {
+                    const adressage = getReportField(p, 'adressage', 'unites');
+                    if (!adressage || !Array.isArray(adressage) || adressage.length === 0) return '';
+                    return `
+                    <div style="margin-bottom:20px;">
+                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">ADRESSAGE DU SYSTÈME</div>
+                        <div style="background:var(--card-bg);border-radius:8px;overflow:hidden;">
+                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:1px;background:rgba(255,255,255,0.1);font-size:11px;">
+                                <div style="background:var(--card-bg);padding:8px;color:var(--text-muted);">Réf. Usine</div>
+                                <div style="background:var(--card-bg);padding:8px;color:var(--text-muted);">N° Série</div>
+                                <div style="background:var(--card-bg);padding:8px;color:var(--text-muted);">Adresse</div>
+                                <div style="background:var(--card-bg);padding:8px;color:var(--text-muted);">Désignation</div>
+                                <div style="background:var(--card-bg);padding:8px;color:var(--text-muted);">Commentaire</div>
+                            </div>
+                            ${adressage.map(u => `
+                                <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:1px;background:rgba(255,255,255,0.05);font-size:12px;">
+                                    <div style="background:var(--card-bg);padding:8px;color:var(--text-primary);">${u.ref_usine || '-'}</div>
+                                    <div style="background:var(--card-bg);padding:8px;color:var(--text-primary);">${u.numero_serie || '-'}</div>
+                                    <div style="background:var(--card-bg);padding:8px;color:var(--text-primary);">${u.adresse || '-'}</div>
+                                    <div style="background:var(--card-bg);padding:8px;color:var(--text-primary);">${u.designation || '-'}</div>
+                                    <div style="background:var(--card-bg);padding:8px;color:var(--text-primary);">${u.commentaire || '-'}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    `;
+                })()}
+
+                <!-- CODES DÉFAUT -->
+                ${(() => {
+                    const codes = parseErrorCodes(p.report?.error_codes);
+                    if (codes.length === 0) return '';
+                    return `
+                    <div style="margin-bottom:20px;">
+                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">CODES DÉFAUT</div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            ${codes.map(code => `
+                                <span style="background:rgba(239,68,68,0.15);color:#ef4444;padding:6px 12px;border-radius:6px;font-size:12px;font-family:monospace;font-weight:600;">${code}</span>
+                            `).join('')}
+                        </div>
+                    </div>
+                    `;
+                })()}
+
+                <!-- SÉCURITÉ DU SYSTÈME -->
+                ${(getReportField(p, 'securite.etat', 'etat_securite') || getReportField(p, 'securite.risques', 'risques')) ? `
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">SÉCURITÉ DU SYSTÈME</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;">
+                        <div style="margin-bottom:8px;">
+                            <div style="color:var(--text-muted);font-size:10px;">État sécurité</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'securite.etat', 'etat_securite') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Risques identifiés</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'securite.risques', 'risques') || '-'}</div>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- RELEVÉS & MESURES -->
+                ${(() => {
+                    const mesures = getReportField(p, 'mesures', 'releves');
+                    if (!mesures || typeof mesures !== 'object' || Object.keys(mesures).length === 0) return '';
+                    return `
+                    <div style="margin-bottom:20px;">
+                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">RELEVÉS & MESURES</div>
+                        <div style="background:var(--card-bg);border-radius:8px;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                            ${Object.entries(mesures).map(([key, val]) => `
+                                <div>
+                                    <div style="color:var(--text-muted);font-size:10px;">${key.replace(/_/g, ' ')}</div>
+                                    <div style="color:var(--text-primary);font-size:13px;">${val || '-'}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    `;
+                })()}
+
+                <!-- HEURES DE FONCTIONNEMENT -->
+                ${(getReportField(p, 'heures_compresseur') || getReportField(p, 'nb_demarrages')) ? `
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">HEURES DE FONCTIONNEMENT</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Heures compresseur</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'heures_compresseur') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Nb démarrages</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'nb_demarrages', 'cycles') || '-'}</div>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- DIAGNOSTIC -->
+                ${p.report?.problem_identified ? `
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">DIAGNOSTIC</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;color:var(--text-primary);font-size:13px;line-height:1.5;">
+                        ${p.report.problem_identified}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- TRAVAUX EFFECTUÉS -->
+                ${(() => {
+                    const solution = p.report?.solution;
+                    const travaux = getReportField(p, 'travaux_effectues');
+                    if (!solution && (!travaux || (Array.isArray(travaux) && travaux.length === 0))) return '';
+                    return `
+                    <div style="margin-bottom:20px;">
+                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">TRAVAUX EFFECTUÉS</div>
+                        <div style="background:var(--card-bg);border-radius:8px;padding:12px;color:var(--text-primary);font-size:13px;line-height:1.5;">
+                            ${solution || (Array.isArray(travaux) ? travaux.map(t => t.texte || t).join(', ') : travaux) || '-'}
+                        </div>
+                    </div>
+                    `;
+                })()}
+
+                <!-- TRAVAUX À PRÉVOIR -->
+                ${(() => {
+                    const travaux = getReportField(p, 'travaux_prevoir', 'travaux_a_prevoir');
+                    if (!travaux || !Array.isArray(travaux) || travaux.length === 0) return '';
+                    return `
+                    <div style="margin-bottom:20px;">
+                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">TRAVAUX À PRÉVOIR</div>
+                        <div style="background:var(--card-bg);border-radius:8px;padding:12px;">
+                            ${travaux.map(t => `
+                                <div style="color:var(--text-primary);font-size:13px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">${t.texte || t}</div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    `;
+                })()}
+
+                <!-- PIÈCES & CONSOMMABLES -->
+                ${(() => {
+                    const pieces = getReportField(p, 'pieces', 'pieces_consommables');
+                    if (!pieces || !Array.isArray(pieces) || pieces.length === 0) return '';
+                    return `
+                    <div style="margin-bottom:20px;">
+                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">PIÈCES & CONSOMMABLES</div>
+                        <div style="background:var(--card-bg);border-radius:8px;padding:12px;">
+                            ${pieces.map(piece => `
+                                <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                                    <span style="color:var(--text-primary);font-size:13px;">${piece.nom || piece.reference || piece}</span>
+                                    <span style="color:var(--text-muted);font-size:13px;">x${piece.quantite || piece.qty || 1}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    `;
+                })()}
+
+                <!-- RAPPORT DU TECHNICIEN -->
+                ${getReportField(p, 'rapport_technicien', 'observations_technicien') ? `
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">RAPPORT DU TECHNICIEN</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;color:var(--text-primary);font-size:13px;line-height:1.5;">
+                        ${getReportField(p, 'rapport_technicien', 'observations_technicien')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- REMARQUES -->
+                ${getReportField(p, 'remarques') ? `
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">REMARQUES</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;color:var(--text-primary);font-size:13px;line-height:1.5;">
+                        ${getReportField(p, 'remarques')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- RÉSERVES -->
+                ${(() => {
+                    const reserves = getReportField(p, 'reserves');
+                    if (!reserves || !Array.isArray(reserves) || reserves.length === 0) return '';
+                    return `
+                    <div style="margin-bottom:20px;">
+                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">RÉSERVES</div>
+                        <div style="background:var(--card-bg);border-radius:8px;padding:12px;">
+                            ${reserves.map(r => `
+                                <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                                    <div style="width:4px;height:100%;min-height:24px;background:var(--accent-orange);border-radius:2px;"></div>
+                                    <div>
+                                        <div style="color:var(--accent-orange);font-size:12px;font-weight:600;">${r.titre || r.type || '-'}</div>
+                                        <div style="color:var(--text-primary);font-size:13px;">${r.description || r.texte || '-'}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    `;
+                })()}
+
+                <!-- RÉSULTAT DE L'INTERVENTION -->
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">RÉSULTAT DE L'INTERVENTION</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;">
+                        <div style="margin-bottom:8px;">
+                            <div style="color:var(--text-muted);font-size:10px;">Statut</div>
+                            <div style="color:${p.report?.status === 'validated' ? 'var(--accent-green)' : 'var(--accent-orange)'};font-size:13px;font-weight:500;">
+                                ${p.report?.status === 'validated' ? 'Validé' : p.report?.status === 'submitted' ? 'Soumis' : getReportField(p, 'resultat.statut', 'statut') || 'En cours'}
+                            </div>
+                        </div>
+                        ${getReportField(p, 'resultat.conclusion', 'conclusion') ? `
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Conclusion</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'resultat.conclusion', 'conclusion')}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <!-- PHOTOS -->
+                ${(() => {
+                    const photos = getReportField(p, 'photos');
+                    if (!photos || !Array.isArray(photos) || photos.length === 0) return '';
+                    return `
+                    <div style="margin-bottom:20px;">
+                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">PHOTOS (${photos.length})</div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            ${photos.map(photo => `
+                                <div style="width:80px;height:60px;background:var(--card-bg);border-radius:6px;overflow:hidden;">
+                                    <img src="${photo.url || photo}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'"/>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    `;
+                })()}
+
+                <!-- TECHNICIEN(S) -->
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">TECHNICIEN(S)</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Nom</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${p.report?.technician_name || p.tech || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Arrivée</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${p.report?.start_time || getReportField(p, 'technicien.arrivee') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Entreprise</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'technicien.entreprise', 'entreprise') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Départ</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${p.report?.end_time || getReportField(p, 'technicien.depart') || '-'}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OBSERVATION(S) CLIENT -->
+                ${getReportField(p, 'observations_client') ? `
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">OBSERVATION(S) CLIENT</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;color:var(--text-primary);font-size:13px;line-height:1.5;">
+                        ${getReportField(p, 'observations_client')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- TESTS & VALIDATION -->
+                ${(getReportField(p, 'tests.pression') || getReportField(p, 'tests.vacuometre')) ? `
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">TESTS & VALIDATION</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Pression test</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'tests.pression', 'pression_test') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Vacuomètre</div>
+                            <div style="color:var(--accent-green);font-size:13px;font-weight:500;">${getReportField(p, 'tests.vacuometre', 'vacuometre') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Durée test</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'tests.duree', 'duree_test') || '-'}</div>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- LONGUEURS TUYAUTERIES -->
+                ${(getReportField(p, 'tuyauteries.longueur') || getReportField(p, 'longueur_totale')) ? `
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">LONGUEURS TUYAUTERIES</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Longueur totale</div>
+                            <div style="color:var(--accent-green);font-size:13px;font-weight:500;">${getReportField(p, 'tuyauteries.longueur', 'longueur_totale') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Appoint calculé</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'tuyauteries.appoint', 'appoint_calcule') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Dénivelé UE-UI</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'tuyauteries.denivele', 'denivele') || '-'}</div>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- SIGNATURES -->
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">SIGNATURES</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div style="background:var(--card-bg);border-radius:8px;padding:16px;text-align:center;">
+                            <div style="color:var(--text-muted);font-size:10px;margin-bottom:8px;">SIGNATURE CLIENT</div>
+                            ${getReportField(p, 'signatures.client.image') ? `
+                                <img src="${getReportField(p, 'signatures.client.image')}" style="max-width:100%;max-height:60px;"/>
+                            ` : `
+                                <div style="color:var(--text-muted);font-size:12px;font-style:italic;">Non signé</div>
+                            `}
+                            <div style="color:var(--text-primary);font-size:12px;margin-top:8px;">${getReportField(p, 'signatures.client.nom', 'signature_client_nom') || '-'}</div>
+                        </div>
+                        <div style="background:var(--card-bg);border-radius:8px;padding:16px;text-align:center;">
+                            <div style="color:var(--text-muted);font-size:10px;margin-bottom:8px;">SIGNATURE TECHNICIEN</div>
+                            ${getReportField(p, 'signatures.technicien.image') ? `
+                                <img src="${getReportField(p, 'signatures.technicien.image')}" style="max-width:100%;max-height:60px;"/>
+                            ` : `
+                                <div style="color:var(--text-muted);font-size:12px;font-style:italic;">Non signé</div>
+                            `}
+                            <div style="color:var(--text-primary);font-size:12px;margin-top:8px;">${p.report?.technician_name || p.tech || '-'}</div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
             <div class="chat-card">
                 <div class="chat-card-header">
