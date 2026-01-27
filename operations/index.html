@@ -288,7 +288,7 @@
             display: none;
             flex-direction: column;
             gap: 6px;
-            max-height: calc(100vh - 220px);
+            max-height: 400px;
             overflow-y: auto;
             overflow-x: hidden;
             padding: 8px;
@@ -299,13 +299,10 @@
             border-bottom: 1px solid var(--border-light);
             border-radius: 14px 14px 0 0;
             scrollbar-width: thin;
-            scrollbar-color: transparent transparent;
+            scrollbar-color: rgba(255,255,255,0.2) transparent;
         }
-        .map-projects-list:hover { scrollbar-color: rgba(255, 255, 255, 0.2) transparent; }
-        .map-projects-list::-webkit-scrollbar { width: 4px; background: transparent; }
-        .map-projects-list::-webkit-scrollbar-track { background: transparent; }
-        .map-projects-list::-webkit-scrollbar-thumb { background: transparent; border-radius: 2px; transition: background 0.3s; }
-        .map-projects-list:hover::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); }
+        .map-projects-list::-webkit-scrollbar { width: 6px; }
+        .map-projects-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
         .map-left-panel.expanded .map-projects-list { display: flex; }
 
         /* Main Summary Card - 480px width, 64px height collapsed */
@@ -3476,7 +3473,13 @@
                 if (progressValue) {
                     progressValue.textContent = avgProgress + '%';
                 }
-                
+
+                // Also update the inline progress value (collapsed view)
+                const progressInline = mapMainCard.querySelector('.progress-value-inline');
+                if (progressInline) {
+                    progressInline.textContent = avgProgress + '%';
+                }
+
                 const progressFill = mapMainCard.querySelector('.progress-fill');
                 if (progressFill) {
                     progressFill.style.width = avgProgress + '%';
@@ -3637,16 +3640,10 @@
             <div class="info-card" style="background:rgba(80,150,255,0.05);border-color:rgba(80,150,255,0.15);">
                 <div class="info-card-title" style="color:var(--accent-blue);">Aperçu du rapport</div>
                 <div style="font-size:12px;color:var(--text-secondary);line-height:1.6;">
-                    ${p.report?.data ? `
-                        <strong>Résumé:</strong> ${p.report.data.resume || p.reportPreview?.problem || 'En cours...'}<br>
-                        <strong>Équipement:</strong> ${p.report.data.systeme?.modele || p.reportPreview?.equipment || p.equipment || ''}<br>
-                        <strong>Codes défaut:</strong> ${p.report.data.codes_defaut?.map(c => c.code).join(', ') || 'Aucun'}<br>
-                        <strong>Travaux:</strong> ${p.report.data.travaux_effectues?.[0]?.description || p.reportPreview?.diagnostic || 'En cours...'}
-                    ` : `
-                        <strong>Équipement:</strong> ${p.reportPreview?.equipment || p.equipment || ''}<br>
-                        <strong>Problème:</strong> ${p.reportPreview?.problem || 'En attente de diagnostic...'}<br>
-                        <strong>Diagnostic:</strong> ${p.reportPreview?.diagnostic || 'Rapport en cours...'}
-                    `}
+                    <strong>Équipement:</strong> ${p.equipment || 'Non spécifié'}<br>
+                    <strong>Client:</strong> ${p.client || p.address || 'Non spécifié'}<br>
+                    <strong>Statut:</strong> ${p.status || 'En cours'}<br>
+                    <strong>Progression:</strong> ${p.progress?.total || 0}%
                 </div>
             </div>
             <div class="chat-card">
@@ -3884,7 +3881,7 @@
                     <div class="mini-project-bar ${p.team}"></div>
                     <div class="mini-project-info">
                         <div class="mini-project-title">${p.title}</div>
-                        <div class="mini-project-meta">${p.id} • ${p.client || p.address || ''}</div>
+                        <div class="mini-project-meta">${p.equipment || p.brand || ''}</div>
                     </div>
                     <div class="mini-project-progress" style="color:${tc[p.team] || tc.direct}">${p.progress.total}%</div>
                 </div>
@@ -3905,8 +3902,10 @@
                     <div class="info-row"><span class="info-label">Taux succès</span><span class="info-value green">92%</span></div>
                 </div>
                 <div class="info-card">
-                    <div class="info-card-title">Projets assignés</div>
-                    ${projectsHtml}
+                    <div class="info-card-title">Projets assignés (${techProjects.length})</div>
+                    <div style="max-height: 300px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.2) transparent;">
+                        ${projectsHtml}
+                    </div>
                 </div>
                 <div class="chat-card">
                     <div class="chat-card-header">
