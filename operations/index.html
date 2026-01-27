@@ -875,6 +875,136 @@
         .info-value.blue { color: var(--accent-blue); }
         .info-value.orange { color: var(--accent-orange); }
 
+        /* Full Report Display */
+        .full-report-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(80, 150, 255, 0.15);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+        .full-report-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .full-report-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .full-report-type {
+            background: var(--accent-orange);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            text-transform: capitalize;
+            font-weight: 500;
+        }
+        .full-report-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 18px;
+            scrollbar-width: thin;
+            scrollbar-color: transparent transparent;
+        }
+        .full-report-scroll:hover {
+            scrollbar-color: rgba(255,255,255,0.2) transparent;
+        }
+        .full-report-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .full-report-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .full-report-scroll::-webkit-scrollbar-thumb {
+            background: transparent;
+            border-radius: 3px;
+            transition: background 0.3s;
+        }
+        .full-report-scroll:hover::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+        }
+        .report-section {
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .report-section:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        .report-section-title {
+            font-size: 11px;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        .report-field {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 6px 0;
+            gap: 16px;
+        }
+        .report-field-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            min-width: 100px;
+            flex-shrink: 0;
+        }
+        .report-field-value {
+            font-size: 12px;
+            color: var(--text-primary);
+            text-align: right;
+            word-break: break-word;
+        }
+        .report-text-block {
+            background: rgba(255,255,255,0.03);
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+        .report-codes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .report-code-tag {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-family: monospace;
+            font-weight: 600;
+        }
+        .report-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 16px;
+        }
+        .report-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
         /* Mini Project Cards (in tech drawer) */
         .mini-project {
             display: flex;
@@ -3757,6 +3887,64 @@
             return Math.round((filled / fieldGroups.length) * 100);
         }
 
+        // Helper: Get nested field value safely for display
+        function getReportField(p, ...paths) {
+            const extracted = p.report?.extracted || {};
+            const report = p.report || {};
+
+            for (const path of paths) {
+                // Check extracted_data with nested path
+                const parts = path.split('.');
+                let val = extracted;
+                for (const part of parts) {
+                    val = val?.[part];
+                }
+                if (val !== null && val !== undefined && val !== '') {
+                    if (Array.isArray(val) && val.length > 0) return val;
+                    if (typeof val === 'string' || typeof val === 'number') return val;
+                    if (typeof val === 'object' && Object.keys(val).length > 0) return val;
+                }
+
+                // Check flat report field
+                if (report[path] !== null && report[path] !== undefined && report[path] !== '') {
+                    return report[path];
+                }
+
+                // Check last part of path
+                const lastPart = path.split('.').pop();
+                if (report[lastPart] !== null && report[lastPart] !== undefined && report[lastPart] !== '') {
+                    return report[lastPart];
+                }
+            }
+            return null;
+        }
+
+        // Helper: Format field value for display
+        function formatFieldValue(val, defaultText = 'Non spécifié') {
+            if (val === null || val === undefined || val === '') return defaultText;
+            if (Array.isArray(val)) return val.length > 0 ? val.join(', ') : defaultText;
+            if (typeof val === 'object') return JSON.stringify(val);
+            return String(val);
+        }
+
+        // Helper: Build report section with title and fields
+        function buildReportSection(title, fields, icon = '') {
+            const validFields = fields.filter(f => f.value !== null && f.value !== undefined && f.value !== '' && f.value !== 'Non spécifié');
+            if (validFields.length === 0) return '';
+
+            return `
+                <div class="report-section">
+                    <div class="report-section-title">${icon} ${title}</div>
+                    ${validFields.map(f => `
+                        <div class="report-field">
+                            <span class="report-field-label">${f.label}</span>
+                            <span class="report-field-value">${f.value}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
         // Helper: Build progress bar row
         function buildProgressRow(label, percent) {
             const color = percent === 100 ? 'var(--accent-green)' :
@@ -3807,52 +3995,204 @@
                     <span style="color:var(--accent-blue);font-weight:600;font-size:16px;">${p.progress?.total || 0}%</span>
                 </div>
             </div>
-            <div class="info-card" style="background:rgba(80,150,255,0.05);border-color:rgba(80,150,255,0.15);max-height:450px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.2) transparent;">
-                <div class="info-card-title" style="color:var(--accent-blue);position:sticky;top:0;background:rgba(30,41,59,0.98);padding:12px;margin:-12px -12px 12px -12px;z-index:1;backdrop-filter:blur(8px);">Aperçu du rapport</div>
-                <div style="background:var(--card-bg);border-radius:8px;padding:12px;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                        <span style="font-weight:600;font-size:13px;">${p.report?.equipment_brand || p.equipment || ''} ${p.report?.equipment_model || ''}</span>
-                        <span style="background:var(--accent-orange);color:white;padding:3px 8px;border-radius:10px;font-size:10px;text-transform:capitalize;">${p.report?.type || 'Intervention'}</span>
-                    </div>
-                    ${p.report?.client ? `
-                        <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">CLIENT</div>
-                        <div style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:10px;">${p.report.client}</div>
-                    ` : ''}
-                    ${p.report?.address ? `
-                        <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">ADRESSE</div>
-                        <div style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:10px;">${p.report.address}</div>
-                    ` : ''}
-                    ${p.report?.problem_reported ? `
-                        <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">PROBLÈME SIGNALÉ</div>
-                        <div style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:10px;line-height:1.5;">${p.report.problem_reported}</div>
-                    ` : ''}
-                    ${p.report?.problem_identified ? `
-                        <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">DIAGNOSTIC</div>
-                        <div style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:10px;line-height:1.5;">${p.report.problem_identified}</div>
-                    ` : ''}
+            <div class="full-report-container" style="height:calc(100vh - 380px);min-height:300px;">
+                <div class="full-report-header">
+                    <span class="full-report-title">📋 Rapport d'intervention</span>
+                    <span class="full-report-type">${getReportField(p, 'type_intervention', 'type') || 'Intervention'}</span>
+                </div>
+                <div class="full-report-scroll">
                     ${(() => {
-                        const codes = parseErrorCodes(p.report?.error_codes);
-                        if (codes.length > 0) {
-                            return `
-                                <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">CODES ERREUR</div>
-                                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
-                                    ${codes.map(code => `<span style="background:rgba(239,68,68,0.2);color:#ef4444;padding:4px 8px;border-radius:4px;font-size:11px;font-family:monospace;font-weight:600;">${code}</span>`).join('')}
-                                </div>
-                            `;
+                        const ext = p.report?.extracted || {};
+                        const rep = p.report || {};
+                        let html = '';
+
+                        // INFORMATIONS CLIENT
+                        const clientSociete = getReportField(p, 'client.societe', 'client_name', 'client');
+                        const clientNom = getReportField(p, 'client.nom');
+                        const clientTel = getReportField(p, 'client.telephone');
+                        const clientEmail = getReportField(p, 'client.email');
+                        if (clientSociete || clientNom || clientTel || clientEmail) {
+                            html += '<div class="report-section"><div class="report-section-title">👤 INFORMATIONS CLIENT</div><div class="report-grid">';
+                            if (clientSociete) html += '<div class="report-field"><span class="report-field-label">Société</span><span class="report-field-value">' + clientSociete + '</span></div>';
+                            if (clientNom) html += '<div class="report-field"><span class="report-field-label">Contact</span><span class="report-field-value">' + clientNom + '</span></div>';
+                            if (clientTel) html += '<div class="report-field"><span class="report-field-label">Téléphone</span><span class="report-field-value">' + clientTel + '</span></div>';
+                            if (clientEmail) html += '<div class="report-field"><span class="report-field-label">Email</span><span class="report-field-value">' + clientEmail + '</span></div>';
+                            html += '</div></div>';
                         }
-                        return '';
+
+                        // INFORMATIONS SITE
+                        const siteAdresse = getReportField(p, 'site.adresse', 'client_address', 'address');
+                        const siteVille = getReportField(p, 'site.ville');
+                        const siteCp = getReportField(p, 'site.code_postal');
+                        const siteAcces = getReportField(p, 'site.acces');
+                        if (siteAdresse || siteVille || siteAcces) {
+                            html += '<div class="report-section"><div class="report-section-title">📍 INFORMATIONS SITE</div>';
+                            if (siteAdresse) html += '<div class="report-field"><span class="report-field-label">Adresse</span><span class="report-field-value">' + siteAdresse + (siteCp ? ', ' + siteCp : '') + (siteVille ? ' ' + siteVille : '') + '</span></div>';
+                            if (siteAcces) html += '<div class="report-field"><span class="report-field-label">Accès</span><span class="report-field-value">' + siteAcces + '</span></div>';
+                            html += '</div>';
+                        }
+
+                        // DATES D'INTERVENTION
+                        const dateDebut = getReportField(p, 'dates.debut', 'intervention_date');
+                        const dateFin = getReportField(p, 'dates.fin');
+                        const duree = getReportField(p, 'dates.duree');
+                        if (dateDebut || dateFin || duree) {
+                            html += '<div class="report-section"><div class="report-section-title">📅 DATES D\'INTERVENTION</div><div class="report-grid">';
+                            if (dateDebut) html += '<div class="report-field"><span class="report-field-label">Début</span><span class="report-field-value">' + dateDebut + '</span></div>';
+                            if (dateFin) html += '<div class="report-field"><span class="report-field-label">Fin</span><span class="report-field-value">' + dateFin + '</span></div>';
+                            if (duree) html += '<div class="report-field"><span class="report-field-label">Durée</span><span class="report-field-value">' + duree + '</span></div>';
+                            html += '</div></div>';
+                        }
+
+                        // TECHNICIEN
+                        const techNom = getReportField(p, 'technicien.nom', 'technician_name') || rep.technician_name;
+                        const techId = getReportField(p, 'technicien.id');
+                        if (techNom) {
+                            html += '<div class="report-section"><div class="report-section-title">👷 TECHNICIEN</div>';
+                            html += '<div class="report-field"><span class="report-field-label">Nom</span><span class="report-field-value">' + techNom + '</span></div>';
+                            if (techId) html += '<div class="report-field"><span class="report-field-label">ID</span><span class="report-field-value">' + techId + '</span></div>';
+                            html += '</div>';
+                        }
+
+                        // SYSTÈME & ÉQUIPEMENT
+                        const sysMarque = getReportField(p, 'systeme.marque', 'equipment_brand', 'brand');
+                        const sysModele = getReportField(p, 'systeme.modele', 'equipment_model', 'model');
+                        const sysNumSerie = getReportField(p, 'systeme.numero_serie');
+                        const sysType = getReportField(p, 'systeme.type');
+                        const sysPuissance = getReportField(p, 'systeme.puissance');
+                        const sysAnnee = getReportField(p, 'systeme.annee_installation');
+                        if (sysMarque || sysModele || sysNumSerie || sysType) {
+                            html += '<div class="report-section"><div class="report-section-title">🔧 SYSTÈME & ÉQUIPEMENT</div><div class="report-grid">';
+                            if (sysMarque) html += '<div class="report-field"><span class="report-field-label">Marque</span><span class="report-field-value">' + sysMarque + '</span></div>';
+                            if (sysModele) html += '<div class="report-field"><span class="report-field-label">Modèle</span><span class="report-field-value">' + sysModele + '</span></div>';
+                            if (sysNumSerie) html += '<div class="report-field"><span class="report-field-label">N° série</span><span class="report-field-value">' + sysNumSerie + '</span></div>';
+                            if (sysType) html += '<div class="report-field"><span class="report-field-label">Type</span><span class="report-field-value">' + sysType + '</span></div>';
+                            if (sysPuissance) html += '<div class="report-field"><span class="report-field-label">Puissance</span><span class="report-field-value">' + sysPuissance + '</span></div>';
+                            if (sysAnnee) html += '<div class="report-field"><span class="report-field-label">Année</span><span class="report-field-value">' + sysAnnee + '</span></div>';
+                            html += '</div></div>';
+                        }
+
+                        // FLUIDE FRIGORIGÈNE
+                        const fluideType = getReportField(p, 'fluide.type');
+                        const fluideCharge = getReportField(p, 'fluide.charge_initiale');
+                        const fluideAjoute = getReportField(p, 'fluide.quantite_ajoutee');
+                        const fluideRecup = getReportField(p, 'fluide.quantite_recuperee');
+                        if (fluideType || fluideCharge || fluideAjoute || fluideRecup) {
+                            html += '<div class="report-section"><div class="report-section-title">❄️ FLUIDE FRIGORIGÈNE</div><div class="report-grid">';
+                            if (fluideType) html += '<div class="report-field"><span class="report-field-label">Type</span><span class="report-field-value">' + fluideType + '</span></div>';
+                            if (fluideCharge) html += '<div class="report-field"><span class="report-field-label">Charge initiale</span><span class="report-field-value">' + fluideCharge + '</span></div>';
+                            if (fluideAjoute) html += '<div class="report-field"><span class="report-field-label">Qté ajoutée</span><span class="report-field-value">' + fluideAjoute + '</span></div>';
+                            if (fluideRecup) html += '<div class="report-field"><span class="report-field-label">Qté récupérée</span><span class="report-field-value">' + fluideRecup + '</span></div>';
+                            html += '</div></div>';
+                        }
+
+                        // PROBLÈME SIGNALÉ
+                        const probleme = getReportField(p, 'resume', 'problem_reported', 'problem_description');
+                        if (probleme) {
+                            html += '<div class="report-section"><div class="report-section-title">⚠️ PROBLÈME SIGNALÉ</div>';
+                            html += '<div class="report-text-block">' + probleme + '</div></div>';
+                        }
+
+                        // CODES ERREUR
+                        const codes = parseErrorCodes(getReportField(p, 'codes_defaut', 'error_codes'));
+                        if (codes.length > 0) {
+                            html += '<div class="report-section"><div class="report-section-title">🚨 CODES ERREUR</div>';
+                            html += '<div class="report-codes">' + codes.map(c => '<span class="report-code-tag">' + c + '</span>').join('') + '</div></div>';
+                        }
+
+                        // DIAGNOSTIC
+                        const diagnostic = getReportField(p, 'resultat.description', 'problem_identified');
+                        const causeIdentifiee = getReportField(p, 'resultat.cause');
+                        if (diagnostic || causeIdentifiee) {
+                            html += '<div class="report-section"><div class="report-section-title">🔍 DIAGNOSTIC</div>';
+                            if (diagnostic) html += '<div class="report-text-block">' + diagnostic + '</div>';
+                            if (causeIdentifiee) html += '<div class="report-field" style="margin-top:10px;"><span class="report-field-label">Cause identifiée</span><span class="report-field-value">' + causeIdentifiee + '</span></div>';
+                            html += '</div>';
+                        }
+
+                        // SOLUTION / TRAVAUX EFFECTUÉS
+                        const solution = getReportField(p, 'rapport_technicien', 'solution_description', 'solution');
+                        const travaux = getReportField(p, 'travaux_effectues');
+                        if (solution || travaux) {
+                            html += '<div class="report-section"><div class="report-section-title">✅ SOLUTION / TRAVAUX EFFECTUÉS</div>';
+                            if (solution) html += '<div class="report-text-block">' + solution + '</div>';
+                            if (travaux && travaux !== solution) html += '<div class="report-text-block" style="margin-top:8px;">' + travaux + '</div>';
+                            html += '</div>';
+                        }
+
+                        // MESURES & RELEVÉS
+                        const mesures = ext.mesures || {};
+                        const tempAspiration = mesures.temperature_aspiration;
+                        const tempRefoulement = mesures.temperature_refoulement;
+                        const pressionHP = mesures.pression_hp;
+                        const pressionBP = mesures.pression_bp;
+                        const surchauffe = mesures.surchauffe;
+                        const sousRefroid = mesures.sous_refroidissement;
+                        const intensite = mesures.intensite;
+                        if (tempAspiration || tempRefoulement || pressionHP || pressionBP || surchauffe || intensite) {
+                            html += '<div class="report-section"><div class="report-section-title">📊 MESURES & RELEVÉS</div><div class="report-grid">';
+                            if (tempAspiration) html += '<div class="report-field"><span class="report-field-label">T° aspiration</span><span class="report-field-value">' + tempAspiration + '</span></div>';
+                            if (tempRefoulement) html += '<div class="report-field"><span class="report-field-label">T° refoulement</span><span class="report-field-value">' + tempRefoulement + '</span></div>';
+                            if (pressionHP) html += '<div class="report-field"><span class="report-field-label">Pression HP</span><span class="report-field-value">' + pressionHP + '</span></div>';
+                            if (pressionBP) html += '<div class="report-field"><span class="report-field-label">Pression BP</span><span class="report-field-value">' + pressionBP + '</span></div>';
+                            if (surchauffe) html += '<div class="report-field"><span class="report-field-label">Surchauffe</span><span class="report-field-value">' + surchauffe + '</span></div>';
+                            if (sousRefroid) html += '<div class="report-field"><span class="report-field-label">Sous-refroid.</span><span class="report-field-value">' + sousRefroid + '</span></div>';
+                            if (intensite) html += '<div class="report-field"><span class="report-field-label">Intensité</span><span class="report-field-value">' + intensite + '</span></div>';
+                            html += '</div></div>';
+                        }
+
+                        // PIÈCES UTILISÉES
+                        const pieces = ext.pieces_utilisees || getReportField(p, 'pieces');
+                        if (pieces && ((Array.isArray(pieces) && pieces.length > 0) || (typeof pieces === 'string' && pieces.trim()))) {
+                            html += '<div class="report-section"><div class="report-section-title">🔩 PIÈCES UTILISÉES</div>';
+                            if (Array.isArray(pieces)) {
+                                html += '<div style="display:flex;flex-direction:column;gap:6px;">';
+                                pieces.forEach(piece => {
+                                    const ref = piece.reference || piece.ref || '';
+                                    const nom = piece.designation || piece.nom || piece.name || piece;
+                                    const qty = piece.quantite || piece.qty || 1;
+                                    html += '<div class="report-field"><span class="report-field-label">' + (ref || 'Pièce') + '</span><span class="report-field-value">' + nom + (qty > 1 ? ' x' + qty : '') + '</span></div>';
+                                });
+                                html += '</div>';
+                            } else {
+                                html += '<div class="report-text-block">' + pieces + '</div>';
+                            }
+                            html += '</div>';
+                        }
+
+                        // RECOMMANDATIONS
+                        const recommandations = getReportField(p, 'recommandations', 'recommendations');
+                        if (recommandations) {
+                            html += '<div class="report-section"><div class="report-section-title">💡 RECOMMANDATIONS</div>';
+                            html += '<div class="report-text-block">' + recommandations + '</div></div>';
+                        }
+
+                        // OBSERVATIONS / COMMENTAIRES
+                        const observations = getReportField(p, 'observations', 'comments');
+                        if (observations) {
+                            html += '<div class="report-section"><div class="report-section-title">📝 OBSERVATIONS</div>';
+                            html += '<div class="report-text-block">' + observations + '</div></div>';
+                        }
+
+                        // VALIDATION
+                        const resultatStatus = getReportField(p, 'resultat.status');
+                        const validation = getReportField(p, 'validation');
+                        const signatureClient = getReportField(p, 'signature_client');
+                        if (resultatStatus || validation || signatureClient) {
+                            html += '<div class="report-section"><div class="report-section-title">✔️ VALIDATION</div>';
+                            if (resultatStatus) html += '<div class="report-field"><span class="report-field-label">Statut</span><span class="report-field-value" style="color:' + (resultatStatus === 'resolu' || resultatStatus === 'termine' ? 'var(--accent-green)' : 'var(--accent-orange)') + ';">' + resultatStatus + '</span></div>';
+                            if (validation) html += '<div class="report-field"><span class="report-field-label">Validation</span><span class="report-field-value">' + validation + '</span></div>';
+                            if (signatureClient) html += '<div class="report-field"><span class="report-field-label">Signature client</span><span class="report-field-value" style="color:var(--accent-green);">✓ Signée</span></div>';
+                            html += '</div>';
+                        }
+
+                        // If no data at all, show placeholder
+                        if (!html) {
+                            html = '<div class="report-empty">📄 Rapport en cours de rédaction...<br><span style="font-size:11px;color:var(--text-muted);margin-top:8px;display:block;">Les données apparaîtront au fur et à mesure que le technicien complète le rapport.</span></div>';
+                        }
+
+                        return html;
                     })()}
-                    ${p.report?.solution ? `
-                        <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">SOLUTION / ACTIONS</div>
-                        <div style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:10px;line-height:1.5;">${p.report.solution}</div>
-                    ` : ''}
-                    ${p.report?.intervention_date ? `
-                        <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">DATE D'INTERVENTION</div>
-                        <div style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:10px;">${p.report.intervention_date}</div>
-                    ` : ''}
-                    ${!p.report?.client && !p.report?.problem_reported && parseErrorCodes(p.report?.error_codes).length === 0 ? `
-                        <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px;">Rapport en cours...</div>
-                    ` : ''}
                 </div>
             </div>
             <div class="chat-card">
