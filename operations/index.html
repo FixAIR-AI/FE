@@ -3223,7 +3223,7 @@
                         .select(`
                             *,
                             technician:user_id(id, first_name, last_name),
-                            report:reports(id, status, created_at)
+                            report:reports(id, status, created_at, problem_reported, problem_identified, solution_description, error_codes, equipment_brand, equipment_model, client_name, report_type)
                         `)
                         .in('user_id', teamTechIds)
                         .order('updated_at', { ascending: false })
@@ -3296,12 +3296,20 @@
                         report: {
                             id: report?.id || null,
                             status: report?.status || null,
-                            data: report?.report_data || null,
-                            client: p.client_name || '',
+                            type: report?.report_type || 'intervention',
+                            // From reports table
+                            problem_reported: report?.problem_reported || p.problem_description || '',
+                            problem_identified: report?.problem_identified || '',
+                            solution: report?.solution_description || p.solution_summary || '',
+                            error_codes: report?.error_codes || [],
+                            // From projects/reports table
+                            client: report?.client_name || p.client_name || '',
                             address: p.client_address || '',
-                            equipment: `${p.brand || ''} ${p.equipment_model || ''}`.trim(),
-                            problem: p.problem_description || '',
-                            actions: p.solution_summary || ''
+                            equipment_brand: report?.equipment_brand || p.brand || '',
+                            equipment_model: report?.equipment_model || p.equipment_model || '',
+                            technician_name: techName,
+                            // Extracted data from tech app (JSONB)
+                            extracted: p.extracted_data || {}
                         }
                     };
                 }
@@ -3632,6 +3640,50 @@
             }
         }
         
+        // Helper: Calculate section progress based on extracted_data
+        function calculateSectionProgress(p, section) {
+            const extracted = p.report?.extracted || {};
+            const report = p.report || {};
+
+            const sections = {
+                identification: ['client', 'address', 'technician_name', 'equipment_brand'],
+                diagnostic: ['problem_reported', 'error_codes', 'problem_identified'],
+                mesures: ['extracted.mesures', 'extracted.fluide', 'extracted.systeme'],
+                conclusion: ['solution', 'extracted.resultat', 'extracted.travaux_effectues']
+            };
+
+            const fields = sections[section] || [];
+            if (fields.length === 0) return 0;
+
+            let filled = 0;
+            fields.forEach(field => {
+                if (field.startsWith('extracted.')) {
+                    const key = field.replace('extracted.', '');
+                    if (extracted[key] && Object.keys(extracted[key] || {}).length > 0) filled++;
+                } else if (report[field]) {
+                    if (Array.isArray(report[field]) ? report[field].length > 0 : report[field] !== '') filled++;
+                }
+            });
+
+            return Math.round((filled / fields.length) * 100);
+        }
+
+        // Helper: Build progress bar row
+        function buildProgressRow(label, percent) {
+            const color = percent === 100 ? 'var(--accent-green)' :
+                          percent > 0 ? 'var(--accent-orange)' :
+                          'var(--text-muted)';
+            return `
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <span style="color:var(--text-secondary);min-width:100px;font-size:13px;">${label}</span>
+                    <div style="flex:1;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;">
+                        <div style="width:${percent}%;height:100%;background:${color};border-radius:3px;"></div>
+                    </div>
+                    <span style="color:${color};font-size:12px;min-width:40px;text-align:right;">${percent}%</span>
+                </div>
+            `;
+        }
+
         // Build drawer content for live project data - SAME STRUCTURE AS V7
         function buildLiveProjectDrawerContent(p, tech) {
             const msgs = tech.messages && tech.messages.length ? 
@@ -3641,27 +3693,43 @@
             return `
             <div class="info-card">
                 <div class="info-card-title">Informations</div>
-                <div class="info-row"><span class="info-label">Technicien</span><span class="info-value">${p.tech}</span></div>
-                <div class="info-row"><span class="info-label">Manager</span><span class="info-value">${p.manager}</span></div>
-                <div class="info-row"><span class="info-label">Équipement</span><span class="info-value">${p.equipment}</span></div>
-                <div class="info-row"><span class="info-label">Priorité</span><span class="info-value ${p.priority==='Haute'||p.priority==='Urgente'?'orange':''}">${p.priority}</span></div>
+                <div class="info-row"><span class="info-label">Technicien</span><span class="info-value">${p.report?.technician_name || p.tech || 'Non assigné'}</span></div>
+                <div class="info-row"><span class="info-label">Client</span><span class="info-value">${p.report?.client || p.client || 'Non spécifié'}</span></div>
+                <div class="info-row"><span class="info-label">Équipement</span><span class="info-value">${p.report?.equipment_brand || p.equipment || ''} ${p.report?.equipment_model || p.model || ''}</span></div>
+                <div class="info-row"><span class="info-label">Statut</span><span class="info-value">${p.status || 'En cours'}</span></div>
             </div>
             <div class="info-card">
                 <div class="info-card-title">Progression du rapport</div>
-                <div class="report-sections">
-                    <div class="report-section"><span class="report-section-name">Identification</span><div class="report-section-bar"><div class="report-section-fill" style="width:${p.progress.identification}%"></div></div><span class="report-section-percent">${p.progress.identification}%</span></div>
-                    <div class="report-section"><span class="report-section-name">Diagnostic</span><div class="report-section-bar"><div class="report-section-fill" style="width:${p.progress.diagnostic}%"></div></div><span class="report-section-percent">${p.progress.diagnostic}%</span></div>
-                    <div class="report-section"><span class="report-section-name">Mesures</span><div class="report-section-bar"><div class="report-section-fill" style="width:${p.progress.mesures}%"></div></div><span class="report-section-percent">${p.progress.mesures}%</span></div>
-                    <div class="report-section"><span class="report-section-name">Conclusion</span><div class="report-section-bar"><div class="report-section-fill" style="width:${p.progress.conclusion}%"></div></div><span class="report-section-percent">${p.progress.conclusion}%</span></div>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                    ${buildProgressRow('Identification', calculateSectionProgress(p, 'identification'))}
+                    ${buildProgressRow('Diagnostic', calculateSectionProgress(p, 'diagnostic'))}
+                    ${buildProgressRow('Mesures', calculateSectionProgress(p, 'mesures'))}
+                    ${buildProgressRow('Conclusion', calculateSectionProgress(p, 'conclusion'))}
+                </div>
+                <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center;">
+                    <span style="color:var(--text-secondary);font-size:13px;">Progression totale</span>
+                    <span style="color:var(--accent-blue);font-weight:600;font-size:16px;">${p.progress?.total || 0}%</span>
                 </div>
             </div>
             <div class="info-card" style="background:rgba(80,150,255,0.05);border-color:rgba(80,150,255,0.15);">
                 <div class="info-card-title" style="color:var(--accent-blue);">Aperçu du rapport</div>
-                <div style="font-size:12px;color:var(--text-secondary);line-height:1.6;">
-                    <strong>Équipement:</strong> ${p.equipment || 'Non spécifié'}<br>
-                    <strong>Client:</strong> ${p.client || p.address || 'Non spécifié'}<br>
-                    <strong>Statut:</strong> ${p.status || 'En cours'}<br>
-                    <strong>Progression:</strong> ${p.progress?.total || 0}%
+                <div style="background:var(--card-bg);border-radius:8px;padding:12px;margin-top:8px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                        <span style="font-weight:600;font-size:13px;">${p.report?.equipment_brand || p.equipment || ''} ${p.report?.equipment_model || ''}</span>
+                        <span style="background:var(--accent-blue);color:white;padding:3px 8px;border-radius:10px;font-size:10px;">${p.report?.type || 'Intervention'}</span>
+                    </div>
+                    ${p.report?.problem_reported ? `
+                        <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">PROBLÈME SIGNALÉ</div>
+                        <div style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:10px;">${p.report.problem_reported}</div>
+                    ` : ''}
+                    ${p.report?.error_codes?.length > 0 ? `
+                        <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">CODES ERREUR</div>
+                        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                            ${p.report.error_codes.map(code => `<span style="background:rgba(239,68,68,0.2);color:#ef4444;padding:3px 6px;border-radius:4px;font-size:11px;font-family:monospace;">${typeof code === 'object' ? code.code : code}</span>`).join('')}
+                        </div>
+                    ` : `
+                        <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:8px;">Rapport en cours...</div>
+                    `}
                 </div>
             </div>
             <div class="chat-card">
