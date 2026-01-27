@@ -875,6 +875,110 @@
         .info-value.blue { color: var(--accent-blue); }
         .info-value.orange { color: var(--accent-orange); }
 
+        /* Report Scroll Container - Hide scrollbar by default, show only during scroll */
+        .report-scroll-container {
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE/Edge */
+        }
+        .report-scroll-container::-webkit-scrollbar {
+            width: 0;
+            background: transparent;
+        }
+        /* Show thin scrollbar only on active scroll via JS class */
+        .report-scroll-container.is-scrolling {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.3) transparent;
+        }
+        .report-scroll-container.is-scrolling::-webkit-scrollbar {
+            width: 6px;
+        }
+        .report-scroll-container.is-scrolling::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.3);
+            border-radius: 3px;
+        }
+
+        /* Also fix project cards scrollbar */
+        .projects-list-wrapper {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .projects-list-wrapper::-webkit-scrollbar {
+            width: 0;
+            background: transparent;
+        }
+        .report-section {
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .report-section:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        .report-section-title {
+            font-size: 11px;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        .report-field {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 6px 0;
+            gap: 16px;
+        }
+        .report-field-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            min-width: 100px;
+            flex-shrink: 0;
+        }
+        .report-field-value {
+            font-size: 12px;
+            color: var(--text-primary);
+            text-align: right;
+            word-break: break-word;
+        }
+        .report-text-block {
+            background: rgba(255,255,255,0.03);
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+        .report-codes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .report-code-tag {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-family: monospace;
+            font-weight: 600;
+        }
+        .report-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 16px;
+        }
+        .report-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
         /* Mini Project Cards (in tech drawer) */
         .mini-project {
             display: flex;
@@ -3757,6 +3861,64 @@
             return Math.round((filled / fieldGroups.length) * 100);
         }
 
+        // Helper: Get nested field value safely for display
+        function getReportField(p, ...paths) {
+            const extracted = p.report?.extracted || {};
+            const report = p.report || {};
+
+            for (const path of paths) {
+                // Check extracted_data with nested path
+                const parts = path.split('.');
+                let val = extracted;
+                for (const part of parts) {
+                    val = val?.[part];
+                }
+                if (val !== null && val !== undefined && val !== '') {
+                    if (Array.isArray(val) && val.length > 0) return val;
+                    if (typeof val === 'string' || typeof val === 'number') return val;
+                    if (typeof val === 'object' && Object.keys(val).length > 0) return val;
+                }
+
+                // Check flat report field
+                if (report[path] !== null && report[path] !== undefined && report[path] !== '') {
+                    return report[path];
+                }
+
+                // Check last part of path
+                const lastPart = path.split('.').pop();
+                if (report[lastPart] !== null && report[lastPart] !== undefined && report[lastPart] !== '') {
+                    return report[lastPart];
+                }
+            }
+            return null;
+        }
+
+        // Helper: Format field value for display
+        function formatFieldValue(val, defaultText = 'Non spécifié') {
+            if (val === null || val === undefined || val === '') return defaultText;
+            if (Array.isArray(val)) return val.length > 0 ? val.join(', ') : defaultText;
+            if (typeof val === 'object') return JSON.stringify(val);
+            return String(val);
+        }
+
+        // Helper: Build report section with title and fields
+        function buildReportSection(title, fields, icon = '') {
+            const validFields = fields.filter(f => f.value !== null && f.value !== undefined && f.value !== '' && f.value !== 'Non spécifié');
+            if (validFields.length === 0) return '';
+
+            return `
+                <div class="report-section">
+                    <div class="report-section-title">${icon} ${title}</div>
+                    ${validFields.map(f => `
+                        <div class="report-field">
+                            <span class="report-field-label">${f.label}</span>
+                            <span class="report-field-value">${f.value}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
         // Helper: Build progress bar row
         function buildProgressRow(label, percent) {
             const color = percent === 100 ? 'var(--accent-green)' :
@@ -3807,53 +3969,493 @@
                     <span style="color:var(--accent-blue);font-weight:600;font-size:16px;">${p.progress?.total || 0}%</span>
                 </div>
             </div>
-            <div class="info-card" style="background:rgba(80,150,255,0.05);border-color:rgba(80,150,255,0.15);max-height:450px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.2) transparent;">
-                <div class="info-card-title" style="color:var(--accent-blue);position:sticky;top:0;background:rgba(30,41,59,0.98);padding:12px;margin:-12px -12px 12px -12px;z-index:1;backdrop-filter:blur(8px);">Aperçu du rapport</div>
-                <div style="background:var(--card-bg);border-radius:8px;padding:12px;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                        <span style="font-weight:600;font-size:13px;">${p.report?.equipment_brand || p.equipment || ''} ${p.report?.equipment_model || ''}</span>
-                        <span style="background:var(--accent-orange);color:white;padding:3px 8px;border-radius:10px;font-size:10px;text-transform:capitalize;">${p.report?.type || 'Intervention'}</span>
+            <div class="report-scroll-container" style="background:rgba(80,150,255,0.03);border:1px solid rgba(80,150,255,0.1);border-radius:12px;padding:16px;flex:1;max-height:calc(100vh - 300px);min-height:400px;overflow-y:auto;" onscroll="this.classList.add('is-scrolling');clearTimeout(this._st);this._st=setTimeout(()=>this.classList.remove('is-scrolling'),1500)">
+
+                <div style="color:var(--accent-blue);font-size:11px;font-weight:600;letter-spacing:0.5px;margin-bottom:16px;">APERÇU DU RAPPORT</div>
+
+                <!-- HEADER -->
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.1);">
+                    <div>
+                        <div style="color:var(--accent-blue);font-size:11px;margin-bottom:4px;">${(p.report?.equipment_brand || '').toUpperCase()}</div>
+                        <div style="font-size:18px;font-weight:600;color:var(--text-primary);">Rapport d'intervention</div>
+                        <div style="color:var(--text-muted);font-size:12px;margin-top:4px;">
+                            RÉF: ${getReportField(p, 'reference', 'ref') || 'FX-2025-XXXX'} •
+                            TYPE: ${p.report?.type || 'Intervention'} •
+                            DATE: ${p.report?.intervention_date || getReportField(p, 'date') || '-'}
+                        </div>
                     </div>
-                    ${p.report?.client ? `
-                        <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">CLIENT</div>
-                        <div style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:10px;">${p.report.client}</div>
-                    ` : ''}
-                    ${p.report?.address ? `
-                        <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">ADRESSE</div>
-                        <div style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:10px;">${p.report.address}</div>
-                    ` : ''}
-                    ${p.report?.problem_reported ? `
-                        <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">PROBLÈME SIGNALÉ</div>
-                        <div style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:10px;line-height:1.5;">${p.report.problem_reported}</div>
-                    ` : ''}
-                    ${p.report?.problem_identified ? `
-                        <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">DIAGNOSTIC</div>
-                        <div style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:10px;line-height:1.5;">${p.report.problem_identified}</div>
-                    ` : ''}
-                    ${(() => {
-                        const codes = parseErrorCodes(p.report?.error_codes);
-                        if (codes.length > 0) {
-                            return `
-                                <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">CODES ERREUR</div>
-                                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
-                                    ${codes.map(code => `<span style="background:rgba(239,68,68,0.2);color:#ef4444;padding:4px 8px;border-radius:4px;font-size:11px;font-family:monospace;font-weight:600;">${code}</span>`).join('')}
-                                </div>
-                            `;
-                        }
-                        return '';
-                    })()}
-                    ${p.report?.solution ? `
-                        <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">SOLUTION / ACTIONS</div>
-                        <div style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:10px;line-height:1.5;">${p.report.solution}</div>
-                    ` : ''}
-                    ${p.report?.intervention_date ? `
-                        <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">DATE D'INTERVENTION</div>
-                        <div style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:10px;">${p.report.intervention_date}</div>
-                    ` : ''}
-                    ${!p.report?.client && !p.report?.problem_reported && parseErrorCodes(p.report?.error_codes).length === 0 ? `
-                        <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px;">Rapport en cours...</div>
-                    ` : ''}
+                    <span style="background:var(--accent-orange);color:white;padding:6px 14px;border-radius:16px;font-size:11px;font-weight:600;">${p.report?.type || 'Intervention'}</span>
                 </div>
+
+                <!-- RÉSUMÉ DE L'INTERVENTION -->
+                ${(p.report?.problem_reported || getReportField(p, 'resume', 'description')) ? `
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">RÉSUMÉ DE L'INTERVENTION</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;color:var(--text-primary);font-size:13px;line-height:1.5;">
+                        ${p.report?.problem_reported || getReportField(p, 'resume', 'description') || '-'}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- INFORMATIONS SITE + CLIENT (side by side) -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+                    <!-- INFORMATIONS SITE -->
+                    <div>
+                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">INFORMATIONS SITE</div>
+                        <div style="background:var(--card-bg);border-radius:8px;padding:12px;">
+                            <div style="margin-bottom:8px;">
+                                <div style="color:var(--text-muted);font-size:10px;">N° Affaire</div>
+                                <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'site.numero_affaire', 'numero_affaire', 'n_affaire') || '-'}</div>
+                            </div>
+                            <div style="margin-bottom:8px;">
+                                <div style="color:var(--text-muted);font-size:10px;">Lieu</div>
+                                <div style="color:var(--text-primary);font-size:13px;">${p.report?.address || getReportField(p, 'site.adresse', 'adresse', 'lieu') || '-'}</div>
+                            </div>
+                            <div>
+                                <div style="color:var(--text-muted);font-size:10px;">Ville</div>
+                                <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'site.code_postal', 'code_postal') || ''} ${getReportField(p, 'site.ville', 'ville') || '-'}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- INFORMATIONS CLIENT -->
+                    <div>
+                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">INFORMATIONS CLIENT</div>
+                        <div style="background:var(--card-bg);border-radius:8px;padding:12px;">
+                            <div style="margin-bottom:8px;">
+                                <div style="color:var(--text-muted);font-size:10px;">Société</div>
+                                <div style="color:var(--text-primary);font-size:13px;">${p.report?.client || getReportField(p, 'client.societe', 'client.nom', 'societe') || '-'}</div>
+                            </div>
+                            <div style="margin-bottom:8px;">
+                                <div style="color:var(--text-muted);font-size:10px;">Contact</div>
+                                <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'client.contact', 'contact') || '-'}</div>
+                            </div>
+                            <div style="margin-bottom:8px;">
+                                <div style="color:var(--text-muted);font-size:10px;">Téléphone</div>
+                                <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'client.telephone', 'telephone', 'tel') || '-'}</div>
+                            </div>
+                            <div>
+                                <div style="color:var(--text-muted);font-size:10px;">Réf. Client</div>
+                                <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'client.reference', 'reference_client', 'ref_client') || '-'}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DATES D'INTERVENTION -->
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">DATES D'INTERVENTION</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Date début</div>
+                            <div style="color:var(--accent-blue);font-size:13px;font-weight:500;">${p.report?.intervention_date || getReportField(p, 'date', 'dates.debut', 'date_debut') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Date fin</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'dates.fin', 'date_fin') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Heure début</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${p.report?.start_time || getReportField(p, 'dates.heure_debut', 'heure_debut') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Heure fin</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${p.report?.end_time || getReportField(p, 'dates.heure_fin', 'heure_fin') || '-'}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SYSTÈME & ÉQUIPEMENT -->
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">SYSTÈME & ÉQUIPEMENT</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Type système</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'systeme.type', 'type_systeme') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Puissance</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'systeme.puissance', 'puissance') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Modèle</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${p.report?.equipment_model || getReportField(p, 'systeme.modele', 'modele') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Année install.</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'systeme.annee_installation', 'annee', 'annee_install') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">N° Série</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'systeme.numero_serie', 'numero_serie', 'n_serie') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Garantie</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'systeme.garantie', 'garantie') || '-'}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FLUIDE FRIGORIGÈNE -->
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">FLUIDE FRIGORIGÈNE</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Type fluide</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'fluide.type', 'type_fluide') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Type huile</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'fluide.type_huile', 'huile') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Charge initiale</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'fluide.charge_initiale', 'charge_initiale') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Charge totale</div>
+                            <div style="color:var(--accent-green);font-size:13px;font-weight:500;">${getReportField(p, 'fluide.charge_totale', 'charge_totale') || '-'}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ADRESSAGE DU SYSTÈME (table) -->
+                ${(() => {
+                    const adressage = getReportField(p, 'adressage', 'unites');
+                    if (!adressage || !Array.isArray(adressage) || adressage.length === 0) return '';
+                    return `
+                    <div style="margin-bottom:20px;">
+                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">ADRESSAGE DU SYSTÈME</div>
+                        <div style="background:var(--card-bg);border-radius:8px;overflow:hidden;">
+                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:1px;background:rgba(255,255,255,0.1);font-size:11px;">
+                                <div style="background:var(--card-bg);padding:8px;color:var(--text-muted);">Réf. Usine</div>
+                                <div style="background:var(--card-bg);padding:8px;color:var(--text-muted);">N° Série</div>
+                                <div style="background:var(--card-bg);padding:8px;color:var(--text-muted);">Adresse</div>
+                                <div style="background:var(--card-bg);padding:8px;color:var(--text-muted);">Désignation</div>
+                                <div style="background:var(--card-bg);padding:8px;color:var(--text-muted);">Commentaire</div>
+                            </div>
+                            ${adressage.map(u => `
+                                <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:1px;background:rgba(255,255,255,0.05);font-size:12px;">
+                                    <div style="background:var(--card-bg);padding:8px;color:var(--text-primary);">${u.ref_usine || '-'}</div>
+                                    <div style="background:var(--card-bg);padding:8px;color:var(--text-primary);">${u.numero_serie || '-'}</div>
+                                    <div style="background:var(--card-bg);padding:8px;color:var(--text-primary);">${u.adresse || '-'}</div>
+                                    <div style="background:var(--card-bg);padding:8px;color:var(--text-primary);">${u.designation || '-'}</div>
+                                    <div style="background:var(--card-bg);padding:8px;color:var(--text-primary);">${u.commentaire || '-'}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    `;
+                })()}
+
+                <!-- CODES DÉFAUT -->
+                ${(() => {
+                    const codes = parseErrorCodes(p.report?.error_codes);
+                    if (codes.length === 0) return '';
+                    return `
+                    <div style="margin-bottom:20px;">
+                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">CODES DÉFAUT</div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            ${codes.map(code => `
+                                <span style="background:rgba(239,68,68,0.15);color:#ef4444;padding:6px 12px;border-radius:6px;font-size:12px;font-family:monospace;font-weight:600;">${code}</span>
+                            `).join('')}
+                        </div>
+                    </div>
+                    `;
+                })()}
+
+                <!-- SÉCURITÉ DU SYSTÈME -->
+                ${(getReportField(p, 'securite.etat', 'etat_securite') || getReportField(p, 'securite.risques', 'risques')) ? `
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">SÉCURITÉ DU SYSTÈME</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;">
+                        <div style="margin-bottom:8px;">
+                            <div style="color:var(--text-muted);font-size:10px;">État sécurité</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'securite.etat', 'etat_securite') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Risques identifiés</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'securite.risques', 'risques') || '-'}</div>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- RELEVÉS & MESURES -->
+                ${(() => {
+                    const mesures = getReportField(p, 'mesures', 'releves');
+                    if (!mesures || typeof mesures !== 'object' || Object.keys(mesures).length === 0) return '';
+                    return `
+                    <div style="margin-bottom:20px;">
+                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">RELEVÉS & MESURES</div>
+                        <div style="background:var(--card-bg);border-radius:8px;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                            ${Object.entries(mesures).map(([key, val]) => `
+                                <div>
+                                    <div style="color:var(--text-muted);font-size:10px;">${key.replace(/_/g, ' ')}</div>
+                                    <div style="color:var(--text-primary);font-size:13px;">${val || '-'}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    `;
+                })()}
+
+                <!-- HEURES DE FONCTIONNEMENT -->
+                ${(getReportField(p, 'heures_compresseur') || getReportField(p, 'nb_demarrages')) ? `
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">HEURES DE FONCTIONNEMENT</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Heures compresseur</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'heures_compresseur') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Nb démarrages</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'nb_demarrages', 'cycles') || '-'}</div>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- DIAGNOSTIC -->
+                ${p.report?.problem_identified ? `
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">DIAGNOSTIC</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;color:var(--text-primary);font-size:13px;line-height:1.5;">
+                        ${p.report.problem_identified}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- TRAVAUX EFFECTUÉS -->
+                ${(() => {
+                    const solution = p.report?.solution;
+                    const travaux = getReportField(p, 'travaux_effectues');
+                    if (!solution && (!travaux || (Array.isArray(travaux) && travaux.length === 0))) return '';
+                    return `
+                    <div style="margin-bottom:20px;">
+                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">TRAVAUX EFFECTUÉS</div>
+                        <div style="background:var(--card-bg);border-radius:8px;padding:12px;color:var(--text-primary);font-size:13px;line-height:1.5;">
+                            ${solution || (Array.isArray(travaux) ? travaux.map(t => t.texte || t).join(', ') : travaux) || '-'}
+                        </div>
+                    </div>
+                    `;
+                })()}
+
+                <!-- TRAVAUX À PRÉVOIR -->
+                ${(() => {
+                    const travaux = getReportField(p, 'travaux_prevoir', 'travaux_a_prevoir');
+                    if (!travaux || !Array.isArray(travaux) || travaux.length === 0) return '';
+                    return `
+                    <div style="margin-bottom:20px;">
+                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">TRAVAUX À PRÉVOIR</div>
+                        <div style="background:var(--card-bg);border-radius:8px;padding:12px;">
+                            ${travaux.map(t => `
+                                <div style="color:var(--text-primary);font-size:13px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">${t.texte || t}</div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    `;
+                })()}
+
+                <!-- PIÈCES & CONSOMMABLES -->
+                ${(() => {
+                    const pieces = getReportField(p, 'pieces', 'pieces_consommables');
+                    if (!pieces || !Array.isArray(pieces) || pieces.length === 0) return '';
+                    return `
+                    <div style="margin-bottom:20px;">
+                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">PIÈCES & CONSOMMABLES</div>
+                        <div style="background:var(--card-bg);border-radius:8px;padding:12px;">
+                            ${pieces.map(piece => `
+                                <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                                    <span style="color:var(--text-primary);font-size:13px;">${piece.nom || piece.reference || piece}</span>
+                                    <span style="color:var(--text-muted);font-size:13px;">x${piece.quantite || piece.qty || 1}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    `;
+                })()}
+
+                <!-- RAPPORT DU TECHNICIEN -->
+                ${getReportField(p, 'rapport_technicien', 'observations_technicien') ? `
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">RAPPORT DU TECHNICIEN</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;color:var(--text-primary);font-size:13px;line-height:1.5;">
+                        ${getReportField(p, 'rapport_technicien', 'observations_technicien')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- REMARQUES -->
+                ${getReportField(p, 'remarques') ? `
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">REMARQUES</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;color:var(--text-primary);font-size:13px;line-height:1.5;">
+                        ${getReportField(p, 'remarques')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- RÉSERVES -->
+                ${(() => {
+                    const reserves = getReportField(p, 'reserves');
+                    if (!reserves || !Array.isArray(reserves) || reserves.length === 0) return '';
+                    return `
+                    <div style="margin-bottom:20px;">
+                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">RÉSERVES</div>
+                        <div style="background:var(--card-bg);border-radius:8px;padding:12px;">
+                            ${reserves.map(r => `
+                                <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                                    <div style="width:4px;height:100%;min-height:24px;background:var(--accent-orange);border-radius:2px;"></div>
+                                    <div>
+                                        <div style="color:var(--accent-orange);font-size:12px;font-weight:600;">${r.titre || r.type || '-'}</div>
+                                        <div style="color:var(--text-primary);font-size:13px;">${r.description || r.texte || '-'}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    `;
+                })()}
+
+                <!-- RÉSULTAT DE L'INTERVENTION -->
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">RÉSULTAT DE L'INTERVENTION</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;">
+                        <div style="margin-bottom:8px;">
+                            <div style="color:var(--text-muted);font-size:10px;">Statut</div>
+                            <div style="color:${p.report?.status === 'validated' ? 'var(--accent-green)' : 'var(--accent-orange)'};font-size:13px;font-weight:500;">
+                                ${p.report?.status === 'validated' ? 'Validé' : p.report?.status === 'submitted' ? 'Soumis' : getReportField(p, 'resultat.statut', 'statut') || 'En cours'}
+                            </div>
+                        </div>
+                        ${getReportField(p, 'resultat.conclusion', 'conclusion') ? `
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Conclusion</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'resultat.conclusion', 'conclusion')}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <!-- PHOTOS -->
+                ${(() => {
+                    const photos = getReportField(p, 'photos');
+                    if (!photos || !Array.isArray(photos) || photos.length === 0) return '';
+                    return `
+                    <div style="margin-bottom:20px;">
+                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">PHOTOS (${photos.length})</div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            ${photos.map(photo => `
+                                <div style="width:80px;height:60px;background:var(--card-bg);border-radius:6px;overflow:hidden;">
+                                    <img src="${photo.url || photo}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'"/>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    `;
+                })()}
+
+                <!-- TECHNICIEN(S) -->
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">TECHNICIEN(S)</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Nom</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${p.report?.technician_name || p.tech || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Arrivée</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${p.report?.start_time || getReportField(p, 'technicien.arrivee') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Entreprise</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'technicien.entreprise', 'entreprise') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Départ</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${p.report?.end_time || getReportField(p, 'technicien.depart') || '-'}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OBSERVATION(S) CLIENT -->
+                ${getReportField(p, 'observations_client') ? `
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">OBSERVATION(S) CLIENT</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;color:var(--text-primary);font-size:13px;line-height:1.5;">
+                        ${getReportField(p, 'observations_client')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- TESTS & VALIDATION -->
+                ${(getReportField(p, 'tests.pression') || getReportField(p, 'tests.vacuometre')) ? `
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">TESTS & VALIDATION</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Pression test</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'tests.pression', 'pression_test') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Vacuomètre</div>
+                            <div style="color:var(--accent-green);font-size:13px;font-weight:500;">${getReportField(p, 'tests.vacuometre', 'vacuometre') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Durée test</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'tests.duree', 'duree_test') || '-'}</div>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- LONGUEURS TUYAUTERIES -->
+                ${(getReportField(p, 'tuyauteries.longueur') || getReportField(p, 'longueur_totale')) ? `
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">LONGUEURS TUYAUTERIES</div>
+                    <div style="background:var(--card-bg);border-radius:8px;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Longueur totale</div>
+                            <div style="color:var(--accent-green);font-size:13px;font-weight:500;">${getReportField(p, 'tuyauteries.longueur', 'longueur_totale') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Appoint calculé</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'tuyauteries.appoint', 'appoint_calcule') || '-'}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text-muted);font-size:10px;">Dénivelé UE-UI</div>
+                            <div style="color:var(--text-primary);font-size:13px;">${getReportField(p, 'tuyauteries.denivele', 'denivele') || '-'}</div>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- SIGNATURES -->
+                <div style="margin-bottom:20px;">
+                    <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">SIGNATURES</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div style="background:var(--card-bg);border-radius:8px;padding:16px;text-align:center;">
+                            <div style="color:var(--text-muted);font-size:10px;margin-bottom:8px;">SIGNATURE CLIENT</div>
+                            ${getReportField(p, 'signatures.client.image') ? `
+                                <img src="${getReportField(p, 'signatures.client.image')}" style="max-width:100%;max-height:60px;"/>
+                            ` : `
+                                <div style="color:var(--text-muted);font-size:12px;font-style:italic;">Non signé</div>
+                            `}
+                            <div style="color:var(--text-primary);font-size:12px;margin-top:8px;">${getReportField(p, 'signatures.client.nom', 'signature_client_nom') || '-'}</div>
+                        </div>
+                        <div style="background:var(--card-bg);border-radius:8px;padding:16px;text-align:center;">
+                            <div style="color:var(--text-muted);font-size:10px;margin-bottom:8px;">SIGNATURE TECHNICIEN</div>
+                            ${getReportField(p, 'signatures.technicien.image') ? `
+                                <img src="${getReportField(p, 'signatures.technicien.image')}" style="max-width:100%;max-height:60px;"/>
+                            ` : `
+                                <div style="color:var(--text-muted);font-size:12px;font-style:italic;">Non signé</div>
+                            `}
+                            <div style="color:var(--text-primary);font-size:12px;margin-top:8px;">${p.report?.technician_name || p.tech || '-'}</div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
             <div class="chat-card">
                 <div class="chat-card-header">
