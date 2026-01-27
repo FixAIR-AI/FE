@@ -3233,6 +3233,16 @@
                         console.error('Error loading projects:', error);
                     } else {
                         allProjects = projects || [];
+                        // DEBUG: Log raw Supabase response
+                        console.log('🔍 Raw Supabase projects:', projects);
+                        const projectWithReport = projects?.find(p => p.report?.length > 0);
+                        console.log('🔍 First project with report:', projectWithReport);
+                        const projectWithProgress = projects?.find(p => p.progress > 0);
+                        console.log('🔍 Project with progress > 0:', projectWithProgress);
+                        if (projectWithProgress) {
+                            console.log('🔍 extracted_data:', projectWithProgress.extracted_data);
+                            console.log('🔍 report array:', projectWithProgress.report);
+                        }
                     }
                 }
                 
