@@ -3919,13 +3919,28 @@
             `;
         }
 
-        // Helper: Deduplicate array by key or stringified value
+        // Helper: Deduplicate array - more aggressive
         function dedupeArray(arr, key = null) {
             if (!Array.isArray(arr)) return arr;
             const seen = new Set();
             return arr.filter(item => {
-                const identifier = key ? (item[key] || JSON.stringify(item)) : JSON.stringify(item);
-                if (seen.has(identifier)) return false;
+                // Create identifier from key field or combination of all string values
+                let identifier;
+                if (key && item[key]) {
+                    identifier = String(item[key]).toLowerCase().trim();
+                } else if (typeof item === 'string') {
+                    identifier = item.toLowerCase().trim();
+                } else if (typeof item === 'object') {
+                    // Create identifier from all string/number values
+                    identifier = Object.values(item)
+                        .filter(v => typeof v === 'string' || typeof v === 'number')
+                        .map(v => String(v).toLowerCase().trim())
+                        .join('|');
+                } else {
+                    identifier = JSON.stringify(item);
+                }
+
+                if (!identifier || seen.has(identifier)) return false;
                 seen.add(identifier);
                 return true;
             });
@@ -4136,8 +4151,19 @@
                     let unites = getReportField(p, 'adressage', 'unites');
                     if (!unites || !Array.isArray(unites) || unites.length === 0) return '';
 
-                    // Deduplicate by address
-                    unites = dedupeArray(unites, 'adresse');
+                    // Deduplicate by ref + adresse + designation combo
+                    const seen = new Set();
+                    unites = unites.filter(u => {
+                        const ref = (u.ref_usine || u.reference || '').toLowerCase().trim();
+                        const adresse = (u.adresse || '').toLowerCase().trim();
+                        const designation = (u.designation || '').toLowerCase().trim();
+                        const key = `${ref}:${adresse}:${designation}`;
+                        if (!adresse || seen.has(key)) return false;
+                        seen.add(key);
+                        return true;
+                    });
+
+                    if (unites.length === 0) return '';
 
                     // Limit to 30 max
                     const displayUnits = unites.slice(0, 30);
@@ -4146,17 +4172,17 @@
                     return `
                     <div style="margin-bottom:20px;">
                         <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">
-                            ADRESSAGE DU SYSTÈME ${unites.length > 30 ? `(${displayUnits.length}/${unites.length})` : `(${unites.length})`}
+                            ADRESSAGE DU SYSTÈME (${unites.length})
                         </div>
                         <div style="background:var(--card-bg);border-radius:8px;overflow:hidden;max-height:300px;overflow-y:auto;">
-                            <div style="display:grid;grid-template-columns:2fr 1fr 1fr 2fr;gap:1px;background:rgba(255,255,255,0.1);font-size:10px;position:sticky;top:0;">
+                            <div style="display:grid;grid-template-columns:2fr 1fr 2fr 2fr;gap:1px;background:rgba(255,255,255,0.1);font-size:10px;position:sticky;top:0;">
                                 <div style="background:var(--card-bg);padding:6px 8px;color:var(--text-muted);">Réf. Usine</div>
                                 <div style="background:var(--card-bg);padding:6px 8px;color:var(--text-muted);">Adresse</div>
                                 <div style="background:var(--card-bg);padding:6px 8px;color:var(--text-muted);">Désignation</div>
                                 <div style="background:var(--card-bg);padding:6px 8px;color:var(--text-muted);">Commentaire</div>
                             </div>
                             ${displayUnits.map(u => `
-                                <div style="display:grid;grid-template-columns:2fr 1fr 1fr 2fr;gap:1px;background:rgba(255,255,255,0.03);font-size:11px;">
+                                <div style="display:grid;grid-template-columns:2fr 1fr 2fr 2fr;gap:1px;background:rgba(255,255,255,0.03);font-size:11px;">
                                     <div style="background:var(--card-bg);padding:6px 8px;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;">${u.ref_usine || u.reference || '-'}</div>
                                     <div style="background:var(--card-bg);padding:6px 8px;color:var(--text-primary);">${u.adresse || '-'}</div>
                                     <div style="background:var(--card-bg);padding:6px 8px;color:var(--text-primary);">${u.designation || '-'}</div>
@@ -4204,15 +4230,29 @@
 
                 <!-- RELEVÉS & MESURES -->
                 ${(() => {
-                    const mesures = getReportField(p, 'mesures', 'releves');
+                    let mesures = getReportField(p, 'mesures', 'releves');
                     if (!mesures) return '';
 
                     // Handle array of measurement objects
                     if (Array.isArray(mesures)) {
                         if (mesures.length === 0) return '';
+
+                        // Deduplicate by label+value combo
+                        const seen = new Set();
+                        mesures = mesures.filter(m => {
+                            const label = (m.label || m.nom || m.type || '').toLowerCase().trim();
+                            const value = String(m.value || m.valeur || '').toLowerCase().trim();
+                            const key = `${label}:${value}`;
+                            if (seen.has(key)) return false;
+                            seen.add(key);
+                            return true;
+                        });
+
+                        if (mesures.length === 0) return '';
+
                         return `
                         <div style="margin-bottom:20px;">
-                            <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">RELEVÉS & MESURES</div>
+                            <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">RELEVÉS & MESURES (${mesures.length})</div>
                             <div style="background:var(--card-bg);border-radius:8px;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                                 ${mesures.slice(0, 20).map(m => `
                                     <div>
@@ -4221,6 +4261,7 @@
                                     </div>
                                 `).join('')}
                             </div>
+                            ${mesures.length > 20 ? `<div style="color:var(--text-muted);font-size:11px;text-align:center;padding-top:8px;">+ ${mesures.length - 20} autres mesures</div>` : ''}
                         </div>
                         `;
                     }
@@ -4363,8 +4404,18 @@
                     let reserves = getReportField(p, 'reserves');
                     if (!reserves || !Array.isArray(reserves) || reserves.length === 0) return '';
 
-                    // Deduplicate by title
-                    reserves = dedupeArray(reserves, 'titre');
+                    // Deduplicate by title + first 50 chars of description
+                    const seen = new Set();
+                    reserves = reserves.filter(r => {
+                        const titre = (r.titre || r.type || '').toLowerCase().trim();
+                        const desc = (r.description || r.texte || '').toLowerCase().trim().substring(0, 50);
+                        const key = `${titre}:${desc}`;
+                        if (seen.has(key)) return false;
+                        seen.add(key);
+                        return true;
+                    });
+
+                    if (reserves.length === 0) return '';
 
                     return `
                     <div style="margin-bottom:20px;">
