@@ -3807,9 +3807,9 @@
                     <span style="color:var(--accent-blue);font-weight:600;font-size:16px;">${p.progress?.total || 0}%</span>
                 </div>
             </div>
-            <div class="info-card" style="background:rgba(80,150,255,0.05);border-color:rgba(80,150,255,0.15);">
-                <div class="info-card-title" style="color:var(--accent-blue);">Aperçu du rapport</div>
-                <div style="background:var(--card-bg);border-radius:8px;padding:12px;margin-top:8px;">
+            <div class="info-card" style="background:rgba(80,150,255,0.05);border-color:rgba(80,150,255,0.15);max-height:450px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.2) transparent;">
+                <div class="info-card-title" style="color:var(--accent-blue);position:sticky;top:0;background:rgba(30,41,59,0.98);padding:12px;margin:-12px -12px 12px -12px;z-index:1;backdrop-filter:blur(8px);">Aperçu du rapport</div>
+                <div style="background:var(--card-bg);border-radius:8px;padding:12px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
                         <span style="font-weight:600;font-size:13px;">${p.report?.equipment_brand || p.equipment || ''} ${p.report?.equipment_model || ''}</span>
                         <span style="background:var(--accent-orange);color:white;padding:3px 8px;border-radius:10px;font-size:10px;text-transform:capitalize;">${p.report?.type || 'Intervention'}</span>
@@ -3818,24 +3818,40 @@
                         <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">CLIENT</div>
                         <div style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:10px;">${p.report.client}</div>
                     ` : ''}
+                    ${p.report?.address ? `
+                        <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">ADRESSE</div>
+                        <div style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:10px;">${p.report.address}</div>
+                    ` : ''}
                     ${p.report?.problem_reported ? `
                         <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">PROBLÈME SIGNALÉ</div>
-                        <div style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:10px;">${p.report.problem_reported}</div>
+                        <div style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:10px;line-height:1.5;">${p.report.problem_reported}</div>
+                    ` : ''}
+                    ${p.report?.problem_identified ? `
+                        <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">DIAGNOSTIC</div>
+                        <div style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:10px;line-height:1.5;">${p.report.problem_identified}</div>
                     ` : ''}
                     ${(() => {
                         const codes = parseErrorCodes(p.report?.error_codes);
                         if (codes.length > 0) {
                             return `
                                 <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">CODES ERREUR</div>
-                                <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                                    ${codes.map(code => `<span style="background:rgba(239,68,68,0.2);color:#ef4444;padding:3px 6px;border-radius:4px;font-size:11px;font-family:monospace;font-weight:600;">${code}</span>`).join('')}
+                                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+                                    ${codes.map(code => `<span style="background:rgba(239,68,68,0.2);color:#ef4444;padding:4px 8px;border-radius:4px;font-size:11px;font-family:monospace;font-weight:600;">${code}</span>`).join('')}
                                 </div>
                             `;
                         }
                         return '';
                     })()}
-                    ${!p.report?.problem_reported && parseErrorCodes(p.report?.error_codes).length === 0 ? `
-                        <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:8px;">Rapport en cours...</div>
+                    ${p.report?.solution ? `
+                        <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">SOLUTION / ACTIONS</div>
+                        <div style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:10px;line-height:1.5;">${p.report.solution}</div>
+                    ` : ''}
+                    ${p.report?.intervention_date ? `
+                        <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">DATE D'INTERVENTION</div>
+                        <div style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:10px;">${p.report.intervention_date}</div>
+                    ` : ''}
+                    ${!p.report?.client && !p.report?.problem_reported && parseErrorCodes(p.report?.error_codes).length === 0 ? `
+                        <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px;">Rapport en cours...</div>
                     ` : ''}
                 </div>
             </div>
