@@ -3215,24 +3215,22 @@
                 teamTechIds.push(currentUserId);
                 
                 let allProjects = [];
-                
-                if (teamTechIds.length > 0) {
-                    const { data: projects, error } = await sb
-                        .from('projects')
-                        .select(`
-                            *,
-                            technician:user_id(id, first_name, last_name),
-                            report:reports(id, status, created_at)
-                        `)
-                        .in('user_id', teamTechIds)
-                        .order('updated_at', { ascending: false })
-                        .limit(50);
-                    
-                    if (error) {
-                        console.error('Error loading projects:', error);
-                    } else {
-                        allProjects = projects || [];
-                    }
+
+                // Load ALL projects (not filtered by team)
+                const { data: projects, error } = await sb
+                    .from('projects')
+                    .select(`
+                        *,
+                        technician:user_id(id, first_name, last_name),
+                        report:reports(id, status, created_at)
+                    `)
+                    .order('updated_at', { ascending: false })
+                    .limit(100);  // Increased to capture all 52+ projects
+
+                if (error) {
+                    console.error('Error loading projects:', error);
+                } else {
+                    allProjects = projects || [];
                 }
                 
                 liveProjectData = {};
@@ -3246,7 +3244,8 @@
                     let progressTotal = 0;
 
                     // Priority 1: Use real progress from projects.progress (saved by tech app)
-                    if (typeof p.progress === 'number' && p.progress > 0) {
+                    // Note: 0 is a valid value - don't skip it!
+                    if (typeof p.progress === 'number') {
                         progressTotal = p.progress;
                     }
                     // Priority 2: Check report_data for progress
@@ -3305,6 +3304,22 @@
                 }
                 
                 console.log('✅ Loaded', Object.keys(liveProjectData).length, 'projects');
+
+                // Debug logging for progress values
+                console.log('📊 Projects Debug:', {
+                    totalLoaded: Object.keys(liveProjectData).length,
+                    progressValues: Object.values(liveProjectData).map(p => ({
+                        id: p.id,
+                        title: p.title?.substring(0, 30),
+                        dbProgress: p.progress?.total,
+                        status: p.status
+                    })),
+                    withZeroProgress: Object.values(liveProjectData).filter(p => p.progress?.total === 0).length,
+                    avgProgress: Object.keys(liveProjectData).length > 0
+                        ? Math.round(Object.values(liveProjectData).reduce((sum, p) => sum + (p.progress?.total || 0), 0) / Object.keys(liveProjectData).length)
+                        : 0
+                });
+
                 updateV7ProjectsUI();
                 
             } catch (err) {
