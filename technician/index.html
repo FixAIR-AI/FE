@@ -11430,7 +11430,14 @@ INSTRUCTIONS:
                 extractedDataSaveTimeout = setTimeout(async () => {
                     // Calculate current progress
                     const completion = calculateReportCompletion(lastReportData);
-                    const progressValue = completion.percentage;
+                    const progressValue = Math.round(completion.percentage);
+
+                    // Debug logging
+                    console.log('🔄 Auto-save:', {
+                        projectId: currentProjectId,
+                        progress: progressValue,
+                        hasExtractedData: !!lastReportData
+                    });
 
                     // 1. Save to projects table (with progress)
                     const { error } = await db.from('projects')
@@ -11443,7 +11450,7 @@ INSTRUCTIONS:
                     if (error) {
                         console.error('[Drawer] Auto-save failed:', error);
                     } else {
-                        console.log('[Drawer] ✅ Auto-saved - Progress:', progressValue + '%');
+                        console.log('✅ Saved to DB - Progress:', progressValue + '%');
                     }
 
                     // 2. Save to reports table
