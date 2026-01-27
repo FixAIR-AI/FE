@@ -3650,6 +3650,40 @@
             }
         }
         
+        // Helper: Calculate duration from start/end times
+        function calculateDuration(startTime, endTime) {
+            if (!startTime || !endTime) return '--';
+            try {
+                const start = new Date(`1970-01-01T${startTime}`);
+                const end = new Date(`1970-01-01T${endTime}`);
+                const diffMs = end - start;
+                const diffMins = Math.round(diffMs / 60000);
+                if (diffMins < 60) return `${diffMins}m`;
+                const hours = Math.floor(diffMins / 60);
+                const mins = diffMins % 60;
+                return mins > 0 ? `${hours}h${mins}m` : `${hours}h`;
+            } catch (e) {
+                return '--';
+            }
+        }
+
+        // Helper: Parse error codes (handles JSON strings and objects in array)
+        function parseErrorCodes(codes) {
+            if (!codes || !Array.isArray(codes)) return [];
+            return codes.map(c => {
+                if (typeof c === 'string') {
+                    if (c.startsWith('{')) {
+                        try {
+                            const parsed = JSON.parse(c);
+                            return parsed.code || c;
+                        } catch { return c; }
+                    }
+                    return c;
+                }
+                return typeof c === 'object' ? (c.code || JSON.stringify(c)) : c;
+            }).filter(Boolean);
+        }
+
         // Helper: Calculate section progress based on extracted_data
         function calculateSectionProgress(p, section) {
             const extracted = p.report?.extracted || {};
@@ -3726,20 +3760,31 @@
                 <div style="background:var(--card-bg);border-radius:8px;padding:12px;margin-top:8px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
                         <span style="font-weight:600;font-size:13px;">${p.report?.equipment_brand || p.equipment || ''} ${p.report?.equipment_model || ''}</span>
-                        <span style="background:var(--accent-blue);color:white;padding:3px 8px;border-radius:10px;font-size:10px;">${p.report?.type || 'Intervention'}</span>
+                        <span style="background:var(--accent-orange);color:white;padding:3px 8px;border-radius:10px;font-size:10px;text-transform:capitalize;">${p.report?.type || 'Intervention'}</span>
                     </div>
+                    ${p.report?.client ? `
+                        <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">CLIENT</div>
+                        <div style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:10px;">${p.report.client}</div>
+                    ` : ''}
                     ${p.report?.problem_reported ? `
                         <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">PROBLÈME SIGNALÉ</div>
                         <div style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:10px;">${p.report.problem_reported}</div>
                     ` : ''}
-                    ${p.report?.error_codes?.length > 0 ? `
-                        <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">CODES ERREUR</div>
-                        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                            ${p.report.error_codes.map(code => `<span style="background:rgba(239,68,68,0.2);color:#ef4444;padding:3px 6px;border-radius:4px;font-size:11px;font-family:monospace;">${typeof code === 'object' ? code.code : code}</span>`).join('')}
-                        </div>
-                    ` : `
+                    ${(() => {
+                        const codes = parseErrorCodes(p.report?.error_codes);
+                        if (codes.length > 0) {
+                            return `
+                                <div style="color:var(--text-secondary);font-size:11px;margin-bottom:4px;">CODES ERREUR</div>
+                                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                                    ${codes.map(code => `<span style="background:rgba(239,68,68,0.2);color:#ef4444;padding:3px 6px;border-radius:4px;font-size:11px;font-family:monospace;font-weight:600;">${code}</span>`).join('')}
+                                </div>
+                            `;
+                        }
+                        return '';
+                    })()}
+                    ${!p.report?.problem_reported && parseErrorCodes(p.report?.error_codes).length === 0 ? `
                         <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:8px;">Rapport en cours...</div>
-                    `}
+                    ` : ''}
                 </div>
             </div>
             <div class="chat-card">
