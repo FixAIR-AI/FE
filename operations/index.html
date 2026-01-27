@@ -3606,10 +3606,13 @@
                 tech: proj.tech,
                 techId: proj.techId,
                 manager: tech.manager || 'Manager',
-                equipment: `${proj.equipment} ${proj.model || ''}`.trim(),
+                equipment: proj.equipment || proj.report?.equipment_brand || '',
+                model: proj.model || proj.report?.equipment_model || '',
+                client: proj.client || proj.report?.client || '',
+                address: proj.address || proj.report?.address || '',
                 priority: proj.status === 'review' ? 'Haute' : 'Normale',
                 team: proj.team,
-                address: proj.address || proj.client,
+                status: proj.status,
                 progress: {
                     total: proj.progress.total,
                     identification: proj.progress.total >= 25 ? 100 : proj.progress.total * 4,
@@ -3617,12 +3620,8 @@
                     mesures: proj.progress.total >= 75 ? 100 : Math.max(0, (proj.progress.total - 50) * 4),
                     conclusion: proj.progress.total >= 100 ? 100 : Math.max(0, (proj.progress.total - 75) * 4)
                 },
-                // Report preview data from Supabase
-                reportPreview: {
-                    equipment: `${proj.equipment} ${proj.model || ''}`.trim(),
-                    problem: proj.report.problem || 'En attente de diagnostic...',
-                    diagnostic: proj.report.actions || 'Rapport en cours...'
-                }
+                // IMPORTANT: Pass the report object with all the real data!
+                report: proj.report
             };
             
             // Use original V7 drawer
@@ -3776,6 +3775,13 @@
 
         // Build drawer content for live project data - SAME STRUCTURE AS V7
         function buildLiveProjectDrawerContent(p, tech) {
+            // Debug logging
+            console.log('🔧 Building drawer for:', p.name || p.title);
+            console.log('🔧 p.report:', p.report);
+            console.log('🔧 p.report?.client:', p.report?.client);
+            console.log('🔧 p.report?.equipment_brand:', p.report?.equipment_brand);
+            console.log('🔧 p.report?.error_codes:', p.report?.error_codes);
+
             const msgs = tech.messages && tech.messages.length ? 
                 tech.messages.map(m => `<div class="msg ${m.type === 'sent' ? 'user' : 'ai'}"><div class="msg-bubble">${m.text}</div><div class="msg-time">${m.time}</div></div>`).join('') : 
                 '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:12px;">Aucun message</div>';
