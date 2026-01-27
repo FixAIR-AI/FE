@@ -3919,6 +3919,18 @@
             `;
         }
 
+        // Helper: Deduplicate array by key or stringified value
+        function dedupeArray(arr, key = null) {
+            if (!Array.isArray(arr)) return arr;
+            const seen = new Set();
+            return arr.filter(item => {
+                const identifier = key ? (item[key] || JSON.stringify(item)) : JSON.stringify(item);
+                if (seen.has(identifier)) return false;
+                seen.add(identifier);
+                return true;
+            });
+        }
+
         // Helper: Build progress bar row
         function buildProgressRow(label, percent) {
             const color = percent === 100 ? 'var(--accent-green)' :
@@ -4119,31 +4131,40 @@
                     </div>
                 </div>
 
-                <!-- ADRESSAGE DU SYSTÈME (table) -->
+                <!-- ADRESSAGE DU SYSTÈME -->
                 ${(() => {
-                    const adressage = getReportField(p, 'adressage', 'unites');
-                    if (!adressage || !Array.isArray(adressage) || adressage.length === 0) return '';
+                    let unites = getReportField(p, 'adressage', 'unites');
+                    if (!unites || !Array.isArray(unites) || unites.length === 0) return '';
+
+                    // Deduplicate by address
+                    unites = dedupeArray(unites, 'adresse');
+
+                    // Limit to 30 max
+                    const displayUnits = unites.slice(0, 30);
+                    const hasMore = unites.length > 30;
+
                     return `
                     <div style="margin-bottom:20px;">
-                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">ADRESSAGE DU SYSTÈME</div>
-                        <div style="background:var(--card-bg);border-radius:8px;overflow:hidden;">
-                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:1px;background:rgba(255,255,255,0.1);font-size:11px;">
-                                <div style="background:var(--card-bg);padding:8px;color:var(--text-muted);">Réf. Usine</div>
-                                <div style="background:var(--card-bg);padding:8px;color:var(--text-muted);">N° Série</div>
-                                <div style="background:var(--card-bg);padding:8px;color:var(--text-muted);">Adresse</div>
-                                <div style="background:var(--card-bg);padding:8px;color:var(--text-muted);">Désignation</div>
-                                <div style="background:var(--card-bg);padding:8px;color:var(--text-muted);">Commentaire</div>
+                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">
+                            ADRESSAGE DU SYSTÈME ${unites.length > 30 ? `(${displayUnits.length}/${unites.length})` : `(${unites.length})`}
+                        </div>
+                        <div style="background:var(--card-bg);border-radius:8px;overflow:hidden;max-height:300px;overflow-y:auto;">
+                            <div style="display:grid;grid-template-columns:2fr 1fr 1fr 2fr;gap:1px;background:rgba(255,255,255,0.1);font-size:10px;position:sticky;top:0;">
+                                <div style="background:var(--card-bg);padding:6px 8px;color:var(--text-muted);">Réf. Usine</div>
+                                <div style="background:var(--card-bg);padding:6px 8px;color:var(--text-muted);">Adresse</div>
+                                <div style="background:var(--card-bg);padding:6px 8px;color:var(--text-muted);">Désignation</div>
+                                <div style="background:var(--card-bg);padding:6px 8px;color:var(--text-muted);">Commentaire</div>
                             </div>
-                            ${adressage.map(u => `
-                                <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:1px;background:rgba(255,255,255,0.05);font-size:12px;">
-                                    <div style="background:var(--card-bg);padding:8px;color:var(--text-primary);">${u.ref_usine || '-'}</div>
-                                    <div style="background:var(--card-bg);padding:8px;color:var(--text-primary);">${u.numero_serie || '-'}</div>
-                                    <div style="background:var(--card-bg);padding:8px;color:var(--text-primary);">${u.adresse || '-'}</div>
-                                    <div style="background:var(--card-bg);padding:8px;color:var(--text-primary);">${u.designation || '-'}</div>
-                                    <div style="background:var(--card-bg);padding:8px;color:var(--text-primary);">${u.commentaire || '-'}</div>
+                            ${displayUnits.map(u => `
+                                <div style="display:grid;grid-template-columns:2fr 1fr 1fr 2fr;gap:1px;background:rgba(255,255,255,0.03);font-size:11px;">
+                                    <div style="background:var(--card-bg);padding:6px 8px;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;">${u.ref_usine || u.reference || '-'}</div>
+                                    <div style="background:var(--card-bg);padding:6px 8px;color:var(--text-primary);">${u.adresse || '-'}</div>
+                                    <div style="background:var(--card-bg);padding:6px 8px;color:var(--text-primary);">${u.designation || '-'}</div>
+                                    <div style="background:var(--card-bg);padding:6px 8px;color:var(--text-muted);font-size:10px;">${u.commentaire || '-'}</div>
                                 </div>
                             `).join('')}
                         </div>
+                        ${hasMore ? `<div style="color:var(--text-muted);font-size:11px;text-align:center;padding:8px;">+ ${unites.length - 30} unités supplémentaires</div>` : ''}
                     </div>
                     `;
                 })()}
@@ -4184,20 +4205,46 @@
                 <!-- RELEVÉS & MESURES -->
                 ${(() => {
                     const mesures = getReportField(p, 'mesures', 'releves');
-                    if (!mesures || typeof mesures !== 'object' || Object.keys(mesures).length === 0) return '';
-                    return `
-                    <div style="margin-bottom:20px;">
-                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">RELEVÉS & MESURES</div>
-                        <div style="background:var(--card-bg);border-radius:8px;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                            ${Object.entries(mesures).map(([key, val]) => `
-                                <div>
-                                    <div style="color:var(--text-muted);font-size:10px;">${key.replace(/_/g, ' ')}</div>
-                                    <div style="color:var(--text-primary);font-size:13px;">${val || '-'}</div>
-                                </div>
-                            `).join('')}
+                    if (!mesures) return '';
+
+                    // Handle array of measurement objects
+                    if (Array.isArray(mesures)) {
+                        if (mesures.length === 0) return '';
+                        return `
+                        <div style="margin-bottom:20px;">
+                            <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">RELEVÉS & MESURES</div>
+                            <div style="background:var(--card-bg);border-radius:8px;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                                ${mesures.slice(0, 20).map(m => `
+                                    <div>
+                                        <div style="color:var(--text-muted);font-size:10px;">${m.label || m.nom || m.type || 'Mesure'}</div>
+                                        <div style="color:var(--text-primary);font-size:13px;">${m.value || m.valeur || '-'} ${m.unit || m.unite || ''}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
                         </div>
-                    </div>
-                    `;
+                        `;
+                    }
+
+                    // Handle object with key-value pairs
+                    if (typeof mesures === 'object') {
+                        const entries = Object.entries(mesures).filter(([k, v]) => v && typeof v !== 'object');
+                        if (entries.length === 0) return '';
+                        return `
+                        <div style="margin-bottom:20px;">
+                            <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">RELEVÉS & MESURES</div>
+                            <div style="background:var(--card-bg);border-radius:8px;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                                ${entries.slice(0, 20).map(([key, val]) => `
+                                    <div>
+                                        <div style="color:var(--text-muted);font-size:10px;">${key.replace(/_/g, ' ')}</div>
+                                        <div style="color:var(--text-primary);font-size:13px;">${val}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        `;
+                    }
+
+                    return '';
                 })()}
 
                 <!-- HEURES DE FONCTIONNEMENT -->
@@ -4230,13 +4277,20 @@
                 <!-- TRAVAUX EFFECTUÉS -->
                 ${(() => {
                     const solution = p.report?.solution;
-                    const travaux = getReportField(p, 'travaux_effectues');
-                    if (!solution && (!travaux || (Array.isArray(travaux) && travaux.length === 0))) return '';
+                    let travaux = getReportField(p, 'travaux_effectues');
+
+                    if (!solution && (!travaux || travaux.length === 0)) return '';
+
+                    // Deduplicate travaux
+                    if (Array.isArray(travaux)) {
+                        travaux = dedupeArray(travaux, 'texte');
+                    }
+
                     return `
                     <div style="margin-bottom:20px;">
                         <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">TRAVAUX EFFECTUÉS</div>
                         <div style="background:var(--card-bg);border-radius:8px;padding:12px;color:var(--text-primary);font-size:13px;line-height:1.5;">
-                            ${solution || (Array.isArray(travaux) ? travaux.map(t => t.texte || t).join(', ') : travaux) || '-'}
+                            ${solution || (Array.isArray(travaux) ? travaux.slice(0, 10).map(t => typeof t === 'string' ? t : (t.texte || t)).join(', ') : '-')}
                         </div>
                     </div>
                     `;
@@ -4244,15 +4298,22 @@
 
                 <!-- TRAVAUX À PRÉVOIR -->
                 ${(() => {
-                    const travaux = getReportField(p, 'travaux_prevoir', 'travaux_a_prevoir');
+                    let travaux = getReportField(p, 'travaux_prevoir', 'travaux_a_prevoir');
                     if (!travaux || !Array.isArray(travaux) || travaux.length === 0) return '';
+
+                    // Deduplicate
+                    travaux = dedupeArray(travaux, 'texte');
+
                     return `
                     <div style="margin-bottom:20px;">
-                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">TRAVAUX À PRÉVOIR</div>
-                        <div style="background:var(--card-bg);border-radius:8px;padding:12px;">
-                            ${travaux.map(t => `
-                                <div style="color:var(--text-primary);font-size:13px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">${t.texte || t}</div>
+                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">TRAVAUX À PRÉVOIR (${travaux.length})</div>
+                        <div style="background:var(--card-bg);border-radius:8px;padding:12px;max-height:200px;overflow-y:auto;">
+                            ${travaux.slice(0, 15).map(t => `
+                                <div style="color:var(--text-primary);font-size:13px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                                    • ${typeof t === 'string' ? t : (t.texte || t.description || JSON.stringify(t))}
+                                </div>
                             `).join('')}
+                            ${travaux.length > 15 ? `<div style="color:var(--text-muted);font-size:11px;padding-top:8px;">+ ${travaux.length - 15} autres</div>` : ''}
                         </div>
                     </div>
                     `;
@@ -4299,21 +4360,26 @@
 
                 <!-- RÉSERVES -->
                 ${(() => {
-                    const reserves = getReportField(p, 'reserves');
+                    let reserves = getReportField(p, 'reserves');
                     if (!reserves || !Array.isArray(reserves) || reserves.length === 0) return '';
+
+                    // Deduplicate by title
+                    reserves = dedupeArray(reserves, 'titre');
+
                     return `
                     <div style="margin-bottom:20px;">
-                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">RÉSERVES</div>
-                        <div style="background:var(--card-bg);border-radius:8px;padding:12px;">
-                            ${reserves.map(r => `
-                                <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-                                    <div style="width:4px;height:100%;min-height:24px;background:var(--accent-orange);border-radius:2px;"></div>
-                                    <div>
-                                        <div style="color:var(--accent-orange);font-size:12px;font-weight:600;">${r.titre || r.type || '-'}</div>
-                                        <div style="color:var(--text-primary);font-size:13px;">${r.description || r.texte || '-'}</div>
+                        <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">RÉSERVES (${reserves.length})</div>
+                        <div style="background:var(--card-bg);border-radius:8px;padding:12px;max-height:300px;overflow-y:auto;">
+                            ${reserves.slice(0, 20).map(r => `
+                                <div style="display:flex;align-items:flex-start;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                                    <div style="width:4px;min-height:24px;background:var(--accent-orange);border-radius:2px;flex-shrink:0;margin-top:2px;"></div>
+                                    <div style="flex:1;">
+                                        <div style="color:var(--accent-orange);font-size:12px;font-weight:600;">${r.titre || r.type || 'Réserve'}</div>
+                                        <div style="color:var(--text-primary);font-size:12px;margin-top:2px;">${r.description || r.texte || '-'}</div>
                                     </div>
                                 </div>
                             `).join('')}
+                            ${reserves.length > 20 ? `<div style="color:var(--text-muted);font-size:11px;text-align:center;padding-top:8px;">+ ${reserves.length - 20} autres réserves</div>` : ''}
                         </div>
                     </div>
                     `;
