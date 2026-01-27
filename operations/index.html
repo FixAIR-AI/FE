@@ -3225,7 +3225,7 @@
                         .select(`
                             *,
                             technician:user_id(id, first_name, last_name),
-                            report:reports(id, status, created_at, report_data)
+                            report:reports(id, status, created_at)
                         `)
                         .in('user_id', teamTechIds)
                         .order('updated_at', { ascending: false })
