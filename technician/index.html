@@ -11432,17 +11432,22 @@ INSTRUCTIONS:
                     const completion = calculateReportCompletion(lastReportData);
                     const progressValue = completion.percentage;
 
+                    // 1. Save to projects table (with progress)
                     const { error } = await db.from('projects')
                         .update({
                             extracted_data: lastReportData,
-                            progress: progressValue
+                            progress: progressValue,
+                            updated_at: new Date().toISOString()
                         })
                         .eq('id', currentProjectId);
                     if (error) {
                         console.error('[Drawer] Auto-save failed:', error);
                     } else {
-                        console.log('[Drawer] ✅ extracted_data auto-saved');
+                        console.log('[Drawer] ✅ Auto-saved - Progress:', progressValue + '%');
                     }
+
+                    // 2. Save to reports table
+                    await saveReportData(currentProjectId, lastReportData);
                 }, 1500);
             }
         }
@@ -12379,7 +12384,65 @@ RÈGLES:
                 // Error saving report
             }
         }
-        
+
+        // ═══ AUTO-SAVE REPORT DATA TO REPORTS TABLE ═══
+        async function saveReportData(projectId, reportData) {
+            if (!projectId || !reportData || !currentUserId) return;
+
+            try {
+                const completion = calculateReportCompletion(reportData);
+
+                // Check if report exists for this project
+                const { data: existingReport } = await db
+                    .from('reports')
+                    .select('id')
+                    .eq('project_id', projectId)
+                    .maybeSingle();
+
+                // Build report record from extracted_data
+                const reportRecord = {
+                    project_id: projectId,
+                    user_id: currentUserId,
+                    status: completion.percentage >= 80 ? 'completed' : 'draft',
+                    title: reportData.reference || `Rapport ${projectId}`,
+                    report_type: reportData.type_intervention || 'MAINT',
+                    equipment_brand: reportData.brand_key || brand || null,
+                    equipment_model: reportData.systeme?.modele || null,
+                    equipment_type: reportData.systeme?.type || null,
+                    problem_reported: reportData.resume || null,
+                    problem_identified: reportData.resultat?.description || null,
+                    solution_description: reportData.rapport_technicien || null,
+                    error_codes: reportData.codes_defaut || [],
+                    actions_performed: reportData.travaux_effectues || [],
+                    client_name: reportData.client?.societe || null,
+                    client_address: reportData.site?.adresse ? `${reportData.site.adresse}${reportData.site.ville ? ', ' + reportData.site.ville : ''}` : null,
+                    updated_at: new Date().toISOString()
+                };
+
+                if (existingReport) {
+                    // Update existing report
+                    const { error } = await db
+                        .from('reports')
+                        .update(reportRecord)
+                        .eq('id', existingReport.id);
+
+                    if (error) console.error('[Reports] Update failed:', error);
+                    else console.log('[Reports] ✅ Report updated');
+                } else {
+                    // Create new report
+                    reportRecord.created_at = new Date().toISOString();
+                    const { error } = await db
+                        .from('reports')
+                        .insert(reportRecord);
+
+                    if (error) console.error('[Reports] Insert failed:', error);
+                    else console.log('[Reports] ✅ Report created');
+                }
+            } catch (e) {
+                console.error('[Reports] saveReportData error:', e);
+            }
+        }
+
         // Get voice intensity from analyser
         function getVoiceIntensity(panel) {
             const analyser = analysers[panel];
