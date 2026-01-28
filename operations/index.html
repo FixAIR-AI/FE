@@ -3996,7 +3996,7 @@
                     <span style="color:var(--accent-blue);font-weight:600;font-size:16px;">${p.progress?.total || 0}%</span>
                 </div>
             </div>
-            <div class="report-scroll-container" style="background:rgba(80,150,255,0.03);border:1px solid rgba(80,150,255,0.1);border-radius:12px;padding:16px;flex:1;max-height:calc(100vh - 300px);min-height:400px;overflow-y:auto;" onscroll="this.classList.add('is-scrolling');clearTimeout(this._st);this._st=setTimeout(()=>this.classList.remove('is-scrolling'),1500)">
+            <div class="report-scroll-container" style="background:rgba(80,150,255,0.03);border:1px solid rgba(80,150,255,0.1);border-radius:12px;padding:16px;flex:1;max-height:calc(100vh - 300px);min-height:400px;overflow-y:auto;margin-bottom:20px;" onscroll="this.classList.add('is-scrolling');clearTimeout(this._st);this._st=setTimeout(()=>this.classList.remove('is-scrolling'),1500)">
 
                 <div style="color:var(--accent-blue);font-size:11px;font-weight:600;letter-spacing:0.5px;margin-bottom:16px;">APERÇU DU RAPPORT</div>
 
@@ -4574,6 +4574,13 @@
                 </div>
 
             </div>
+            <!-- END APERÇU DU RAPPORT -->
+
+            <!-- SEPARATOR -->
+            <div style="height:1px;background:linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);margin:8px 0 16px 0;"></div>
+
+            <!-- CHAT SECTION -->
+            <div style="color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:12px;">COMMUNICATION</div>
             <div class="chat-card">
                 <div class="chat-card-header">
                     <div class="chat-card-avatar">${tech.initials}</div>
