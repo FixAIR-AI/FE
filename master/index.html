@@ -3789,7 +3789,7 @@
         function showLoginScreen() {
             document.getElementById('loginScreen').classList.add('active');
             document.getElementById('accessDeniedScreen').classList.remove('active');
-            document.getElementById('mainApp').classList.remove('active');
+            document.getElementById('homeWrapper').classList.remove('active');
             loginStep = 0;
             updateLoginUI();
             clearLoginStatus();
@@ -3798,14 +3798,14 @@
         function showAccessDeniedScreen(email) {
             document.getElementById('accessDeniedEmail').textContent = email;
             document.getElementById('loginScreen').classList.remove('active');
-            document.getElementById('mainApp').classList.remove('active');
+            document.getElementById('homeWrapper').classList.remove('active');
             document.getElementById('accessDeniedScreen').classList.add('active');
         }
 
         function showMainApp(profile) {
             document.getElementById('loginScreen').classList.remove('active');
             document.getElementById('accessDeniedScreen').classList.remove('active');
-            document.getElementById('mainApp').classList.add('active');
+            document.getElementById('homeWrapper').classList.add('active');
 
             // Update UI with profile info
             const firstName = profile?.first_name || profile?.email?.split('@')[0] || 'Admin';
