@@ -1447,8 +1447,12 @@
                 allUsers = await supabaseQuery('users', { select: '*', order: 'created_at.desc' });
                 allProjects = await supabaseQuery('projects', { select: '*', order: 'updated_at.desc' });
                 allChats = await supabaseQuery('chats', { select: '*', order: 'started_at.desc' });
-                allMessages = await supabaseQuery('messages', { select: '*', order: 'created_at.asc', limit: '2000' });
-                
+                // Messages are now loaded on-demand per project (see loadProjectMessages)
+                allMessages = [];
+
+                // Initialize messages cache
+                window.projectMessagesCache = {};
+
                 // Separate enterprises and technicians
                 // Enterprise = role is 'admin' AND has company_name
                 // Technician = everyone else (role is 'technician' or no role, or no company_name)
@@ -1465,13 +1469,13 @@
                     return role !== 'admin' || !hasCompany;
                 });
                 
-                console.log('Data loaded:', { 
-                    users: allUsers.length, 
-                    enterprises: allEnterprises.length, 
+                console.log('Data loaded:', {
+                    users: allUsers.length,
+                    enterprises: allEnterprises.length,
                     technicians: allTechnicians.length,
-                    projects: allProjects.length, 
-                    chats: allChats.length, 
-                    messages: allMessages.length 
+                    projects: allProjects.length,
+                    chats: allChats.length,
+                    messages: '(loaded on-demand)'
                 });
                 
                 // Debug: show enterprise detection
@@ -1486,7 +1490,6 @@
                     const admins = allUsers.filter(u => (u.role || '').toLowerCase() === 'admin');
                     console.log('Admins:', admins.map(a => ({ email: a.email, role: a.role, company: a.company_name })));
                 }
-
                 // ═══ EXPOSE TO WINDOW FOR GLOBAL ACCESS ═══
                 window.allUsers = allUsers;
                 window.allProjects = allProjects;
@@ -1502,6 +1505,56 @@
             } catch (error) {
                 console.error('Error:', error);
                 setConnectionStatus('error');
+            }
+        }
+
+        // ═══ ON-DEMAND MESSAGE LOADING ═══
+        async function loadProjectMessages(projectId) {
+            // Check cache first
+            if (window.projectMessagesCache && window.projectMessagesCache[projectId]) {
+                console.log('📦 Messages from cache for project:', projectId);
+                return window.projectMessagesCache[projectId];
+            }
+
+            // Get all chats for this project
+            const projectChats = allChats.filter(c => c.project_id === projectId);
+            const chatIds = projectChats.map(c => c.id);
+
+            if (chatIds.length === 0) {
+                console.log('⚠️ No chats found for project:', projectId);
+                return [];
+            }
+
+            console.log('🔄 Loading messages for project:', projectId, 'chats:', chatIds.length);
+
+            try {
+                // Load messages for all chats in this project
+                // Using Supabase REST API with 'in' filter
+                const chatIdList = chatIds.join(',');
+                const url = `${SUPABASE_URL}/rest/v1/messages?chat_id=in.(${chatIdList})&order=created_at.asc`;
+                const response = await fetch(url, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+
+                if (!response.ok) {
+                    console.error('Failed to load messages:', response.status);
+                    return [];
+                }
+
+                const messages = await response.json();
+                console.log('✅ Loaded', messages.length, 'messages for project:', projectId);
+
+                // Cache the results
+                if (!window.projectMessagesCache) window.projectMessagesCache = {};
+                window.projectMessagesCache[projectId] = messages;
+
+                return messages;
+            } catch (error) {
+                console.error('Error loading project messages:', error);
+                return [];
             }
         }
 
@@ -2682,7 +2735,7 @@
         }
 
         // ═══ PROJECT VIEW ═══
-        function openProjectView(projectId) {
+        async function openProjectView(projectId) {
             currentProjectId = projectId;
             const project = allProjects.find(p => p.id === projectId);
             if (!project) return;
@@ -2693,18 +2746,25 @@
             const copilotChat = projectChats.find(c => c.type === 'copilot' || c.chat_type === 'copilot');
             const assistantChat = projectChats.find(c => c.type === 'assistant' || c.chat_type === 'assistant');
 
-            // Debug logging
-            console.log('🔍 openProjectView:', projectId);
-            console.log('🔍 allChats total:', allChats.length, 'projectChats:', projectChats.length);
-            console.log('🔍 Chat types found:', projectChats.map(c => ({ id: c.id, type: c.type, chat_type: c.chat_type })));
-            console.log('🔍 copilotChat:', copilotChat?.id, 'assistantChat:', assistantChat?.id);
-
             const brand = project.brand || 'Multi-marques';
-            document.getElementById('copilotBrand').textContent = brand;
-            document.getElementById('assistantBrand').textContent = brand;
+            const copilotBrandEl = document.getElementById('copilotBrand');
+            const assistantBrandEl = document.getElementById('assistantBrand');
+            if (copilotBrandEl) copilotBrandEl.textContent = brand;
+            if (assistantBrandEl) assistantBrandEl.textContent = brand;
 
-            renderChatMessages('copilot', copilotChat);
-            renderChatMessages('assistant', assistantChat);
+            // Show loading indicator
+            const copilotBody = document.getElementById('copilotBody');
+            const assistantBody = document.getElementById('assistantBody');
+            if (copilotBody) copilotBody.innerHTML = '<div class="chat-loading" style="text-align:center;padding:40px;color:var(--text-dim);"><div style="font-size:24px;margin-bottom:8px;">⏳</div>Chargement des messages...</div>';
+            if (assistantBody) assistantBody.innerHTML = '<div class="chat-loading" style="text-align:center;padding:40px;color:var(--text-dim);"><div style="font-size:24px;margin-bottom:8px;">⏳</div>Chargement des messages...</div>';
+
+            // Load messages on-demand
+            const projectMessages = await loadProjectMessages(projectId);
+            console.log('🔍 Project messages loaded:', projectMessages.length);
+
+            // Render chats with loaded messages
+            renderChatMessages('copilot', copilotChat, projectMessages);
+            renderChatMessages('assistant', assistantChat, projectMessages);
 
             const hasBoth = copilotChat && assistantChat;
             if (hasBoth) {
@@ -2723,29 +2783,26 @@
             document.getElementById('projectViewOverlay').classList.add('active');
         }
 
-        function renderChatMessages(type, chat) {
+        function renderChatMessages(type, chat, projectMessages = null) {
             const body = document.getElementById(type + 'Body');
+            if (!body) return;
+
             const modeName = type === 'copilot' ? 'Copilot' : 'Assistant';
             const modeColor = type === 'copilot' ? 'var(--copilot)' : 'var(--assistant)';
 
-            // Debug logging
-            console.log('🔍 renderChatMessages:', type, 'chat:', chat?.id);
-            console.log('🔍 allMessages available:', typeof allMessages, 'length:', allMessages?.length || 0);
-
             if (!chat) {
-                console.log('⚠️ No chat found for type:', type);
                 body.innerHTML = `<div class="chat-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><div>Aucun message ${modeName}</div></div>`;
                 return;
             }
 
-            const messages = allMessages.filter(m => m.chat_id === chat.id);
-            console.log('🔍 Messages for chat', chat.id, ':', messages.length);
+            // Use provided messages or fall back to global allMessages
+            const sourceMessages = projectMessages || allMessages || [];
+            const messages = sourceMessages.filter(m => m.chat_id === chat.id);
+            console.log('🔍 renderChatMessages:', type, 'chat:', chat.id, 'messages:', messages.length, 'from source:', sourceMessages.length);
             if (messages.length === 0) {
-                console.log('⚠️ No messages found for chat:', chat.id);
                 body.innerHTML = `<div class="chat-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><div>Aucun message</div></div>`;
                 return;
             }
-            console.log('✅ Rendering', messages.length, 'messages for', type);
 
             body.innerHTML = messages.map(m => {
                 const role = m.role || m.sender || 'user';
@@ -3810,30 +3867,46 @@
 
         // ═══ SCREEN HELPERS ═══
         function showLoginScreen() {
-            document.getElementById('loginScreen').classList.add('active');
-            document.getElementById('accessDeniedScreen').classList.remove('active');
-            document.getElementById('homeWrapper').classList.remove('active');
+            const loginScreen = document.getElementById('loginScreen');
+            const accessDeniedScreen = document.getElementById('accessDeniedScreen');
+            const homeWrapper = document.getElementById('homeWrapper');
+
+            if (loginScreen) loginScreen.classList.add('active');
+            if (accessDeniedScreen) accessDeniedScreen.classList.remove('active');
+            if (homeWrapper) homeWrapper.classList.remove('active');
             loginStep = 0;
             updateLoginUI();
             clearLoginStatus();
         }
 
         function showAccessDeniedScreen(email) {
-            document.getElementById('accessDeniedEmail').textContent = email;
-            document.getElementById('loginScreen').classList.remove('active');
-            document.getElementById('homeWrapper').classList.remove('active');
-            document.getElementById('accessDeniedScreen').classList.add('active');
+            const accessDeniedEmail = document.getElementById('accessDeniedEmail');
+            const loginScreen = document.getElementById('loginScreen');
+            const homeWrapper = document.getElementById('homeWrapper');
+            const accessDeniedScreen = document.getElementById('accessDeniedScreen');
+
+            if (accessDeniedEmail) accessDeniedEmail.textContent = email;
+            if (loginScreen) loginScreen.classList.remove('active');
+            if (homeWrapper) homeWrapper.classList.remove('active');
+            if (accessDeniedScreen) accessDeniedScreen.classList.add('active');
         }
 
         function showMainApp(profile) {
-            document.getElementById('loginScreen').classList.remove('active');
-            document.getElementById('accessDeniedScreen').classList.remove('active');
-            document.getElementById('homeWrapper').classList.add('active');
+            const loginScreen = document.getElementById('loginScreen');
+            const accessDeniedScreen = document.getElementById('accessDeniedScreen');
+            const homeWrapper = document.getElementById('homeWrapper');
+
+            if (loginScreen) loginScreen.classList.remove('active');
+            if (accessDeniedScreen) accessDeniedScreen.classList.remove('active');
+            if (homeWrapper) homeWrapper.classList.add('active');
 
             // Update UI with profile info
             const firstName = profile?.first_name || profile?.email?.split('@')[0] || 'Admin';
-            document.getElementById('userName').textContent = firstName;
-            document.getElementById('userAvatar').textContent = firstName.charAt(0).toUpperCase();
+            const userNameEl = document.getElementById('userName');
+            const userAvatarEl = document.getElementById('userAvatar');
+
+            if (userNameEl) userNameEl.textContent = firstName;
+            if (userAvatarEl) userAvatarEl.textContent = firstName.charAt(0).toUpperCase();
 
             toast('Bienvenue ' + firstName + ' !');
         }
