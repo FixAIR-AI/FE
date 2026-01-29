@@ -1486,6 +1486,15 @@
                     const admins = allUsers.filter(u => (u.role || '').toLowerCase() === 'admin');
                     console.log('Admins:', admins.map(a => ({ email: a.email, role: a.role, company: a.company_name })));
                 }
+
+                // ═══ EXPOSE TO WINDOW FOR GLOBAL ACCESS ═══
+                window.allUsers = allUsers;
+                window.allProjects = allProjects;
+                window.allChats = allChats;
+                window.allMessages = allMessages;
+                window.allEnterprises = allEnterprises;
+                window.allTechnicians = allTechnicians;
+
                 setConnectionStatus('connected');
                 updateDashboard();
                 updateSettingsPage();
@@ -2684,6 +2693,12 @@
             const copilotChat = projectChats.find(c => c.type === 'copilot' || c.chat_type === 'copilot');
             const assistantChat = projectChats.find(c => c.type === 'assistant' || c.chat_type === 'assistant');
 
+            // Debug logging
+            console.log('🔍 openProjectView:', projectId);
+            console.log('🔍 allChats total:', allChats.length, 'projectChats:', projectChats.length);
+            console.log('🔍 Chat types found:', projectChats.map(c => ({ id: c.id, type: c.type, chat_type: c.chat_type })));
+            console.log('🔍 copilotChat:', copilotChat?.id, 'assistantChat:', assistantChat?.id);
+
             const brand = project.brand || 'Multi-marques';
             document.getElementById('copilotBrand').textContent = brand;
             document.getElementById('assistantBrand').textContent = brand;
@@ -2712,17 +2727,25 @@
             const body = document.getElementById(type + 'Body');
             const modeName = type === 'copilot' ? 'Copilot' : 'Assistant';
             const modeColor = type === 'copilot' ? 'var(--copilot)' : 'var(--assistant)';
-            
+
+            // Debug logging
+            console.log('🔍 renderChatMessages:', type, 'chat:', chat?.id);
+            console.log('🔍 allMessages available:', typeof allMessages, 'length:', allMessages?.length || 0);
+
             if (!chat) {
+                console.log('⚠️ No chat found for type:', type);
                 body.innerHTML = `<div class="chat-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><div>Aucun message ${modeName}</div></div>`;
                 return;
             }
 
             const messages = allMessages.filter(m => m.chat_id === chat.id);
+            console.log('🔍 Messages for chat', chat.id, ':', messages.length);
             if (messages.length === 0) {
+                console.log('⚠️ No messages found for chat:', chat.id);
                 body.innerHTML = `<div class="chat-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><div>Aucun message</div></div>`;
                 return;
             }
+            console.log('✅ Rendering', messages.length, 'messages for', type);
 
             body.innerHTML = messages.map(m => {
                 const role = m.role || m.sender || 'user';
