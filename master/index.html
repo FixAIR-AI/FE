@@ -4056,14 +4056,29 @@
                     return;
                 }
 
-                toast('Magic link envoyé à ' + email);
-                if (buttonEl) {
-                    buttonEl.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;">✓ Envoyé</span>';
-                    setTimeout(() => {
+                // Parse response and open magic link
+                const data = await response.json();
+                const result = Array.isArray(data) ? data[0] : data;
+                const magicLink = result.action_link;
+
+                if (magicLink) {
+                    console.log('Opening magic link:', magicLink);
+                    window.open(magicLink, '_blank');
+                    if (buttonEl) {
+                        buttonEl.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;">✓ Ouvert!</span>';
+                        setTimeout(() => {
+                            buttonEl.disabled = false;
+                            buttonEl.classList.remove('loading');
+                            buttonEl.innerHTML = originalText;
+                        }, 3000);
+                    }
+                } else {
+                    toast('Erreur: Magic link non reçu');
+                    if (buttonEl) {
                         buttonEl.disabled = false;
                         buttonEl.classList.remove('loading');
                         buttonEl.innerHTML = originalText;
-                    }, 3000);
+                    }
                 }
             } catch (err) {
                 console.error('Access account error:', err);
