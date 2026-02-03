@@ -6372,6 +6372,81 @@
             alert('Erreur: Supabase non chargé. Veuillez rafraîchir la page.');
         }
 
+        // ═══ MAGIC LINK CALLBACK HANDLER ═══
+        // Parse URL hash for auth tokens (magic link, recovery, signup confirmation)
+        function parseHashParams(hash) {
+            if (!hash || hash.length < 2) return {};
+            const params = {};
+            const hashContent = hash.substring(1); // Remove #
+            const pairs = hashContent.split('&');
+            for (const pair of pairs) {
+                const [key, value] = pair.split('=');
+                if (key && value) {
+                    params[decodeURIComponent(key)] = decodeURIComponent(value);
+                }
+            }
+            return params;
+        }
+
+        async function handleMagicLinkCallback() {
+            const hash = window.location.hash;
+            if (!hash) return false;
+
+            const hashParams = parseHashParams(hash);
+            const hasAccessToken = !!hashParams.access_token;
+            const hasRefreshToken = !!hashParams.refresh_token;
+            const tokenType = hashParams.type; // 'recovery', 'signup', 'magiclink', etc.
+
+            if (!hasAccessToken) return false;
+
+            console.log('=== MAGIC LINK CALLBACK ===');
+            console.log('Token type:', tokenType);
+
+            // Clean URL hash BEFORE setting session (prevents Supabase from processing it again)
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+
+            try {
+                // Set the session using the tokens from the URL
+                const { data, error } = await db.auth.setSession({
+                    access_token: hashParams.access_token,
+                    refresh_token: hashParams.refresh_token || hashParams.access_token
+                });
+
+                if (error) {
+                    console.error('Magic link session error:', error);
+                    return false;
+                }
+
+                if (data.session && data.session.user) {
+                    console.log('Magic link auth successful, user:', data.session.user.id);
+
+                    // Persist session to localStorage for reliability
+                    localStorage.setItem('fixair-tech-auth', JSON.stringify({
+                        currentSession: data.session,
+                        expiresAt: data.session.expires_at
+                    }));
+
+                    // Handle recovery links - redirect to /auth for password reset
+                    if (tokenType === 'recovery') {
+                        console.log('Recovery link - redirecting to /auth');
+                        window.location.href = '/auth#' + hash.substring(1);
+                        return true;
+                    }
+
+                    // For magic link or signup confirmation, redirect to dashboard with user ID
+                    const userId = data.session.user.id;
+                    const newUrl = '/technician/?user=' + userId;
+                    console.log('Redirecting to:', newUrl);
+                    window.location.href = newUrl;
+                    return true;
+                }
+            } catch (err) {
+                console.error('Magic link callback error:', err);
+            }
+
+            return false;
+        }
+
         // Helper to wait for Supabase to be ready
         async function waitForSupabase() {
             if (supabaseReady && db) return db;
@@ -7025,6 +7100,13 @@
         // ═══ APP INITIALIZATION ═══
         async function init() {
             console.log('=== TECHNICIAN APP INIT ===');
+
+            // Handle magic link callback first (auth tokens in URL hash)
+            const handledMagicLink = await handleMagicLinkCallback();
+            if (handledMagicLink) {
+                // Magic link is being processed, page will redirect
+                return;
+            }
 
             // Initialize router for back/forward support
             Router.init();
