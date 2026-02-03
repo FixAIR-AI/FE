@@ -2531,7 +2531,7 @@
                 const data = await response.json();
 
                 // Récupérer le magic link
-                const magicLink = data.properties?.action_link;
+                const magicLink = data.action_link || data.properties?.action_link;
 
                 if (!magicLink) {
                     throw new Error('Magic link non reçu. Vérifiez que l\'email existe dans Supabase.');
