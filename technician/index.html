@@ -4935,6 +4935,17 @@
 .tp-loading-step{opacity:0;transform:translateY(4px);transition:all 0.25s ease}
 .tp-loading-step.tp-visible{opacity:1;transform:translateY(0)}
 /* ===== END THOUGHT PROCESS CSS ===== */
+
+/* ===== REPORT COMPLETION STATE CSS ===== */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.completion-overlay {
+    animation: fadeIn 0.2s ease;
+}
+/* ===== END REPORT COMPLETION STATE CSS ===== */
     </style>
     
     <!-- Supabase Client -->
@@ -5627,8 +5638,7 @@
             </div>
         </div>
         <div class="report-footer">
-            <button class="r-btn secondary" onclick="shareReport()"><span class="icon"><svg><use href="#icon-share"/></svg></span>Partager</button>
-            <button class="r-btn primary" onclick="exportReportPDF()"><span class="icon"><svg><use href="#icon-download"/></svg></span>Exporter PDF</button>
+            <button class="r-btn primary" onclick="showCompletionPopup()" style="flex: 1;">✓ Compléter le rapport</button>
         </div>
     </div>
 
@@ -6362,6 +6372,81 @@
             alert('Erreur: Supabase non chargé. Veuillez rafraîchir la page.');
         }
 
+        // ═══ MAGIC LINK CALLBACK HANDLER ═══
+        // Parse URL hash for auth tokens (magic link, recovery, signup confirmation)
+        function parseHashParams(hash) {
+            if (!hash || hash.length < 2) return {};
+            const params = {};
+            const hashContent = hash.substring(1); // Remove #
+            const pairs = hashContent.split('&');
+            for (const pair of pairs) {
+                const [key, value] = pair.split('=');
+                if (key && value) {
+                    params[decodeURIComponent(key)] = decodeURIComponent(value);
+                }
+            }
+            return params;
+        }
+
+        async function handleMagicLinkCallback() {
+            const hash = window.location.hash;
+            if (!hash) return false;
+
+            const hashParams = parseHashParams(hash);
+            const hasAccessToken = !!hashParams.access_token;
+            const hasRefreshToken = !!hashParams.refresh_token;
+            const tokenType = hashParams.type; // 'recovery', 'signup', 'magiclink', etc.
+
+            if (!hasAccessToken) return false;
+
+            console.log('=== MAGIC LINK CALLBACK ===');
+            console.log('Token type:', tokenType);
+
+            // Clean URL hash BEFORE setting session (prevents Supabase from processing it again)
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+
+            try {
+                // Set the session using the tokens from the URL
+                const { data, error } = await db.auth.setSession({
+                    access_token: hashParams.access_token,
+                    refresh_token: hashParams.refresh_token || hashParams.access_token
+                });
+
+                if (error) {
+                    console.error('Magic link session error:', error);
+                    return false;
+                }
+
+                if (data.session && data.session.user) {
+                    console.log('Magic link auth successful, user:', data.session.user.id);
+
+                    // Persist session to localStorage for reliability
+                    localStorage.setItem('fixair-tech-auth', JSON.stringify({
+                        currentSession: data.session,
+                        expiresAt: data.session.expires_at
+                    }));
+
+                    // Handle recovery links - redirect to /auth for password reset
+                    if (tokenType === 'recovery') {
+                        console.log('Recovery link - redirecting to /auth');
+                        window.location.href = '/auth#' + hash.substring(1);
+                        return true;
+                    }
+
+                    // For magic link or signup confirmation, redirect to dashboard with user ID
+                    const userId = data.session.user.id;
+                    const newUrl = '/technician/?user=' + userId;
+                    console.log('Redirecting to:', newUrl);
+                    window.location.href = newUrl;
+                    return true;
+                }
+            } catch (err) {
+                console.error('Magic link callback error:', err);
+            }
+
+            return false;
+        }
+
         // Helper to wait for Supabase to be ready
         async function waitForSupabase() {
             if (supabaseReady && db) return db;
@@ -6385,6 +6470,437 @@
                 t.classList.remove('show');
                 toastTimeout = null;
             }, 2000);
+        }
+
+        // ============================================
+        // REPORT COMPLETION STATE MANAGEMENT
+        // ============================================
+        const REPORT_STATUS = {
+            IN_PROGRESS: 'in_progress',
+            COMPLETED: 'completed'
+        };
+
+        let reportCompletionState = {
+            status: REPORT_STATUS.IN_PROGRESS,
+            isLocked: false
+        };
+
+        // ============================================
+        // FIELD LOCKING (no visual icons)
+        // ============================================
+        function lockReportFields() {
+            reportCompletionState.isLocked = true;
+
+            // Lock all editable fields by removing contenteditable
+            document.querySelectorAll('.editable-field').forEach(field => {
+                field.setAttribute('data-was-editable', 'true');
+                field.setAttribute('contenteditable', 'false');
+                field.style.cursor = 'default';
+                field.addEventListener('click', onLockedFieldClick);
+            });
+
+            // Also lock any input/textarea/select
+            document.querySelectorAll('#report-content input, #report-content textarea, #report-content select').forEach(field => {
+                field.disabled = true;
+                field.addEventListener('click', onLockedFieldClick);
+            });
+        }
+
+        function unlockReportFields() {
+            reportCompletionState.isLocked = false;
+
+            // Restore contenteditable
+            document.querySelectorAll('[data-was-editable="true"]').forEach(field => {
+                field.setAttribute('contenteditable', 'true');
+                field.style.cursor = '';
+                field.removeEventListener('click', onLockedFieldClick);
+            });
+
+            // Unlock inputs
+            document.querySelectorAll('#report-content input, #report-content textarea, #report-content select').forEach(field => {
+                field.disabled = false;
+                field.removeEventListener('click', onLockedFieldClick);
+            });
+        }
+
+        function onLockedFieldClick(e) {
+            if (reportCompletionState.isLocked) {
+                e.preventDefault();
+                e.stopPropagation();
+                showSubtleToast('Pour modifier, cliquez sur "Modifier le rapport"');
+            }
+        }
+
+        // Subtle toast (different from existing toast - appears at bottom, more discreet)
+        function showSubtleToast(message) {
+            const existing = document.querySelector('.subtle-toast');
+            if (existing) existing.remove();
+
+            const toastEl = document.createElement('div');
+            toastEl.className = 'subtle-toast';
+            toastEl.innerHTML = '💡 ' + message;
+            toastEl.style.cssText = `
+                position: fixed;
+                bottom: 100px;
+                left: 50%;
+                transform: translateX(-50%) translateY(20px);
+                background: rgba(20, 20, 30, 0.95);
+                color: rgba(255, 255, 255, 0.8);
+                padding: 12px 20px;
+                border-radius: 10px;
+                font-size: 13px;
+                opacity: 0;
+                transition: all 0.3s ease;
+                z-index: 10001;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                pointer-events: none;
+            `;
+            document.body.appendChild(toastEl);
+
+            requestAnimationFrame(() => {
+                toastEl.style.opacity = '1';
+                toastEl.style.transform = 'translateX(-50%) translateY(0)';
+            });
+
+            setTimeout(() => {
+                toastEl.style.opacity = '0';
+                toastEl.style.transform = 'translateX(-50%) translateY(20px)';
+                setTimeout(() => toastEl.remove(), 300);
+            }, 3000);
+        }
+
+        // ============================================
+        // COMPLETION POPUP & ACTIONS
+        // ============================================
+        function showCompletionPopup() {
+            const completion = calculateReportCompletion(lastReportData || {});
+            const progress = completion.percentage || 0;
+
+            const overlay = document.createElement('div');
+            overlay.className = 'completion-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.85);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10002;
+                animation: fadeIn 0.2s ease;
+            `;
+
+            overlay.innerHTML = `
+                <div style="
+                    background: linear-gradient(145deg, rgba(30,30,45,0.98), rgba(20,20,35,0.98));
+                    border-radius: 20px;
+                    padding: 36px;
+                    max-width: 380px;
+                    text-align: center;
+                    border: 1px solid rgba(255,255,255,0.1);
+                    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+                ">
+                    <h3 style="margin: 0 0 24px; color: #fff; font-size: 18px; font-weight: 600;">
+                        📋 Finaliser le rapport ?
+                    </h3>
+
+                    <div style="
+                        width: 110px;
+                        height: 110px;
+                        border-radius: 50%;
+                        background: rgba(245, 166, 35, 0.1);
+                        border: 4px solid #f5a623;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        margin: 0 auto 24px;
+                    ">
+                        <span style="font-size: 32px; font-weight: 700; color: #f5a623;">${progress}%</span>
+                        <span style="font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 2px;">Complété</span>
+                    </div>
+
+                    <p style="
+                        color: rgba(255, 255, 255, 0.6);
+                        font-size: 13px;
+                        margin-bottom: 28px;
+                        line-height: 1.6;
+                    ">
+                        Une fois terminé, le rapport sera verrouillé.<br>
+                        Vous pourrez le modifier plus tard si nécessaire.
+                    </p>
+
+                    <div style="display: flex; gap: 12px;">
+                        <button onclick="closeCompletionPopup()" style="
+                            flex: 1;
+                            padding: 14px;
+                            border-radius: 10px;
+                            background: rgba(255, 255, 255, 0.08);
+                            color: rgba(255, 255, 255, 0.7);
+                            border: 1px solid rgba(255, 255, 255, 0.1);
+                            cursor: pointer;
+                            font-size: 14px;
+                            font-weight: 500;
+                            transition: all 0.2s;
+                        " onmouseover="this.style.background='rgba(255,255,255,0.12)'"
+                          onmouseout="this.style.background='rgba(255,255,255,0.08)'">
+                            Annuler
+                        </button>
+                        <button onclick="confirmReportCompletion()" style="
+                            flex: 1;
+                            padding: 14px;
+                            border-radius: 10px;
+                            background: linear-gradient(135deg, #f5a623, #e6951c);
+                            color: white;
+                            border: none;
+                            cursor: pointer;
+                            font-size: 14px;
+                            font-weight: 600;
+                            transition: all 0.2s;
+                            box-shadow: 0 4px 15px rgba(245, 166, 35, 0.3);
+                        " onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 20px rgba(245,166,35,0.4)'"
+                          onmouseout="this.style.transform='';this.style.boxShadow='0 4px 15px rgba(245,166,35,0.3)'">
+                            ✓ Terminer
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+
+            // Close on backdrop click
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) closeCompletionPopup();
+            });
+        }
+
+        function closeCompletionPopup() {
+            document.querySelector('.completion-overlay')?.remove();
+        }
+
+        async function confirmReportCompletion() {
+            closeCompletionPopup();
+
+            reportCompletionState.status = REPORT_STATUS.COMPLETED;
+            reportCompletionState.isLocked = true;
+
+            // Save to Supabase
+            try {
+                await db
+                    .from('projects')
+                    .update({
+                        completion_status: 'completed',
+                        progress: 100,
+                        completed_at: new Date().toISOString()
+                    })
+                    .eq('id', currentProjectId);
+
+                lockReportFields();
+                updateReportFooterButtons();
+
+                toast('✓ Rapport terminé');
+            } catch (err) {
+                console.error('Error completing report:', err);
+                toast('Erreur lors de la finalisation');
+            }
+        }
+
+        async function modifyReport() {
+            reportCompletionState.status = REPORT_STATUS.IN_PROGRESS;
+            reportCompletionState.isLocked = false;
+
+            // Recalculate progress
+            const completion = calculateReportCompletion(lastReportData || {});
+
+            try {
+                await db
+                    .from('projects')
+                    .update({
+                        completion_status: 'in_progress',
+                        progress: completion.percentage
+                    })
+                    .eq('id', currentProjectId);
+
+                unlockReportFields();
+                updateReportFooterButtons();
+
+                toast('📝 Rapport déverrouillé');
+            } catch (err) {
+                console.error('Error unlocking report:', err);
+                toast('Erreur lors du déverrouillage');
+            }
+        }
+
+        // ============================================
+        // FOOTER BUTTONS UPDATE
+        // ============================================
+        function updateReportFooterButtons() {
+            const footer = document.querySelector('.report-footer');
+            if (!footer) return;
+
+            if (reportCompletionState.status === REPORT_STATUS.COMPLETED) {
+                // TERMINÉ state: Modifier (secondary) + Exporter PDF (primary)
+                footer.innerHTML = `
+                    <button class="r-btn secondary" onclick="modifyReport()">Modifier le rapport</button>
+                    <button class="r-btn primary" onclick="exportReportPDF()">📄 Exporter PDF</button>
+                `;
+            } else {
+                // EN COURS state: Compléter (primary full width)
+                footer.innerHTML = `
+                    <button class="r-btn primary" onclick="showCompletionPopup()" style="flex: 1;">✓ Compléter le rapport</button>
+                `;
+            }
+        }
+
+        // ============================================
+        // NEW INFO NOTIFICATION (subtle, non-blocking)
+        // ============================================
+        let pendingNewFields = [];
+
+        function showNewInfoNotification(newFields) {
+            if (!newFields || newFields.length === 0) return;
+
+            // Only show if report is completed
+            if (reportCompletionState.status !== REPORT_STATUS.COMPLETED) return;
+
+            pendingNewFields = newFields;
+
+            const existing = document.querySelector('.new-info-notification');
+            if (existing) existing.remove();
+
+            const preview = newFields.map(f => f.label || f.path).join(', ');
+            const truncated = preview.length > 35 ? preview.substring(0, 35) + '...' : preview;
+
+            const bar = document.createElement('div');
+            bar.className = 'new-info-notification';
+            bar.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                background: rgba(20, 20, 30, 0.95);
+                padding: 14px 20px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                transform: translateY(-100%);
+                transition: transform 0.3s ease;
+                z-index: 10003;
+                backdrop-filter: blur(10px);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            `;
+
+            bar.innerHTML = `
+                <span style="color: rgba(255,255,255,0.9); font-size: 13px;">
+                    📝 Nouvelle info détectée: <strong>${truncated}</strong>
+                </span>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="dismissNewInfoNotification()" style="
+                        padding: 8px 14px;
+                        background: transparent;
+                        color: rgba(255,255,255,0.5);
+                        border: none;
+                        cursor: pointer;
+                        font-size: 12px;
+                    ">Ignorer</button>
+                    <button onclick="acceptNewInfo()" style="
+                        padding: 8px 16px;
+                        background: #f5a623;
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 12px;
+                        font-weight: 500;
+                    ">Ajouter</button>
+                </div>
+            `;
+
+            document.body.appendChild(bar);
+
+            // Slide in
+            requestAnimationFrame(() => {
+                bar.style.transform = 'translateY(0)';
+            });
+        }
+
+        function dismissNewInfoNotification() {
+            const bar = document.querySelector('.new-info-notification');
+            if (bar) {
+                bar.style.transform = 'translateY(-100%)';
+                setTimeout(() => bar.remove(), 300);
+            }
+            pendingNewFields = [];
+        }
+
+        async function acceptNewInfo() {
+            dismissNewInfoNotification();
+
+            if (pendingNewFields.length === 0) return;
+
+            // Merge new fields into report data
+            pendingNewFields.forEach(field => {
+                if (field.path && field.value !== undefined) {
+                    setNestedValue(lastReportData, field.path, field.value);
+                }
+            });
+
+            pendingNewFields = [];
+
+            // Switch to in_progress and unlock
+            await modifyReport();
+
+            // Trigger save
+            triggerAutoSave();
+
+            showSubtleToast('Info ajoutée au rapport');
+        }
+
+        // Helper: Set nested value in object
+        function setNestedValue(obj, path, value) {
+            const keys = path.split('.');
+            let current = obj;
+            for (let i = 0; i < keys.length - 1; i++) {
+                if (!current[keys[i]]) current[keys[i]] = {};
+                current = current[keys[i]];
+            }
+            current[keys[keys.length - 1]] = value;
+        }
+
+        // Helper: Get nested value from object
+        function getNestedValue(obj, path) {
+            return path.split('.').reduce((o, k) => (o || {})[k], obj);
+        }
+
+        // Helper: Detect new fields in extraction
+        function detectNewFieldsFromExtraction(extracted, existing) {
+            const newFields = [];
+
+            const pathsToCheck = [
+                { path: 'travaux_effectues', label: 'Travaux effectués' },
+                { path: 'pieces_utilisees', label: 'Pièces utilisées' },
+                { path: 'fluide.quantite_ajoutee', label: 'Fluide ajouté' },
+                { path: 'remarques', label: 'Remarques' },
+                { path: 'mesures', label: 'Mesures' },
+                { path: 'recommandations', label: 'Recommandations' }
+            ];
+
+            pathsToCheck.forEach(({ path, label }) => {
+                const newVal = getNestedValue(extracted, path);
+                const oldVal = getNestedValue(existing, path);
+
+                // Check if new value exists and is different
+                if (newVal !== undefined && newVal !== null && newVal !== '') {
+                    const newStr = JSON.stringify(newVal);
+                    const oldStr = JSON.stringify(oldVal);
+
+                    if (newStr !== oldStr) {
+                        newFields.push({ path, label, value: newVal });
+                    }
+                }
+            });
+
+            return newFields;
         }
 
         // App state
@@ -6584,6 +7100,13 @@
         // ═══ APP INITIALIZATION ═══
         async function init() {
             console.log('=== TECHNICIAN APP INIT ===');
+
+            // Handle magic link callback first (auth tokens in URL hash)
+            const handledMagicLink = await handleMagicLinkCallback();
+            if (handledMagicLink) {
+                // Magic link is being processed, page will redirect
+                return;
+            }
 
             // Initialize router for back/forward support
             Router.init();
@@ -8944,7 +9467,7 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                 // Step 1: Get project details
                 const { data: project, error: projectError } = await db
                     .from('projects')
-                    .select('id, title, brand, original_brand, status, created_at, updated_at, extracted_data')
+                    .select('id, title, brand, original_brand, status, created_at, updated_at, extracted_data, completion_status')
                     .eq('id', projectId)
                     .single();
                 
@@ -8974,6 +9497,23 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                     lastReportData = project.extracted_data;
                     updateDrawerPreview(lastReportData);
                     console.log('[Project] ✅ Loaded extracted_data:', Object.keys(lastReportData).length, 'fields');
+                }
+
+                // ═══ INITIALIZE REPORT COMPLETION STATE ═══
+                if (project.completion_status === 'completed') {
+                    reportCompletionState.status = REPORT_STATUS.COMPLETED;
+                    reportCompletionState.isLocked = true;
+                    // Defer locking until DOM is ready
+                    setTimeout(() => {
+                        lockReportFields();
+                        updateReportFooterButtons();
+                    }, 500);
+                } else {
+                    reportCompletionState.status = REPORT_STATUS.IN_PROGRESS;
+                    reportCompletionState.isLocked = false;
+                    setTimeout(() => {
+                        updateReportFooterButtons();
+                    }, 500);
                 }
 
                 // ═══ FIX: Detect if user selected different brand on main page ═══
@@ -11424,18 +11964,37 @@ INSTRUCTIONS:
             // Auto-save indicator
             showAutoSaveIndicator();
 
-            // ═══ AUTO-SAVE extracted_data with debounce ═══
+            // ═══ AUTO-SAVE extracted_data AND progress with debounce ═══
             if (currentProjectId && lastReportData) {
                 clearTimeout(extractedDataSaveTimeout);
                 extractedDataSaveTimeout = setTimeout(async () => {
+                    // Calculate current progress
+                    const completion = calculateReportCompletion(lastReportData);
+                    const progressValue = Math.round(completion.percentage);
+
+                    // Debug logging
+                    console.log('🔄 Auto-save:', {
+                        projectId: currentProjectId,
+                        progress: progressValue,
+                        hasExtractedData: !!lastReportData
+                    });
+
+                    // 1. Save to projects table (with progress)
                     const { error } = await db.from('projects')
-                        .update({ extracted_data: lastReportData })
+                        .update({
+                            extracted_data: lastReportData,
+                            progress: progressValue,
+                            updated_at: new Date().toISOString()
+                        })
                         .eq('id', currentProjectId);
                     if (error) {
                         console.error('[Drawer] Auto-save failed:', error);
                     } else {
-                        console.log('[Drawer] ✅ extracted_data auto-saved');
+                        console.log('✅ Saved to DB - Progress:', progressValue + '%');
                     }
+
+                    // 2. Save to reports table
+                    await saveReportData(currentProjectId, lastReportData);
                 }, 1500);
             }
         }
@@ -12271,8 +12830,16 @@ RÈGLES:
                                     date: new Date().toLocaleDateString('fr-FR')
                                 };
                             }
+                            // Check for new info if report is completed (before merge)
+                            if (reportCompletionState.status === REPORT_STATUS.COMPLETED) {
+                                const newFields = detectNewFieldsFromExtraction(extractedData, lastReportData);
+                                if (newFields.length > 0) {
+                                    showNewInfoNotification(newFields);
+                                }
+                            }
+
                             mergeReportData(lastReportData, extractedData);
-                            
+
                             // Immediately update preview
                             updateDrawerPreview(lastReportData);
 
@@ -12372,7 +12939,65 @@ RÈGLES:
                 // Error saving report
             }
         }
-        
+
+        // ═══ AUTO-SAVE REPORT DATA TO REPORTS TABLE ═══
+        async function saveReportData(projectId, reportData) {
+            if (!projectId || !reportData || !currentUserId) return;
+
+            try {
+                const completion = calculateReportCompletion(reportData);
+
+                // Check if report exists for this project
+                const { data: existingReport } = await db
+                    .from('reports')
+                    .select('id')
+                    .eq('project_id', projectId)
+                    .maybeSingle();
+
+                // Build report record from extracted_data
+                const reportRecord = {
+                    project_id: projectId,
+                    user_id: currentUserId,
+                    status: completion.percentage >= 80 ? 'completed' : 'draft',
+                    title: reportData.reference || `Rapport ${projectId}`,
+                    report_type: reportData.type_intervention || 'MAINT',
+                    equipment_brand: reportData.brand_key || brand || null,
+                    equipment_model: reportData.systeme?.modele || null,
+                    equipment_type: reportData.systeme?.type || null,
+                    problem_reported: reportData.resume || null,
+                    problem_identified: reportData.resultat?.description || null,
+                    solution_description: reportData.rapport_technicien || null,
+                    error_codes: reportData.codes_defaut || [],
+                    actions_performed: reportData.travaux_effectues || [],
+                    client_name: reportData.client?.societe || null,
+                    client_address: reportData.site?.adresse ? `${reportData.site.adresse}${reportData.site.ville ? ', ' + reportData.site.ville : ''}` : null,
+                    updated_at: new Date().toISOString()
+                };
+
+                if (existingReport) {
+                    // Update existing report
+                    const { error } = await db
+                        .from('reports')
+                        .update(reportRecord)
+                        .eq('id', existingReport.id);
+
+                    if (error) console.error('[Reports] Update failed:', error);
+                    else console.log('[Reports] ✅ Report updated');
+                } else {
+                    // Create new report
+                    reportRecord.created_at = new Date().toISOString();
+                    const { error } = await db
+                        .from('reports')
+                        .insert(reportRecord);
+
+                    if (error) console.error('[Reports] Insert failed:', error);
+                    else console.log('[Reports] ✅ Report created');
+                }
+            } catch (e) {
+                console.error('[Reports] saveReportData error:', e);
+            }
+        }
+
         // Get voice intensity from analyser
         function getVoiceIntensity(panel) {
             const analyser = analysers[panel];
