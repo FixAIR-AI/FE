@@ -1,7 +1,19 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+    <script>
+    // Preserve hash for magic link auth
+    var hash = window.location.hash;
+    var redirectUrl = '/technician/';
+    if (hash && hash.includes('access_token')) {
+        redirectUrl = '/technician/index.html' + hash;
+    }
+    window.location.replace(redirectUrl);
+</script>
+<noscript>
     <meta http-equiv="refresh" content="0; url=/technician/" />
+</noscript>
+    
     
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <meta charset="UTF-8">
