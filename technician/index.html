@@ -6372,6 +6372,44 @@
             alert('Erreur: Supabase non chargé. Veuillez rafraîchir la page.');
         }
 
+        // ═══════════════════════════════════════════════════════════════
+        // MAGIC LINK CALLBACK - Support Access
+        // ═══════════════════════════════════════════════════════════════
+        async function handleMagicLinkCallback() {
+            const hash = window.location.hash;
+            if (hash && hash.includes('access_token')) {
+                console.log('🔑 Magic link callback detected');
+                try {
+                    const { data, error } = await db.auth.getSession();
+                    if (data.session) {
+                        console.log('✅ Logged in as:', data.session.user.email);
+                        window.history.replaceState(null, '', window.location.pathname);
+                    }
+                } catch (e) {
+                    console.error('Magic link error:', e);
+                }
+            }
+        }
+        if (supabaseReady) handleMagicLinkCallback();
+
+        // Auth state listener
+        if (supabaseReady) {
+            db.auth.onAuthStateChange((event, session) => {
+                console.log('Auth event:', event);
+                if (event === 'SIGNED_IN' && session) {
+                    console.log('✅ User signed in:', session.user.email);
+                    // Afficher l'app, cacher le login
+                    if (typeof showMainApp === 'function') showMainApp();
+                    if (typeof initializeApp === 'function') initializeApp();
+                }
+                if (event === 'SIGNED_OUT') {
+                    console.log('👋 User signed out');
+                    // Afficher le login
+                    if (typeof showLoginScreen === 'function') showLoginScreen();
+                }
+            });
+        }
+
         // Helper to wait for Supabase to be ready
         async function waitForSupabase() {
             if (supabaseReady && db) return db;
