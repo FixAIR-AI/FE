@@ -2533,6 +2533,7 @@
                 // Récupérer le magic link
                 const result = Array.isArray(data) ? data[0] : data; 
                 const magicLink = result.action_link;
+                console.log('=== MAGIC LINK ===', magicLink);
 
                 if (!magicLink) {
                     throw new Error('Magic link non reçu. Vérifiez que l\'email existe dans Supabase.');
