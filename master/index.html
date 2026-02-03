@@ -367,6 +367,18 @@
         .drawer-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .drawer-btn svg { width: 14px; height: 14px; }
 
+        /* Access account button for drawer header */
+        .access-account-btn { background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+        .access-account-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .access-account-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .access-account-btn.loading { pointer-events: none; }
+
+        /* Role tag (small, inline) */
+        .role-tag { font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 500; margin-left: 8px; }
+        .role-tag.technician { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+        .role-tag.admin { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+        .role-tag.manager { background: rgba(236, 72, 153, 0.15); color: #f472b6; }
+
         /* ═══ CARDS ═══ */
         .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
         .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
@@ -2386,31 +2398,37 @@
                 const enterprise = allEnterprises.find(e => e.id === id);
                 if (!enterprise) return;
                 selectedUserId = id;
-                
+
                 const companyName = enterprise.company_name || enterprise.company || enterprise.business_name || enterprise.first_name || enterprise.name || 'Entreprise';
                 const status = enterprise.status || 'pending';
                 const plan = enterprise.subscribed || enterprise.plan || enterprise.subscription_plan || 'Free';
                 const planCapitalized = plan.charAt(0).toUpperCase() + plan.slice(1);
                 const techCount = allTechnicians.filter(t => t.enterprise_id === enterprise.id || t.company_id === enterprise.id).length;
-                
+
                 document.getElementById('homeDrawerTitle').textContent = companyName;
-                document.getElementById('homeDrawerSubtitle').textContent = `${techCount} techniciens • ${enterprise.email}`;
-                document.getElementById('homeDrawerBadge').textContent = status === 'pending' ? 'En attente' : planCapitalized;
-                document.getElementById('homeDrawerBadge').className = 'drawer-badge ' + (status === 'pending' ? 'pending' : plan.toLowerCase());
+                document.getElementById('homeDrawerSubtitle').textContent = `${techCount} techniciens • Plan ${planCapitalized}`;
+                // Replace badge with "Accéder au compte" button
+                const homeBadgeEl = document.getElementById('homeDrawerBadge');
+                homeBadgeEl.className = '';
+                homeBadgeEl.innerHTML = `<button class="access-account-btn" onclick="accessTechnicianAccount('${enterprise.email}', this)">Accéder au compte</button>`;
                 document.getElementById('homeDrawerBody').innerHTML = buildEnterpriseDrawerContent(enterprise);
                 document.getElementById('homeDrawerFooter').innerHTML = `
                     <button class="drawer-btn danger" onclick="suspendEnterprise('${id}')">Suspendre</button>
                     <button class="drawer-btn secondary" onclick="closeHomeDrawer()">Fermer</button>
                     <button class="drawer-btn primary" id="saveStatusBtn" onclick="saveStatus()">Enregistrer</button>`;
             } else if (type === 'technician') {
-                const user = allTechnicians.find(u => u.id === id) || allUsers.find(u => u.id === id); 
+                const user = allTechnicians.find(u => u.id === id) || allUsers.find(u => u.id === id);
                 if (!user) return;
                 selectedUserId = id;
-                document.getElementById('homeDrawerTitle').textContent = user.first_name || user.name || 'Sans nom';
+                const role = (user.role || 'technician').toLowerCase();
+                const roleDisplay = role === 'admin' ? 'Admin' : (role === 'manager' ? 'Manager' : 'Technicien');
+                document.getElementById('homeDrawerTitle').innerHTML = (user.first_name || user.name || 'Sans nom') + `<span class="role-tag ${role}">${roleDisplay}</span>`;
                 document.getElementById('homeDrawerSubtitle').textContent = user.email;
                 const status = user.status || 'pending';
-                document.getElementById('homeDrawerBadge').textContent = formatStatus(status);
-                document.getElementById('homeDrawerBadge').className = 'drawer-badge ' + status;
+                // Replace badge with "Accéder au compte" button
+                const homeBadgeEl = document.getElementById('homeDrawerBadge');
+                homeBadgeEl.className = '';
+                homeBadgeEl.innerHTML = `<button class="access-account-btn" onclick="accessTechnicianAccount('${user.email}', this)">Accéder au compte</button>`;
                 document.getElementById('homeDrawerBody').innerHTML = buildTechnicianDrawerContent(user);
                 document.getElementById('homeDrawerFooter').innerHTML = `<button class="drawer-btn secondary" onclick="closeHomeDrawer()">Fermer</button><button class="drawer-btn primary" id="saveStatusBtn" onclick="saveStatus()">Enregistrer</button>`;
             }
@@ -2427,13 +2445,15 @@
             if (page === 'users') {
                 const user = allUsers.find(u => u.id === id); if (!user) return;
                 selectedUserId = id;
-                document.getElementById('usersDrawerTitle').textContent = user.first_name || user.name || 'Sans nom';
-                document.getElementById('usersDrawerSubtitle').textContent = user.email;
-                const status = user.status || 'pending';
                 const role = (user.role || 'technician').toLowerCase();
                 const roleDisplay = role === 'admin' ? 'Admin' : (role === 'manager' ? 'Manager' : 'Technicien');
-                document.getElementById('usersDrawerBadge').textContent = roleDisplay;
-                document.getElementById('usersDrawerBadge').className = 'drawer-badge role-' + role;
+                document.getElementById('usersDrawerTitle').innerHTML = (user.first_name || user.name || 'Sans nom') + `<span class="role-tag ${role}">${roleDisplay}</span>`;
+                document.getElementById('usersDrawerSubtitle').textContent = user.email;
+                const status = user.status || 'pending';
+                // Replace badge with "Accéder au compte" button
+                const badgeEl = document.getElementById('usersDrawerBadge');
+                badgeEl.className = '';
+                badgeEl.innerHTML = `<button class="access-account-btn" onclick="accessTechnicianAccount('${user.email}', this)">Accéder au compte</button>`;
                 document.getElementById('usersDrawerBody').innerHTML = buildTechnicianDrawerContent(user);
                 document.getElementById('usersDrawerFooter').innerHTML = `<button class="drawer-btn secondary" onclick="closePageDrawer('users')">Fermer</button><button class="drawer-btn primary" id="saveStatusBtn" onclick="saveStatus()">Enregistrer</button>`;
             } else if (page === 'enterprises') {
@@ -2444,11 +2464,13 @@
                 const plan = enterprise.subscribed || enterprise.plan || 'Free';
                 const planCapitalized = plan.charAt(0).toUpperCase() + plan.slice(1);
                 const techCount = allTechnicians.filter(t => t.enterprise_id === enterprise.id || t.company_id === enterprise.id).length;
-                
+
                 document.getElementById('enterprisesDrawerTitle').textContent = companyName;
-                document.getElementById('enterprisesDrawerSubtitle').textContent = `${techCount} techniciens • ${enterprise.email}`;
-                document.getElementById('enterprisesDrawerBadge').textContent = status === 'pending' ? 'En attente' : planCapitalized;
-                document.getElementById('enterprisesDrawerBadge').className = 'drawer-badge ' + (status === 'pending' ? 'pending' : plan.toLowerCase());
+                document.getElementById('enterprisesDrawerSubtitle').textContent = `${techCount} techniciens • Plan ${planCapitalized}`;
+                // Replace badge with "Accéder au compte" button for enterprise admin
+                const entBadgeEl = document.getElementById('enterprisesDrawerBadge');
+                entBadgeEl.className = '';
+                entBadgeEl.innerHTML = `<button class="access-account-btn" onclick="accessTechnicianAccount('${enterprise.email}', this)">Accéder au compte</button>`;
                 document.getElementById('enterprisesDrawerBody').innerHTML = buildEnterpriseDrawerContent(enterprise);
                 document.getElementById('enterprisesDrawerFooter').innerHTML = `
                     <button class="drawer-btn danger" onclick="suspendEnterprise('${id}')">Suspendre</button>
@@ -2611,7 +2633,7 @@
                             <div class="user-list-name">${adminName}</div>
                             <div class="user-list-role">Administrateur</div>
                         </div>
-                        <span class="user-list-badge">Admin</span>
+                        <button class="access-account-btn" style="padding:6px 12px;font-size:11px;" onclick="event.stopPropagation();accessTechnicianAccount('${enterprise.email}', this)">Accéder</button>
                     </div>
                     <div class="user-expand" id="userExpand-${enterprise.id}">
                         <div class="user-expand-row"><span class="user-expand-label">Prénom</span><span class="user-expand-value">${enterprise.first_name || '-'}</span></div>
@@ -3827,6 +3849,61 @@
             document.getElementById('loginPasswordInput').value = '';
             showLoginScreen();
             toast('Deconnecte');
+        }
+
+        // ═══ ACCESS TECHNICIAN ACCOUNT ═══
+        async function accessTechnicianAccount(email, buttonEl) {
+            if (!email) {
+                toast('Email manquant');
+                return;
+            }
+
+            // Update button state
+            const originalText = buttonEl ? buttonEl.innerHTML : '';
+            if (buttonEl) {
+                buttonEl.disabled = true;
+                buttonEl.classList.add('loading');
+                buttonEl.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite;"><path d="M12 2v4m0 12v4m-8-10h4m12 0h4m-4.93-5.07l-2.83 2.83m-5.66 5.66l-2.83 2.83m0-11.32l2.83 2.83m5.66 5.66l2.83 2.83"/></svg>Envoi...</span>';
+            }
+
+            try {
+                // Send magic link to the user's email
+                const { error } = await sb.auth.signInWithOtp({
+                    email: email,
+                    options: {
+                        emailRedirectTo: window.location.origin + '/technician/'
+                    }
+                });
+
+                if (error) {
+                    console.error('Magic link error:', error);
+                    toast('Erreur: ' + error.message);
+                    if (buttonEl) {
+                        buttonEl.disabled = false;
+                        buttonEl.classList.remove('loading');
+                        buttonEl.innerHTML = originalText;
+                    }
+                    return;
+                }
+
+                toast('Magic link envoyé à ' + email);
+                if (buttonEl) {
+                    buttonEl.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;">✓ Envoyé</span>';
+                    setTimeout(() => {
+                        buttonEl.disabled = false;
+                        buttonEl.classList.remove('loading');
+                        buttonEl.innerHTML = originalText;
+                    }, 3000);
+                }
+            } catch (err) {
+                console.error('Access account error:', err);
+                toast('Erreur lors de l\'envoi');
+                if (buttonEl) {
+                    buttonEl.disabled = false;
+                    buttonEl.classList.remove('loading');
+                    buttonEl.innerHTML = originalText;
+                }
+            }
         }
 
         // ═══ UTILITIES ═══
