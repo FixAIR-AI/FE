@@ -5026,6 +5026,32 @@
     background: rgba(249, 115, 22, 0.1);
 }
 
+.export-option.enterprise {
+    border-color: #1B4D4D;
+    background: rgba(27, 77, 77, 0.1);
+}
+
+.export-option.enterprise:hover {
+    background: rgba(27, 77, 77, 0.2);
+    border-color: #1B4D4D;
+}
+
+.export-option.locked {
+    border-color: var(--border, rgba(255,255,255,0.1));
+    background: var(--bg-secondary, #1a1a2e);
+    opacity: 0.7;
+}
+
+.export-option.locked:hover {
+    opacity: 1;
+    border-color: var(--assistant, #22c55e);
+}
+
+.export-option.secondary {
+    border-color: var(--border, rgba(255,255,255,0.1));
+    background: transparent;
+}
+
 .export-icon {
     font-size: 28px;
 }
@@ -10372,6 +10398,11 @@ INSTRUCTIONS:
         
         // Show export format selection menu
         function showExportMenu() {
+            // Check if user has enterprise mode enabled
+            const userProfile = window.currentUserProfile || {};
+            const companyProfile = window.currentCompanyProfile || {};
+            const hasEnterprise = companyProfile.plan === 'enterprise' || userProfile.enterprise_enabled;
+            
             // Create modal for export options
             const modal = document.createElement('div');
             modal.className = 'export-modal';
@@ -10382,14 +10413,21 @@ INSTRUCTIONS:
                         <button class="export-modal-close" onclick="this.closest('.export-modal').remove()">×</button>
                     </div>
                     <div class="export-options">
-                        <button class="export-option primary" onclick="exportReport('word'); this.closest('.export-modal').remove();">
+                        <button class="export-option primary" onclick="exportReport('word', 'standard'); this.closest('.export-modal').remove();">
                             <span class="export-icon">📄</span>
                             <span class="export-label">
-                                <strong>Word (.docx)</strong>
-                                <small>Modifiable - Recommandé</small>
+                                <strong>Word Standard</strong>
+                                <small>Format FixAIR</small>
                             </span>
                         </button>
-                        <button class="export-option" onclick="exportReport('pdf'); this.closest('.export-modal').remove();">
+                        <button class="export-option ${hasEnterprise ? 'enterprise' : 'locked'}" onclick="${hasEnterprise ? "exportReport('word', 'enterprise'); this.closest('.export-modal').remove();" : 'showEnterpriseUpsell()'}">
+                            <span class="export-icon">${hasEnterprise ? '🏢' : '🔒'}</span>
+                            <span class="export-label">
+                                <strong>Word Enterprise</strong>
+                                <small>${hasEnterprise ? 'Logo & couleurs client' : 'Offre Enterprise'}</small>
+                            </span>
+                        </button>
+                        <button class="export-option secondary" onclick="exportReport('pdf', 'standard'); this.closest('.export-modal').remove();">
                             <span class="export-icon">📋</span>
                             <span class="export-label">
                                 <strong>PDF</strong>
@@ -10407,12 +10445,59 @@ INSTRUCTIONS:
             });
         }
         
+        // Show enterprise upsell modal
+        function showEnterpriseUpsell() {
+            document.querySelector('.export-modal')?.remove();
+            const modal = document.createElement('div');
+            modal.className = 'export-modal';
+            modal.innerHTML = `
+                <div class="export-modal-content" style="max-width: 400px;">
+                    <div class="export-modal-header">
+                        <h3>🏢 Offre Enterprise</h3>
+                        <button class="export-modal-close" onclick="this.closest('.export-modal').remove()">×</button>
+                    </div>
+                    <div style="padding: 20px; text-align: center;">
+                        <p style="margin-bottom: 15px; color: var(--text-dim);">Personnalisez vos rapports avec :</p>
+                        <ul style="text-align: left; margin: 15px 0; padding-left: 25px; color: var(--text);">
+                            <li>✓ Page de garde avec votre logo</li>
+                            <li>✓ Couleurs de votre entreprise</li>
+                            <li>✓ En-tête/pied de page personnalisés</li>
+                            <li>✓ Photo du site en couverture</li>
+                        </ul>
+                        <p style="font-size: 24px; font-weight: bold; color: var(--assistant); margin: 20px 0;">50€/utilisateur/mois</p>
+                        <a href="mailto:contact@fixair.ai?subject=Offre%20Enterprise" class="export-option primary" style="display: block; text-decoration: none; margin-top: 15px;">
+                            <span>Contactez-nous</span>
+                        </a>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+        }
+        
         // Export report in specified format
-        async function exportReport(format) {
+        async function exportReport(format, mode = 'standard') {
             const data = collectReportData();
             if (!data) {
                 toast('Aucun rapport à exporter');
                 return;
+            }
+            
+            // Add export mode to data
+            data.exportMode = mode;
+            
+            // For enterprise mode, add company branding info
+            if (mode === 'enterprise') {
+                const companyProfile = window.currentCompanyProfile || {};
+                data.enterprise = {
+                    name: companyProfile.name || data.technicien?.entreprise || 'Entreprise',
+                    logo: companyProfile.logo_url || null,
+                    color: companyProfile.brand_color || '#1B4D4D', // Default EQWATTEUR teal
+                    address: companyProfile.address || '',
+                    phone: companyProfile.phone || '',
+                    email: companyProfile.email || '',
+                    siret: companyProfile.siret || ''
+                };
             }
             
             if (format === 'word') {
@@ -10487,14 +10572,7 @@ INSTRUCTIONS:
                     return arr;
                 };
                 
-                // Helper: Section heading with accent bar
-                const sectionHeading = (text) => new Paragraph({
-                    children: [
-                        new TextRun({ text: '█ ', color: primaryColor, size: 24 }),
-                        new TextRun({ text: text.toUpperCase(), bold: true, size: 22, font: 'Calibri' })
-                    ],
-                    spacing: { before: 400, after: 150 }
-                });
+                // Helper: Section heading with accent bar (defined later with docPrimaryColor)
                 
                 // Helper: Key-value with proper styling
                 const kvRow = (label, value, options = {}) => {
@@ -10592,21 +10670,171 @@ INSTRUCTIONS:
                 
                 // ═══ BUILD DOCUMENT ═══
                 const children = [];
+                const isEnterprise = data.exportMode === 'enterprise' && data.enterprise;
                 
-                // ═══ HEADER WITH LOGOS ═══
-                // Logo row: FixAIR left, Enterprise placeholder right
+                // Override primary color for enterprise mode
+                const docPrimaryColor = isEnterprise 
+                    ? (data.enterprise.color || '#1B4D4D').replace('#', '') 
+                    : primaryColor;
+                
+                // Helper: Section heading with accent bar (uses docPrimaryColor for enterprise support)
+                const sectionHeading = (text) => new Paragraph({
+                    children: [
+                        new TextRun({ text: '█ ', color: docPrimaryColor, size: 24 }),
+                        new TextRun({ text: text.toUpperCase(), bold: true, size: 22, font: 'Calibri' })
+                    ],
+                    spacing: { before: 400, after: 150 }
+                });
+                
+                // ═══ ENTERPRISE COVER PAGE ═══
+                if (isEnterprise) {
+                    const ent = data.enterprise;
+                    
+                    // Large enterprise name/logo at top
+                    children.push(new Paragraph({
+                        children: [new TextRun({ 
+                            text: ent.name.toUpperCase(), 
+                            bold: true, 
+                            size: 56, 
+                            font: 'Calibri', 
+                            color: docPrimaryColor 
+                        })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { before: 600, after: 200 }
+                    }));
+                    
+                    // Decorative line
+                    children.push(new Paragraph({
+                        children: [new TextRun({ 
+                            text: '━'.repeat(40), 
+                            color: docPrimaryColor,
+                            size: 20
+                        })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 400 }
+                    }));
+                    
+                    // Main title
+                    children.push(new Paragraph({
+                        children: [new TextRun({ 
+                            text: "RAPPORT D'INTERVENTION", 
+                            bold: true, 
+                            size: 44, 
+                            font: 'Calibri', 
+                            color: '111827' 
+                        })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 200 }
+                    }));
+                    
+                    // Brand/equipment
+                    children.push(new Paragraph({
+                        children: [new TextRun({ 
+                            text: data.brand || 'Climatisation', 
+                            size: 32, 
+                            font: 'Calibri', 
+                            color: '6B7280' 
+                        })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 400 }
+                    }));
+                    
+                    // Site photo placeholder or site address
+                    const photos = data.photos || window.reportPhotos || [];
+                    if (photos.length > 0 && photos[0].data && photos[0].data.startsWith('data:image')) {
+                        try {
+                            children.push(new Paragraph({
+                                children: [new ImageRun({
+                                    data: base64ToUint8Array(photos[0].data),
+                                    transformation: { width: 450, height: 300 }
+                                })],
+                                alignment: AlignmentType.CENTER,
+                                spacing: { after: 300 }
+                            }));
+                        } catch (e) { console.error('Cover photo error:', e); }
+                    }
+                    
+                    // Site info box
+                    const coverBorder = { style: BorderStyle.SINGLE, size: 2, color: docPrimaryColor };
+                    children.push(new Table({
+                        rows: [new TableRow({
+                            children: [new TableCell({
+                                children: [
+                                    new Paragraph({
+                                        children: [new TextRun({ text: 'SITE', bold: true, size: 20, font: 'Calibri', color: docPrimaryColor })],
+                                        alignment: AlignmentType.CENTER,
+                                        spacing: { after: 100 }
+                                    }),
+                                    new Paragraph({
+                                        children: [new TextRun({ text: data.site?.adresse || '', size: 22, font: 'Calibri' })],
+                                        alignment: AlignmentType.CENTER
+                                    }),
+                                    new Paragraph({
+                                        children: [new TextRun({ text: data.site?.ville || '', size: 22, font: 'Calibri' })],
+                                        alignment: AlignmentType.CENTER,
+                                        spacing: { after: 100 }
+                                    }),
+                                    new Paragraph({
+                                        children: [new TextRun({ text: `Réf: ${data.reference || ''}`, size: 18, font: 'Calibri', color: '6B7280' })],
+                                        alignment: AlignmentType.CENTER
+                                    })
+                                ],
+                                borders: { top: coverBorder, bottom: coverBorder, left: coverBorder, right: coverBorder },
+                                margins: { top: 200, bottom: 200, left: 300, right: 300 },
+                                shading: { fill: 'F9FAFB', type: ShadingType.CLEAR }
+                            })]
+                        })],
+                        width: { size: 80, type: WidthType.PERCENTAGE },
+                        alignment: AlignmentType.CENTER
+                    }));
+                    
+                    // Date at bottom
+                    children.push(new Paragraph({
+                        children: [new TextRun({ 
+                            text: data.date || new Date().toLocaleDateString('fr-FR'), 
+                            size: 24, 
+                            font: 'Calibri', 
+                            color: '6B7280' 
+                        })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { before: 400 }
+                    }));
+                    
+                    // Enterprise footer info on cover
+                    const entFooter = [ent.address, ent.phone, ent.email].filter(Boolean).join('  •  ');
+                    if (entFooter) {
+                        children.push(new Paragraph({
+                            children: [new TextRun({ 
+                                text: entFooter, 
+                                size: 16, 
+                                font: 'Calibri', 
+                                color: '9CA3AF' 
+                            })],
+                            alignment: AlignmentType.CENTER,
+                            spacing: { before: 600 }
+                        }));
+                    }
+                    
+                    // Page break after cover
+                    children.push(new Paragraph({ children: [new PageBreak()] }));
+                }
+                
+                // ═══ HEADER WITH LOGOS (Standard mode or after Enterprise cover) ═══
+                // Logo row: FixAIR left, Enterprise logo right
                 const logoTable = new Table({
                     rows: [new TableRow({
                         children: [
                             new TableCell({
                                 children: [
                                     new Paragraph({
-                                        children: [
+                                        children: isEnterprise ? [
+                                            new TextRun({ text: data.enterprise.name, bold: true, size: 28, font: 'Calibri', color: docPrimaryColor })
+                                        ] : [
                                             new ImageRun({
                                                 data: base64ToUint8Array(FIXAIR_LOGO_BASE64),
                                                 transformation: { width: 50, height: 50 }
                                             }),
-                                            new TextRun({ text: '  FixAIR', bold: true, size: 36, font: 'Calibri', color: primaryColor })
+                                            new TextRun({ text: '  FixAIR', bold: true, size: 36, font: 'Calibri', color: docPrimaryColor })
                                         ],
                                         alignment: AlignmentType.LEFT
                                     })
@@ -10618,7 +10846,13 @@ INSTRUCTIONS:
                                 children: [
                                     new Paragraph({
                                         children: [
-                                            new TextRun({ text: data.enterprise_name || '[LOGO ENTREPRISE]', size: 20, font: 'Calibri', color: '9CA3AF', italics: !data.enterprise_name })
+                                            new TextRun({ 
+                                                text: isEnterprise ? (data.technicien?.entreprise || '') : (data.enterprise_name || '[LOGO ENTREPRISE]'), 
+                                                size: 20, 
+                                                font: 'Calibri', 
+                                                color: '9CA3AF', 
+                                                italics: !isEnterprise && !data.enterprise_name 
+                                            })
                                         ],
                                         alignment: AlignmentType.RIGHT
                                     })
@@ -10642,7 +10876,7 @@ INSTRUCTIONS:
                 
                 // Brand subtitle
                 children.push(new Paragraph({
-                    children: [new TextRun({ text: data.brand || 'Multi-marques', size: 24, font: 'Calibri', color: primaryColor })],
+                    children: [new TextRun({ text: data.brand || 'Multi-marques', size: 24, font: 'Calibri', color: docPrimaryColor })],
                     alignment: AlignmentType.CENTER,
                     spacing: { after: 200 }
                 }));
@@ -11134,12 +11368,13 @@ INSTRUCTIONS:
                 // Filter nulls and create document
                 const filteredChildren = children.filter(c => c !== null);
                 
-                // Create header
+                // Create header (branded for enterprise)
+                const headerBrand = isEnterprise ? data.enterprise.name : 'FixAIR';
                 const docHeader = new Header({
                     children: [
                         new Paragraph({
                             children: [
-                                new TextRun({ text: 'FixAIR', bold: true, size: 16, font: 'Calibri', color: primaryColor }),
+                                new TextRun({ text: headerBrand, bold: true, size: 16, font: 'Calibri', color: docPrimaryColor }),
                                 new TextRun({ text: `  |  ${data.brand || ''}  |  Réf: ${data.reference || ''}  |  ${data.date || ''}`, size: 14, font: 'Calibri', color: '9CA3AF' })
                             ],
                             alignment: AlignmentType.RIGHT
@@ -11147,13 +11382,18 @@ INSTRUCTIONS:
                     ]
                 });
                 
-                // Create footer with page numbers
+                // Create footer with page numbers (enterprise shows company info)
+                const footerTechInfo = data.technicien?.nom ? `${data.technicien.nom}` : '';
+                const footerCompany = isEnterprise ? data.enterprise.name : 'FixAIR';
+                const footerAddress = isEnterprise && data.enterprise.address ? `  |  ${data.enterprise.address}` : '';
+                
                 const docFooter = new Footer({
                     children: [
                         new Paragraph({
                             children: [
-                                new TextRun({ text: data.technicien?.nom ? `Technicien: ${data.technicien.nom}  |  ` : '', size: 14, font: 'Calibri', color: '6B7280' }),
-                                new TextRun({ text: 'FixAIR', size: 14, font: 'Calibri', color: primaryColor, bold: true }),
+                                new TextRun({ text: footerTechInfo ? `${footerTechInfo}  |  ` : '', size: 14, font: 'Calibri', color: '6B7280' }),
+                                new TextRun({ text: footerCompany, size: 14, font: 'Calibri', color: docPrimaryColor, bold: true }),
+                                new TextRun({ text: footerAddress, size: 12, font: 'Calibri', color: '9CA3AF' }),
                                 new TextRun({ text: '  |  Page ', size: 14, font: 'Calibri', color: '6B7280' }),
                                 new TextRun({ children: [PageNumber.CURRENT], size: 14, font: 'Calibri', color: '6B7280' }),
                                 new TextRun({ text: ' / ', size: 14, font: 'Calibri', color: '6B7280' }),
@@ -11180,7 +11420,8 @@ INSTRUCTIONS:
                 
                 // Generate and download
                 const blob = await Packer.toBlob(doc);
-                const filename = `Rapport_${data.brand || 'FixAIR'}_${data.reference || new Date().toISOString().split('T')[0]}.docx`;
+                const companyName = isEnterprise ? data.enterprise.name : 'FixAIR';
+                const filename = `Rapport_${companyName}_${data.brand || ''}_${data.reference || new Date().toISOString().split('T')[0]}.docx`.replace(/__/g, '_');
                 saveAs(blob, filename);
                 
                 toast('Document Word téléchargé !');
