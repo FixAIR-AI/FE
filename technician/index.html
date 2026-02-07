@@ -10458,9 +10458,9 @@ INSTRUCTIONS:
                 toast('Génération du document Word...');
                 
                 const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, 
-                        WidthType, AlignmentType, BorderStyle, HeadingLevel, Header,
+                        WidthType, AlignmentType, BorderStyle, HeadingLevel, Header, Footer,
                         ImageRun, PageBreak, ShadingType, TableLayoutType,
-                        VerticalAlign, convertInchesToTwip } = docx;
+                        VerticalAlign, convertInchesToTwip, PageNumber } = docx;
                 
                 // Brand colors
                 const brandKey = data.brand_key || 'general';
@@ -10734,6 +10734,15 @@ INSTRUCTIONS:
                     ));
                 }
                 
+                // ═══ ADRESSAGE UNITÉS ═══
+                if (data.adressage && data.adressage.length > 0) {
+                    children.push(sectionHeading('Adressage Unités'));
+                    children.push(createTable(
+                        ['Réf. Usine', 'N° Série', 'Adresse', 'Désignation', 'Commentaire'],
+                        data.adressage.map(a => [a.ref_usine || '', a.serie || '', a.adresse || '', a.designation || '', a.commentaire || ''])
+                    ));
+                }
+                
                 // ═══ CODES DÉFAUT ═══
                 if (data.codes_defaut && data.codes_defaut.length > 0) {
                     children.push(sectionHeading('Codes Défaut'));
@@ -10743,12 +10752,47 @@ INSTRUCTIONS:
                     ));
                 }
                 
+                // ═══ SÉCURITÉ ═══
+                if (data.securite && (data.securite.etat || data.securite.risques)) {
+                    children.push(sectionHeading('Sécurité'));
+                    if (data.securite.etat) {
+                        const etatColors = { 'OK': '22C55E', 'À surveiller': 'F59E0B', 'Critique': 'EF4444' };
+                        children.push(new Paragraph({
+                            children: [
+                                new TextRun({ text: 'État: ', bold: true, size: 20, font: 'Calibri' }),
+                                new TextRun({ text: data.securite.etat, size: 20, font: 'Calibri', color: etatColors[data.securite.etat] || '374151' })
+                            ],
+                            spacing: { after: 80 }
+                        }));
+                    }
+                    if (data.securite.risques) {
+                        children.push(new Paragraph({
+                            children: [new TextRun({ text: 'Risques identifiés:', bold: true, size: 20, font: 'Calibri', color: 'EF4444' })],
+                            spacing: { after: 60 }
+                        }));
+                        children.push(new Paragraph({
+                            children: [new TextRun({ text: data.securite.risques, size: 20, font: 'Calibri' })],
+                            spacing: { after: 100 },
+                            shading: { fill: 'FEF2F2', type: ShadingType.CLEAR }
+                        }));
+                    }
+                }
+                
                 // ═══ MESURES ═══
                 if (data.mesures && data.mesures.length > 0) {
                     children.push(sectionHeading('Mesures'));
                     children.push(createTable(
                         ['Paramètre', 'Valeur', 'Observation'],
                         data.mesures.map(m => [m.label, `${m.valeur}${m.unite ? ' ' + m.unite : ''}`, m.note || ''])
+                    ));
+                }
+                
+                // ═══ FONCTIONNEMENT ═══
+                if (data.fonctionnement && (data.fonctionnement.heures_compresseur || data.fonctionnement.nb_demarrages)) {
+                    children.push(sectionHeading('Fonctionnement'));
+                    children.push(infoBox(
+                        [data.fonctionnement.heures_compresseur && { label: 'Heures compresseur', value: data.fonctionnement.heures_compresseur + ' h' }],
+                        [data.fonctionnement.nb_demarrages && { label: 'Nb démarrages', value: data.fonctionnement.nb_demarrages }]
                     ));
                 }
                 
@@ -10805,6 +10849,90 @@ INSTRUCTIONS:
                     }));
                 }
                 
+                // ═══ REMARQUES ═══
+                if (data.remarques) {
+                    children.push(sectionHeading('Remarques'));
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: data.remarques, size: 20, font: 'Calibri' })],
+                        spacing: { after: 200 }
+                    }));
+                }
+                
+                // ═══ TESTS MISE EN SERVICE ═══
+                if (data.tests && (data.tests.pression_test_bar || data.tests.duree_test_heures || data.tests.valeur_vacuometre_mbar)) {
+                    children.push(sectionHeading('Tests Mise en Service'));
+                    children.push(infoBox(
+                        [
+                            data.tests.pression_test_bar && { label: 'Pression test', value: data.tests.pression_test_bar + ' bar' },
+                            data.tests.duree_test_heures && { label: 'Durée test', value: data.tests.duree_test_heures + ' h' }
+                        ],
+                        [
+                            data.tests.valeur_vacuometre_mbar && { label: 'Vacuomètre', value: data.tests.valeur_vacuometre_mbar + ' mbar' }
+                        ]
+                    ));
+                }
+                
+                // ═══ TUYAUTERIES ═══
+                if (data.tuyauteries && (data.tuyauteries.longueur_totale_m || data.tuyauteries.denivele_oc_ui_m || data.tuyauteries.appoint_calcule_kg)) {
+                    children.push(sectionHeading('Tuyauteries'));
+                    children.push(infoBox(
+                        [
+                            data.tuyauteries.longueur_totale_m && { label: 'Longueur totale', value: data.tuyauteries.longueur_totale_m + ' m' },
+                            data.tuyauteries.denivele_oc_ui_m && { label: 'Dénivelé UE-UI', value: data.tuyauteries.denivele_oc_ui_m + ' m' }
+                        ],
+                        [
+                            data.tuyauteries.appoint_calcule_kg && { label: 'Appoint calculé', value: data.tuyauteries.appoint_calcule_kg + ' kg' }
+                        ]
+                    ));
+                }
+                
+                // ═══ ÉLECTRIQUE ═══
+                if (data.electrique && (data.electrique.calibre_disjoncteur || data.electrique.section_cable)) {
+                    children.push(sectionHeading('Électrique'));
+                    children.push(infoBox(
+                        [data.electrique.calibre_disjoncteur && { label: 'Calibre disjoncteur', value: data.electrique.calibre_disjoncteur }],
+                        [data.electrique.section_cable && { label: 'Section câble', value: data.electrique.section_cable }]
+                    ));
+                }
+                
+                // ═══ RELEVÉS UNITÉ EXTÉRIEURE ═══
+                if (data.releves_ue && (data.releves_ue.pd1_bar || data.releves_ue.ps_bar || data.releves_ue.ta_celsius || data.releves_ue.freq_inv1_hz)) {
+                    children.push(sectionHeading('Relevés Unité Extérieure'));
+                    children.push(infoBox(
+                        [
+                            data.releves_ue.pd1_bar && { label: 'HP (Pd1)', value: data.releves_ue.pd1_bar + ' bar' },
+                            data.releves_ue.ps_bar && { label: 'BP (Ps)', value: data.releves_ue.ps_bar + ' bar' }
+                        ],
+                        [
+                            data.releves_ue.ta_celsius && { label: 'T° ext (TA)', value: data.releves_ue.ta_celsius + ' °C' },
+                            data.releves_ue.freq_inv1_hz && { label: 'Fréq compresseur', value: data.releves_ue.freq_inv1_hz + ' Hz' }
+                        ]
+                    ));
+                }
+                
+                // ═══ RELEVÉS UNITÉS INTÉRIEURES ═══
+                if (data.releves_ui && data.releves_ui.length > 0) {
+                    children.push(sectionHeading('Relevés Unités Intérieures'));
+                    children.push(createTable(
+                        ['Unité', 'T° Soufflage', 'T° Reprise', 'Delta'],
+                        data.releves_ui.map(ui => [ui.nom || '', ui.temp_soufflage || '', ui.temp_reprise || '', ui.delta || ''])
+                    ));
+                }
+                
+                // ═══ CERFA FLUIDES FRIGORIGÈNES ═══
+                if (data.cerfa && (data.cerfa.fluide_total_charge_kg || data.cerfa.fluide_total_recupere_kg || data.cerfa.attestation_capacite)) {
+                    children.push(sectionHeading('CERFA Fluides Frigorigènes'));
+                    children.push(infoBox(
+                        [
+                            data.cerfa.fluide_total_charge_kg && { label: 'Fluide chargé', value: data.cerfa.fluide_total_charge_kg + ' kg' },
+                            data.cerfa.fluide_total_recupere_kg && { label: 'Fluide récupéré', value: data.cerfa.fluide_total_recupere_kg + ' kg' }
+                        ],
+                        [
+                            data.cerfa.attestation_capacite && { label: 'N° Attestation capacité', value: data.cerfa.attestation_capacite }
+                        ]
+                    ));
+                }
+                
                 // ═══ RÉSERVES ═══
                 if (data.reserves && data.reserves.length > 0) {
                     children.push(sectionHeading('Réserves / Alertes'));
@@ -10859,6 +10987,16 @@ INSTRUCTIONS:
                             data.technicien.autres && { label: 'Équipe', value: data.technicien.autres }
                         ]
                     ));
+                }
+                
+                // ═══ OBSERVATION CLIENT ═══
+                if (data.observation_client) {
+                    children.push(sectionHeading('Observation Client'));
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: data.observation_client, size: 20, font: 'Calibri', italics: true })],
+                        spacing: { after: 200 },
+                        shading: { fill: 'F0F9FF', type: ShadingType.CLEAR }
+                    }));
                 }
                 
                 // ═══ SIGNATURES (with images) ═══
@@ -10996,13 +11134,46 @@ INSTRUCTIONS:
                 // Filter nulls and create document
                 const filteredChildren = children.filter(c => c !== null);
                 
+                // Create header
+                const docHeader = new Header({
+                    children: [
+                        new Paragraph({
+                            children: [
+                                new TextRun({ text: 'FixAIR', bold: true, size: 16, font: 'Calibri', color: primaryColor }),
+                                new TextRun({ text: `  |  ${data.brand || ''}  |  Réf: ${data.reference || ''}  |  ${data.date || ''}`, size: 14, font: 'Calibri', color: '9CA3AF' })
+                            ],
+                            alignment: AlignmentType.RIGHT
+                        })
+                    ]
+                });
+                
+                // Create footer with page numbers
+                const docFooter = new Footer({
+                    children: [
+                        new Paragraph({
+                            children: [
+                                new TextRun({ text: data.technicien?.nom ? `Technicien: ${data.technicien.nom}  |  ` : '', size: 14, font: 'Calibri', color: '6B7280' }),
+                                new TextRun({ text: 'FixAIR', size: 14, font: 'Calibri', color: primaryColor, bold: true }),
+                                new TextRun({ text: '  |  Page ', size: 14, font: 'Calibri', color: '6B7280' }),
+                                new TextRun({ children: [PageNumber.CURRENT], size: 14, font: 'Calibri', color: '6B7280' }),
+                                new TextRun({ text: ' / ', size: 14, font: 'Calibri', color: '6B7280' }),
+                                new TextRun({ children: [PageNumber.TOTAL_PAGES], size: 14, font: 'Calibri', color: '6B7280' }),
+                                new TextRun({ text: `  |  ${new Date().toLocaleDateString('fr-FR')}`, size: 14, font: 'Calibri', color: '6B7280' })
+                            ],
+                            alignment: AlignmentType.CENTER
+                        })
+                    ]
+                });
+                
                 const doc = new Document({
                     sections: [{
                         properties: {
                             page: {
-                                margin: { top: 720, right: 720, bottom: 720, left: 720 }
+                                margin: { top: 900, right: 720, bottom: 900, left: 720 }
                             }
                         },
+                        headers: { default: docHeader },
+                        footers: { default: docFooter },
                         children: filteredChildren
                     }]
                 });
