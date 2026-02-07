@@ -10401,7 +10401,9 @@ INSTRUCTIONS:
             // Check if user has enterprise mode enabled
             const userProfile = window.currentUserProfile || {};
             const companyProfile = window.currentCompanyProfile || {};
-            const hasEnterprise = companyProfile.plan === 'enterprise' || userProfile.enterprise_enabled;
+            // TODO: Revert to production check before merge:
+            // const hasEnterprise = companyProfile.plan === 'enterprise' || userProfile.enterprise_enabled;
+            const hasEnterprise = true; // TESTING: Always show Enterprise option
             
             // Create modal for export options
             const modal = document.createElement('div');
@@ -10545,7 +10547,7 @@ INSTRUCTIONS:
                 const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, 
                         WidthType, AlignmentType, BorderStyle, HeadingLevel, Header, Footer,
                         ImageRun, PageBreak, ShadingType, TableLayoutType,
-                        VerticalAlign, convertInchesToTwip, PageNumber } = docx;
+                        VerticalAlign, convertInchesToTwip, PageNumber } = window.docx;
                 
                 // Brand colors
                 const brandKey = data.brand_key || 'general';
