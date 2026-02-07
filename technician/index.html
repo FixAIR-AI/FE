@@ -4945,6 +4945,108 @@
 .completion-overlay {
     animation: fadeIn 0.2s ease;
 }
+
+/* ===== EXPORT MODAL CSS ===== */
+.export-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.2s ease;
+}
+
+.export-modal-content {
+    background: var(--bg-primary, #1a1a2e);
+    border-radius: 16px;
+    padding: 24px;
+    min-width: 300px;
+    max-width: 90vw;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+
+.export-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.export-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: var(--text-primary, #fff);
+}
+
+.export-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--text-secondary, #888);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.export-modal-close:hover {
+    color: var(--text-primary, #fff);
+}
+
+.export-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.export-option {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: var(--bg-secondary, #252542);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.export-option:hover {
+    border-color: var(--accent, #F97316);
+    background: var(--bg-tertiary, #2d2d4a);
+}
+
+.export-option.primary {
+    border-color: var(--accent, #F97316);
+    background: rgba(249, 115, 22, 0.1);
+}
+
+.export-icon {
+    font-size: 28px;
+}
+
+.export-label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.export-label strong {
+    font-size: 16px;
+    color: var(--text-primary, #fff);
+}
+
+.export-label small {
+    font-size: 12px;
+    color: var(--text-secondary, #888);
+}
+/* ===== END EXPORT MODAL CSS ===== */
+
 /* ===== END REPORT COMPLETION STATE CSS ===== */
     </style>
     
@@ -4953,6 +5055,10 @@
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <!-- jsPDF for PDF export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- docx.js for Word export -->
+    <script src="https://unpkg.com/docx@8.5.0/build/index.umd.min.js"></script>
+    <!-- FileSaver for download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <!-- Mermaid.js for diagrams -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- FixAIR Diagram System -->
@@ -6739,10 +6845,10 @@
             if (!footer) return;
 
             if (reportCompletionState.status === REPORT_STATUS.COMPLETED) {
-                // TERMINÉ state: Modifier (secondary) + Exporter PDF (primary)
+                // TERMINÉ state: Modifier (secondary) + Exporter (primary)
                 footer.innerHTML = `
                     <button class="r-btn secondary" onclick="modifyReport()">Modifier le rapport</button>
-                    <button class="r-btn primary" onclick="exportReportPDF()">📄 Exporter PDF</button>
+                    <button class="r-btn primary" onclick="exportReportPDF()">📤 Exporter</button>
                 `;
             } else {
                 // EN COURS state: Compléter (primary full width)
@@ -10163,7 +10269,7 @@ INSTRUCTIONS:
                     </div>
                     <div class="rpt-actions">
                         <button class="rpt-btn secondary" onclick="shareReport()">Partager</button>
-                        <button class="rpt-btn primary" onclick="exportReportPDF()">Export PDF</button>
+                        <button class="rpt-btn primary" onclick="exportReportPDF()">📤 Exporter</button>
                     </div>
                 </div>`;
             }
@@ -10255,9 +10361,535 @@ INSTRUCTIONS:
             return text;
         }
         
-        // Main PDF export function - DISABLED (Premium feature)
+        // ═══════════════════════════════════════════════════════════════
+        // EXPORT FUNCTIONS - Word (.docx) + PDF
+        // ═══════════════════════════════════════════════════════════════
+        
+        // Main export function - shows export menu
         function exportReportPDF() {
-            toast('Export PDF disponible dans la version Pro');
+            showExportMenu();
+        }
+        
+        // Show export format selection menu
+        function showExportMenu() {
+            // Create modal for export options
+            const modal = document.createElement('div');
+            modal.className = 'export-modal';
+            modal.innerHTML = `
+                <div class="export-modal-content">
+                    <div class="export-modal-header">
+                        <h3>Exporter le rapport</h3>
+                        <button class="export-modal-close" onclick="this.closest('.export-modal').remove()">×</button>
+                    </div>
+                    <div class="export-options">
+                        <button class="export-option primary" onclick="exportReport('word'); this.closest('.export-modal').remove();">
+                            <span class="export-icon">📄</span>
+                            <span class="export-label">
+                                <strong>Word (.docx)</strong>
+                                <small>Modifiable - Recommandé</small>
+                            </span>
+                        </button>
+                        <button class="export-option" onclick="exportReport('pdf'); this.closest('.export-modal').remove();">
+                            <span class="export-icon">📋</span>
+                            <span class="export-label">
+                                <strong>PDF</strong>
+                                <small>Format fixe</small>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Close on backdrop click
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.remove();
+            });
+        }
+        
+        // Export report in specified format
+        async function exportReport(format) {
+            const data = collectReportData();
+            if (!data) {
+                toast('Aucun rapport à exporter');
+                return;
+            }
+            
+            if (format === 'word') {
+                await generateWord(data);
+            } else {
+                await generatePDF(data);
+            }
+        }
+        
+        // Collect all report data from lastReportData + photos + signatures
+        function collectReportData() {
+            if (!lastReportData) return null;
+            
+            const data = { ...lastReportData };
+            
+            // Add photos from global
+            if (window.reportPhotos && window.reportPhotos.length > 0) {
+                data.photos = window.reportPhotos;
+            }
+            
+            // Collect signatures from drawer if present
+            const clientSig = document.querySelector('.signature-area[data-type="client"] img');
+            const techSig = document.querySelector('.signature-area[data-type="technicien"] img');
+            
+            if (clientSig || techSig) {
+                data.signatures = data.signatures || {};
+                if (clientSig) data.signatures.client = clientSig.src;
+                if (techSig) data.signatures.technicien = techSig.src;
+            }
+            
+            return data;
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // WORD EXPORT - Professional .docx Generation
+        // ═══════════════════════════════════════════════════════════════
+        
+        async function generateWord(data) {
+            try {
+                toast('Génération du document Word...');
+                
+                const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, 
+                        WidthType, AlignmentType, BorderStyle, HeadingLevel,
+                        ImageRun, PageBreak, ShadingType } = docx;
+                
+                // Brand colors
+                const brandKey = data.brand_key || 'general';
+                const brandColors = {
+                    carrier: '#0066CC', daikin: '#00A0E9', mitsubishi: '#E60012',
+                    toshiba: '#FF0000', panasonic: '#0046AD', lg: '#A50034',
+                    samsung: '#1428A0', hitachi: '#E60012', fujitsu: '#ED1C24',
+                    general: '#F97316'
+                };
+                const primaryColor = brandColors[brandKey] || brandColors.general;
+                
+                // Status colors
+                const statusColors = {
+                    conforme: '22C55E', non_conforme: 'EF4444', en_cours: 'EAB308'
+                };
+                const statusLabels = {
+                    conforme: 'CONFORME', non_conforme: 'NON CONFORME', en_cours: 'EN COURS'
+                };
+                
+                // Helper: Create section heading
+                const sectionHeading = (text) => new Paragraph({
+                    children: [new TextRun({ text, bold: true, size: 24, color: primaryColor.replace('#', '') })],
+                    spacing: { before: 300, after: 100 },
+                    border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: primaryColor.replace('#', '') } }
+                });
+                
+                // Helper: Create key-value row
+                const kvRow = (label, value) => {
+                    if (!value) return null;
+                    return new Paragraph({
+                        children: [
+                            new TextRun({ text: label + ': ', bold: true, size: 20 }),
+                            new TextRun({ text: String(value), size: 20 })
+                        ],
+                        spacing: { after: 60 }
+                    });
+                };
+                
+                // Helper: Create table
+                const createTable = (headers, rows) => {
+                    const headerRow = new TableRow({
+                        children: headers.map(h => new TableCell({
+                            children: [new Paragraph({ children: [new TextRun({ text: h, bold: true, size: 18 })] })],
+                            shading: { fill: 'F3F4F6', type: ShadingType.CLEAR }
+                        }))
+                    });
+                    
+                    const dataRows = rows.map(row => new TableRow({
+                        children: row.map(cell => new TableCell({
+                            children: [new Paragraph({ children: [new TextRun({ text: String(cell || ''), size: 18 })] })]
+                        }))
+                    }));
+                    
+                    return new Table({
+                        rows: [headerRow, ...dataRows],
+                        width: { size: 100, type: WidthType.PERCENTAGE }
+                    });
+                };
+                
+                // Build document sections
+                const children = [];
+                
+                // ═══ HEADER ═══
+                children.push(new Paragraph({
+                    children: [
+                        new TextRun({ text: 'RAPPORT D\'INTERVENTION', bold: true, size: 36, color: primaryColor.replace('#', '') })
+                    ],
+                    alignment: AlignmentType.CENTER,
+                    spacing: { after: 100 }
+                }));
+                
+                children.push(new Paragraph({
+                    children: [new TextRun({ text: data.brand || 'FixAIR', size: 28, color: '666666' })],
+                    alignment: AlignmentType.CENTER,
+                    spacing: { after: 200 }
+                }));
+                
+                // Reference, Date, Status row
+                const headerInfo = [];
+                if (data.reference) headerInfo.push(`Réf: ${data.reference}`);
+                if (data.date) headerInfo.push(`Date: ${data.date}`);
+                if (data.type_intervention) headerInfo.push(`Type: ${data.type_intervention}`);
+                
+                if (headerInfo.length > 0) {
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: headerInfo.join(' | '), size: 20, color: '666666' })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 100 }
+                    }));
+                }
+                
+                // Status badge
+                if (data.status) {
+                    const statusColor = statusColors[data.status] || statusColors.en_cours;
+                    children.push(new Paragraph({
+                        children: [new TextRun({ 
+                            text: ' ' + (statusLabels[data.status] || data.status.toUpperCase()) + ' ',
+                            bold: true, size: 22, color: 'FFFFFF',
+                            shading: { fill: statusColor, type: ShadingType.CLEAR }
+                        })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 300 }
+                    }));
+                }
+                
+                // ═══ RÉSUMÉ ═══
+                if (data.resume) {
+                    children.push(sectionHeading('Résumé'));
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: data.resume, size: 20 })],
+                        spacing: { after: 200 }
+                    }));
+                }
+                
+                // ═══ SITE & CLIENT ═══
+                children.push(sectionHeading('Site & Client'));
+                
+                if (data.site) {
+                    if (data.site.numero_affaire) children.push(kvRow('N° Affaire', data.site.numero_affaire));
+                    if (data.site.adresse) children.push(kvRow('Adresse', data.site.adresse));
+                    if (data.site.ville) children.push(kvRow('Ville', data.site.ville));
+                }
+                
+                if (data.client) {
+                    if (data.client.societe) children.push(kvRow('Société', data.client.societe));
+                    if (data.client.contact) children.push(kvRow('Contact', data.client.contact));
+                    if (data.client.telephone) children.push(kvRow('Téléphone', data.client.telephone));
+                    if (data.client.reference) children.push(kvRow('Réf. Client', data.client.reference));
+                }
+                
+                // ═══ DATES INTERVENTION ═══
+                if (data.dates && (data.dates.debut_date || data.dates.fin_date)) {
+                    children.push(sectionHeading('Dates Intervention'));
+                    if (data.dates.debut_date) {
+                        children.push(kvRow('Début', `${data.dates.debut_date}${data.dates.debut_heure ? ' à ' + data.dates.debut_heure : ''}`));
+                    }
+                    if (data.dates.fin_date) {
+                        children.push(kvRow('Fin', `${data.dates.fin_date}${data.dates.fin_heure ? ' à ' + data.dates.fin_heure : ''}`));
+                    }
+                }
+                
+                // ═══ SYSTÈME ═══
+                if (data.systeme && Object.values(data.systeme).some(v => v)) {
+                    children.push(sectionHeading('Système'));
+                    children.push(kvRow('Type', data.systeme.type));
+                    children.push(kvRow('Modèle', data.systeme.modele));
+                    children.push(kvRow('N° Série', data.systeme.serie));
+                    children.push(kvRow('Puissance', data.systeme.puissance ? data.systeme.puissance + ' kW' : null));
+                    children.push(kvRow('Année installation', data.systeme.annee_installation));
+                    children.push(kvRow('Garantie', data.systeme.garantie));
+                }
+                
+                // ═══ FLUIDE ═══
+                if (data.fluide && Object.values(data.fluide).some(v => v)) {
+                    children.push(sectionHeading('Fluide Frigorigène'));
+                    children.push(kvRow('Type', data.fluide.type));
+                    children.push(kvRow('Charge initiale', data.fluide.charge_initiale ? data.fluide.charge_initiale + ' kg' : null));
+                    children.push(kvRow('Type huile', data.fluide.type_huile));
+                    children.push(kvRow('Charge totale', data.fluide.charge_totale ? data.fluide.charge_totale + ' kg' : null));
+                }
+                
+                // ═══ ADRESSAGE ═══
+                if (data.adressage && data.adressage.length > 0) {
+                    children.push(sectionHeading('Adressage Unités'));
+                    children.push(createTable(
+                        ['Unité', 'Adresse', 'Zone'],
+                        data.adressage.map(a => [a.unite, a.adresse, a.zone])
+                    ));
+                }
+                
+                // ═══ CODES DÉFAUT ═══
+                if (data.codes_defaut && data.codes_defaut.length > 0) {
+                    children.push(sectionHeading('Codes Défaut'));
+                    children.push(createTable(
+                        ['Code', 'Description', 'Résolution'],
+                        data.codes_defaut.map(c => [c.code, c.description, c.resolution])
+                    ));
+                }
+                
+                // ═══ SÉCURITÉ ═══
+                if (data.securite && (data.securite.etat || data.securite.risques)) {
+                    children.push(sectionHeading('Sécurité'));
+                    children.push(kvRow('État', data.securite.etat));
+                    if (data.securite.risques) {
+                        children.push(new Paragraph({
+                            children: [new TextRun({ text: 'Risques identifiés:', bold: true, size: 20 })],
+                            spacing: { after: 60 }
+                        }));
+                        children.push(new Paragraph({
+                            children: [new TextRun({ text: data.securite.risques, size: 20, color: 'EF4444' })],
+                            spacing: { after: 100 }
+                        }));
+                    }
+                }
+                
+                // ═══ MESURES ═══
+                if (data.mesures && data.mesures.length > 0) {
+                    children.push(sectionHeading('Mesures'));
+                    children.push(createTable(
+                        ['Mesure', 'Valeur', 'Note'],
+                        data.mesures.map(m => [m.label, m.valeur + (m.unite ? ' ' + m.unite : ''), m.note || ''])
+                    ));
+                }
+                
+                // ═══ FONCTIONNEMENT ═══
+                if (data.fonctionnement && (data.fonctionnement.heures_compresseur || data.fonctionnement.nb_demarrages)) {
+                    children.push(sectionHeading('Fonctionnement'));
+                    children.push(kvRow('Heures compresseur', data.fonctionnement.heures_compresseur));
+                    children.push(kvRow('Nb démarrages', data.fonctionnement.nb_demarrages));
+                }
+                
+                // ═══ TRAVAUX EFFECTUÉS ═══
+                if (data.travaux_effectues && data.travaux_effectues.length > 0) {
+                    children.push(sectionHeading('Travaux Effectués'));
+                    data.travaux_effectues.forEach(t => {
+                        const icon = t.status === 'done' ? '✓' : (t.status === 'error' ? '✗' : '→');
+                        const color = t.status === 'done' ? '22C55E' : (t.status === 'error' ? 'EF4444' : 'EAB308');
+                        children.push(new Paragraph({
+                            children: [
+                                new TextRun({ text: icon + ' ', color }),
+                                new TextRun({ text: t.texte, size: 20 })
+                            ],
+                            spacing: { after: 60 }
+                        }));
+                    });
+                }
+                
+                // ═══ TRAVAUX À PRÉVOIR ═══
+                if (data.travaux_prevoir && data.travaux_prevoir.length > 0) {
+                    children.push(sectionHeading('Travaux à Prévoir'));
+                    data.travaux_prevoir.forEach(t => {
+                        const prioriteColors = { urgent: 'EF4444', normal: 'EAB308', optionnel: '666666' };
+                        children.push(new Paragraph({
+                            children: [
+                                new TextRun({ text: '• ' + t.texte, size: 20 }),
+                                t.priorite ? new TextRun({ text: ` [${t.priorite.toUpperCase()}]`, size: 18, color: prioriteColors[t.priorite] || '666666' }) : null
+                            ].filter(Boolean),
+                            spacing: { after: 60 }
+                        }));
+                    });
+                }
+                
+                // ═══ PIÈCES ═══
+                if (data.pieces && data.pieces.length > 0) {
+                    children.push(sectionHeading('Pièces Utilisées'));
+                    children.push(createTable(
+                        ['Référence', 'Désignation', 'Qté'],
+                        data.pieces.map(p => [p.reference, p.designation, p.quantite])
+                    ));
+                }
+                
+                // ═══ RAPPORT TECHNICIEN ═══
+                if (data.rapport_technicien) {
+                    children.push(sectionHeading('Rapport Technicien'));
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: data.rapport_technicien, size: 20 })],
+                        spacing: { after: 200 }
+                    }));
+                }
+                
+                // ═══ REMARQUES ═══
+                if (data.remarques) {
+                    children.push(sectionHeading('Remarques'));
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: data.remarques, size: 20 })],
+                        spacing: { after: 200 }
+                    }));
+                }
+                
+                // ═══ TESTS MES ═══
+                if (data.tests && Object.values(data.tests).some(v => v)) {
+                    children.push(sectionHeading('Tests Mise en Service'));
+                    children.push(kvRow('Pression test', data.tests.pression_test_bar ? data.tests.pression_test_bar + ' bar' : null));
+                    children.push(kvRow('Durée test', data.tests.duree_test_heures ? data.tests.duree_test_heures + ' h' : null));
+                    children.push(kvRow('Vacuomètre', data.tests.valeur_vacuometre_mbar ? data.tests.valeur_vacuometre_mbar + ' mbar' : null));
+                }
+                
+                // ═══ TUYAUTERIES ═══
+                if (data.tuyauteries && Object.values(data.tuyauteries).some(v => v)) {
+                    children.push(sectionHeading('Tuyauteries'));
+                    children.push(kvRow('Longueur totale', data.tuyauteries.longueur_totale_m ? data.tuyauteries.longueur_totale_m + ' m' : null));
+                    children.push(kvRow('Dénivelé UE-UI', data.tuyauteries.denivele_oc_ui_m ? data.tuyauteries.denivele_oc_ui_m + ' m' : null));
+                    children.push(kvRow('Appoint calculé', data.tuyauteries.appoint_calcule_kg ? data.tuyauteries.appoint_calcule_kg + ' kg' : null));
+                }
+                
+                // ═══ ÉLECTRIQUE ═══
+                if (data.electrique && Object.values(data.electrique).some(v => v)) {
+                    children.push(sectionHeading('Électrique'));
+                    children.push(kvRow('Disjoncteur', data.electrique.calibre_disjoncteur));
+                    children.push(kvRow('Section câble', data.electrique.section_cable));
+                }
+                
+                // ═══ RELEVÉS UE ═══
+                if (data.releves_ue && Object.values(data.releves_ue).some(v => v)) {
+                    children.push(sectionHeading('Relevés Unité Extérieure'));
+                    children.push(kvRow('HP (Pd1)', data.releves_ue.pd1_bar ? data.releves_ue.pd1_bar + ' bar' : null));
+                    children.push(kvRow('BP (Ps)', data.releves_ue.ps_bar ? data.releves_ue.ps_bar + ' bar' : null));
+                    children.push(kvRow('T° ext (TA)', data.releves_ue.ta_celsius ? data.releves_ue.ta_celsius + ' °C' : null));
+                    children.push(kvRow('Fréq compresseur', data.releves_ue.freq_inv1_hz ? data.releves_ue.freq_inv1_hz + ' Hz' : null));
+                }
+                
+                // ═══ RELEVÉS UI ═══
+                if (data.releves_ui && data.releves_ui.length > 0) {
+                    children.push(sectionHeading('Relevés Unités Intérieures'));
+                    children.push(createTable(
+                        ['Unité', 'T° Soufflage', 'T° Reprise', 'Delta'],
+                        data.releves_ui.map(ui => [ui.nom, ui.temp_soufflage, ui.temp_reprise, ui.delta])
+                    ));
+                }
+                
+                // ═══ CERFA ═══
+                if (data.cerfa && Object.values(data.cerfa).some(v => v)) {
+                    children.push(sectionHeading('CERFA Fluides Frigorigènes'));
+                    children.push(kvRow('Fluide chargé', data.cerfa.fluide_total_charge_kg ? data.cerfa.fluide_total_charge_kg + ' kg' : null));
+                    children.push(kvRow('Fluide récupéré', data.cerfa.fluide_total_recupere_kg ? data.cerfa.fluide_total_recupere_kg + ' kg' : null));
+                    children.push(kvRow('N° Attestation', data.cerfa.attestation_capacite));
+                }
+                
+                // ═══ RÉSERVES ═══
+                if (data.reserves && data.reserves.length > 0) {
+                    children.push(sectionHeading('Réserves / Alertes'));
+                    data.reserves.forEach(r => {
+                        const color = r.type === 'danger' ? 'EF4444' : 'EAB308';
+                        const icon = r.type === 'danger' ? '⚠️' : '⚡';
+                        children.push(new Paragraph({
+                            children: [
+                                new TextRun({ text: icon + ' ', size: 20 }),
+                                new TextRun({ text: r.titre || 'Attention', bold: true, size: 20, color }),
+                                new TextRun({ text: ': ' + r.texte, size: 20 })
+                            ],
+                            spacing: { after: 100 }
+                        }));
+                    });
+                }
+                
+                // ═══ RÉSULTAT ═══
+                if (data.resultat) {
+                    children.push(sectionHeading('Résultat'));
+                    const resLabels = { resolu: 'Problème résolu', en_attente: 'En attente', non_resolu: 'Non résolu' };
+                    const resColors = { resolu: '22C55E', en_attente: 'EAB308', non_resolu: 'EF4444' };
+                    
+                    children.push(new Paragraph({
+                        children: [new TextRun({ 
+                            text: resLabels[data.resultat.status] || data.resultat.status,
+                            bold: true, size: 24, 
+                            color: resColors[data.resultat.status] || '666666'
+                        })],
+                        spacing: { after: 100 }
+                    }));
+                    
+                    if (data.resultat.description) {
+                        children.push(new Paragraph({
+                            children: [new TextRun({ text: data.resultat.description, size: 20 })],
+                            spacing: { after: 200 }
+                        }));
+                    }
+                }
+                
+                // ═══ OBSERVATION CLIENT ═══
+                if (data.observation_client) {
+                    children.push(sectionHeading('Observation Client'));
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: data.observation_client, size: 20, italics: true })],
+                        spacing: { after: 200 }
+                    }));
+                }
+                
+                // ═══ TECHNICIEN ═══
+                if (data.technicien) {
+                    children.push(sectionHeading('Technicien'));
+                    children.push(kvRow('Nom', data.technicien.nom));
+                    children.push(kvRow('Entreprise', data.technicien.entreprise));
+                    if (data.technicien.heure_arrivee || data.technicien.heure_depart) {
+                        children.push(kvRow('Présence', 
+                            `${data.technicien.heure_arrivee || '?'} → ${data.technicien.heure_depart || '?'}`
+                        ));
+                    }
+                    children.push(kvRow('Autres techniciens', data.technicien.autres));
+                }
+                
+                // ═══ SIGNATURES ═══
+                if (data.signatures && (data.signatures.client || data.signatures.technicien)) {
+                    children.push(sectionHeading('Signatures'));
+                    
+                    // Note: docx.js ImageRun requires base64 data
+                    // For now, add placeholder text - full image support requires async image loading
+                    if (data.signatures.nom_client) {
+                        children.push(kvRow('Client', data.signatures.nom_client + ' (signé)'));
+                    }
+                    if (data.signatures.nom_technicien) {
+                        children.push(kvRow('Technicien', data.signatures.nom_technicien + ' (signé)'));
+                    }
+                }
+                
+                // ═══ FOOTER ═══
+                children.push(new Paragraph({
+                    children: [new TextRun({ text: '─'.repeat(50), color: 'CCCCCC' })],
+                    spacing: { before: 400 }
+                }));
+                
+                children.push(new Paragraph({
+                    children: [new TextRun({ 
+                        text: `Généré par FixAIR — ${new Date().toLocaleDateString('fr-FR')}`,
+                        size: 18, color: '999999'
+                    })],
+                    alignment: AlignmentType.CENTER
+                }));
+                
+                // Filter out null paragraphs
+                const filteredChildren = children.filter(c => c !== null);
+                
+                // Create document
+                const doc = new Document({
+                    sections: [{
+                        properties: {},
+                        children: filteredChildren
+                    }]
+                });
+                
+                // Generate and download
+                const blob = await Packer.toBlob(doc);
+                const filename = `Rapport_${data.brand || 'FixAIR'}_${data.reference || new Date().toISOString().split('T')[0]}.docx`;
+                saveAs(blob, filename);
+                
+                toast('Document Word téléchargé !');
+                
+                // Track export
+                trackAction('report');
+                
+            } catch (error) {
+                console.error('Error generating Word document:', error);
+                toast('Erreur génération Word: ' + error.message);
+            }
         }
         
         // Generate professional PDF
@@ -12410,7 +13042,7 @@ text = text.replace(/\s*\{"type"\s*:\s*"report"[\s\S]*\}\s*$/, '').trim();
                         </div>
                         <div class="report-menu-item" onclick="exportReportPDFMenu(event, this)">
                             <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></span>
-                            <span>Export PDF</span>
+                            <span>Exporter</span>
                         </div>
                     </div>
                 </div>`;
@@ -13327,11 +13959,11 @@ RÈGLES:
             toast('Partage disponible dans la version Pro');
         }
 
-        // Menu version of export PDF - DISABLED (Premium feature)
+        // Menu version of export
         function exportReportPDFMenu(event, el) {
             event.stopPropagation();
             el.closest('.report-menu-dropdown').classList.remove('show');
-            toast('Export PDF disponible dans la version Pro');
+            showExportMenu();
         }
 
         // Menu version of share - DISABLED (Premium feature)
