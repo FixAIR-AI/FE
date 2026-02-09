@@ -4946,6 +4946,240 @@
     animation: fadeIn 0.2s ease;
 }
 /* ===== END REPORT COMPLETION STATE CSS ===== */
+
+/* ═══════════════════════════════════════════════════════════════
+   FREEMIUM PAYWALL SYSTEM - Soft Upgrade Prompts
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Upgrade Modal Overlay */
+.upgrade-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    padding: 20px;
+}
+.upgrade-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Upgrade Modal Card */
+.upgrade-modal {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    max-width: 400px;
+    width: 100%;
+    padding: 32px 28px;
+    transform: translateY(20px) scale(0.95);
+    transition: transform 0.3s ease;
+    text-align: center;
+}
+.upgrade-overlay.show .upgrade-modal {
+    transform: translateY(0) scale(1);
+}
+
+/* Upgrade Icon */
+.upgrade-icon {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 20px;
+    background: linear-gradient(135deg, var(--copilot) 0%, #FF8F5C 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 32px rgba(255, 107, 53, 0.3);
+}
+.upgrade-icon svg {
+    width: 36px;
+    height: 36px;
+    color: white;
+}
+
+/* Upgrade Title & Text */
+.upgrade-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 12px;
+}
+.upgrade-subtitle {
+    font-size: 15px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    margin-bottom: 24px;
+}
+
+/* Usage Counter Badge */
+.usage-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 107, 53, 0.1);
+    border: 1px solid rgba(255, 107, 53, 0.2);
+    padding: 10px 16px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    font-size: 13px;
+    color: var(--copilot);
+    font-weight: 600;
+}
+.usage-badge .usage-count {
+    background: var(--copilot);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+/* Benefits List */
+.upgrade-benefits {
+    text-align: left;
+    margin-bottom: 24px;
+    padding: 16px;
+    background: var(--card);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+.upgrade-benefit {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 8px 0;
+}
+.upgrade-benefit:not(:last-child) {
+    border-bottom: 1px solid var(--border);
+}
+.upgrade-benefit-icon {
+    width: 20px;
+    height: 20px;
+    background: rgba(34, 197, 94, 0.15);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+.upgrade-benefit-icon svg {
+    width: 12px;
+    height: 12px;
+    color: #22c55e;
+}
+.upgrade-benefit-text {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.4;
+}
+
+/* Upgrade Buttons */
+.upgrade-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.upgrade-btn {
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+.upgrade-btn.primary {
+    background: linear-gradient(135deg, var(--copilot) 0%, #FF8F5C 100%);
+    color: white;
+    box-shadow: 0 4px 16px rgba(255, 107, 53, 0.3);
+}
+.upgrade-btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(255, 107, 53, 0.4);
+}
+.upgrade-btn.secondary {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+}
+.upgrade-btn.secondary:hover {
+    background: var(--card);
+    color: var(--text);
+}
+
+/* Soft Banner (in-chat) */
+.upgrade-banner {
+    background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(255, 143, 92, 0.08) 100%);
+    border: 1px solid rgba(255, 107, 53, 0.2);
+    border-radius: 12px;
+    padding: 16px;
+    margin: 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.upgrade-banner-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--copilot);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.upgrade-banner-icon svg {
+    width: 20px;
+    height: 20px;
+    color: white;
+}
+.upgrade-banner-content {
+    flex: 1;
+}
+.upgrade-banner-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+}
+.upgrade-banner-text {
+    font-size: 12px;
+    color: var(--text-dim);
+}
+.upgrade-banner-btn {
+    padding: 8px 14px;
+    background: var(--copilot);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+/* Light theme overrides */
+[data-theme="light"] .upgrade-modal {
+    background: #FFFFFF;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+[data-theme="light"] .upgrade-benefits {
+    background: #F8FAFC;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
     </style>
     
     <!-- Supabase Client -->
@@ -4968,6 +5202,76 @@
 <body>
     <!-- App wrapper to contain everything and prevent gaps -->
     <div class="app-wrapper">
+    
+    <!-- ═══════════════════════════════════════════════════════════════
+         FREEMIUM PAYWALL - UPGRADE MODAL
+         ═══════════════════════════════════════════════════════════════ -->
+    <div id="upgradeOverlay" class="upgrade-overlay" onclick="closeUpgradeModal(event)">
+        <div class="upgrade-modal" onclick="event.stopPropagation()">
+            <div class="upgrade-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                </svg>
+            </div>
+            
+            <h2 class="upgrade-title" id="upgradeTitle">Passez à FixAIR Pro</h2>
+            <p class="upgrade-subtitle" id="upgradeSubtitle">
+                Débloquez le plein potentiel de votre assistant HVAC
+            </p>
+            
+            <div class="usage-badge" id="usageBadge">
+                <span>Utilisations gratuites</span>
+                <span class="usage-count" id="usageCount">5/5</span>
+            </div>
+            
+            <div class="upgrade-benefits">
+                <div class="upgrade-benefit">
+                    <div class="upgrade-benefit-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                    </div>
+                    <span class="upgrade-benefit-text">Diagnostic Copilot <strong>illimité</strong></span>
+                </div>
+                <div class="upgrade-benefit">
+                    <div class="upgrade-benefit-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                    </div>
+                    <span class="upgrade-benefit-text">Export PDF professionnel des rapports</span>
+                </div>
+                <div class="upgrade-benefit">
+                    <div class="upgrade-benefit-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                    </div>
+                    <span class="upgrade-benefit-text">Schémas techniques interactifs</span>
+                </div>
+                <div class="upgrade-benefit">
+                    <div class="upgrade-benefit-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                    </div>
+                    <span class="upgrade-benefit-text">Support prioritaire 24/7</span>
+                </div>
+            </div>
+            
+            <div class="upgrade-buttons">
+                <button class="upgrade-btn primary" onclick="handleUpgradeClick()">
+                    Passer à Pro — 29€/mois
+                </button>
+                <button class="upgrade-btn secondary" onclick="closeUpgradeModal()">
+                    Plus tard
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- END FREEMIUM PAYWALL -->
     
     <!-- SVG DEFS -->
     <svg style="position:absolute;width:0;height:0;">
@@ -7468,6 +7772,7 @@
             // Load app data
             loadProjectsListAndCheckOnboarding();
             initGamification();
+            initFreemium(); // Initialize freemium paywall system
             prefetchApiKeys();
             initLiveStatusTracking();
 
@@ -10195,9 +10500,36 @@ INSTRUCTIONS:
             general: { primary: '#EA580C', secondary: '#1a1a2e' }
         };
         
-        // Share report function - DISABLED (Premium feature)
+        // Share report function - Pro feature with upgrade prompt
         function shareReport() {
-            toast('Partage disponible dans la version Pro');
+            // Check if user has Pro subscription
+            if (typeof canUseProFeature === 'function' && canUseProFeature('share_report')) {
+                // Pro user - implement sharing (placeholder)
+                if (lastReportData) {
+                    const text = generateReportText(lastReportData);
+                    if (navigator.share) {
+                        navigator.share({
+                            title: 'Rapport d\'intervention FixAIR',
+                            text: text
+                        }).catch(() => {
+                            navigator.clipboard.writeText(text);
+                            toast('Rapport copié !');
+                        });
+                    } else {
+                        navigator.clipboard.writeText(text);
+                        toast('Rapport copié !');
+                    }
+                } else {
+                    toast('Aucun rapport à partager');
+                }
+            } else {
+                // Free user - show upgrade modal
+                if (typeof showUpgradeModal === 'function') {
+                    showUpgradeModal('share');
+                } else {
+                    toast('Partage disponible dans la version Pro');
+                }
+            }
         }
         
         // Generate plain text version of report
@@ -10255,9 +10587,24 @@ INSTRUCTIONS:
             return text;
         }
         
-        // Main PDF export function - DISABLED (Premium feature)
+        // Main PDF export function - Pro feature with upgrade prompt
         function exportReportPDF() {
-            toast('Export PDF disponible dans la version Pro');
+            // Check if user has Pro subscription
+            if (typeof canUseProFeature === 'function' && canUseProFeature('export_pdf')) {
+                // Pro user - generate PDF
+                if (lastReportData) {
+                    generatePDF(lastReportData);
+                } else {
+                    toast('Aucun rapport à exporter');
+                }
+            } else {
+                // Free user - show upgrade modal
+                if (typeof showUpgradeModal === 'function') {
+                    showUpgradeModal('export_pdf');
+                } else {
+                    toast('Export PDF disponible dans la version Pro');
+                }
+            }
         }
         
         // Generate professional PDF
@@ -12610,6 +12957,23 @@ text = text.replace(/\s*\{"type"\s*:\s*"report"[\s\S]*\}\s*$/, '').trim();
             const text = input.value.trim();
             if(!text) return;
             
+            // ═══ FREEMIUM CHECK: Track usage and show upgrade if needed ═══
+            if (typeof trackChatUsage === 'function') {
+                const usageResult = trackChatUsage(panel);
+                
+                // If at hard limit, show modal and don't send
+                if (usageResult.showUpgrade && !usageResult.allowed) {
+                    showUpgradeModal(panel === 'copilot' ? 'copilot_limit' : 'copilot_limit');
+                    return; // Don't send the message
+                }
+                
+                // If approaching limit, show soft warning banner (but still send)
+                if (usageResult.showWarning && usageResult.remaining <= 3) {
+                    showUpgradeBanner(panel, usageResult.remaining);
+                }
+            }
+            // ═══ END FREEMIUM CHECK ═══
+            
             // Add user message to UI
             addMsg(panel, 'user', text);
             showThoughtProcess(panel, text);
@@ -13327,18 +13691,42 @@ RÈGLES:
             toast('Partage disponible dans la version Pro');
         }
 
-        // Menu version of export PDF - DISABLED (Premium feature)
+        // Menu version of export PDF - Pro feature with upgrade prompt
         function exportReportPDFMenu(event, el) {
             event.stopPropagation();
             el.closest('.report-menu-dropdown').classList.remove('show');
-            toast('Export PDF disponible dans la version Pro');
+            
+            // Check if user has Pro subscription
+            if (typeof canUseProFeature === 'function' && canUseProFeature('export_pdf')) {
+                // Pro user - trigger export
+                exportReportPDF();
+            } else {
+                // Free user - show upgrade modal
+                if (typeof showUpgradeModal === 'function') {
+                    showUpgradeModal('export_pdf');
+                } else {
+                    toast('Export PDF disponible dans la version Pro');
+                }
+            }
         }
 
-        // Menu version of share - DISABLED (Premium feature)
+        // Menu version of share - Pro feature with upgrade prompt
         function shareReportMenu(event, el) {
             event.stopPropagation();
             el.closest('.report-menu-dropdown').classList.remove('show');
-            toast('Partage disponible dans la version Pro');
+            
+            // Check if user has Pro subscription
+            if (typeof canUseProFeature === 'function' && canUseProFeature('share_report')) {
+                // Pro user - share report
+                shareReport();
+            } else {
+                // Free user - show upgrade modal
+                if (typeof showUpgradeModal === 'function') {
+                    showUpgradeModal('share');
+                } else {
+                    toast('Partage disponible dans la version Pro');
+                }
+            }
         }
         
         // Close report menu when clicking outside
@@ -14967,6 +15355,299 @@ RÈGLES:
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', setViewportHeight);
         }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // FREEMIUM PAYWALL SYSTEM
+        // ═══════════════════════════════════════════════════════════════
+        // Soft paywall: X free Copilot chats → upgrade prompt
+        // Export PDF → subscription required
+        // UX: Never block abruptly, always give value first
+        // ═══════════════════════════════════════════════════════════════
+        
+        const FREEMIUM_CONFIG = {
+            // Free tier limits
+            freeCopilotChats: 15,        // Free Copilot messages per week
+            freeAssistantChats: 25,      // Free Assistant messages per week (more generous)
+            softLimitWarning: 0.8,       // Show warning at 80% usage
+            
+            // Storage keys
+            storageKey: 'fixair_freemium_usage',
+            
+            // Features requiring Pro
+            proFeatures: ['export_pdf', 'export_word', 'share_report', 'diagrams_advanced'],
+            
+            // Pricing (for display)
+            monthlyPrice: 29,
+            yearlyPrice: 249,
+            
+            // Upgrade URL (placeholder - will be Stripe)
+            upgradeUrl: 'https://fixair.ai/upgrade'
+        };
+        
+        // Get/Set freemium usage from localStorage
+        function getFreemiumUsage() {
+            try {
+                const stored = localStorage.getItem(FREEMIUM_CONFIG.storageKey);
+                if (!stored) return createFreshUsage();
+                
+                const usage = JSON.parse(stored);
+                
+                // Check if week has reset (Monday reset)
+                const weekStart = getFreemiumWeekStart();
+                if (!usage.weekStart || new Date(usage.weekStart) < weekStart) {
+                    return createFreshUsage();
+                }
+                
+                return usage;
+            } catch (e) {
+                console.warn('[Freemium] Error reading usage:', e);
+                return createFreshUsage();
+            }
+        }
+        
+        function createFreshUsage() {
+            const fresh = {
+                weekStart: getFreemiumWeekStart().toISOString(),
+                copilotChats: 0,
+                assistantChats: 0,
+                isPro: false, // Will be updated from Supabase
+                lastChecked: new Date().toISOString()
+            };
+            saveFreemiumUsage(fresh);
+            return fresh;
+        }
+        
+        function saveFreemiumUsage(usage) {
+            try {
+                localStorage.setItem(FREEMIUM_CONFIG.storageKey, JSON.stringify(usage));
+            } catch (e) {
+                console.warn('[Freemium] Error saving usage:', e);
+            }
+        }
+        
+        function getFreemiumWeekStart() {
+            const now = new Date();
+            const dayOfWeek = now.getDay();
+            const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+            const monday = new Date(now);
+            monday.setDate(now.getDate() + mondayOffset);
+            monday.setHours(0, 0, 0, 0);
+            return monday;
+        }
+        
+        // Check subscription status from Supabase (async)
+        async function checkSubscriptionStatus() {
+            try {
+                const userId = await getCurrentUserId();
+                if (!userId || userId.startsWith('demo-')) return false;
+                
+                // Check users table for subscription_tier
+                const { data, error } = await db
+                    .from('users')
+                    .select('subscription_tier, subscription_expires')
+                    .eq('id', userId)
+                    .single();
+                
+                if (error || !data) return false;
+                
+                // Check if subscription is active
+                const isPro = data.subscription_tier === 'pro' || data.subscription_tier === 'enterprise';
+                const isExpired = data.subscription_expires && new Date(data.subscription_expires) < new Date();
+                
+                // Update local cache
+                const usage = getFreemiumUsage();
+                usage.isPro = isPro && !isExpired;
+                saveFreemiumUsage(usage);
+                
+                return usage.isPro;
+            } catch (e) {
+                console.warn('[Freemium] Error checking subscription:', e);
+                return false;
+            }
+        }
+        
+        // Track a chat message (called from sendMsg)
+        function trackChatUsage(panel) {
+            const usage = getFreemiumUsage();
+            
+            // Pro users don't need tracking (but we still track for analytics)
+            if (usage.isPro) return { allowed: true, remaining: 999 };
+            
+            const key = panel === 'copilot' ? 'copilotChats' : 'assistantChats';
+            const limit = panel === 'copilot' ? FREEMIUM_CONFIG.freeCopilotChats : FREEMIUM_CONFIG.freeAssistantChats;
+            
+            // Increment usage
+            usage[key] = (usage[key] || 0) + 1;
+            saveFreemiumUsage(usage);
+            
+            const remaining = Math.max(0, limit - usage[key]);
+            const percentUsed = usage[key] / limit;
+            
+            return {
+                allowed: usage[key] <= limit,
+                remaining: remaining,
+                total: limit,
+                used: usage[key],
+                percentUsed: percentUsed,
+                showWarning: percentUsed >= FREEMIUM_CONFIG.softLimitWarning && percentUsed < 1,
+                showUpgrade: percentUsed >= 1
+            };
+        }
+        
+        // Check if user can send a chat (preview check, doesn't increment)
+        function canSendChat(panel) {
+            const usage = getFreemiumUsage();
+            if (usage.isPro) return { allowed: true, remaining: 999 };
+            
+            const key = panel === 'copilot' ? 'copilotChats' : 'assistantChats';
+            const limit = panel === 'copilot' ? FREEMIUM_CONFIG.freeCopilotChats : FREEMIUM_CONFIG.freeAssistantChats;
+            const remaining = Math.max(0, limit - (usage[key] || 0));
+            
+            return {
+                allowed: remaining > 0,
+                remaining: remaining,
+                total: limit,
+                used: usage[key] || 0
+            };
+        }
+        
+        // Check if user can use a Pro feature
+        function canUseProFeature(feature) {
+            const usage = getFreemiumUsage();
+            return usage.isPro;
+        }
+        
+        // Show upgrade modal
+        function showUpgradeModal(context = 'generic') {
+            const overlay = document.getElementById('upgradeOverlay');
+            const title = document.getElementById('upgradeTitle');
+            const subtitle = document.getElementById('upgradeSubtitle');
+            const badge = document.getElementById('usageBadge');
+            const usageCount = document.getElementById('usageCount');
+            
+            // Customize based on context
+            switch(context) {
+                case 'copilot_limit':
+                    title.textContent = '🔥 Copilot illimité';
+                    subtitle.textContent = 'Vous avez atteint votre limite hebdomadaire. Passez à Pro pour un diagnostic illimité !';
+                    badge.style.display = 'inline-flex';
+                    const copilotUsage = canSendChat('copilot');
+                    usageCount.textContent = `${copilotUsage.used}/${copilotUsage.total}`;
+                    break;
+                    
+                case 'copilot_warning':
+                    title.textContent = 'Bientôt à la limite';
+                    subtitle.textContent = 'Il vous reste quelques messages Copilot gratuits cette semaine. Passez à Pro pour ne jamais être limité !';
+                    badge.style.display = 'inline-flex';
+                    const copilotWarn = canSendChat('copilot');
+                    usageCount.textContent = `${copilotWarn.used}/${copilotWarn.total}`;
+                    break;
+                    
+                case 'export_pdf':
+                    title.textContent = '📄 Export PDF Pro';
+                    subtitle.textContent = 'Générez des rapports PDF professionnels avec votre logo et mise en page personnalisée.';
+                    badge.style.display = 'none';
+                    break;
+                    
+                case 'export_word':
+                    title.textContent = '📝 Export Word Pro';
+                    subtitle.textContent = 'Exportez vos rapports en Word modifiable pour personnalisation avancée.';
+                    badge.style.display = 'none';
+                    break;
+                    
+                case 'share':
+                    title.textContent = '🔗 Partage Pro';
+                    subtitle.textContent = 'Partagez vos rapports directement avec vos clients par email ou lien.';
+                    badge.style.display = 'none';
+                    break;
+                    
+                default:
+                    title.textContent = 'Passez à FixAIR Pro';
+                    subtitle.textContent = 'Débloquez le plein potentiel de votre assistant HVAC';
+                    badge.style.display = 'none';
+            }
+            
+            overlay.classList.add('show');
+            
+            // Track modal view for analytics
+            if (typeof trackAction === 'function') {
+                // Don't track this as an action, just log
+                console.log('[Freemium] Upgrade modal shown:', context);
+            }
+        }
+        
+        function closeUpgradeModal(event) {
+            // If clicking overlay background, close
+            if (event && event.target.id !== 'upgradeOverlay') return;
+            document.getElementById('upgradeOverlay').classList.remove('show');
+        }
+        
+        function handleUpgradeClick() {
+            // For now, show toast and redirect to upgrade page
+            toast('Redirection vers la page d\'abonnement...');
+            
+            // Track upgrade intent
+            console.log('[Freemium] Upgrade clicked');
+            
+            // Close modal
+            closeUpgradeModal();
+            
+            // Open upgrade page (placeholder - will be Stripe)
+            setTimeout(() => {
+                window.open(FREEMIUM_CONFIG.upgradeUrl, '_blank');
+            }, 500);
+        }
+        
+        // Show soft upgrade banner in chat (non-blocking)
+        function showUpgradeBanner(panel, remaining) {
+            const chatBody = document.getElementById(panel + 'Body');
+            if (!chatBody) return;
+            
+            // Don't show if already showing
+            if (chatBody.querySelector('.upgrade-banner')) return;
+            
+            const banner = document.createElement('div');
+            banner.className = 'upgrade-banner';
+            banner.innerHTML = `
+                <div class="upgrade-banner-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                        <path d="M2 17l10 5 10-5"/>
+                    </svg>
+                </div>
+                <div class="upgrade-banner-content">
+                    <div class="upgrade-banner-title">Plus que ${remaining} message${remaining > 1 ? 's' : ''} gratuit${remaining > 1 ? 's' : ''}</div>
+                    <div class="upgrade-banner-text">Passez à Pro pour un accès illimité</div>
+                </div>
+                <button class="upgrade-banner-btn" onclick="showUpgradeModal('copilot_warning')">Upgrade</button>
+            `;
+            
+            chatBody.appendChild(banner);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+        
+        // Initialize freemium on page load
+        async function initFreemium() {
+            console.log('[Freemium] Initializing...');
+            
+            // Check subscription status from database
+            await checkSubscriptionStatus();
+            
+            const usage = getFreemiumUsage();
+            console.log('[Freemium] Current usage:', usage);
+        }
+        
+        // Expose to global scope
+        window.showUpgradeModal = showUpgradeModal;
+        window.closeUpgradeModal = closeUpgradeModal;
+        window.handleUpgradeClick = handleUpgradeClick;
+        window.canSendChat = canSendChat;
+        window.trackChatUsage = trackChatUsage;
+        window.canUseProFeature = canUseProFeature;
+        
+        // ═══════════════════════════════════════════════════════════════
+        // END FREEMIUM PAYWALL SYSTEM
+        // ═══════════════════════════════════════════════════════════════
         
         // ═══════════════════════════════════════════════════════════════
         // GAMIFICATION - REALISTIC ECONOMIC MODEL
