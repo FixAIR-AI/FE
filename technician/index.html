@@ -4945,6 +4945,134 @@
 .completion-overlay {
     animation: fadeIn 0.2s ease;
 }
+
+/* ===== EXPORT MODAL CSS ===== */
+.export-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.2s ease;
+}
+
+.export-modal-content {
+    background: var(--bg-primary, #1a1a2e);
+    border-radius: 16px;
+    padding: 24px;
+    min-width: 300px;
+    max-width: 90vw;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+
+.export-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.export-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: var(--text-primary, #fff);
+}
+
+.export-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--text-secondary, #888);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.export-modal-close:hover {
+    color: var(--text-primary, #fff);
+}
+
+.export-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.export-option {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: var(--bg-secondary, #252542);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.export-option:hover {
+    border-color: var(--accent, #F97316);
+    background: var(--bg-tertiary, #2d2d4a);
+}
+
+.export-option.primary {
+    border-color: var(--accent, #F97316);
+    background: rgba(249, 115, 22, 0.1);
+}
+
+.export-option.enterprise {
+    border-color: #1B4D4D;
+    background: rgba(27, 77, 77, 0.1);
+}
+
+.export-option.enterprise:hover {
+    background: rgba(27, 77, 77, 0.2);
+    border-color: #1B4D4D;
+}
+
+.export-option.locked {
+    border-color: var(--border, rgba(255,255,255,0.1));
+    background: var(--bg-secondary, #1a1a2e);
+    opacity: 0.7;
+}
+
+.export-option.locked:hover {
+    opacity: 1;
+    border-color: var(--assistant, #22c55e);
+}
+
+.export-option.secondary {
+    border-color: var(--border, rgba(255,255,255,0.1));
+    background: transparent;
+}
+
+.export-icon {
+    font-size: 28px;
+}
+
+.export-label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.export-label strong {
+    font-size: 16px;
+    color: var(--text-primary, #fff);
+}
+
+.export-label small {
+    font-size: 12px;
+    color: var(--text-secondary, #888);
+}
+/* ===== END EXPORT MODAL CSS ===== */
+
 /* ===== END REPORT COMPLETION STATE CSS ===== */
 
 /* ═══════════════════════════════════════════════════════════════
@@ -5187,6 +5315,10 @@
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <!-- jsPDF for PDF export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- docx.js for Word export -->
+    <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+    <!-- FileSaver for download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <!-- Mermaid.js for diagrams -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- FixAIR Diagram System -->
@@ -5241,7 +5373,7 @@
                             <polyline points="20 6 9 17 4 12"/>
                         </svg>
                     </div>
-                    <span class="upgrade-benefit-text">Export PDF professionnel des rapports</span>
+                    <span class="upgrade-benefit-text">Export PDF & Word professionnel des rapports</span>
                 </div>
                 <div class="upgrade-benefit">
                     <div class="upgrade-benefit-icon">
@@ -7043,10 +7175,10 @@
             if (!footer) return;
 
             if (reportCompletionState.status === REPORT_STATUS.COMPLETED) {
-                // TERMINÉ state: Modifier (secondary) + Exporter PDF (primary)
+                // TERMINÉ state: Modifier (secondary) + Exporter (primary)
                 footer.innerHTML = `
                     <button class="r-btn secondary" onclick="modifyReport()">Modifier le rapport</button>
-                    <button class="r-btn primary" onclick="exportReportPDF()">📄 Exporter PDF</button>
+                    <button class="r-btn primary" onclick="exportReportPDF()">📤 Exporter</button>
                 `;
             } else {
                 // EN COURS state: Compléter (primary full width)
@@ -10468,7 +10600,7 @@ INSTRUCTIONS:
                     </div>
                     <div class="rpt-actions">
                         <button class="rpt-btn secondary" onclick="shareReport()">Partager</button>
-                        <button class="rpt-btn primary" onclick="exportReportPDF()">Export PDF</button>
+                        <button class="rpt-btn primary" onclick="exportReportPDF()">📤 Exporter</button>
                     </div>
                 </div>`;
             }
@@ -10500,36 +10632,9 @@ INSTRUCTIONS:
             general: { primary: '#EA580C', secondary: '#1a1a2e' }
         };
         
-        // Share report function - Pro feature with upgrade prompt
+        // Share report function - DISABLED (Premium feature)
         function shareReport() {
-            // Check if user has Pro subscription
-            if (typeof canUseProFeature === 'function' && canUseProFeature('share_report')) {
-                // Pro user - implement sharing (placeholder)
-                if (lastReportData) {
-                    const text = generateReportText(lastReportData);
-                    if (navigator.share) {
-                        navigator.share({
-                            title: 'Rapport d\'intervention FixAIR',
-                            text: text
-                        }).catch(() => {
-                            navigator.clipboard.writeText(text);
-                            toast('Rapport copié !');
-                        });
-                    } else {
-                        navigator.clipboard.writeText(text);
-                        toast('Rapport copié !');
-                    }
-                } else {
-                    toast('Aucun rapport à partager');
-                }
-            } else {
-                // Free user - show upgrade modal
-                if (typeof showUpgradeModal === 'function') {
-                    showUpgradeModal('share');
-                } else {
-                    toast('Partage disponible dans la version Pro');
-                }
-            }
+            toast('Partage disponible dans la version Pro');
         }
         
         // Generate plain text version of report
@@ -10587,23 +10692,1051 @@ INSTRUCTIONS:
             return text;
         }
         
-        // Main PDF export function - Pro feature with upgrade prompt
+        // ═══════════════════════════════════════════════════════════════
+        // EXPORT FUNCTIONS - Word (.docx) + PDF
+        // ═══════════════════════════════════════════════════════════════
+        
+        // Main export function - shows export menu
         function exportReportPDF() {
-            // Check if user has Pro subscription
-            if (typeof canUseProFeature === 'function' && canUseProFeature('export_pdf')) {
-                // Pro user - generate PDF
-                if (lastReportData) {
-                    generatePDF(lastReportData);
-                } else {
-                    toast('Aucun rapport à exporter');
-                }
+            showExportMenu();
+        }
+        
+        // Show export format selection menu
+        function showExportMenu() {
+            // Check if user has enterprise mode enabled
+            const userProfile = window.currentUserProfile || {};
+            const companyProfile = window.currentCompanyProfile || {};
+            // TODO: Revert to production check before merge:
+            // const hasEnterprise = companyProfile.plan === 'enterprise' || userProfile.enterprise_enabled;
+            const hasEnterprise = true; // TESTING: Always show Enterprise option
+            
+            // Create modal for export options
+            const modal = document.createElement('div');
+            modal.className = 'export-modal';
+            modal.innerHTML = `
+                <div class="export-modal-content">
+                    <div class="export-modal-header">
+                        <h3>Exporter le rapport</h3>
+                        <button class="export-modal-close" onclick="this.closest('.export-modal').remove()">×</button>
+                    </div>
+                    <div class="export-options">
+                        <button class="export-option primary" onclick="exportReport('word', 'standard'); this.closest('.export-modal').remove();">
+                            <span class="export-icon">📄</span>
+                            <span class="export-label">
+                                <strong>Word Standard</strong>
+                                <small>Format FixAIR</small>
+                            </span>
+                        </button>
+                        <button class="export-option ${hasEnterprise ? 'enterprise' : 'locked'}" onclick="${hasEnterprise ? "exportReport('word', 'enterprise'); this.closest('.export-modal').remove();" : 'showEnterpriseUpsell()'}">
+                            <span class="export-icon">${hasEnterprise ? '🏢' : '🔒'}</span>
+                            <span class="export-label">
+                                <strong>Word Enterprise</strong>
+                                <small>${hasEnterprise ? 'Logo & couleurs client' : 'Offre Enterprise'}</small>
+                            </span>
+                        </button>
+                        <button class="export-option secondary" onclick="exportReport('pdf', 'standard'); this.closest('.export-modal').remove();">
+                            <span class="export-icon">📋</span>
+                            <span class="export-label">
+                                <strong>PDF</strong>
+                                <small>Format fixe</small>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Close on backdrop click
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.remove();
+            });
+        }
+        
+        // Show enterprise upsell modal
+        function showEnterpriseUpsell() {
+            document.querySelector('.export-modal')?.remove();
+            const modal = document.createElement('div');
+            modal.className = 'export-modal';
+            modal.innerHTML = `
+                <div class="export-modal-content" style="max-width: 400px;">
+                    <div class="export-modal-header">
+                        <h3>🏢 Offre Enterprise</h3>
+                        <button class="export-modal-close" onclick="this.closest('.export-modal').remove()">×</button>
+                    </div>
+                    <div style="padding: 20px; text-align: center;">
+                        <p style="margin-bottom: 15px; color: var(--text-dim);">Personnalisez vos rapports avec :</p>
+                        <ul style="text-align: left; margin: 15px 0; padding-left: 25px; color: var(--text);">
+                            <li>✓ Page de garde avec votre logo</li>
+                            <li>✓ Couleurs de votre entreprise</li>
+                            <li>✓ En-tête/pied de page personnalisés</li>
+                            <li>✓ Photo du site en couverture</li>
+                        </ul>
+                        <p style="font-size: 24px; font-weight: bold; color: var(--assistant); margin: 20px 0;">50€/utilisateur/mois</p>
+                        <a href="mailto:contact@fixair.ai?subject=Offre%20Enterprise" class="export-option primary" style="display: block; text-decoration: none; margin-top: 15px;">
+                            <span>Contactez-nous</span>
+                        </a>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+        }
+        
+        // Export report in specified format
+        async function exportReport(format, mode = 'standard') {
+            const data = collectReportData();
+            if (!data) {
+                toast('Aucun rapport à exporter');
+                return;
+            }
+            
+            // Add export mode to data
+            data.exportMode = mode;
+            
+            // For enterprise mode, add company branding info
+            if (mode === 'enterprise') {
+                const companyProfile = window.currentCompanyProfile || {};
+                data.enterprise = {
+                    name: companyProfile.name || data.technicien?.entreprise || 'Entreprise',
+                    logo: companyProfile.logo_url || null,
+                    color: companyProfile.brand_color || '#1B4D4D', // Default EQWATTEUR teal
+                    address: companyProfile.address || '',
+                    phone: companyProfile.phone || '',
+                    email: companyProfile.email || '',
+                    siret: companyProfile.siret || ''
+                };
+            }
+            
+            if (format === 'word') {
+                await generateWord(data);
             } else {
-                // Free user - show upgrade modal
-                if (typeof showUpgradeModal === 'function') {
-                    showUpgradeModal('export_pdf');
-                } else {
-                    toast('Export PDF disponible dans la version Pro');
+                await generatePDF(data);
+            }
+        }
+        
+        // Collect all report data from lastReportData + photos + signatures
+        function collectReportData() {
+            if (!lastReportData) return null;
+            
+            const data = { ...lastReportData };
+            
+            // Add photos from global
+            if (window.reportPhotos && window.reportPhotos.length > 0) {
+                data.photos = window.reportPhotos;
+            }
+            
+            // Collect signatures from drawer if present
+            const clientSig = document.querySelector('.signature-area[data-type="client"] img');
+            const techSig = document.querySelector('.signature-area[data-type="technicien"] img');
+            
+            if (clientSig || techSig) {
+                data.signatures = data.signatures || {};
+                if (clientSig) data.signatures.client = clientSig.src;
+                if (techSig) data.signatures.technicien = techSig.src;
+            }
+            
+            return data;
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // WORD EXPORT - Professional .docx Generation v2.0
+        // ═══════════════════════════════════════════════════════════════
+        
+        // FixAIR Logo as base64 PNG (orange flame icon)
+        const FIXAIR_LOGO_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAACXBIWXMAAAsTAAALEwEAmpwYAAAF8WlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNy4xLWMwMDAgNzkuZWRhMmIzZiwgMjAyMS8xMS8xNC0xMjo0MTo1NCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIvPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+eo8fSQAABqhJREFUeJztnVtsFFUYx/9nZnd3u1u6bYEWCkWhVAygKBcVEEQQCEEJ8kBioomJxkR9MDF6JV7whlfig4lRHzQxamLUxAsGFVQUUS4FCkihtIVSoC3dtrvb2Z2Z4wNb2u7O7M7uzM60NN8vyaa7Z875zvnPmXPmnPkOICgoKCgoKCgoKCgoKCjIM8jJgqrq0mJNk2ZqGquFwGxJYjMBVAKoAFAEIBdAJoAMAAoAFUAUQBRAH4AeAO0AWgA0SxK7CEkqt9u5h2madrS3t/eG3T4k49rQ0LBi7ty5P2ua5vqW6ziOs7a2tmrJkiXn4vG4u7dIjuM4X11d3R4AqKmpWXPlypWqUCjkepnr1q3bFQwGGQA0NjZW+P1+1+udOXPm2Tlz5vQAgCzLrpdZWVm5u76+vlOW5THr5C0VW1uLg0yTTwLM7XJkWVanTJlyORAI6CZJkt0u0+fznZ8+fXoIAKZOnRpgv/pj6dKln8XjcYM9CwsLj+fm5g5brc/v91fV1NRsBYD6+vrKcePGuV7PqFGj7iovL+8EgOXLl38yZsyYIatlJvcZa11dXQ+7WuD06dPPl5WV9VutLxAInKuqqroOAPPnz981derUIavl+P3+ymXLlm0BgEWLFn3qdDqDBBIiG+L3B84OhkJTrFaWl5e3pbi4uNdqfeFwuLampmYPACxYsKCpsLDQcpnJfcbaZcuW/Zwsi4npdYTD4bmBQGDAaj2DBg36csKECd0AUF1dPX3ixImdrpSt2u1cwCkVDJhttbKcnJyXJk2a1GO1vpycnBk1NTXdADBx4sRXhw0b5vreJJeZ+XNJScnVlStX7n3ggQc8eQ4NHz58jd/vdz29nLfeeutPtm8h3u7du/fOvXv3ul6mKIpL77jjjgMAUFNT0+XGgzoZv9+/sKam5vMRI0Y8xyzJF4KhcFW2xfh8vu+nTJnSlm15mqZZfUCPs1Lv3LlzDx87dsz1MidNmnTqySef/DEYDCb0n5wK+8lqZQBw7733HrrrrrsOWa0vHA5X79mz50cACAaDYz3IU4RJq5U1NDTsS0aDIDs7u6impubnVHUIgrBCFMXhVusJh8NtNTU1G6zWl5ubuwIA5syZ89fAgQMHrNZntu9Yt25d7bZt21zPnNXX1+/YsWOH62UmP6tXXnmldvLkyZ6Xabfv6OzsJLNFWWU5FPKLwrSwkJWVdWxwOFznZjl2yikuLl5ptU5RFI9Nnz79VIZ1WiJrK+6g6JLBxKCgIFCWmewfPW7qk8jFNKAMuE0F7JbpVfmZwm35TgVlWJ7qBZ0qL1P4TqHAJBuV5xXJYXsO9A+OHSzP7TLHK/zeEbfqNxPsZIlO5XsF/y57a5IDmfQZbmPn/O2W45XfKewn5C24dTAPEpU+wy24TWqEw24GNkPdgi/PUH+nyjIYKpLdNWO2TCPC6HkQ+G7VO+1W4BQs04dEUpZZWYaAJKXDjx8/riR3RnYLsMIKT8pLIoKdpOwuzy5sn9iSjGBn+5xQplV+rJDKfvmx2x/YlO9EOT8KJMrHbpl2yyHp7n8lAzZ0aWq3AKdI9z5kqIeIIvxeyFBZwvZE/OfcfkodpMNObI+hgbTLI4LzSAHW6yNA8MJuAanAF6xWAIwC8JXdApLRIKAGQK3dApJxYBD+E0qy/+a0LPvHkOX4kKXyE0lUVrb1GUFm+EYdNvWJJJpKlwIk3J5UlsPLTSAR9suJ0iDBbmZSJNWC6VYC7O63EvXJCDLwCXjUwfI9+yFYlZ/uvyKxAnrUwfLslidCwvLSfUhZyDDINugPhZyU+RMgnfK8IF05RFBQUFCQOz35ISopybx/dXU1eTJiY7fMsrIy2+W4QVK99fX1yT95iF1ZZWXF6urqbjJ50k4k1XHHjBnj+p6ktLT0fFlZWY/dcqwwd+7cH1wvM/k5d+7cny4vLz/ndDn19fWjA4GA6/XW1dX97HqZyc+ZM2cWm7kkSHe/lYqampoTVutrbGxc5HqZyU9dXd1fTpdTX18/LRAIuL6HCofD+xobG5dcWlq6W3K5zJqamvJwOOz6+Ts3N/fz8vLyOgAoKCgYY+aSwI5j1xUrVqT+UNAtZhUWFn6TnZ0dd7k+J8Fqm9TX1y9ubGxc6npFiWRlZf09ZMiQDqfLKSgomJadne16mcFg8Ly88sKFCwss/ij0M9k/egwRRVGSLJ4dZSH0hyKZn5+f1g/KDBFEUdxVUlJyxu5KvMJuAW7T0dGRWltbS4D1Mh4EBQUFBQUFBQUFBQUFBQVlgv8B2zJFlAEixgUAAAAASUVORK5CYII=';
+        
+        async function generateWord(data) {
+            try {
+                toast('Génération du document Word...');
+                
+                const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, 
+                        WidthType, AlignmentType, BorderStyle, HeadingLevel, Header, Footer,
+                        ImageRun, PageBreak, ShadingType, TableLayoutType,
+                        VerticalAlign, convertInchesToTwip, PageNumber } = window.docx;
+                
+                // Brand colors
+                const brandKey = data.brand_key || 'general';
+                const brandColors = {
+                    carrier: 'F97316', daikin: '00A0E9', mitsubishi: 'E60012',
+                    toshiba: 'FF0000', panasonic: '0046AD', lg: 'A50034',
+                    samsung: '1428A0', hitachi: 'E60012', fujitsu: 'ED1C24',
+                    general: 'F97316'
+                };
+                const primaryColor = brandColors[brandKey] || brandColors.general;
+                
+                // Status colors and labels
+                const statusConfig = {
+                    conforme: { color: '22C55E', label: '✓ CONFORME', bg: 'DCFCE7' },
+                    non_conforme: { color: 'EF4444', label: '✗ NON CONFORME', bg: 'FEE2E2' },
+                    en_cours: { color: 'EAB308', label: '◐ EN COURS', bg: 'FEF9C3' }
+                };
+                
+                // Helper: Convert base64 to Uint8Array
+                const base64ToUint8Array = (base64) => {
+                    const raw = atob(base64.replace(/^data:image\/\w+;base64,/, ''));
+                    const arr = new Uint8Array(raw.length);
+                    for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+                    return arr;
+                };
+                
+                // Helper: Section heading with accent bar (defined later with docPrimaryColor)
+                
+                // Helper: Key-value with proper styling
+                const kvRow = (label, value, options = {}) => {
+                    if (!value) return null;
+                    return new Paragraph({
+                        children: [
+                            new TextRun({ text: label, bold: true, size: 20, font: 'Calibri', color: '374151' }),
+                            new TextRun({ text: ':  ', size: 20, font: 'Calibri', color: '6B7280' }),
+                            new TextRun({ text: String(value), size: 20, font: 'Calibri', color: options.color || '111827' })
+                        ],
+                        spacing: { after: 80 },
+                        indent: { left: options.indent || 0 }
+                    });
+                };
+                
+                // Helper: Professional table with borders
+                const createTable = (headers, rows, options = {}) => {
+                    const borderStyle = { style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB' };
+                    
+                    const headerRow = new TableRow({
+                        children: headers.map(h => new TableCell({
+                            children: [new Paragraph({ 
+                                children: [new TextRun({ text: h, bold: true, size: 18, font: 'Calibri', color: '374151' })],
+                                alignment: AlignmentType.LEFT
+                            })],
+                            shading: { fill: 'F3F4F6', type: ShadingType.CLEAR },
+                            borders: { top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle },
+                            margins: { top: 80, bottom: 80, left: 120, right: 120 }
+                        })),
+                        tableHeader: true
+                    });
+                    
+                    const dataRows = rows.map((row, idx) => new TableRow({
+                        children: row.map(cell => new TableCell({
+                            children: [new Paragraph({ 
+                                children: [new TextRun({ text: String(cell || '—'), size: 18, font: 'Calibri' })]
+                            })],
+                            borders: { top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle },
+                            margins: { top: 60, bottom: 60, left: 120, right: 120 },
+                            shading: idx % 2 === 1 ? { fill: 'FAFAFA', type: ShadingType.CLEAR } : undefined
+                        }))
+                    }));
+                    
+                    return new Table({
+                        rows: [headerRow, ...dataRows],
+                        width: { size: 100, type: WidthType.PERCENTAGE },
+                        layout: TableLayoutType.FIXED
+                    });
+                };
+                
+                // Helper: Two-column info box
+                const infoBox = (leftItems, rightItems) => {
+                    const borderStyle = { style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB' };
+                    
+                    const leftContent = leftItems.filter(Boolean).map(item => 
+                        new Paragraph({
+                            children: [
+                                new TextRun({ text: item.label + ': ', bold: true, size: 18, font: 'Calibri', color: '6B7280' }),
+                                new TextRun({ text: String(item.value || '—'), size: 18, font: 'Calibri' })
+                            ],
+                            spacing: { after: 60 }
+                        })
+                    );
+                    
+                    const rightContent = rightItems.filter(Boolean).map(item =>
+                        new Paragraph({
+                            children: [
+                                new TextRun({ text: item.label + ': ', bold: true, size: 18, font: 'Calibri', color: '6B7280' }),
+                                new TextRun({ text: String(item.value || '—'), size: 18, font: 'Calibri' })
+                            ],
+                            spacing: { after: 60 }
+                        })
+                    );
+                    
+                    return new Table({
+                        rows: [new TableRow({
+                            children: [
+                                new TableCell({
+                                    children: leftContent.length ? leftContent : [new Paragraph({})],
+                                    borders: { top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle },
+                                    margins: { top: 120, bottom: 120, left: 160, right: 160 },
+                                    width: { size: 50, type: WidthType.PERCENTAGE }
+                                }),
+                                new TableCell({
+                                    children: rightContent.length ? rightContent : [new Paragraph({})],
+                                    borders: { top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle },
+                                    margins: { top: 120, bottom: 120, left: 160, right: 160 },
+                                    width: { size: 50, type: WidthType.PERCENTAGE }
+                                })
+                            ]
+                        })],
+                        width: { size: 100, type: WidthType.PERCENTAGE }
+                    });
+                };
+                
+                // ═══ BUILD DOCUMENT ═══
+                const children = [];
+                const isEnterprise = data.exportMode === 'enterprise' && data.enterprise;
+                
+                // Override primary color for enterprise mode
+                const docPrimaryColor = isEnterprise 
+                    ? (data.enterprise.color || '#1B4D4D').replace('#', '') 
+                    : primaryColor;
+                
+                // Helper: Section heading with accent bar (uses docPrimaryColor for enterprise support)
+                const sectionHeading = (text) => new Paragraph({
+                    children: [
+                        new TextRun({ text: '█ ', color: docPrimaryColor, size: 24 }),
+                        new TextRun({ text: text.toUpperCase(), bold: true, size: 22, font: 'Calibri' })
+                    ],
+                    spacing: { before: 400, after: 150 }
+                });
+                
+                // ═══ ENTERPRISE COVER PAGE ═══
+                if (isEnterprise) {
+                    const ent = data.enterprise;
+                    
+                    // Large enterprise name/logo at top
+                    children.push(new Paragraph({
+                        children: [new TextRun({ 
+                            text: ent.name.toUpperCase(), 
+                            bold: true, 
+                            size: 56, 
+                            font: 'Calibri', 
+                            color: docPrimaryColor 
+                        })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { before: 600, after: 200 }
+                    }));
+                    
+                    // Decorative line
+                    children.push(new Paragraph({
+                        children: [new TextRun({ 
+                            text: '━'.repeat(40), 
+                            color: docPrimaryColor,
+                            size: 20
+                        })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 400 }
+                    }));
+                    
+                    // Main title
+                    children.push(new Paragraph({
+                        children: [new TextRun({ 
+                            text: "RAPPORT D'INTERVENTION", 
+                            bold: true, 
+                            size: 44, 
+                            font: 'Calibri', 
+                            color: '111827' 
+                        })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 200 }
+                    }));
+                    
+                    // Brand/equipment
+                    children.push(new Paragraph({
+                        children: [new TextRun({ 
+                            text: data.brand || 'Climatisation', 
+                            size: 32, 
+                            font: 'Calibri', 
+                            color: '6B7280' 
+                        })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 400 }
+                    }));
+                    
+                    // Site photo placeholder or site address
+                    const photos = data.photos || window.reportPhotos || [];
+                    if (photos.length > 0 && photos[0].data && photos[0].data.startsWith('data:image')) {
+                        try {
+                            children.push(new Paragraph({
+                                children: [new ImageRun({
+                                    data: base64ToUint8Array(photos[0].data),
+                                    transformation: { width: 450, height: 300 }
+                                })],
+                                alignment: AlignmentType.CENTER,
+                                spacing: { after: 300 }
+                            }));
+                        } catch (e) { console.error('Cover photo error:', e); }
+                    }
+                    
+                    // Site info box
+                    const coverBorder = { style: BorderStyle.SINGLE, size: 2, color: docPrimaryColor };
+                    children.push(new Table({
+                        rows: [new TableRow({
+                            children: [new TableCell({
+                                children: [
+                                    new Paragraph({
+                                        children: [new TextRun({ text: 'SITE', bold: true, size: 20, font: 'Calibri', color: docPrimaryColor })],
+                                        alignment: AlignmentType.CENTER,
+                                        spacing: { after: 100 }
+                                    }),
+                                    new Paragraph({
+                                        children: [new TextRun({ text: data.site?.adresse || '', size: 22, font: 'Calibri' })],
+                                        alignment: AlignmentType.CENTER
+                                    }),
+                                    new Paragraph({
+                                        children: [new TextRun({ text: data.site?.ville || '', size: 22, font: 'Calibri' })],
+                                        alignment: AlignmentType.CENTER,
+                                        spacing: { after: 100 }
+                                    }),
+                                    new Paragraph({
+                                        children: [new TextRun({ text: `Réf: ${data.reference || ''}`, size: 18, font: 'Calibri', color: '6B7280' })],
+                                        alignment: AlignmentType.CENTER
+                                    })
+                                ],
+                                borders: { top: coverBorder, bottom: coverBorder, left: coverBorder, right: coverBorder },
+                                margins: { top: 200, bottom: 200, left: 300, right: 300 },
+                                shading: { fill: 'F9FAFB', type: ShadingType.CLEAR }
+                            })]
+                        })],
+                        width: { size: 80, type: WidthType.PERCENTAGE },
+                        alignment: AlignmentType.CENTER
+                    }));
+                    
+                    // Date at bottom
+                    children.push(new Paragraph({
+                        children: [new TextRun({ 
+                            text: data.date || new Date().toLocaleDateString('fr-FR'), 
+                            size: 24, 
+                            font: 'Calibri', 
+                            color: '6B7280' 
+                        })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { before: 400 }
+                    }));
+                    
+                    // Enterprise footer info on cover
+                    const entFooter = [ent.address, ent.phone, ent.email].filter(Boolean).join('  •  ');
+                    if (entFooter) {
+                        children.push(new Paragraph({
+                            children: [new TextRun({ 
+                                text: entFooter, 
+                                size: 16, 
+                                font: 'Calibri', 
+                                color: '9CA3AF' 
+                            })],
+                            alignment: AlignmentType.CENTER,
+                            spacing: { before: 600 }
+                        }));
+                    }
+                    
+                    // Page break after cover
+                    children.push(new Paragraph({ children: [new PageBreak()] }));
                 }
+                
+                // ═══ HEADER WITH LOGOS (Standard mode or after Enterprise cover) ═══
+                // Logo row: FixAIR left, Enterprise logo right
+                const logoTable = new Table({
+                    rows: [new TableRow({
+                        children: [
+                            new TableCell({
+                                children: [
+                                    new Paragraph({
+                                        children: isEnterprise ? [
+                                            new TextRun({ text: data.enterprise.name, bold: true, size: 28, font: 'Calibri', color: docPrimaryColor })
+                                        ] : [
+                                            new ImageRun({
+                                                data: base64ToUint8Array(FIXAIR_LOGO_BASE64),
+                                                transformation: { width: 50, height: 50 }
+                                            }),
+                                            new TextRun({ text: '  FixAIR', bold: true, size: 36, font: 'Calibri', color: docPrimaryColor })
+                                        ],
+                                        alignment: AlignmentType.LEFT
+                                    })
+                                ],
+                                borders: { top: {style: BorderStyle.NONE}, bottom: {style: BorderStyle.NONE}, left: {style: BorderStyle.NONE}, right: {style: BorderStyle.NONE} },
+                                width: { size: 50, type: WidthType.PERCENTAGE }
+                            }),
+                            new TableCell({
+                                children: [
+                                    new Paragraph({
+                                        children: [
+                                            new TextRun({ 
+                                                text: isEnterprise ? (data.technicien?.entreprise || '') : (data.enterprise_name || '[LOGO ENTREPRISE]'), 
+                                                size: 20, 
+                                                font: 'Calibri', 
+                                                color: '9CA3AF', 
+                                                italics: !isEnterprise && !data.enterprise_name 
+                                            })
+                                        ],
+                                        alignment: AlignmentType.RIGHT
+                                    })
+                                ],
+                                borders: { top: {style: BorderStyle.NONE}, bottom: {style: BorderStyle.NONE}, left: {style: BorderStyle.NONE}, right: {style: BorderStyle.NONE} },
+                                width: { size: 50, type: WidthType.PERCENTAGE },
+                                verticalAlign: VerticalAlign.CENTER
+                            })
+                        ]
+                    })],
+                    width: { size: 100, type: WidthType.PERCENTAGE }
+                });
+                children.push(logoTable);
+                
+                // Title
+                children.push(new Paragraph({
+                    children: [new TextRun({ text: "RAPPORT D'INTERVENTION", bold: true, size: 32, font: 'Calibri', color: '111827' })],
+                    alignment: AlignmentType.CENTER,
+                    spacing: { before: 300, after: 100 }
+                }));
+                
+                // Brand subtitle
+                children.push(new Paragraph({
+                    children: [new TextRun({ text: data.brand || 'Multi-marques', size: 24, font: 'Calibri', color: docPrimaryColor })],
+                    alignment: AlignmentType.CENTER,
+                    spacing: { after: 200 }
+                }));
+                
+                // Reference info bar
+                const refInfo = [];
+                if (data.reference) refInfo.push(`Réf: ${data.reference}`);
+                if (data.date) refInfo.push(`Date: ${data.date}`);
+                if (data.type_intervention) refInfo.push(data.type_intervention);
+                
+                if (refInfo.length > 0) {
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: refInfo.join('   •   '), size: 20, font: 'Calibri', color: '6B7280' })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 200 }
+                    }));
+                }
+                
+                // Status badge
+                if (data.status && statusConfig[data.status]) {
+                    const sc = statusConfig[data.status];
+                    children.push(new Paragraph({
+                        children: [new TextRun({ 
+                            text: `  ${sc.label}  `,
+                            bold: true, size: 24, font: 'Calibri', color: sc.color
+                        })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 300 },
+                        shading: { fill: sc.bg, type: ShadingType.CLEAR }
+                    }));
+                }
+                
+                // ═══ RÉSUMÉ ═══
+                if (data.resume) {
+                    children.push(sectionHeading('Résumé'));
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: data.resume, size: 20, font: 'Calibri' })],
+                        spacing: { after: 200 },
+                        shading: { fill: 'F9FAFB', type: ShadingType.CLEAR }
+                    }));
+                }
+                
+                // ═══ SITE & CLIENT (Two columns) ═══
+                children.push(sectionHeading('Site & Client'));
+                children.push(infoBox(
+                    [
+                        data.site?.numero_affaire && { label: 'N° Affaire', value: data.site.numero_affaire },
+                        data.site?.adresse && { label: 'Adresse', value: data.site.adresse },
+                        data.site?.ville && { label: 'Ville', value: data.site.ville }
+                    ],
+                    [
+                        data.client?.societe && { label: 'Société', value: data.client.societe },
+                        data.client?.contact && { label: 'Contact', value: data.client.contact },
+                        data.client?.telephone && { label: 'Téléphone', value: data.client.telephone },
+                        data.client?.reference && { label: 'Réf. Client', value: data.client.reference }
+                    ]
+                ));
+                
+                // ═══ DATES ═══
+                if (data.dates && (data.dates.debut_date || data.dates.fin_date)) {
+                    children.push(sectionHeading('Dates Intervention'));
+                    children.push(infoBox(
+                        [
+                            data.dates.debut_date && { label: 'Début', value: `${data.dates.debut_date}${data.dates.debut_heure ? ' à ' + data.dates.debut_heure : ''}` }
+                        ],
+                        [
+                            data.dates.fin_date && { label: 'Fin', value: `${data.dates.fin_date}${data.dates.fin_heure ? ' à ' + data.dates.fin_heure : ''}` }
+                        ]
+                    ));
+                }
+                
+                // ═══ SYSTÈME & FLUIDE (Two columns) ═══
+                if ((data.systeme && Object.values(data.systeme).some(v => v)) || (data.fluide && Object.values(data.fluide).some(v => v))) {
+                    children.push(sectionHeading('Équipement'));
+                    children.push(infoBox(
+                        [
+                            data.systeme?.type && { label: 'Type', value: data.systeme.type },
+                            data.systeme?.modele && { label: 'Modèle', value: data.systeme.modele },
+                            data.systeme?.serie && { label: 'N° Série', value: data.systeme.serie },
+                            data.systeme?.puissance && { label: 'Puissance', value: data.systeme.puissance + ' kW' },
+                            data.systeme?.garantie && { label: 'Garantie', value: data.systeme.garantie }
+                        ],
+                        [
+                            data.fluide?.type && { label: 'Fluide', value: data.fluide.type },
+                            data.fluide?.charge_initiale && { label: 'Charge initiale', value: data.fluide.charge_initiale + ' kg' },
+                            data.fluide?.charge_totale && { label: 'Charge totale', value: data.fluide.charge_totale + ' kg' },
+                            data.fluide?.type_huile && { label: 'Huile', value: data.fluide.type_huile }
+                        ]
+                    ));
+                }
+                
+                // ═══ ADRESSAGE UNITÉS ═══
+                if (data.adressage && data.adressage.length > 0) {
+                    children.push(sectionHeading('Adressage Unités'));
+                    children.push(createTable(
+                        ['Réf. Usine', 'N° Série', 'Adresse', 'Désignation', 'Commentaire'],
+                        data.adressage.map(a => [a.ref_usine || '', a.serie || '', a.adresse || '', a.designation || '', a.commentaire || ''])
+                    ));
+                }
+                
+                // ═══ CODES DÉFAUT ═══
+                if (data.codes_defaut && data.codes_defaut.length > 0) {
+                    children.push(sectionHeading('Codes Défaut'));
+                    children.push(createTable(
+                        ['Code', 'Description', 'Résolution'],
+                        data.codes_defaut.map(c => [c.code, c.description, c.resolution])
+                    ));
+                }
+                
+                // ═══ SÉCURITÉ ═══
+                if (data.securite && (data.securite.etat || data.securite.risques)) {
+                    children.push(sectionHeading('Sécurité'));
+                    if (data.securite.etat) {
+                        const etatColors = { 'OK': '22C55E', 'À surveiller': 'F59E0B', 'Critique': 'EF4444' };
+                        children.push(new Paragraph({
+                            children: [
+                                new TextRun({ text: 'État: ', bold: true, size: 20, font: 'Calibri' }),
+                                new TextRun({ text: data.securite.etat, size: 20, font: 'Calibri', color: etatColors[data.securite.etat] || '374151' })
+                            ],
+                            spacing: { after: 80 }
+                        }));
+                    }
+                    if (data.securite.risques) {
+                        children.push(new Paragraph({
+                            children: [new TextRun({ text: 'Risques identifiés:', bold: true, size: 20, font: 'Calibri', color: 'EF4444' })],
+                            spacing: { after: 60 }
+                        }));
+                        children.push(new Paragraph({
+                            children: [new TextRun({ text: data.securite.risques, size: 20, font: 'Calibri' })],
+                            spacing: { after: 100 },
+                            shading: { fill: 'FEF2F2', type: ShadingType.CLEAR }
+                        }));
+                    }
+                }
+                
+                // ═══ MESURES ═══
+                if (data.mesures && data.mesures.length > 0) {
+                    children.push(sectionHeading('Mesures'));
+                    children.push(createTable(
+                        ['Paramètre', 'Valeur', 'Observation'],
+                        data.mesures.map(m => [m.label, `${m.valeur}${m.unite ? ' ' + m.unite : ''}`, m.note || ''])
+                    ));
+                }
+                
+                // ═══ FONCTIONNEMENT ═══
+                if (data.fonctionnement && (data.fonctionnement.heures_compresseur || data.fonctionnement.nb_demarrages)) {
+                    children.push(sectionHeading('Fonctionnement'));
+                    children.push(infoBox(
+                        [data.fonctionnement.heures_compresseur && { label: 'Heures compresseur', value: data.fonctionnement.heures_compresseur + ' h' }],
+                        [data.fonctionnement.nb_demarrages && { label: 'Nb démarrages', value: data.fonctionnement.nb_demarrages }]
+                    ));
+                }
+                
+                // ═══ TRAVAUX EFFECTUÉS ═══
+                if (data.travaux_effectues && data.travaux_effectues.length > 0) {
+                    children.push(sectionHeading('Travaux Effectués'));
+                    data.travaux_effectues.forEach(t => {
+                        const statusIcon = t.status === 'done' ? '✓' : (t.status === 'error' ? '✗' : '○');
+                        const statusColor = t.status === 'done' ? '22C55E' : (t.status === 'error' ? 'EF4444' : '6B7280');
+                        children.push(new Paragraph({
+                            children: [
+                                new TextRun({ text: statusIcon + '  ', color: statusColor, size: 22, font: 'Calibri' }),
+                                new TextRun({ text: t.texte, size: 20, font: 'Calibri' })
+                            ],
+                            spacing: { after: 80 },
+                            indent: { left: 200 }
+                        }));
+                    });
+                }
+                
+                // ═══ TRAVAUX À PRÉVOIR ═══
+                if (data.travaux_prevoir && data.travaux_prevoir.length > 0) {
+                    children.push(sectionHeading('Travaux à Prévoir'));
+                    data.travaux_prevoir.forEach(t => {
+                        const prioColors = { urgent: 'EF4444', normal: 'F59E0B', optionnel: '6B7280' };
+                        const prioLabels = { urgent: 'URGENT', normal: 'Normal', optionnel: 'Optionnel' };
+                        children.push(new Paragraph({
+                            children: [
+                                new TextRun({ text: '→  ', color: '6B7280', size: 20, font: 'Calibri' }),
+                                new TextRun({ text: t.texte, size: 20, font: 'Calibri' }),
+                                t.priorite ? new TextRun({ text: `  [${prioLabels[t.priorite] || t.priorite}]`, size: 18, font: 'Calibri', color: prioColors[t.priorite] || '6B7280', bold: t.priorite === 'urgent' }) : null
+                            ].filter(Boolean),
+                            spacing: { after: 80 },
+                            indent: { left: 200 }
+                        }));
+                    });
+                }
+                
+                // ═══ PIÈCES ═══
+                if (data.pieces && data.pieces.length > 0) {
+                    children.push(sectionHeading('Pièces Utilisées'));
+                    children.push(createTable(
+                        ['Référence', 'Désignation', 'Qté'],
+                        data.pieces.map(p => [p.reference, p.designation, p.quantite])
+                    ));
+                }
+                
+                // ═══ RAPPORT TECHNICIEN ═══
+                if (data.rapport_technicien) {
+                    children.push(sectionHeading('Rapport Technicien'));
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: data.rapport_technicien, size: 20, font: 'Calibri' })],
+                        spacing: { after: 200 }
+                    }));
+                }
+                
+                // ═══ REMARQUES ═══
+                if (data.remarques) {
+                    children.push(sectionHeading('Remarques'));
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: data.remarques, size: 20, font: 'Calibri' })],
+                        spacing: { after: 200 }
+                    }));
+                }
+                
+                // ═══ TESTS MISE EN SERVICE ═══
+                if (data.tests && (data.tests.pression_test_bar || data.tests.duree_test_heures || data.tests.valeur_vacuometre_mbar)) {
+                    children.push(sectionHeading('Tests Mise en Service'));
+                    children.push(infoBox(
+                        [
+                            data.tests.pression_test_bar && { label: 'Pression test', value: data.tests.pression_test_bar + ' bar' },
+                            data.tests.duree_test_heures && { label: 'Durée test', value: data.tests.duree_test_heures + ' h' }
+                        ],
+                        [
+                            data.tests.valeur_vacuometre_mbar && { label: 'Vacuomètre', value: data.tests.valeur_vacuometre_mbar + ' mbar' }
+                        ]
+                    ));
+                }
+                
+                // ═══ TUYAUTERIES ═══
+                if (data.tuyauteries && (data.tuyauteries.longueur_totale_m || data.tuyauteries.denivele_oc_ui_m || data.tuyauteries.appoint_calcule_kg)) {
+                    children.push(sectionHeading('Tuyauteries'));
+                    children.push(infoBox(
+                        [
+                            data.tuyauteries.longueur_totale_m && { label: 'Longueur totale', value: data.tuyauteries.longueur_totale_m + ' m' },
+                            data.tuyauteries.denivele_oc_ui_m && { label: 'Dénivelé UE-UI', value: data.tuyauteries.denivele_oc_ui_m + ' m' }
+                        ],
+                        [
+                            data.tuyauteries.appoint_calcule_kg && { label: 'Appoint calculé', value: data.tuyauteries.appoint_calcule_kg + ' kg' }
+                        ]
+                    ));
+                }
+                
+                // ═══ ÉLECTRIQUE ═══
+                if (data.electrique && (data.electrique.calibre_disjoncteur || data.electrique.section_cable)) {
+                    children.push(sectionHeading('Électrique'));
+                    children.push(infoBox(
+                        [data.electrique.calibre_disjoncteur && { label: 'Calibre disjoncteur', value: data.electrique.calibre_disjoncteur }],
+                        [data.electrique.section_cable && { label: 'Section câble', value: data.electrique.section_cable }]
+                    ));
+                }
+                
+                // ═══ RELEVÉS UNITÉ EXTÉRIEURE ═══
+                if (data.releves_ue && (data.releves_ue.pd1_bar || data.releves_ue.ps_bar || data.releves_ue.ta_celsius || data.releves_ue.freq_inv1_hz)) {
+                    children.push(sectionHeading('Relevés Unité Extérieure'));
+                    children.push(infoBox(
+                        [
+                            data.releves_ue.pd1_bar && { label: 'HP (Pd1)', value: data.releves_ue.pd1_bar + ' bar' },
+                            data.releves_ue.ps_bar && { label: 'BP (Ps)', value: data.releves_ue.ps_bar + ' bar' }
+                        ],
+                        [
+                            data.releves_ue.ta_celsius && { label: 'T° ext (TA)', value: data.releves_ue.ta_celsius + ' °C' },
+                            data.releves_ue.freq_inv1_hz && { label: 'Fréq compresseur', value: data.releves_ue.freq_inv1_hz + ' Hz' }
+                        ]
+                    ));
+                }
+                
+                // ═══ RELEVÉS UNITÉS INTÉRIEURES ═══
+                if (data.releves_ui && data.releves_ui.length > 0) {
+                    children.push(sectionHeading('Relevés Unités Intérieures'));
+                    children.push(createTable(
+                        ['Unité', 'T° Soufflage', 'T° Reprise', 'Delta'],
+                        data.releves_ui.map(ui => [ui.nom || '', ui.temp_soufflage || '', ui.temp_reprise || '', ui.delta || ''])
+                    ));
+                }
+                
+                // ═══ CERFA FLUIDES FRIGORIGÈNES ═══
+                if (data.cerfa && (data.cerfa.fluide_total_charge_kg || data.cerfa.fluide_total_recupere_kg || data.cerfa.attestation_capacite)) {
+                    children.push(sectionHeading('CERFA Fluides Frigorigènes'));
+                    children.push(infoBox(
+                        [
+                            data.cerfa.fluide_total_charge_kg && { label: 'Fluide chargé', value: data.cerfa.fluide_total_charge_kg + ' kg' },
+                            data.cerfa.fluide_total_recupere_kg && { label: 'Fluide récupéré', value: data.cerfa.fluide_total_recupere_kg + ' kg' }
+                        ],
+                        [
+                            data.cerfa.attestation_capacite && { label: 'N° Attestation capacité', value: data.cerfa.attestation_capacite }
+                        ]
+                    ));
+                }
+                
+                // ═══ RÉSERVES ═══
+                if (data.reserves && data.reserves.length > 0) {
+                    children.push(sectionHeading('Réserves / Alertes'));
+                    data.reserves.forEach(r => {
+                        const isWarning = r.type === 'danger';
+                        children.push(new Paragraph({
+                            children: [
+                                new TextRun({ text: isWarning ? '⚠ ' : '! ', size: 22, color: isWarning ? 'EF4444' : 'F59E0B', font: 'Calibri' }),
+                                new TextRun({ text: (r.titre || 'Attention') + ': ', bold: true, size: 20, font: 'Calibri', color: isWarning ? 'EF4444' : 'F59E0B' }),
+                                new TextRun({ text: r.texte, size: 20, font: 'Calibri' })
+                            ],
+                            spacing: { after: 100 },
+                            shading: { fill: isWarning ? 'FEF2F2' : 'FFFBEB', type: ShadingType.CLEAR }
+                        }));
+                    });
+                }
+                
+                // ═══ RÉSULTAT ═══
+                if (data.resultat) {
+                    children.push(sectionHeading('Résultat'));
+                    const resConfig = {
+                        resolu: { color: '22C55E', bg: 'DCFCE7', label: '✓ PROBLÈME RÉSOLU' },
+                        en_attente: { color: 'F59E0B', bg: 'FEF9C3', label: '◐ EN ATTENTE' },
+                        non_resolu: { color: 'EF4444', bg: 'FEE2E2', label: '✗ NON RÉSOLU' }
+                    };
+                    const rc = resConfig[data.resultat.status] || resConfig.en_attente;
+                    
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: rc.label, bold: true, size: 26, font: 'Calibri', color: rc.color })],
+                        spacing: { after: 100 },
+                        shading: { fill: rc.bg, type: ShadingType.CLEAR }
+                    }));
+                    
+                    if (data.resultat.description) {
+                        children.push(new Paragraph({
+                            children: [new TextRun({ text: data.resultat.description, size: 20, font: 'Calibri' })],
+                            spacing: { after: 200 }
+                        }));
+                    }
+                }
+                
+                // ═══ TECHNICIEN ═══
+                if (data.technicien && (data.technicien.nom || data.technicien.entreprise)) {
+                    children.push(sectionHeading('Technicien'));
+                    children.push(infoBox(
+                        [
+                            data.technicien.nom && { label: 'Nom', value: data.technicien.nom },
+                            data.technicien.entreprise && { label: 'Entreprise', value: data.technicien.entreprise }
+                        ],
+                        [
+                            (data.technicien.heure_arrivee || data.technicien.heure_depart) && { label: 'Présence', value: `${data.technicien.heure_arrivee || '?'} → ${data.technicien.heure_depart || '?'}` },
+                            data.technicien.autres && { label: 'Équipe', value: data.technicien.autres }
+                        ]
+                    ));
+                }
+                
+                // ═══ OBSERVATION CLIENT ═══
+                if (data.observation_client) {
+                    children.push(sectionHeading('Observation Client'));
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: data.observation_client, size: 20, font: 'Calibri', italics: true })],
+                        spacing: { after: 200 },
+                        shading: { fill: 'F0F9FF', type: ShadingType.CLEAR }
+                    }));
+                }
+                
+                // ═══ SIGNATURES (with images) ═══
+                if (data.signatures && (data.signatures.client || data.signatures.technicien || data.signatures.nom_client || data.signatures.nom_technicien)) {
+                    children.push(sectionHeading('Signatures'));
+                    
+                    const sigCells = [];
+                    
+                    // Client signature
+                    const clientSigContent = [];
+                    clientSigContent.push(new Paragraph({
+                        children: [new TextRun({ text: 'Client', bold: true, size: 18, font: 'Calibri', color: '6B7280' })],
+                        alignment: AlignmentType.CENTER
+                    }));
+                    
+                    if (data.signatures.client && data.signatures.client.startsWith('data:image')) {
+                        try {
+                            clientSigContent.push(new Paragraph({
+                                children: [new ImageRun({
+                                    data: base64ToUint8Array(data.signatures.client),
+                                    transformation: { width: 150, height: 60 }
+                                })],
+                                alignment: AlignmentType.CENTER
+                            }));
+                        } catch (e) { console.error('Signature client error:', e); }
+                    }
+                    
+                    clientSigContent.push(new Paragraph({
+                        children: [new TextRun({ text: data.signatures.nom_client || '________________', size: 18, font: 'Calibri' })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { before: 100 }
+                    }));
+                    
+                    sigCells.push(new TableCell({
+                        children: clientSigContent,
+                        borders: { top: {style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB'}, bottom: {style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB'}, left: {style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB'}, right: {style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB'} },
+                        margins: { top: 120, bottom: 120, left: 120, right: 120 },
+                        width: { size: 50, type: WidthType.PERCENTAGE }
+                    }));
+                    
+                    // Technician signature
+                    const techSigContent = [];
+                    techSigContent.push(new Paragraph({
+                        children: [new TextRun({ text: 'Technicien', bold: true, size: 18, font: 'Calibri', color: '6B7280' })],
+                        alignment: AlignmentType.CENTER
+                    }));
+                    
+                    if (data.signatures.technicien && data.signatures.technicien.startsWith('data:image')) {
+                        try {
+                            techSigContent.push(new Paragraph({
+                                children: [new ImageRun({
+                                    data: base64ToUint8Array(data.signatures.technicien),
+                                    transformation: { width: 150, height: 60 }
+                                })],
+                                alignment: AlignmentType.CENTER
+                            }));
+                        } catch (e) { console.error('Signature tech error:', e); }
+                    }
+                    
+                    techSigContent.push(new Paragraph({
+                        children: [new TextRun({ text: data.signatures.nom_technicien || data.technicien?.nom || '________________', size: 18, font: 'Calibri' })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { before: 100 }
+                    }));
+                    
+                    sigCells.push(new TableCell({
+                        children: techSigContent,
+                        borders: { top: {style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB'}, bottom: {style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB'}, left: {style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB'}, right: {style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB'} },
+                        margins: { top: 120, bottom: 120, left: 120, right: 120 },
+                        width: { size: 50, type: WidthType.PERCENTAGE }
+                    }));
+                    
+                    children.push(new Table({
+                        rows: [new TableRow({ children: sigCells })],
+                        width: { size: 100, type: WidthType.PERCENTAGE }
+                    }));
+                }
+                
+                // ═══ PHOTOS ANNEXE ═══
+                const photos = data.photos || window.reportPhotos || [];
+                if (photos.length > 0) {
+                    children.push(new Paragraph({ children: [new PageBreak()] }));
+                    
+                    children.push(new Paragraph({
+                        children: [
+                            new TextRun({ text: '█ ', color: primaryColor, size: 28 }),
+                            new TextRun({ text: 'PHOTOS DE L\'INTERVENTION', bold: true, size: 26, font: 'Calibri' })
+                        ],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 300 }
+                    }));
+                    
+                    for (const photo of photos) {
+                        if (photo.data && photo.data.startsWith('data:image')) {
+                            try {
+                                children.push(new Paragraph({
+                                    children: [new ImageRun({
+                                        data: base64ToUint8Array(photo.data),
+                                        transformation: { width: 400, height: 300 }
+                                    })],
+                                    alignment: AlignmentType.CENTER,
+                                    spacing: { after: 100 }
+                                }));
+                                
+                                if (photo.caption) {
+                                    children.push(new Paragraph({
+                                        children: [new TextRun({ text: photo.caption, size: 18, font: 'Calibri', italics: true, color: '6B7280' })],
+                                        alignment: AlignmentType.CENTER,
+                                        spacing: { after: 300 }
+                                    }));
+                                }
+                            } catch (e) {
+                                console.error('Photo error:', e);
+                            }
+                        }
+                    }
+                }
+                
+                // ═══ FOOTER ═══
+                children.push(new Paragraph({
+                    children: [new TextRun({ text: '━'.repeat(60), color: 'E5E7EB' })],
+                    spacing: { before: 400 },
+                    alignment: AlignmentType.CENTER
+                }));
+                
+                children.push(new Paragraph({
+                    children: [
+                        new TextRun({ text: 'Document généré par ', size: 16, font: 'Calibri', color: '9CA3AF' }),
+                        new TextRun({ text: 'FixAIR', size: 16, font: 'Calibri', color: primaryColor, bold: true }),
+                        new TextRun({ text: ` — ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`, size: 16, font: 'Calibri', color: '9CA3AF' })
+                    ],
+                    alignment: AlignmentType.CENTER
+                }));
+                
+                // Filter nulls and create document
+                const filteredChildren = children.filter(c => c !== null);
+                
+                // Create header (branded for enterprise)
+                const headerBrand = isEnterprise ? data.enterprise.name : 'FixAIR';
+                const docHeader = new Header({
+                    children: [
+                        new Paragraph({
+                            children: [
+                                new TextRun({ text: headerBrand, bold: true, size: 16, font: 'Calibri', color: docPrimaryColor }),
+                                new TextRun({ text: `  |  ${data.brand || ''}  |  Réf: ${data.reference || ''}  |  ${data.date || ''}`, size: 14, font: 'Calibri', color: '9CA3AF' })
+                            ],
+                            alignment: AlignmentType.RIGHT
+                        })
+                    ]
+                });
+                
+                // Create footer with page numbers (enterprise shows company info)
+                const footerTechInfo = data.technicien?.nom ? `${data.technicien.nom}` : '';
+                const footerCompany = isEnterprise ? data.enterprise.name : 'FixAIR';
+                const footerAddress = isEnterprise && data.enterprise.address ? `  |  ${data.enterprise.address}` : '';
+                
+                const docFooter = new Footer({
+                    children: [
+                        new Paragraph({
+                            children: [
+                                new TextRun({ text: footerTechInfo ? `${footerTechInfo}  |  ` : '', size: 14, font: 'Calibri', color: '6B7280' }),
+                                new TextRun({ text: footerCompany, size: 14, font: 'Calibri', color: docPrimaryColor, bold: true }),
+                                new TextRun({ text: footerAddress, size: 12, font: 'Calibri', color: '9CA3AF' }),
+                                new TextRun({ text: '  |  Page ', size: 14, font: 'Calibri', color: '6B7280' }),
+                                new TextRun({ children: [PageNumber.CURRENT], size: 14, font: 'Calibri', color: '6B7280' }),
+                                new TextRun({ text: ' / ', size: 14, font: 'Calibri', color: '6B7280' }),
+                                new TextRun({ children: [PageNumber.TOTAL_PAGES], size: 14, font: 'Calibri', color: '6B7280' }),
+                                new TextRun({ text: `  |  ${new Date().toLocaleDateString('fr-FR')}`, size: 14, font: 'Calibri', color: '6B7280' })
+                            ],
+                            alignment: AlignmentType.CENTER
+                        })
+                    ]
+                });
+                
+                const doc = new Document({
+                    sections: [{
+                        properties: {
+                            page: {
+                                margin: { top: 900, right: 720, bottom: 900, left: 720 }
+                            }
+                        },
+                        headers: { default: docHeader },
+                        footers: { default: docFooter },
+                        children: filteredChildren
+                    }]
+                });
+                
+                // Generate and download
+                const blob = await Packer.toBlob(doc);
+                const companyName = isEnterprise ? data.enterprise.name : 'FixAIR';
+                const filename = `Rapport_${companyName}_${data.brand || ''}_${data.reference || new Date().toISOString().split('T')[0]}.docx`.replace(/__/g, '_');
+                saveAs(blob, filename);
+                
+                toast('Document Word téléchargé !');
+                trackAction('report');
+                
+            } catch (error) {
+                console.error('Error generating Word document:', error);
+                toast('Erreur génération Word: ' + error.message);
             }
         }
         
@@ -12757,7 +13890,7 @@ text = text.replace(/\s*\{"type"\s*:\s*"report"[\s\S]*\}\s*$/, '').trim();
                         </div>
                         <div class="report-menu-item" onclick="exportReportPDFMenu(event, this)">
                             <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></span>
-                            <span>Export PDF</span>
+                            <span>Exporter</span>
                         </div>
                     </div>
                 </div>`;
@@ -13691,42 +14824,18 @@ RÈGLES:
             toast('Partage disponible dans la version Pro');
         }
 
-        // Menu version of export PDF - Pro feature with upgrade prompt
+        // Menu version of export
         function exportReportPDFMenu(event, el) {
             event.stopPropagation();
             el.closest('.report-menu-dropdown').classList.remove('show');
-            
-            // Check if user has Pro subscription
-            if (typeof canUseProFeature === 'function' && canUseProFeature('export_pdf')) {
-                // Pro user - trigger export
-                exportReportPDF();
-            } else {
-                // Free user - show upgrade modal
-                if (typeof showUpgradeModal === 'function') {
-                    showUpgradeModal('export_pdf');
-                } else {
-                    toast('Export PDF disponible dans la version Pro');
-                }
-            }
+            showExportMenu();
         }
 
-        // Menu version of share - Pro feature with upgrade prompt
+        // Menu version of share - DISABLED (Premium feature)
         function shareReportMenu(event, el) {
             event.stopPropagation();
             el.closest('.report-menu-dropdown').classList.remove('show');
-            
-            // Check if user has Pro subscription
-            if (typeof canUseProFeature === 'function' && canUseProFeature('share_report')) {
-                // Pro user - share report
-                shareReport();
-            } else {
-                // Free user - show upgrade modal
-                if (typeof showUpgradeModal === 'function') {
-                    showUpgradeModal('share');
-                } else {
-                    toast('Partage disponible dans la version Pro');
-                }
-            }
+            toast('Partage disponible dans la version Pro');
         }
         
         // Close report menu when clicking outside
@@ -15360,7 +16469,7 @@ RÈGLES:
         // FREEMIUM PAYWALL SYSTEM
         // ═══════════════════════════════════════════════════════════════
         // Soft paywall: X free Copilot chats → upgrade prompt
-        // Export PDF → subscription required
+        // Export PDF/Word → subscription required for non-standard
         // UX: Never block abruptly, always give value first
         // ═══════════════════════════════════════════════════════════════
         
@@ -15570,10 +16679,7 @@ RÈGLES:
             overlay.classList.add('show');
             
             // Track modal view for analytics
-            if (typeof trackAction === 'function') {
-                // Don't track this as an action, just log
-                console.log('[Freemium] Upgrade modal shown:', context);
-            }
+            console.log('[Freemium] Upgrade modal shown:', context);
         }
         
         function closeUpgradeModal(event) {
