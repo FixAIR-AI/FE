@@ -7,3 +7,8 @@
 /admin/*  /admin/index.html  200
 /manager/*  /manager/index.html  200
 /master/*  /master/index.html  200
+
+# Referral program routing
+# Supports clean URLs like /r/julien4829
+/r/:code  /r/index.html  200
+/r/:code/  /r/index.html  200
