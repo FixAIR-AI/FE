@@ -9433,8 +9433,11 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                                         const reportDataMatch = msg.content.match(/\[REPORT_DATA\]([\s\S]*?)\[\/REPORT_DATA\]/);
                                         if (reportDataMatch) {
                                             const reportData = JSON.parse(reportDataMatch[1].trim());
-                                            lastReportData = reportData;
-                                            updateDrawerPreview(reportData);
+                                            if (!lastReportData) {
+                                                lastReportData = { brand: brand, brand_key: brand, status: 'en_cours', date: new Date().toLocaleDateString('fr-FR') };
+                                            }
+                                            mergeReportData(lastReportData, reportData);
+                                            updateDrawerPreview(lastReportData);
                                         }
                                     } catch (e) {
                                         // Could not parse saved REPORT_DATA
@@ -9542,10 +9545,8 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             document.getElementById('reportSheet').classList.add('open');
             document.getElementById('reportBackdrop').classList.add('show');
 
-            // Ensure report data is populated from chat history on first open
-            if (!lastReportData || Object.keys(lastReportData).length === 0) {
-                buildPartialReport();
-            }
+            // Always rebuild report data from chat history (not just when empty)
+            buildPartialReport();
 
             // Always show editable template with current data (or empty)
             updateDrawerPreview(lastReportData || {});
@@ -10470,8 +10471,11 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                                         const reportDataMatch = msg.content.match(/\[REPORT_DATA\]([\s\S]*?)\[\/REPORT_DATA\]/);
                                         if (reportDataMatch) {
                                             const reportData = JSON.parse(reportDataMatch[1].trim());
-                                            lastReportData = reportData;
-                                            updateDrawerPreview(reportData);
+                                            if (!lastReportData) {
+                                                lastReportData = { brand: brand, brand_key: brand, status: 'en_cours', date: new Date().toLocaleDateString('fr-FR') };
+                                            }
+                                            mergeReportData(lastReportData, reportData);
+                                            updateDrawerPreview(lastReportData);
                                         }
                                     } catch (e) {
                                         // Could not parse saved REPORT_DATA
@@ -11097,7 +11101,7 @@ INSTRUCTIONS:
         
         // Main export function - shows export menu
         function exportReportPDF() {
-            showExportMenu();
+            exportReport('word');
         }
         
         // Show export format selection menu
@@ -12730,8 +12734,8 @@ INSTRUCTIONS:
         // Build partial report from conversation
         // Called when we detect report-relevant info in the chat
         function buildPartialReport() {
-            // Get info from chatHistory
-            const history = chatHistory.assistant || [];
+            // Get info from chatHistory — scan BOTH panels for report data
+            const history = [...(chatHistory.assistant || []), ...(chatHistory.copilot || [])];
             const userMessages = history.filter(m => m.role === 'user').map(m => m.content);
             const aiMessages = history.filter(m => m.role === 'assistant').map(m => m.content);
             const allText = userMessages.join(' ').toLowerCase();
