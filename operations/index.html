@@ -2465,7 +2465,6 @@
                         storageKey: 'fixair-auth'
                     }
                 });
-                // console.log('✅ Supabase initialized');
                 return true;
             } catch (err) {
                 console.error('❌ Supabase init error:', err);
@@ -2575,7 +2574,6 @@
                         updateLoginUI();
                     } else {
                         // No error AND no user = genuinely new user, redirect to signup
-                        console.log('User not found in database, redirecting to signup');
                         setLoginStatus(t('status.redirectSignup'), 'info');
                         setTimeout(() => {
                             window.location.href = 'https://go.fixair.ai/auth?email=' + encodeURIComponent(email) + '&from=admin';
@@ -3052,7 +3050,6 @@
                         }
                     }
                 } catch (err) {
-                    // console.log('No valid stored session');
                 }
             }
         }
@@ -3091,7 +3088,6 @@
             try {
                 const { data: { session } } = await sb.auth.getSession();
                 if (!session) {
-                    // console.log('No session - showing login');
                     return null;
                 }
 
@@ -3102,7 +3098,6 @@
                     .maybeSingle();
 
                 if (!profile) {
-                    // console.log('No profile found');
                     return null;
                 }
 
@@ -3111,11 +3106,9 @@
 
                 // Check if user is an admin
                 if (profile.role && !['admin', 'owner'].includes(profile.role)) {
-                    // console.log('User role is:', profile.role, '- not an admin');
                     return null;
                 }
 
-                // console.log('✅ Manager authenticated:', profile.email);
                 return profile;
             } catch (err) {
                 console.error('Auth check error:', err);
@@ -3138,7 +3131,6 @@
                 }
             });
             realtimeSubscriptions = [];
-            console.log('🧹 Cleaned up realtime subscriptions');
         }
 
         // ═══════════════════════════════════════════════════════════════
@@ -3295,7 +3287,6 @@
                     };
                 }
                 
-                console.log('✅ Loaded', Object.keys(liveTeamData).length, 'team members (INTERNE + EXTERNE)');
                 updateV7TeamUI();
                 
             } catch (err) {
@@ -3338,14 +3329,9 @@
                     } else {
                         allProjects = projects || [];
                         // DEBUG: Log raw Supabase response
-                        console.log('🔍 Raw Supabase projects:', projects);
                         const projectWithReport = projects?.find(p => p.report?.length > 0);
-                        console.log('🔍 First project with report:', projectWithReport);
                         const projectWithProgress = projects?.find(p => p.progress > 0);
-                        console.log('🔍 Project with progress > 0:', projectWithProgress);
                         if (projectWithProgress) {
-                            console.log('🔍 extracted_data:', projectWithProgress.extracted_data);
-                            console.log('🔍 report array:', projectWithProgress.report);
                         }
                     }
                 }
@@ -3430,10 +3416,8 @@
                     };
                 }
                 
-                console.log('✅ Loaded', Object.keys(liveProjectData).length, 'projects');
 
                 // Debug logging for progress values
-                console.log('📊 Projects Debug:', {
                     totalLoaded: Object.keys(liveProjectData).length,
                     progressValues: Object.values(liveProjectData).map(p => ({
                         id: p.id,
@@ -3473,7 +3457,6 @@
                 if (error) throw error;
                 
                 livePendingShares = shares || [];
-                console.log('✅ Loaded', livePendingShares.length, 'pending availability shares');
                 
                 // Show notification if any pending
                 if (livePendingShares.length > 0) {
@@ -3489,12 +3472,10 @@
         // LOAD ALL DATA (orchestrator)
         // ═══════════════════════════════════════════════════════════════
         async function loadAllData() {
-            console.log('📊 Loading all data from Supabase...');
             await loadTeamMembers();
             await loadProjects();
             await loadPendingShares();
             updateV7DashboardStats();
-            console.log('✅ All data loaded!');
         }
 
         // ═══════════════════════════════════════════════════════════════
@@ -3670,7 +3651,6 @@
             
             // Log all unique statuses for debugging
             const uniqueStatuses = [...new Set(projects.map(p => p.status))];
-            console.log('📊 Unique project statuses:', uniqueStatuses);
             
             const techs = Object.values(liveTeamData);
             const teamStats = {
@@ -3682,9 +3662,7 @@
             
             // Log all unique tech statuses
             const uniqueTechStatuses = [...new Set(techs.map(t => t.status))];
-            console.log('📊 Unique tech statuses:', uniqueTechStatuses);
             
-            console.log('📊 Stats - Projects:', stats, 'Team:', teamStats);
         }
 
         // Open project drawer with live data - USE ORIGINAL V7 DRAWER STRUCTURE
@@ -3965,11 +3943,6 @@
         // Build drawer content for live project data - SAME STRUCTURE AS V7
         function buildLiveProjectDrawerContent(p, tech) {
             // Debug logging
-            console.log('🔧 Building drawer for:', p.name || p.title);
-            console.log('🔧 p.report:', p.report);
-            console.log('🔧 p.report?.client:', p.report?.client);
-            console.log('🔧 p.report?.equipment_brand:', p.report?.equipment_brand);
-            console.log('🔧 p.report?.error_codes:', p.report?.error_codes);
 
             const msgs = tech.messages && tech.messages.length ? 
                 tech.messages.map(m => `<div class="msg ${m.type === 'sent' ? 'user' : 'ai'}"><div class="msg-bubble">${m.text}</div><div class="msg-time">${m.time}</div></div>`).join('') : 
