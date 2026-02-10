@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>FixAir Word Export Sample Generator</title>
+    <script src="https://unpkg.com/docx@8.5.0/build/index.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        body { font-family: system-ui; padding: 40px; background: #1a1a2e; color: #fff; }
+        button { background: #F97316; color: white; border: none; padding: 16px 32px; font-size: 18px; border-radius: 8px; cursor: pointer; }
+        button:hover { background: #EA580C; }
+        .status { margin-top: 20px; padding: 16px; background: #252542; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <h1>🦞 FixAir Word Export — Sample Generator</h1>
+    <p>Cliquez pour générer un rapport Word avec des données fictives EQWATTEUR.</p>
+    <button onclick="generateSample()">📄 Générer Échantillon Word</button>
+    <div class="status" id="status">En attente...</div>
+
+    <script>
+        // FixAIR Logo base64
+        const FIXAIR_LOGO_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAACXBIWXMAAAsTAAALEwEAmpwYAAAF8WlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNy4xLWMwMDAgNzkuZWRhMmIzZiwgMjAyMS8xMS8xNC0xMjo0MTo1NCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIvPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+eo8fSQAABqhJREFUeJztnVtsFFUYx/9nZnd3u1u6bYEWCkWhVAygKBcVEEQQCEEJ8kBioomJxkR9MDF6JV7whlfig4lRHzQxamLUxAsGFVQUUS4FCkihtIVSoC3dtrvb2Z2Z4wNb2u7O7M7uzM60NN8vyaa7Z875zvnPmXPmnPkOICgoKCgoKCgoKCgoKCjIM8jJgqrq0mJNk2ZqGquFwGxJYjMBVAKoAFAEIBdAJoAMAAoAFUAUQBRAH4AeAO0AWgA0SxK7CEkqt9u5h2madrS3t/eG3T4k49rQ0LBi7ty5P2ua5vqW6ziOs7a2tmrJkiXn4vG4u7dIjuM4X11d3R4AqKmpWXPlypWqUCjkepnr1q3bFQwGGQA0NjZW+P1+1+udOXPm2Tlz5vQAgCzLrpdZWVm5u76+vlOW5THr5C0VW1uLg0yTTwLM7XJkWVanTJlyORAI6CZJkt0u0+fznZ8+fXoIAKZOnRpgv/pj6dKln8XjcYM9CwsLj+fm5g5brc/v91fV1NRsBYD6+vrKcePGuV7PqFGj7iovL+8EgOXLl38yZsyYIatlJvcZa11dXQ+7WuD06dPPl5WV9VutLxAInKuqqroOAPPnz981derUIavl+P3+ymXLlm0BgEWLFn3qdDqDBBIiG+L3B84OhkJTrFaWl5e3pbi4uNdqfeFwuLampmYPACxYsKCpsLDQcpnJfcbaZcuW/Zwsi4npdYTD4bmBQGDAaj2DBg36csKECd0AUF1dPX3ixImdrpSt2u1cwCkVDJhttbKcnJyXJk2a1GO1vpycnBk1NTXdADBx4sRXhw0b5vreJJeZ+XNJScnVlStX7n3ggQc8eQ4NHz58jd/vdz29nLfeeutPtm8h3u7du/fOvXv3ul6mKIpL77jjjgMAUFNT0+XGgzoZv9+/sKam5vMRI0Y8xyzJF4KhcFW2xfh8vu+nTJnSlm15mqZZfUCPs1Lv3LlzDx87dsz1MidNmnTqySef/DEYDCb0n5wK+8lqZQBw7733HrrrrrsOWa0vHA5X79mz50cACAaDYz3IU4RJq5U1NDTsS0aDIDs7u6ampubnVHUIgrBCFMXhVusJh8NtNTU1G6zWl5ubuwIA5syZ89fAgQMHrNZntu9Yt25d7bZt21zPnNXX1+/YsWOH62UmP6tXXnmldvLkyZ6Xabfv6OzsJLNFWWU5FPKLwrSwkJWVdWxwOFznZjl2yikuLl5ptU5RFI9Nnz79VIZ1WiJrK+6g6JLBxKCgIFCWmewfPW7qk8jFNKAMuE0F7JbpVfmZwm35TgVlWJ7qBZ0qL1P4TqHAJBuV5xXJYXsO9A+OHSzP7TLHK/zeEbfqNxPsZIlO5XsF/y57a5IDmfQZbmPn/O2W45XfKewn5C24dTAPEpU+wy24TWqEw24GNkPdgi/PUH+nyjIYKpLdNWO2TCPC6HkQ+G7VO+1W4BQs04dEUpZZWYaAJKXDjx8/riR3RnYLsMIKT8pLIoKdpOwuzy5sn9iSjGBn+5xQplV+rJDKfvmx2x/YlO9EOT8KJMrHbpl2yyHp7n8lAzZ0aWq3AKdI9z5kqIeIIvxeyFBZwvZE/OfcfkodpMNObI+hgbTLI4LzSAHW6yNA8MJuAanAF6xWAIwC8JXdApLRIKAGQK3dApJxYBD+E0qy/+a0LPvHkOX4kKXyE0lUVrb1GUFm+EYdNvWJJJpKlwIk3J5UlsPLTSAR9suJ0iDBbmZSJNWC6VYC7O63EvXJCDLwCXjUwfI9+yFYlZ/uvyKxAnrUwfLslidCwvLSfUhZyDDINugPhZyU+RMgnfK8IF05RFBQUFCQOz35ISopybx/dXU1eTJiY7fMsrIy2+W4QVK99fX1yT95iF1ZZWXF6urqbjJ50k4k1XHHjBnj+p6ktLT0fFlZWY/dcqwwd+7cH1wvM/k5d+7cny4vLz/ndDn19fWjA4GA6/XW1dX97HqZyc+ZM2cWm7kkSHe/lYqampoTVutrbGxc5HqZyU9dXd1fTpdTX18/LRAIuL6HCofD+xobG5dcWlq6W3K5zJqamvJwOOz6+Ts3N/fz8vLyOgAoKCgYY+aSwI5j1xUrVqT+UNAtZhUWFn6TnZ0dd7k+J8Fqm9TX1y9ubGxc6npFiWRlZf09ZMiQDqfLKSgomJadne16mcFg8Ly88sKFCwss/ij0M9k/egwRRVGSLJ4dZSH0hyKZn5+f1g/KDBFEUdxVUlJyxu5KvMJuAW7T0dGRWltbS4D1Mh4EBQUFBQUFBQUFBQUFBQVlgv8B2zJFlAEixgUAAAAASUVORK5CYII=';
+
+        // Sample signature base64 (simple squiggle)
+        const SAMPLE_SIGNATURE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAAA8CAYAAACEhkNqAAAACXBIWXMAAAsTAAALEwEAmpwYAAADsklEQVR4nO2dzXHbMBCFX5zpAO7AqcCuwK7ArsB0BeYkufYkqsCuIE4FdgVyBUoHSgdKBcoHhqNhhOPMkEPsYvG+GY8sjUTg7WIXILCgEEIIIYQQQgghhBBCCCGEEEIIIYQQ8h9jW29A4TvWG0D+TAtgCeCx9YaQv9MCeA/gtPWGkL/TAnjfekPIn2kBPAB43HpDiBJtjvv/AdgHcAtgF8D+Af+GFEgL4HcANwD2AbzSV/cA7gM4a7txpAQ+AdiGEGuL4a09gGMAtw8dkJRFB+AcwBGA1wHsAbhJDuhBh1sAx623nZTBC4BnAA4BHAR1NMB9BA+APQCnEDwCOAQpaFwi8Aj3Ee4G7lqB4G7gKYRIQO4E7h54uxW2yD3OzPX3vbqPYMFiXLfwdgbh7la0ANrtaI3bhOBR4ADAu8C1O4G7gbuR6w2AC3y7JQ6AOzIIqZ0nhJAQ1x4A7FYEt6Hg7izAuySGuxW4G7ne4C7A4aBuBfJRhHALcF8RK9sT7sbq3ge4uwdwsrq2A7jd4N0JhJC7gTuwuoGlsVrh7j7A3Qi+B3AdqH8ZyQ4HK3AngLut7j3AXQNPIXgE8BLi/kXA+qC6F4AHAeJOELh7D+DuBcAxgqcuXHsn4O5Wl/cA7ka49xjAYYC7e4A7gLvbCJ5CnI8QMOA6EHj3EYC7rwCOILjbOq4dROodArgNaHsncHfC3dcIDgJa4m7o/K3u3UK8jxCeBbgbuHsEIeYuwH0L4JLCE8DdhwgOAVyHuPcHQMpDhPYAc9/R9TYAR4HM14jrbhBDxHMEtxtaH1pvQHYe6LwphEgN3N0LuNvA3a3IcRbhbAJ3L2HybqhsYN3NwN3tBu72EZwHuLuF4BGEswBtJpE2N8HdwN27CE4i2B3g7kGEewdAiruB2+4EbpuBO1Pw+G7g7lYXjgjuLsF9F0LbCG4AHI5od4+BOxNwdxxhjqS4e4Lg3gsIM12Cu48hnNmO7u5GPE4h7roiuP0AwO0GgJ0I9y0IXhJI9gw87wB3X0K4KYJnAG4H7m5B+JhAquPwuwfuHkNwE8kdwO1TBM8QPELwGsEp3N2OaHuH4OaIOx8DuHsI4TaAmwB3O7hzfyYbOv8SweWA7u5A+CiBuL8HcBPB3dXlswR3N7q8s1ruJohQ+x5xzZLg7h7CcwJhJoJbA3cfQbjZIbgtuKdx+ALc7YfgjgqET5G7E9wd8PwJ7u5Euq+IIPGExN0LmCPuXEE4LILbgHYnkE7g7kaO8yZQfwFyuoHn/Ae8XsE/Z5FtZwAAAABJRU5ErkJggg==';
+
+        // Sample data
+        const sampleData = {
+            brand: 'Carrier',
+            brand_key: 'carrier',
+            reference: 'FX-2026-00142',
+            date: '07/02/2026',
+            type_intervention: 'SAV / Dépannage',
+            status: 'conforme',
+            enterprise_name: 'EQWATTEUR',
+            
+            resume: 'Intervention suite à défaut de communication sur unité extérieure VRF. Diagnostic réalisé, câble bus défectueux identifié et remplacé. Système remis en service avec succès. Toutes les unités intérieures communiquent correctement.',
+            
+            site: {
+                numero_affaire: 'AFF-2026-0089',
+                adresse: '45 Avenue de la République',
+                ville: '94140 Alfortville'
+            },
+            
+            client: {
+                societe: 'EQWATTEUR SAS',
+                contact: 'Badra Cisse',
+                telephone: '07 49 33 21 08',
+                reference: 'CLI-EQW-001'
+            },
+            
+            dates: {
+                debut_date: '07/02/2026',
+                debut_heure: '09:30',
+                fin_date: '07/02/2026',
+                fin_heure: '14:45'
+            },
+            
+            systeme: {
+                type: 'VRF',
+                modele: '38AH-024',
+                serie: 'CR26A00142',
+                puissance: '24',
+                garantie: 'Sous garantie'
+            },
+            
+            fluide: {
+                type: 'R410A',
+                charge_initiale: '8.5',
+                charge_totale: '8.5',
+                type_huile: 'POE'
+            },
+            
+            codes_defaut: [
+                { code: '7100', description: 'Défaut communication bus entre UE et UI', resolution: 'Câble bus remplacé' },
+                { code: '7102', description: 'Timeout communication UI-03', resolution: 'Adressage vérifié et corrigé' }
+            ],
+            
+            mesures: [
+                { label: 'Haute Pression', valeur: '28.5', unite: 'bar', status: 'ok' },
+                { label: 'Basse Pression', valeur: '10.2', unite: 'bar', status: 'ok' },
+                { label: 'Surchauffe', valeur: '7', unite: '°C', status: 'ok' },
+                { label: 'Sous-refroidissement', valeur: '5', unite: '°C', status: 'ok' }
+            ],
+            
+            travaux_effectues: [
+                { texte: 'Diagnostic complet du système VRF', status: 'done' },
+                { texte: 'Vérification du câblage bus de communication', status: 'done' },
+                { texte: 'Remplacement câble bus défectueux (15m)', status: 'done' },
+                { texte: 'Reprogrammation adresses unités intérieures', status: 'done' },
+                { texte: 'Test de fonctionnement toutes UI', status: 'done' },
+                { texte: 'Relevé des pressions et températures', status: 'done' }
+            ],
+            
+            travaux_prevoir: [
+                { texte: 'Maintenance préventive recommandée dans 6 mois', priorite: 'normal' },
+                { texte: 'Vérifier état des filtres UI bureau direction', priorite: 'optionnel' }
+            ],
+            
+            pieces: [
+                { reference: 'CBL-BUS-15M', designation: 'Câble bus communication 2 paires blindé', quantite: '1' },
+                { reference: 'CON-RJ45-2P', designation: 'Connecteurs RJ45 blindés', quantite: '4' }
+            ],
+            
+            rapport_technicien: 'À mon arrivée, le système affichait un défaut de communication généralisé. Après diagnostic approfondi, j\'ai identifié un câble bus endommagé (probable passage de rongeur dans le faux-plafond). Le câble a été remplacé sur toute sa longueur entre le coffret de brassage et l\'unité extérieure. Toutes les unités intérieures ont été ré-adressées et testées individuellement. Le système fonctionne maintenant parfaitement.',
+            
+            reserves: [
+                { type: 'warning', titre: 'Passage câbles', texte: 'Recommandation de protéger les passages de câbles dans le faux-plafond (gaines anti-rongeurs)' }
+            ],
+            
+            resultat: {
+                status: 'resolu',
+                description: 'Système remis en service. Communication rétablie entre toutes les unités. Client satisfait.'
+            },
+            
+            technicien: {
+                nom: 'Mohamed AHMED',
+                entreprise: 'EQWATTEUR SAS',
+                heure_arrivee: '09:30',
+                heure_depart: '14:45'
+            },
+            
+            signatures: {
+                client: SAMPLE_SIGNATURE,
+                nom_client: 'Badra Cisse',
+                technicien: SAMPLE_SIGNATURE,
+                nom_technicien: 'Mohamed AHMED'
+            }
+        };
+
+        function log(msg) {
+            document.getElementById('status').innerHTML += '<br>' + msg;
+        }
+
+        async function generateSample() {
+            log('🔄 Génération en cours...');
+            
+            try {
+                const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, 
+                        WidthType, AlignmentType, BorderStyle, ImageRun, PageBreak, ShadingType, 
+                        TableLayoutType, VerticalAlign } = docx;
+                
+                const data = sampleData;
+                const primaryColor = 'F97316';
+                
+                const statusConfig = {
+                    conforme: { color: '22C55E', label: '✓ CONFORME', bg: 'DCFCE7' },
+                    non_conforme: { color: 'EF4444', label: '✗ NON CONFORME', bg: 'FEE2E2' },
+                    en_cours: { color: 'EAB308', label: '◐ EN COURS', bg: 'FEF9C3' }
+                };
+                
+                const base64ToUint8Array = (base64) => {
+                    const raw = atob(base64.replace(/^data:image\/\w+;base64,/, ''));
+                    const arr = new Uint8Array(raw.length);
+                    for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+                    return arr;
+                };
+                
+                const sectionHeading = (text) => new Paragraph({
+                    children: [
+                        new TextRun({ text: '█ ', color: primaryColor, size: 24 }),
+                        new TextRun({ text: text.toUpperCase(), bold: true, size: 22, font: 'Calibri' })
+                    ],
+                    spacing: { before: 400, after: 150 }
+                });
+                
+                const kvRow = (label, value, options = {}) => {
+                    if (!value) return null;
+                    return new Paragraph({
+                        children: [
+                            new TextRun({ text: label, bold: true, size: 20, font: 'Calibri', color: '374151' }),
+                            new TextRun({ text: ':  ', size: 20, font: 'Calibri', color: '6B7280' }),
+                            new TextRun({ text: String(value), size: 20, font: 'Calibri', color: options.color || '111827' })
+                        ],
+                        spacing: { after: 80 },
+                        indent: { left: options.indent || 0 }
+                    });
+                };
+                
+                const createTable = (headers, rows) => {
+                    const borderStyle = { style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB' };
+                    
+                    const headerRow = new TableRow({
+                        children: headers.map(h => new TableCell({
+                            children: [new Paragraph({ 
+                                children: [new TextRun({ text: h, bold: true, size: 18, font: 'Calibri', color: '374151' })]
+                            })],
+                            shading: { fill: 'F3F4F6', type: ShadingType.CLEAR },
+                            borders: { top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle },
+                            margins: { top: 80, bottom: 80, left: 120, right: 120 }
+                        })),
+                        tableHeader: true
+                    });
+                    
+                    const dataRows = rows.map((row, idx) => new TableRow({
+                        children: row.map(cell => new TableCell({
+                            children: [new Paragraph({ 
+                                children: [new TextRun({ text: String(cell || '—'), size: 18, font: 'Calibri' })]
+                            })],
+                            borders: { top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle },
+                            margins: { top: 60, bottom: 60, left: 120, right: 120 },
+                            shading: idx % 2 === 1 ? { fill: 'FAFAFA', type: ShadingType.CLEAR } : undefined
+                        }))
+                    }));
+                    
+                    return new Table({
+                        rows: [headerRow, ...dataRows],
+                        width: { size: 100, type: WidthType.PERCENTAGE },
+                        layout: TableLayoutType.FIXED
+                    });
+                };
+                
+                const infoBox = (leftItems, rightItems) => {
+                    const borderStyle = { style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB' };
+                    
+                    const leftContent = leftItems.filter(Boolean).map(item => 
+                        new Paragraph({
+                            children: [
+                                new TextRun({ text: item.label + ': ', bold: true, size: 18, font: 'Calibri', color: '6B7280' }),
+                                new TextRun({ text: String(item.value || '—'), size: 18, font: 'Calibri' })
+                            ],
+                            spacing: { after: 60 }
+                        })
+                    );
+                    
+                    const rightContent = rightItems.filter(Boolean).map(item =>
+                        new Paragraph({
+                            children: [
+                                new TextRun({ text: item.label + ': ', bold: true, size: 18, font: 'Calibri', color: '6B7280' }),
+                                new TextRun({ text: String(item.value || '—'), size: 18, font: 'Calibri' })
+                            ],
+                            spacing: { after: 60 }
+                        })
+                    );
+                    
+                    return new Table({
+                        rows: [new TableRow({
+                            children: [
+                                new TableCell({
+                                    children: leftContent.length ? leftContent : [new Paragraph({})],
+                                    borders: { top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle },
+                                    margins: { top: 120, bottom: 120, left: 160, right: 160 },
+                                    width: { size: 50, type: WidthType.PERCENTAGE }
+                                }),
+                                new TableCell({
+                                    children: rightContent.length ? rightContent : [new Paragraph({})],
+                                    borders: { top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle },
+                                    margins: { top: 120, bottom: 120, left: 160, right: 160 },
+                                    width: { size: 50, type: WidthType.PERCENTAGE }
+                                })
+                            ]
+                        })],
+                        width: { size: 100, type: WidthType.PERCENTAGE }
+                    });
+                };
+                
+                const children = [];
+                
+                // Logo header
+                const logoTable = new Table({
+                    rows: [new TableRow({
+                        children: [
+                            new TableCell({
+                                children: [
+                                    new Paragraph({
+                                        children: [
+                                            new ImageRun({
+                                                data: base64ToUint8Array(FIXAIR_LOGO_BASE64),
+                                                transformation: { width: 50, height: 50 }
+                                            }),
+                                            new TextRun({ text: '  FixAIR', bold: true, size: 36, font: 'Calibri', color: primaryColor })
+                                        ]
+                                    })
+                                ],
+                                borders: { top: {style: BorderStyle.NONE}, bottom: {style: BorderStyle.NONE}, left: {style: BorderStyle.NONE}, right: {style: BorderStyle.NONE} },
+                                width: { size: 50, type: WidthType.PERCENTAGE }
+                            }),
+                            new TableCell({
+                                children: [
+                                    new Paragraph({
+                                        children: [new TextRun({ text: data.enterprise_name || '[LOGO ENTREPRISE]', size: 24, font: 'Calibri', color: '0066CC', bold: true })],
+                                        alignment: AlignmentType.RIGHT
+                                    })
+                                ],
+                                borders: { top: {style: BorderStyle.NONE}, bottom: {style: BorderStyle.NONE}, left: {style: BorderStyle.NONE}, right: {style: BorderStyle.NONE} },
+                                width: { size: 50, type: WidthType.PERCENTAGE },
+                                verticalAlign: VerticalAlign.CENTER
+                            })
+                        ]
+                    })],
+                    width: { size: 100, type: WidthType.PERCENTAGE }
+                });
+                children.push(logoTable);
+                
+                // Title
+                children.push(new Paragraph({
+                    children: [new TextRun({ text: "RAPPORT D'INTERVENTION", bold: true, size: 32, font: 'Calibri', color: '111827' })],
+                    alignment: AlignmentType.CENTER,
+                    spacing: { before: 300, after: 100 }
+                }));
+                
+                // Brand
+                children.push(new Paragraph({
+                    children: [new TextRun({ text: data.brand, size: 24, font: 'Calibri', color: primaryColor })],
+                    alignment: AlignmentType.CENTER,
+                    spacing: { after: 200 }
+                }));
+                
+                // Reference info
+                children.push(new Paragraph({
+                    children: [new TextRun({ text: `Réf: ${data.reference}   •   Date: ${data.date}   •   ${data.type_intervention}`, size: 20, font: 'Calibri', color: '6B7280' })],
+                    alignment: AlignmentType.CENTER,
+                    spacing: { after: 200 }
+                }));
+                
+                // Status
+                const sc = statusConfig[data.status];
+                children.push(new Paragraph({
+                    children: [new TextRun({ text: `  ${sc.label}  `, bold: true, size: 24, font: 'Calibri', color: sc.color })],
+                    alignment: AlignmentType.CENTER,
+                    spacing: { after: 300 },
+                    shading: { fill: sc.bg, type: ShadingType.CLEAR }
+                }));
+                
+                // Résumé
+                children.push(sectionHeading('Résumé'));
+                children.push(new Paragraph({
+                    children: [new TextRun({ text: data.resume, size: 20, font: 'Calibri' })],
+                    spacing: { after: 200 },
+                    shading: { fill: 'F9FAFB', type: ShadingType.CLEAR }
+                }));
+                
+                // Site & Client
+                children.push(sectionHeading('Site & Client'));
+                children.push(infoBox(
+                    [
+                        { label: 'N° Affaire', value: data.site.numero_affaire },
+                        { label: 'Adresse', value: data.site.adresse },
+                        { label: 'Ville', value: data.site.ville }
+                    ],
+                    [
+                        { label: 'Société', value: data.client.societe },
+                        { label: 'Contact', value: data.client.contact },
+                        { label: 'Téléphone', value: data.client.telephone },
+                        { label: 'Réf. Client', value: data.client.reference }
+                    ]
+                ));
+                
+                // Dates
+                children.push(sectionHeading('Dates Intervention'));
+                children.push(infoBox(
+                    [{ label: 'Début', value: `${data.dates.debut_date} à ${data.dates.debut_heure}` }],
+                    [{ label: 'Fin', value: `${data.dates.fin_date} à ${data.dates.fin_heure}` }]
+                ));
+                
+                // Équipement
+                children.push(sectionHeading('Équipement'));
+                children.push(infoBox(
+                    [
+                        { label: 'Type', value: data.systeme.type },
+                        { label: 'Modèle', value: data.systeme.modele },
+                        { label: 'N° Série', value: data.systeme.serie },
+                        { label: 'Puissance', value: data.systeme.puissance + ' kW' },
+                        { label: 'Garantie', value: data.systeme.garantie }
+                    ],
+                    [
+                        { label: 'Fluide', value: data.fluide.type },
+                        { label: 'Charge initiale', value: data.fluide.charge_initiale + ' kg' },
+                        { label: 'Charge totale', value: data.fluide.charge_totale + ' kg' },
+                        { label: 'Huile', value: data.fluide.type_huile }
+                    ]
+                ));
+                
+                // Codes défaut
+                children.push(sectionHeading('Codes Défaut'));
+                children.push(createTable(
+                    ['Code', 'Description', 'Résolution'],
+                    data.codes_defaut.map(c => [c.code, c.description, c.resolution])
+                ));
+                
+                // Mesures
+                children.push(sectionHeading('Mesures'));
+                children.push(createTable(
+                    ['Paramètre', 'Valeur', 'Observation'],
+                    data.mesures.map(m => [m.label, `${m.valeur} ${m.unite}`, ''])
+                ));
+                
+                // Travaux effectués
+                children.push(sectionHeading('Travaux Effectués'));
+                data.travaux_effectues.forEach(t => {
+                    children.push(new Paragraph({
+                        children: [
+                            new TextRun({ text: '✓  ', color: '22C55E', size: 22, font: 'Calibri' }),
+                            new TextRun({ text: t.texte, size: 20, font: 'Calibri' })
+                        ],
+                        spacing: { after: 80 },
+                        indent: { left: 200 }
+                    }));
+                });
+                
+                // Travaux à prévoir
+                children.push(sectionHeading('Travaux à Prévoir'));
+                data.travaux_prevoir.forEach(t => {
+                    const prioColors = { urgent: 'EF4444', normal: 'F59E0B', optionnel: '6B7280' };
+                    const prioLabels = { urgent: 'URGENT', normal: 'Normal', optionnel: 'Optionnel' };
+                    children.push(new Paragraph({
+                        children: [
+                            new TextRun({ text: '→  ', color: '6B7280', size: 20, font: 'Calibri' }),
+                            new TextRun({ text: t.texte, size: 20, font: 'Calibri' }),
+                            new TextRun({ text: `  [${prioLabels[t.priorite]}]`, size: 18, font: 'Calibri', color: prioColors[t.priorite] })
+                        ],
+                        spacing: { after: 80 },
+                        indent: { left: 200 }
+                    }));
+                });
+                
+                // Pièces
+                children.push(sectionHeading('Pièces Utilisées'));
+                children.push(createTable(
+                    ['Référence', 'Désignation', 'Qté'],
+                    data.pieces.map(p => [p.reference, p.designation, p.quantite])
+                ));
+                
+                // Rapport technicien
+                children.push(sectionHeading('Rapport Technicien'));
+                children.push(new Paragraph({
+                    children: [new TextRun({ text: data.rapport_technicien, size: 20, font: 'Calibri' })],
+                    spacing: { after: 200 }
+                }));
+                
+                // Réserves
+                children.push(sectionHeading('Réserves / Alertes'));
+                data.reserves.forEach(r => {
+                    children.push(new Paragraph({
+                        children: [
+                            new TextRun({ text: '! ', size: 22, color: 'F59E0B', font: 'Calibri' }),
+                            new TextRun({ text: r.titre + ': ', bold: true, size: 20, font: 'Calibri', color: 'F59E0B' }),
+                            new TextRun({ text: r.texte, size: 20, font: 'Calibri' })
+                        ],
+                        spacing: { after: 100 },
+                        shading: { fill: 'FFFBEB', type: ShadingType.CLEAR }
+                    }));
+                });
+                
+                // Résultat
+                children.push(sectionHeading('Résultat'));
+                const rc = { color: '22C55E', bg: 'DCFCE7', label: '✓ PROBLÈME RÉSOLU' };
+                children.push(new Paragraph({
+                    children: [new TextRun({ text: rc.label, bold: true, size: 26, font: 'Calibri', color: rc.color })],
+                    spacing: { after: 100 },
+                    shading: { fill: rc.bg, type: ShadingType.CLEAR }
+                }));
+                children.push(new Paragraph({
+                    children: [new TextRun({ text: data.resultat.description, size: 20, font: 'Calibri' })],
+                    spacing: { after: 200 }
+                }));
+                
+                // Technicien
+                children.push(sectionHeading('Technicien'));
+                children.push(infoBox(
+                    [
+                        { label: 'Nom', value: data.technicien.nom },
+                        { label: 'Entreprise', value: data.technicien.entreprise }
+                    ],
+                    [
+                        { label: 'Présence', value: `${data.technicien.heure_arrivee} → ${data.technicien.heure_depart}` }
+                    ]
+                ));
+                
+                // Signatures
+                children.push(sectionHeading('Signatures'));
+                const borderStyle = { style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB' };
+                
+                const clientSigContent = [
+                    new Paragraph({
+                        children: [new TextRun({ text: 'Client', bold: true, size: 18, font: 'Calibri', color: '6B7280' })],
+                        alignment: AlignmentType.CENTER
+                    }),
+                    new Paragraph({
+                        children: [new ImageRun({
+                            data: base64ToUint8Array(data.signatures.client),
+                            transformation: { width: 150, height: 60 }
+                        })],
+                        alignment: AlignmentType.CENTER
+                    }),
+                    new Paragraph({
+                        children: [new TextRun({ text: data.signatures.nom_client, size: 18, font: 'Calibri' })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { before: 100 }
+                    })
+                ];
+                
+                const techSigContent = [
+                    new Paragraph({
+                        children: [new TextRun({ text: 'Technicien', bold: true, size: 18, font: 'Calibri', color: '6B7280' })],
+                        alignment: AlignmentType.CENTER
+                    }),
+                    new Paragraph({
+                        children: [new ImageRun({
+                            data: base64ToUint8Array(data.signatures.technicien),
+                            transformation: { width: 150, height: 60 }
+                        })],
+                        alignment: AlignmentType.CENTER
+                    }),
+                    new Paragraph({
+                        children: [new TextRun({ text: data.signatures.nom_technicien, size: 18, font: 'Calibri' })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { before: 100 }
+                    })
+                ];
+                
+                children.push(new Table({
+                    rows: [new TableRow({
+                        children: [
+                            new TableCell({
+                                children: clientSigContent,
+                                borders: { top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle },
+                                margins: { top: 120, bottom: 120, left: 120, right: 120 },
+                                width: { size: 50, type: WidthType.PERCENTAGE }
+                            }),
+                            new TableCell({
+                                children: techSigContent,
+                                borders: { top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle },
+                                margins: { top: 120, bottom: 120, left: 120, right: 120 },
+                                width: { size: 50, type: WidthType.PERCENTAGE }
+                            })
+                        ]
+                    })],
+                    width: { size: 100, type: WidthType.PERCENTAGE }
+                }));
+                
+                // Footer
+                children.push(new Paragraph({
+                    children: [new TextRun({ text: '━'.repeat(60), color: 'E5E7EB' })],
+                    spacing: { before: 400 },
+                    alignment: AlignmentType.CENTER
+                }));
+                
+                children.push(new Paragraph({
+                    children: [
+                        new TextRun({ text: 'Document généré par ', size: 16, font: 'Calibri', color: '9CA3AF' }),
+                        new TextRun({ text: 'FixAIR', size: 16, font: 'Calibri', color: primaryColor, bold: true }),
+                        new TextRun({ text: ` — ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`, size: 16, font: 'Calibri', color: '9CA3AF' })
+                    ],
+                    alignment: AlignmentType.CENTER
+                }));
+                
+                const doc = new Document({
+                    sections: [{
+                        properties: { page: { margin: { top: 720, right: 720, bottom: 720, left: 720 } } },
+                        children: children.filter(c => c !== null)
+                    }]
+                });
+                
+                const blob = await Packer.toBlob(doc);
+                saveAs(blob, `SAMPLE_Rapport_EQWATTEUR_${data.reference}.docx`);
+                
+                log('✅ Fichier généré: SAMPLE_Rapport_EQWATTEUR_FX-2026-00142.docx');
+                log('📁 Vérifie ton dossier Téléchargements !');
+                
+            } catch (error) {
+                log('❌ Erreur: ' + error.message);
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>

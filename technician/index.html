@@ -4945,7 +4945,657 @@
 .completion-overlay {
     animation: fadeIn 0.2s ease;
 }
+
+/* ===== EXPORT MODAL CSS ===== */
+.export-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.2s ease;
+}
+
+.export-modal-content {
+    background: var(--bg-primary, #1a1a2e);
+    border-radius: 16px;
+    padding: 24px;
+    min-width: 300px;
+    max-width: 90vw;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+
+.export-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.export-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: var(--text-primary, #fff);
+}
+
+.export-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--text-secondary, #888);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.export-modal-close:hover {
+    color: var(--text-primary, #fff);
+}
+
+.export-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.export-option {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: var(--bg-secondary, #252542);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.export-option:hover {
+    border-color: var(--accent, #F97316);
+    background: var(--bg-tertiary, #2d2d4a);
+}
+
+.export-option.primary {
+    border-color: var(--accent, #F97316);
+    background: rgba(249, 115, 22, 0.1);
+}
+
+.export-option.enterprise {
+    border-color: #1B4D4D;
+    background: rgba(27, 77, 77, 0.1);
+}
+
+.export-option.enterprise:hover {
+    background: rgba(27, 77, 77, 0.2);
+    border-color: #1B4D4D;
+}
+
+.export-option.locked {
+    border-color: var(--border, rgba(255,255,255,0.1));
+    background: var(--bg-secondary, #1a1a2e);
+    opacity: 0.7;
+}
+
+.export-option.locked:hover {
+    opacity: 1;
+    border-color: var(--assistant, #22c55e);
+}
+
+.export-option.secondary {
+    border-color: var(--border, rgba(255,255,255,0.1));
+    background: transparent;
+}
+
+.export-icon {
+    font-size: 28px;
+}
+
+.export-label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.export-label strong {
+    font-size: 16px;
+    color: var(--text-primary, #fff);
+}
+
+.export-label small {
+    font-size: 12px;
+    color: var(--text-secondary, #888);
+}
+/* ===== END EXPORT MODAL CSS ===== */
+
 /* ===== END REPORT COMPLETION STATE CSS ===== */
+
+/* ═══════════════════════════════════════════════════════════════
+   FREEMIUM PAYWALL SYSTEM - Soft Upgrade Prompts
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Upgrade Modal Overlay */
+.upgrade-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    padding: 20px;
+}
+.upgrade-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Upgrade Modal Card */
+.upgrade-modal {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    max-width: 400px;
+    width: 100%;
+    padding: 32px 28px;
+    transform: translateY(20px) scale(0.95);
+    transition: transform 0.3s ease;
+    text-align: center;
+}
+.upgrade-overlay.show .upgrade-modal {
+    transform: translateY(0) scale(1);
+}
+
+/* Upgrade Icon */
+.upgrade-icon {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 20px;
+    background: linear-gradient(135deg, var(--copilot) 0%, #FF8F5C 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 32px rgba(255, 107, 53, 0.3);
+}
+.upgrade-icon svg {
+    width: 36px;
+    height: 36px;
+    color: white;
+}
+
+/* Upgrade Title & Text */
+.upgrade-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 12px;
+}
+.upgrade-subtitle {
+    font-size: 15px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    margin-bottom: 24px;
+}
+
+/* Usage Counter Badge */
+.usage-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 107, 53, 0.1);
+    border: 1px solid rgba(255, 107, 53, 0.2);
+    padding: 10px 16px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    font-size: 13px;
+    color: var(--copilot);
+    font-weight: 600;
+}
+.usage-badge .usage-count {
+    background: var(--copilot);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+/* Benefits List */
+.upgrade-benefits {
+    text-align: left;
+    margin-bottom: 24px;
+    padding: 16px;
+    background: var(--card);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+.upgrade-benefit {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 8px 0;
+}
+.upgrade-benefit:not(:last-child) {
+    border-bottom: 1px solid var(--border);
+}
+.upgrade-benefit-icon {
+    width: 20px;
+    height: 20px;
+    background: rgba(34, 197, 94, 0.15);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+.upgrade-benefit-icon svg {
+    width: 12px;
+    height: 12px;
+    color: #22c55e;
+}
+.upgrade-benefit-text {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.4;
+}
+
+/* Upgrade Buttons */
+.upgrade-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.upgrade-btn {
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+.upgrade-btn.primary {
+    background: linear-gradient(135deg, var(--copilot) 0%, #FF8F5C 100%);
+    color: white;
+    box-shadow: 0 4px 16px rgba(255, 107, 53, 0.3);
+}
+.upgrade-btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(255, 107, 53, 0.4);
+}
+.upgrade-btn.secondary {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+}
+.upgrade-btn.secondary:hover {
+    background: var(--card);
+    color: var(--text);
+}
+
+/* Soft Banner (in-chat) */
+.upgrade-banner {
+    background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(255, 143, 92, 0.08) 100%);
+    border: 1px solid rgba(255, 107, 53, 0.2);
+    border-radius: 12px;
+    padding: 16px;
+    margin: 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.upgrade-banner-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--copilot);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.upgrade-banner-icon svg {
+    width: 20px;
+    height: 20px;
+    color: white;
+}
+.upgrade-banner-content {
+    flex: 1;
+}
+.upgrade-banner-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+}
+.upgrade-banner-text {
+    font-size: 12px;
+    color: var(--text-dim);
+}
+.upgrade-banner-btn {
+    padding: 8px 14px;
+    background: var(--copilot);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+/* Light theme overrides */
+[data-theme="light"] .upgrade-modal {
+    background: #FFFFFF;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+[data-theme="light"] .upgrade-benefits {
+    background: #F8FAFC;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+
+        /* ═══════════════════════════════════════════════════════════════
+           REFERRAL PROGRAM STYLES
+           ═══════════════════════════════════════════════════════════════ */
+        
+        .referral-section {
+            width: 100%;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(255, 107, 53, 0.08));
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        
+        .referral-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .referral-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #8b5cf6, #FF6B35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .referral-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text);
+        }
+        
+        .referral-subtitle {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+        
+        .referral-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .referral-stat {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+        }
+        
+        .referral-stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #8b5cf6;
+        }
+        
+        .referral-stat-label {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+        
+        .referral-code-box {
+            background: var(--bg-secondary);
+            border: 1px dashed rgba(139, 92, 246, 0.3);
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        
+        .referral-code {
+            font-family: monospace;
+            font-size: 14px;
+            font-weight: 600;
+            color: #8b5cf6;
+            letter-spacing: 1px;
+        }
+        
+        .referral-copy-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        
+        .referral-copy-btn:hover {
+            background: rgba(139, 92, 246, 0.1);
+            color: #8b5cf6;
+        }
+        
+        .referral-share-btns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .referral-share-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+        
+        .referral-share-btn.whatsapp {
+            background: #25D366;
+            color: white;
+        }
+        
+        .referral-share-btn.whatsapp:hover {
+            background: #1da851;
+            transform: translateY(-1px);
+        }
+        
+        .referral-share-btn.copy {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+        
+        .referral-share-btn.copy:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Referral Modal (friction point) */
+        .referral-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .referral-modal-overlay.active {
+            display: flex;
+        }
+        
+        .referral-modal {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 32px 24px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            border: 1px solid var(--border);
+            animation: modalSlideIn 0.3s ease;
+        }
+        
+        @keyframes modalSlideIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        .referral-modal-icon {
+            font-size: 56px;
+            margin-bottom: 16px;
+        }
+        
+        .referral-modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+        
+        .referral-modal-text {
+            font-size: 14px;
+            color: var(--text-dim);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+        
+        .referral-modal-bonus {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(255, 107, 53, 0.1));
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .referral-modal-bonus-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #8b5cf6;
+            margin-bottom: 4px;
+        }
+        
+        .referral-modal-bonus-value {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #8b5cf6, #FF6B35);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .referral-modal-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+        }
+        
+        .referral-modal-btn.primary {
+            background: #25D366;
+            color: white;
+        }
+        
+        .referral-modal-btn.primary:hover {
+            background: #1da851;
+        }
+        
+        .referral-modal-btn.secondary {
+            background: linear-gradient(135deg, #FF6B35, #E55A2B);
+            color: white;
+        }
+        
+        .referral-modal-btn.secondary:hover {
+            opacity: 0.9;
+        }
+        
+        .referral-modal-btn.tertiary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+        }
+        
+        .referral-modal-btn.tertiary:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Light theme */
+        [data-theme="light"] .referral-section {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.06), rgba(255, 107, 53, 0.06));
+        }
+        
+        [data-theme="light"] .referral-stat {
+            background: rgba(0, 0, 0, 0.02);
+        }
+        
+        [data-theme="light"] .referral-modal {
+            background: #FFFFFF;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Ambassador badge */
+        .ambassador-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            color: white;
+            margin-left: 8px;
+        }
+        
+        /* END REFERRAL PROGRAM STYLES */
+
     </style>
     
     <!-- Supabase Client -->
@@ -4953,6 +5603,10 @@
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <!-- jsPDF for PDF export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- docx.js for Word export -->
+    <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+    <!-- FileSaver for download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <!-- Mermaid.js for diagrams -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <!-- FixAIR Diagram System -->
@@ -4968,6 +5622,105 @@
 <body>
     <!-- App wrapper to contain everything and prevent gaps -->
     <div class="app-wrapper">
+    
+    <!-- ═══════════════════════════════════════════════════════════════
+         FREEMIUM PAYWALL - UPGRADE MODAL
+         ═══════════════════════════════════════════════════════════════ -->
+    <div id="upgradeOverlay" class="upgrade-overlay" onclick="closeUpgradeModal(event)">
+        <div class="upgrade-modal" onclick="event.stopPropagation()">
+            <div class="upgrade-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                </svg>
+            </div>
+            
+            <h2 class="upgrade-title" id="upgradeTitle">Passez à FixAIR Pro</h2>
+            <p class="upgrade-subtitle" id="upgradeSubtitle">
+                Débloquez le plein potentiel de votre assistant HVAC
+            </p>
+            
+            <div class="usage-badge" id="usageBadge">
+                <span>Utilisations gratuites</span>
+                <span class="usage-count" id="usageCount">5/5</span>
+            </div>
+            
+            <div class="upgrade-benefits">
+                <div class="upgrade-benefit">
+                    <div class="upgrade-benefit-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                    </div>
+                    <span class="upgrade-benefit-text">Diagnostic Copilot <strong>illimité</strong></span>
+                </div>
+                <div class="upgrade-benefit">
+                    <div class="upgrade-benefit-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                    </div>
+                    <span class="upgrade-benefit-text">Export PDF & Word professionnel des rapports</span>
+                </div>
+                <div class="upgrade-benefit">
+                    <div class="upgrade-benefit-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                    </div>
+                    <span class="upgrade-benefit-text">Schémas techniques interactifs</span>
+                </div>
+                <div class="upgrade-benefit">
+                    <div class="upgrade-benefit-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                    </div>
+                    <span class="upgrade-benefit-text">Support prioritaire 24/7</span>
+                </div>
+            </div>
+            
+            <div class="upgrade-buttons">
+                <button class="upgrade-btn primary" onclick="handleUpgradeClick()">
+                    Passer à Pro — 29€/mois
+                </button>
+                <button class="upgrade-btn secondary" onclick="closeUpgradeModal()">
+                    Plus tard
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- END FREEMIUM PAYWALL -->
+    
+    <!-- ═══════════════════════════════════════════════════════════════
+         REFERRAL FRICTION MODAL
+         ═══════════════════════════════════════════════════════════════ -->
+    <div id="referralModalOverlay" class="referral-modal-overlay" onclick="closeReferralModal(event)">
+        <div class="referral-modal" onclick="event.stopPropagation()">
+            <div class="referral-modal-icon">⚡</div>
+            <h2 class="referral-modal-title" id="referralModalTitle">Vous avez atteint votre limite</h2>
+            <p class="referral-modal-text" id="referralModalText">
+                Vous avez utilisé vos requêtes gratuites cette semaine. Débloquez plus de requêtes en invitant un collègue !
+            </p>
+            
+            <div class="referral-modal-bonus">
+                <div class="referral-modal-bonus-title">Bonus parrainage</div>
+                <div class="referral-modal-bonus-value">+30 requêtes IA</div>
+            </div>
+            
+            <button class="referral-modal-btn primary" onclick="shareOnWhatsAppFromModal()">
+                📱 Partager sur WhatsApp
+            </button>
+            <button class="referral-modal-btn secondary" onclick="handleUpgradeClick(); closeReferralModal();">
+                ⭐ Passer à Pro — 29€/mois
+            </button>
+            <button class="referral-modal-btn tertiary" onclick="closeReferralModal()">
+                Plus tard
+            </button>
+        </div>
+    </div>
+    <!-- END REFERRAL FRICTION MODAL -->
     
     <!-- SVG DEFS -->
     <svg style="position:absolute;width:0;height:0;">
@@ -5377,6 +6130,59 @@
                 <div class="settings-divider"></div>
                 
                 <button class="profile-save" onclick="saveProfile()" data-i18n="profile.save">Enregistrer</button>
+                
+                <!-- REFERRAL PROGRAM SECTION -->
+                <div class="settings-divider"></div>
+                <div class="settings-section-title">🎁 <span data-i18n="referral.title">Parrainage</span></div>
+                
+                <div class="referral-section" id="referralSection">
+                    <div class="referral-header">
+                        <div class="referral-icon">🎁</div>
+                        <div>
+                            <div class="referral-title" data-i18n="referral.header">Invitez vos collègues</div>
+                            <div class="referral-subtitle" data-i18n="referral.subheader">Gagnez 30 requêtes IA bonus chacun !</div>
+                        </div>
+                    </div>
+                    
+                    <div class="referral-stats">
+                        <div class="referral-stat">
+                            <div class="referral-stat-value" id="referralCount">0</div>
+                            <div class="referral-stat-label" data-i18n="referral.invited">Collègues invités</div>
+                        </div>
+                        <div class="referral-stat">
+                            <div class="referral-stat-value" id="bonusQueries">0</div>
+                            <div class="referral-stat-label" data-i18n="referral.bonus">Requêtes bonus</div>
+                        </div>
+                    </div>
+                    
+                    <div class="referral-code-box">
+                        <span class="referral-code" id="myReferralCode">...</span>
+                        <button class="referral-copy-btn" onclick="copyReferralCode()" title="Copier le code">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div class="referral-share-btns">
+                        <button class="referral-share-btn whatsapp" onclick="shareOnWhatsApp()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                            </svg>
+                            WhatsApp
+                        </button>
+                        <button class="referral-share-btn copy" onclick="copyReferralLink()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                            </svg>
+                            <span data-i18n="referral.copyLink">Copier le lien</span>
+                        </button>
+                    </div>
+                </div>
+                <!-- END REFERRAL PROGRAM SECTION -->
+                
                 <button class="profile-save" onclick="logout()" style="background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; margin-top: 12px;" data-i18n="profile.logout">Déconnexion</button>
             </div>
         </div>
@@ -5866,6 +6672,13 @@
                 'profile.theme_desc': 'Mode sombre ou clair',
                 'profile.save': 'Enregistrer',
                 'profile.logout': 'Déconnexion',
+                // Referral
+                'referral.title': 'Parrainage',
+                'referral.header': 'Invitez vos collègues',
+                'referral.subheader': 'Gagnez 30 requêtes IA bonus chacun !',
+                'referral.invited': 'Collègues invités',
+                'referral.bonus': 'Requêtes bonus',
+                'referral.copyLink': 'Copier le lien',
                 // Login
                 'login.welcome': 'Bienvenue',
                 'login.subtitle': 'Assistant IA pour techniciens HVAC',
@@ -5943,6 +6756,13 @@
                 'profile.theme_desc': 'Dark or light mode',
                 'profile.save': 'Save',
                 'profile.logout': 'Logout',
+                // Referral
+                'referral.title': 'Referral',
+                'referral.header': 'Invite your colleagues',
+                'referral.subheader': 'Earn 30 AI queries bonus each!',
+                'referral.invited': 'Colleagues invited',
+                'referral.bonus': 'Bonus queries',
+                'referral.copyLink': 'Copy link',
                 // Login
                 'login.welcome': 'Welcome',
                 'login.subtitle': 'AI Assistant for HVAC technicians',
@@ -6739,10 +7559,10 @@
             if (!footer) return;
 
             if (reportCompletionState.status === REPORT_STATUS.COMPLETED) {
-                // TERMINÉ state: Modifier (secondary) + Exporter PDF (primary)
+                // TERMINÉ state: Modifier (secondary) + Exporter (primary)
                 footer.innerHTML = `
                     <button class="r-btn secondary" onclick="modifyReport()">Modifier le rapport</button>
-                    <button class="r-btn primary" onclick="exportReportPDF()">📄 Exporter PDF</button>
+                    <button class="r-btn primary" onclick="exportReportPDF()">📤 Exporter</button>
                 `;
             } else {
                 // EN COURS state: Compléter (primary full width)
@@ -7468,6 +8288,8 @@
             // Load app data
             loadProjectsListAndCheckOnboarding();
             initGamification();
+            initFreemium(); // Initialize freemium paywall system
+            initReferral(); // Initialize referral program
             prefetchApiKeys();
             initLiveStatusTracking();
 
@@ -10163,7 +10985,7 @@ INSTRUCTIONS:
                     </div>
                     <div class="rpt-actions">
                         <button class="rpt-btn secondary" onclick="shareReport()">Partager</button>
-                        <button class="rpt-btn primary" onclick="exportReportPDF()">Export PDF</button>
+                        <button class="rpt-btn primary" onclick="exportReportPDF()">📤 Exporter</button>
                     </div>
                 </div>`;
             }
@@ -10255,9 +11077,1111 @@ INSTRUCTIONS:
             return text;
         }
         
-        // Main PDF export function - DISABLED (Premium feature)
+        // ═══════════════════════════════════════════════════════════════
+        // EXPORT FUNCTIONS - Word (.docx) + PDF
+        // ═══════════════════════════════════════════════════════════════
+        
+        // Main export function - shows export menu
         function exportReportPDF() {
-            toast('Export PDF disponible dans la version Pro');
+            showExportMenu();
+        }
+        
+        // Show export format selection menu
+        function showExportMenu() {
+            // Check if user has enterprise mode enabled
+            const userProfile = window.currentUserProfile || {};
+            const companyProfile = window.currentCompanyProfile || {};
+            // TODO: Revert to production check before merge:
+            // const hasEnterprise = companyProfile.plan === 'enterprise' || userProfile.enterprise_enabled;
+            const hasEnterprise = true; // TESTING: Always show Enterprise option
+            
+            // Create modal for export options
+            const modal = document.createElement('div');
+            modal.className = 'export-modal';
+            modal.innerHTML = `
+                <div class="export-modal-content">
+                    <div class="export-modal-header">
+                        <h3>Exporter le rapport</h3>
+                        <button class="export-modal-close" onclick="this.closest('.export-modal').remove()">×</button>
+                    </div>
+                    <div class="export-options">
+                        <button class="export-option primary" onclick="exportReport('word', 'standard'); this.closest('.export-modal').remove();">
+                            <span class="export-icon">📄</span>
+                            <span class="export-label">
+                                <strong>Word Standard</strong>
+                                <small>Format FixAIR</small>
+                            </span>
+                        </button>
+                        <button class="export-option ${hasEnterprise ? 'enterprise' : 'locked'}" onclick="${hasEnterprise ? "exportReport('word', 'enterprise'); this.closest('.export-modal').remove();" : 'showEnterpriseUpsell()'}">
+                            <span class="export-icon">${hasEnterprise ? '🏢' : '🔒'}</span>
+                            <span class="export-label">
+                                <strong>Word Enterprise</strong>
+                                <small>${hasEnterprise ? 'Logo & couleurs client' : 'Offre Enterprise'}</small>
+                            </span>
+                        </button>
+                        <button class="export-option secondary" onclick="exportReport('pdf', 'standard'); this.closest('.export-modal').remove();">
+                            <span class="export-icon">📋</span>
+                            <span class="export-label">
+                                <strong>PDF</strong>
+                                <small>Format fixe</small>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Close on backdrop click
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.remove();
+            });
+        }
+        
+        // Show enterprise upsell modal
+        function showEnterpriseUpsell() {
+            document.querySelector('.export-modal')?.remove();
+            const modal = document.createElement('div');
+            modal.className = 'export-modal';
+            modal.innerHTML = `
+                <div class="export-modal-content" style="max-width: 400px;">
+                    <div class="export-modal-header">
+                        <h3>🏢 Offre Enterprise</h3>
+                        <button class="export-modal-close" onclick="this.closest('.export-modal').remove()">×</button>
+                    </div>
+                    <div style="padding: 20px; text-align: center;">
+                        <p style="margin-bottom: 15px; color: var(--text-dim);">Personnalisez vos rapports avec :</p>
+                        <ul style="text-align: left; margin: 15px 0; padding-left: 25px; color: var(--text);">
+                            <li>✓ Page de garde avec votre logo</li>
+                            <li>✓ Couleurs de votre entreprise</li>
+                            <li>✓ En-tête/pied de page personnalisés</li>
+                            <li>✓ Photo du site en couverture</li>
+                        </ul>
+                        <p style="font-size: 24px; font-weight: bold; color: var(--assistant); margin: 20px 0;">50€/utilisateur/mois</p>
+                        <a href="mailto:contact@fixair.ai?subject=Offre%20Enterprise" class="export-option primary" style="display: block; text-decoration: none; margin-top: 15px;">
+                            <span>Contactez-nous</span>
+                        </a>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+        }
+        
+        // Export report in specified format
+        async function exportReport(format, mode = 'standard') {
+            const data = collectReportData();
+            if (!data) {
+                toast('Aucun rapport à exporter');
+                return;
+            }
+            
+            // Add export mode to data
+            data.exportMode = mode;
+            
+            // For enterprise mode, add company branding info
+            if (mode === 'enterprise') {
+                const companyProfile = window.currentCompanyProfile || {};
+                data.enterprise = {
+                    name: companyProfile.name || data.technicien?.entreprise || 'Entreprise',
+                    logo: companyProfile.logo_url || null,
+                    color: companyProfile.brand_color || '#1B4D4D', // Default EQWATTEUR teal
+                    address: companyProfile.address || '',
+                    phone: companyProfile.phone || '',
+                    email: companyProfile.email || '',
+                    siret: companyProfile.siret || ''
+                };
+            }
+            
+            if (format === 'word') {
+                await generateWord(data);
+            } else {
+                await generatePDF(data);
+            }
+        }
+        
+        // Collect all report data from lastReportData + photos + signatures
+        function collectReportData() {
+            if (!lastReportData) return null;
+            
+            const data = { ...lastReportData };
+            
+            // Add photos from global
+            if (window.reportPhotos && window.reportPhotos.length > 0) {
+                data.photos = window.reportPhotos;
+            }
+            
+            // Collect signatures from drawer if present
+            const clientSig = document.querySelector('.signature-area[data-type="client"] img');
+            const techSig = document.querySelector('.signature-area[data-type="technicien"] img');
+            
+            if (clientSig || techSig) {
+                data.signatures = data.signatures || {};
+                if (clientSig) data.signatures.client = clientSig.src;
+                if (techSig) data.signatures.technicien = techSig.src;
+            }
+            
+            return data;
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // WORD EXPORT - Professional .docx Generation v2.0
+        // ═══════════════════════════════════════════════════════════════
+        
+        // FixAIR Logo as base64 PNG (orange flame icon)
+        const FIXAIR_LOGO_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAACXBIWXMAAAsTAAALEwEAmpwYAAAF8WlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNy4xLWMwMDAgNzkuZWRhMmIzZiwgMjAyMS8xMS8xNC0xMjo0MTo1NCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIvPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+eo8fSQAABqhJREFUeJztnVtsFFUYx/9nZnd3u1u6bYEWCkWhVAygKBcVEEQQCEEJ8kBioomJxkR9MDF6JV7whlfig4lRHzQxamLUxAsGFVQUUS4FCkihtIVSoC3dtrvb2Z2Z4wNb2u7O7M7uzM60NN8vyaa7Z875zvnPmXPmnPkOICgoKCgoKCgoKCgoKCjIM8jJgqrq0mJNk2ZqGquFwGxJYjMBVAKoAFAEIBdAJoAMAAoAFUAUQBRAH4AeAO0AWgA0SxK7CEkqt9u5h2madrS3t/eG3T4k49rQ0LBi7ty5P2ua5vqW6ziOs7a2tmrJkiXn4vG4u7dIjuM4X11d3R4AqKmpWXPlypWqUCjkepnr1q3bFQwGGQA0NjZW+P1+1+udOXPm2Tlz5vQAgCzLrpdZWVm5u76+vlOW5THr5C0VW1uLg0yTTwLM7XJkWVanTJlyORAI6CZJkt0u0+fznZ8+fXoIAKZOnRpgv/pj6dKln8XjcYM9CwsLj+fm5g5brc/v91fV1NRsBYD6+vrKcePGuV7PqFGj7iovL+8EgOXLl38yZsyYIatlJvcZa11dXQ+7WuD06dPPl5WV9VutLxAInKuqqroOAPPnz981derUIavl+P3+ymXLlm0BgEWLFn3qdDqDBBIiG+L3B84OhkJTrFaWl5e3pbi4uNdqfeFwuLampmYPACxYsKCpsLDQcpnJfcbaZcuW/Zwsi4npdYTD4bmBQGDAaj2DBg36csKECd0AUF1dPX3ixImdrpSt2u1cwCkVDJhttbKcnJyXJk2a1GO1vpycnBk1NTXdADBx4sRXhw0b5vreJJeZ+XNJScnVlStX7n3ggQc8eQ4NHz58jd/vdz29nLfeeutPtm8h3u7du/fOvXv3ul6mKIpL77jjjgMAUFNT0+XGgzoZv9+/sKam5vMRI0Y8xyzJF4KhcFW2xfh8vu+nTJnSlm15mqZZfUCPs1Lv3LlzDx87dsz1MidNmnTqySef/DEYDCb0n5wK+8lqZQBw7733HrrrrrsOWa0vHA5X79mz50cACAaDYz3IU4RJq5U1NDTsS0aDIDs7u6impubnVHUIgrBCFMXhVusJh8NtNTU1G6zWl5ubuwIA5syZ89fAgQMHrNZntu9Yt25d7bZt21zPnNXX1+/YsWOH62UmP6tXXnmldvLkyZ6Xabfv6OzsJLNFWWU5FPKLwrSwkJWVdWxwOFznZjl2yikuLl5ptU5RFI9Nnz79VIZ1WiJrK+6g6JLBxKCgIFCWmewfPW7qk8jFNKAMuE0F7JbpVfmZwm35TgVlWJ7qBZ0qL1P4TqHAJBuV5xXJYXsO9A+OHSzP7TLHK/zeEbfqNxPsZIlO5XsF/y57a5IDmfQZbmPn/O2W45XfKewn5C24dTAPEpU+wy24TWqEw24GNkPdgi/PUH+nyjIYKpLdNWO2TCPC6HkQ+G7VO+1W4BQs04dEUpZZWYaAJKXDjx8/riR3RnYLsMIKT8pLIoKdpOwuzy5sn9iSjGBn+5xQplV+rJDKfvmx2x/YlO9EOT8KJMrHbpl2yyHp7n8lAzZ0aWq3AKdI9z5kqIeIIvxeyFBZwvZE/OfcfkodpMNObI+hgbTLI4LzSAHW6yNA8MJuAanAF6xWAIwC8JXdApLRIKAGQK3dApJxYBD+E0qy/+a0LPvHkOX4kKXyE0lUVrb1GUFm+EYdNvWJJJpKlwIk3J5UlsPLTSAR9suJ0iDBbmZSJNWC6VYC7O63EvXJCDLwCXjUwfI9+yFYlZ/uvyKxAnrUwfLslidCwvLSfUhZyDDINugPhZyU+RMgnfK8IF05RFBQUFCQOz35ISopybx/dXU1eTJiY7fMsrIy2+W4QVK99fX1yT95iF1ZZWXF6urqbjJ50k4k1XHHjBnj+p6ktLT0fFlZWY/dcqwwd+7cH1wvM/k5d+7cny4vLz/ndDn19fWjA4GA6/XW1dX97HqZyc+ZM2cWm7kkSHe/lYqampoTVutrbGxc5HqZyU9dXd1fTpdTX18/LRAIuL6HCofD+xobG5dcWlq6W3K5zJqamvJwOOz6+Ts3N/fz8vLyOgAoKCgYY+aSwI5j1xUrVqT+UNAtZhUWFn6TnZ0dd7k+J8Fqm9TX1y9ubGxc6npFiWRlZf09ZMiQDqfLKSgomJadne16mcFg8Ly88sKFCwss/ij0M9k/egwRRVGSLJ4dZSH0hyKZn5+f1g/KDBFEUdxVUlJyxu5KvMJuAW7T0dGRWltbS4D1Mh4EBQUFBQUFBQUFBQUFBQVlgv8B2zJFlAEixgUAAAAASUVORK5CYII=';
+        
+        async function generateWord(data) {
+            try {
+                toast('Génération du document Word...');
+                
+                const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, 
+                        WidthType, AlignmentType, BorderStyle, HeadingLevel, Header, Footer,
+                        ImageRun, PageBreak, ShadingType, TableLayoutType,
+                        VerticalAlign, convertInchesToTwip, PageNumber } = window.docx;
+                
+                // Brand colors
+                const brandKey = data.brand_key || 'general';
+                const brandColors = {
+                    carrier: 'F97316', daikin: '00A0E9', mitsubishi: 'E60012',
+                    toshiba: 'FF0000', panasonic: '0046AD', lg: 'A50034',
+                    samsung: '1428A0', hitachi: 'E60012', fujitsu: 'ED1C24',
+                    general: 'F97316'
+                };
+                const primaryColor = brandColors[brandKey] || brandColors.general;
+                
+                // Status colors and labels
+                const statusConfig = {
+                    conforme: { color: '22C55E', label: '✓ CONFORME', bg: 'DCFCE7' },
+                    non_conforme: { color: 'EF4444', label: '✗ NON CONFORME', bg: 'FEE2E2' },
+                    en_cours: { color: 'EAB308', label: '◐ EN COURS', bg: 'FEF9C3' }
+                };
+                
+                // Helper: Convert base64 to Uint8Array
+                const base64ToUint8Array = (base64) => {
+                    const raw = atob(base64.replace(/^data:image\/\w+;base64,/, ''));
+                    const arr = new Uint8Array(raw.length);
+                    for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+                    return arr;
+                };
+                
+                // Helper: Section heading with accent bar (defined later with docPrimaryColor)
+                
+                // Helper: Key-value with proper styling
+                const kvRow = (label, value, options = {}) => {
+                    if (!value) return null;
+                    return new Paragraph({
+                        children: [
+                            new TextRun({ text: label, bold: true, size: 20, font: 'Calibri', color: '374151' }),
+                            new TextRun({ text: ':  ', size: 20, font: 'Calibri', color: '6B7280' }),
+                            new TextRun({ text: String(value), size: 20, font: 'Calibri', color: options.color || '111827' })
+                        ],
+                        spacing: { after: 80 },
+                        indent: { left: options.indent || 0 }
+                    });
+                };
+                
+                // Helper: Professional table with borders
+                const createTable = (headers, rows, options = {}) => {
+                    const borderStyle = { style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB' };
+                    
+                    const headerRow = new TableRow({
+                        children: headers.map(h => new TableCell({
+                            children: [new Paragraph({ 
+                                children: [new TextRun({ text: h, bold: true, size: 18, font: 'Calibri', color: '374151' })],
+                                alignment: AlignmentType.LEFT
+                            })],
+                            shading: { fill: 'F3F4F6', type: ShadingType.CLEAR },
+                            borders: { top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle },
+                            margins: { top: 80, bottom: 80, left: 120, right: 120 }
+                        })),
+                        tableHeader: true
+                    });
+                    
+                    const dataRows = rows.map((row, idx) => new TableRow({
+                        children: row.map(cell => new TableCell({
+                            children: [new Paragraph({ 
+                                children: [new TextRun({ text: String(cell || '—'), size: 18, font: 'Calibri' })]
+                            })],
+                            borders: { top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle },
+                            margins: { top: 60, bottom: 60, left: 120, right: 120 },
+                            shading: idx % 2 === 1 ? { fill: 'FAFAFA', type: ShadingType.CLEAR } : undefined
+                        }))
+                    }));
+                    
+                    return new Table({
+                        rows: [headerRow, ...dataRows],
+                        width: { size: 100, type: WidthType.PERCENTAGE },
+                        layout: TableLayoutType.FIXED
+                    });
+                };
+                
+                // Helper: Two-column info box
+                const infoBox = (leftItems, rightItems) => {
+                    const borderStyle = { style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB' };
+                    
+                    const leftContent = leftItems.filter(Boolean).map(item => 
+                        new Paragraph({
+                            children: [
+                                new TextRun({ text: item.label + ': ', bold: true, size: 18, font: 'Calibri', color: '6B7280' }),
+                                new TextRun({ text: String(item.value || '—'), size: 18, font: 'Calibri' })
+                            ],
+                            spacing: { after: 60 }
+                        })
+                    );
+                    
+                    const rightContent = rightItems.filter(Boolean).map(item =>
+                        new Paragraph({
+                            children: [
+                                new TextRun({ text: item.label + ': ', bold: true, size: 18, font: 'Calibri', color: '6B7280' }),
+                                new TextRun({ text: String(item.value || '—'), size: 18, font: 'Calibri' })
+                            ],
+                            spacing: { after: 60 }
+                        })
+                    );
+                    
+                    return new Table({
+                        rows: [new TableRow({
+                            children: [
+                                new TableCell({
+                                    children: leftContent.length ? leftContent : [new Paragraph({})],
+                                    borders: { top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle },
+                                    margins: { top: 120, bottom: 120, left: 160, right: 160 },
+                                    width: { size: 50, type: WidthType.PERCENTAGE }
+                                }),
+                                new TableCell({
+                                    children: rightContent.length ? rightContent : [new Paragraph({})],
+                                    borders: { top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle },
+                                    margins: { top: 120, bottom: 120, left: 160, right: 160 },
+                                    width: { size: 50, type: WidthType.PERCENTAGE }
+                                })
+                            ]
+                        })],
+                        width: { size: 100, type: WidthType.PERCENTAGE }
+                    });
+                };
+                
+                // ═══ BUILD DOCUMENT ═══
+                const children = [];
+                const isEnterprise = data.exportMode === 'enterprise' && data.enterprise;
+                
+                // Override primary color for enterprise mode
+                const docPrimaryColor = isEnterprise 
+                    ? (data.enterprise.color || '#1B4D4D').replace('#', '') 
+                    : primaryColor;
+                
+                // Helper: Section heading with accent bar (uses docPrimaryColor for enterprise support)
+                const sectionHeading = (text) => new Paragraph({
+                    children: [
+                        new TextRun({ text: '█ ', color: docPrimaryColor, size: 24 }),
+                        new TextRun({ text: text.toUpperCase(), bold: true, size: 22, font: 'Calibri' })
+                    ],
+                    spacing: { before: 400, after: 150 }
+                });
+                
+                // ═══ ENTERPRISE COVER PAGE ═══
+                if (isEnterprise) {
+                    const ent = data.enterprise;
+                    
+                    // Large enterprise name/logo at top
+                    children.push(new Paragraph({
+                        children: [new TextRun({ 
+                            text: ent.name.toUpperCase(), 
+                            bold: true, 
+                            size: 56, 
+                            font: 'Calibri', 
+                            color: docPrimaryColor 
+                        })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { before: 600, after: 200 }
+                    }));
+                    
+                    // Decorative line
+                    children.push(new Paragraph({
+                        children: [new TextRun({ 
+                            text: '━'.repeat(40), 
+                            color: docPrimaryColor,
+                            size: 20
+                        })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 400 }
+                    }));
+                    
+                    // Main title
+                    children.push(new Paragraph({
+                        children: [new TextRun({ 
+                            text: "RAPPORT D'INTERVENTION", 
+                            bold: true, 
+                            size: 44, 
+                            font: 'Calibri', 
+                            color: '111827' 
+                        })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 200 }
+                    }));
+                    
+                    // Brand/equipment
+                    children.push(new Paragraph({
+                        children: [new TextRun({ 
+                            text: data.brand || 'Climatisation', 
+                            size: 32, 
+                            font: 'Calibri', 
+                            color: '6B7280' 
+                        })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 400 }
+                    }));
+                    
+                    // Site photo placeholder or site address
+                    const photos = data.photos || window.reportPhotos || [];
+                    if (photos.length > 0 && photos[0].data && photos[0].data.startsWith('data:image')) {
+                        try {
+                            children.push(new Paragraph({
+                                children: [new ImageRun({
+                                    data: base64ToUint8Array(photos[0].data),
+                                    transformation: { width: 450, height: 300 }
+                                })],
+                                alignment: AlignmentType.CENTER,
+                                spacing: { after: 300 }
+                            }));
+                        } catch (e) { console.error('Cover photo error:', e); }
+                    }
+                    
+                    // Site info box
+                    const coverBorder = { style: BorderStyle.SINGLE, size: 2, color: docPrimaryColor };
+                    children.push(new Table({
+                        rows: [new TableRow({
+                            children: [new TableCell({
+                                children: [
+                                    new Paragraph({
+                                        children: [new TextRun({ text: 'SITE', bold: true, size: 20, font: 'Calibri', color: docPrimaryColor })],
+                                        alignment: AlignmentType.CENTER,
+                                        spacing: { after: 100 }
+                                    }),
+                                    new Paragraph({
+                                        children: [new TextRun({ text: data.site?.adresse || '', size: 22, font: 'Calibri' })],
+                                        alignment: AlignmentType.CENTER
+                                    }),
+                                    new Paragraph({
+                                        children: [new TextRun({ text: data.site?.ville || '', size: 22, font: 'Calibri' })],
+                                        alignment: AlignmentType.CENTER,
+                                        spacing: { after: 100 }
+                                    }),
+                                    new Paragraph({
+                                        children: [new TextRun({ text: `Réf: ${data.reference || ''}`, size: 18, font: 'Calibri', color: '6B7280' })],
+                                        alignment: AlignmentType.CENTER
+                                    })
+                                ],
+                                borders: { top: coverBorder, bottom: coverBorder, left: coverBorder, right: coverBorder },
+                                margins: { top: 200, bottom: 200, left: 300, right: 300 },
+                                shading: { fill: 'F9FAFB', type: ShadingType.CLEAR }
+                            })]
+                        })],
+                        width: { size: 80, type: WidthType.PERCENTAGE },
+                        alignment: AlignmentType.CENTER
+                    }));
+                    
+                    // Date at bottom
+                    children.push(new Paragraph({
+                        children: [new TextRun({ 
+                            text: data.date || new Date().toLocaleDateString('fr-FR'), 
+                            size: 24, 
+                            font: 'Calibri', 
+                            color: '6B7280' 
+                        })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { before: 400 }
+                    }));
+                    
+                    // Enterprise footer info on cover
+                    const entFooter = [ent.address, ent.phone, ent.email].filter(Boolean).join('  •  ');
+                    if (entFooter) {
+                        children.push(new Paragraph({
+                            children: [new TextRun({ 
+                                text: entFooter, 
+                                size: 16, 
+                                font: 'Calibri', 
+                                color: '9CA3AF' 
+                            })],
+                            alignment: AlignmentType.CENTER,
+                            spacing: { before: 600 }
+                        }));
+                    }
+                    
+                    // Page break after cover
+                    children.push(new Paragraph({ children: [new PageBreak()] }));
+                }
+                
+                // ═══ HEADER WITH LOGOS (Standard mode or after Enterprise cover) ═══
+                // Logo row: FixAIR left, Enterprise logo right
+                const logoTable = new Table({
+                    rows: [new TableRow({
+                        children: [
+                            new TableCell({
+                                children: [
+                                    new Paragraph({
+                                        children: isEnterprise ? [
+                                            new TextRun({ text: data.enterprise.name, bold: true, size: 28, font: 'Calibri', color: docPrimaryColor })
+                                        ] : [
+                                            new ImageRun({
+                                                data: base64ToUint8Array(FIXAIR_LOGO_BASE64),
+                                                transformation: { width: 50, height: 50 }
+                                            }),
+                                            new TextRun({ text: '  FixAIR', bold: true, size: 36, font: 'Calibri', color: docPrimaryColor })
+                                        ],
+                                        alignment: AlignmentType.LEFT
+                                    })
+                                ],
+                                borders: { top: {style: BorderStyle.NONE}, bottom: {style: BorderStyle.NONE}, left: {style: BorderStyle.NONE}, right: {style: BorderStyle.NONE} },
+                                width: { size: 50, type: WidthType.PERCENTAGE }
+                            }),
+                            new TableCell({
+                                children: [
+                                    new Paragraph({
+                                        children: [
+                                            new TextRun({ 
+                                                text: isEnterprise ? (data.technicien?.entreprise || '') : (data.enterprise_name || '[LOGO ENTREPRISE]'), 
+                                                size: 20, 
+                                                font: 'Calibri', 
+                                                color: '9CA3AF', 
+                                                italics: !isEnterprise && !data.enterprise_name 
+                                            })
+                                        ],
+                                        alignment: AlignmentType.RIGHT
+                                    })
+                                ],
+                                borders: { top: {style: BorderStyle.NONE}, bottom: {style: BorderStyle.NONE}, left: {style: BorderStyle.NONE}, right: {style: BorderStyle.NONE} },
+                                width: { size: 50, type: WidthType.PERCENTAGE },
+                                verticalAlign: VerticalAlign.CENTER
+                            })
+                        ]
+                    })],
+                    width: { size: 100, type: WidthType.PERCENTAGE }
+                });
+                children.push(logoTable);
+                
+                // Title
+                children.push(new Paragraph({
+                    children: [new TextRun({ text: "RAPPORT D'INTERVENTION", bold: true, size: 32, font: 'Calibri', color: '111827' })],
+                    alignment: AlignmentType.CENTER,
+                    spacing: { before: 300, after: 100 }
+                }));
+                
+                // Brand subtitle
+                children.push(new Paragraph({
+                    children: [new TextRun({ text: data.brand || 'Multi-marques', size: 24, font: 'Calibri', color: docPrimaryColor })],
+                    alignment: AlignmentType.CENTER,
+                    spacing: { after: 200 }
+                }));
+                
+                // Reference info bar
+                const refInfo = [];
+                if (data.reference) refInfo.push(`Réf: ${data.reference}`);
+                if (data.date) refInfo.push(`Date: ${data.date}`);
+                if (data.type_intervention) refInfo.push(data.type_intervention);
+                
+                if (refInfo.length > 0) {
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: refInfo.join('   •   '), size: 20, font: 'Calibri', color: '6B7280' })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 200 }
+                    }));
+                }
+                
+                // Status badge
+                if (data.status && statusConfig[data.status]) {
+                    const sc = statusConfig[data.status];
+                    children.push(new Paragraph({
+                        children: [new TextRun({ 
+                            text: `  ${sc.label}  `,
+                            bold: true, size: 24, font: 'Calibri', color: sc.color
+                        })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 300 },
+                        shading: { fill: sc.bg, type: ShadingType.CLEAR }
+                    }));
+                }
+                
+                // ═══ RÉSUMÉ ═══
+                if (data.resume) {
+                    children.push(sectionHeading('Résumé'));
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: data.resume, size: 20, font: 'Calibri' })],
+                        spacing: { after: 200 },
+                        shading: { fill: 'F9FAFB', type: ShadingType.CLEAR }
+                    }));
+                }
+                
+                // ═══ SITE & CLIENT (Two columns) ═══
+                children.push(sectionHeading('Site & Client'));
+                children.push(infoBox(
+                    [
+                        data.site?.numero_affaire && { label: 'N° Affaire', value: data.site.numero_affaire },
+                        data.site?.adresse && { label: 'Adresse', value: data.site.adresse },
+                        data.site?.ville && { label: 'Ville', value: data.site.ville }
+                    ],
+                    [
+                        data.client?.societe && { label: 'Société', value: data.client.societe },
+                        data.client?.contact && { label: 'Contact', value: data.client.contact },
+                        data.client?.telephone && { label: 'Téléphone', value: data.client.telephone },
+                        data.client?.reference && { label: 'Réf. Client', value: data.client.reference }
+                    ]
+                ));
+                
+                // ═══ DATES ═══
+                if (data.dates && (data.dates.debut_date || data.dates.fin_date)) {
+                    children.push(sectionHeading('Dates Intervention'));
+                    children.push(infoBox(
+                        [
+                            data.dates.debut_date && { label: 'Début', value: `${data.dates.debut_date}${data.dates.debut_heure ? ' à ' + data.dates.debut_heure : ''}` }
+                        ],
+                        [
+                            data.dates.fin_date && { label: 'Fin', value: `${data.dates.fin_date}${data.dates.fin_heure ? ' à ' + data.dates.fin_heure : ''}` }
+                        ]
+                    ));
+                }
+                
+                // ═══ SYSTÈME & FLUIDE (Two columns) ═══
+                if ((data.systeme && Object.values(data.systeme).some(v => v)) || (data.fluide && Object.values(data.fluide).some(v => v))) {
+                    children.push(sectionHeading('Équipement'));
+                    children.push(infoBox(
+                        [
+                            data.systeme?.type && { label: 'Type', value: data.systeme.type },
+                            data.systeme?.modele && { label: 'Modèle', value: data.systeme.modele },
+                            data.systeme?.serie && { label: 'N° Série', value: data.systeme.serie },
+                            data.systeme?.puissance && { label: 'Puissance', value: data.systeme.puissance + ' kW' },
+                            data.systeme?.garantie && { label: 'Garantie', value: data.systeme.garantie }
+                        ],
+                        [
+                            data.fluide?.type && { label: 'Fluide', value: data.fluide.type },
+                            data.fluide?.charge_initiale && { label: 'Charge initiale', value: data.fluide.charge_initiale + ' kg' },
+                            data.fluide?.charge_totale && { label: 'Charge totale', value: data.fluide.charge_totale + ' kg' },
+                            data.fluide?.type_huile && { label: 'Huile', value: data.fluide.type_huile }
+                        ]
+                    ));
+                }
+                
+                // ═══ ADRESSAGE UNITÉS ═══
+                if (data.adressage && data.adressage.length > 0) {
+                    children.push(sectionHeading('Adressage Unités'));
+                    children.push(createTable(
+                        ['Réf. Usine', 'N° Série', 'Adresse', 'Désignation', 'Commentaire'],
+                        data.adressage.map(a => [a.ref_usine || '', a.serie || '', a.adresse || '', a.designation || '', a.commentaire || ''])
+                    ));
+                }
+                
+                // ═══ CODES DÉFAUT ═══
+                if (data.codes_defaut && data.codes_defaut.length > 0) {
+                    children.push(sectionHeading('Codes Défaut'));
+                    children.push(createTable(
+                        ['Code', 'Description', 'Résolution'],
+                        data.codes_defaut.map(c => [c.code, c.description, c.resolution])
+                    ));
+                }
+                
+                // ═══ SÉCURITÉ ═══
+                if (data.securite && (data.securite.etat || data.securite.risques)) {
+                    children.push(sectionHeading('Sécurité'));
+                    if (data.securite.etat) {
+                        const etatColors = { 'OK': '22C55E', 'À surveiller': 'F59E0B', 'Critique': 'EF4444' };
+                        children.push(new Paragraph({
+                            children: [
+                                new TextRun({ text: 'État: ', bold: true, size: 20, font: 'Calibri' }),
+                                new TextRun({ text: data.securite.etat, size: 20, font: 'Calibri', color: etatColors[data.securite.etat] || '374151' })
+                            ],
+                            spacing: { after: 80 }
+                        }));
+                    }
+                    if (data.securite.risques) {
+                        children.push(new Paragraph({
+                            children: [new TextRun({ text: 'Risques identifiés:', bold: true, size: 20, font: 'Calibri', color: 'EF4444' })],
+                            spacing: { after: 60 }
+                        }));
+                        children.push(new Paragraph({
+                            children: [new TextRun({ text: data.securite.risques, size: 20, font: 'Calibri' })],
+                            spacing: { after: 100 },
+                            shading: { fill: 'FEF2F2', type: ShadingType.CLEAR }
+                        }));
+                    }
+                }
+                
+                // ═══ MESURES ═══
+                if (data.mesures && data.mesures.length > 0) {
+                    children.push(sectionHeading('Mesures'));
+                    children.push(createTable(
+                        ['Paramètre', 'Valeur', 'Observation'],
+                        data.mesures.map(m => [m.label, `${m.valeur}${m.unite ? ' ' + m.unite : ''}`, m.note || ''])
+                    ));
+                }
+                
+                // ═══ FONCTIONNEMENT ═══
+                if (data.fonctionnement && (data.fonctionnement.heures_compresseur || data.fonctionnement.nb_demarrages)) {
+                    children.push(sectionHeading('Fonctionnement'));
+                    children.push(infoBox(
+                        [data.fonctionnement.heures_compresseur && { label: 'Heures compresseur', value: data.fonctionnement.heures_compresseur + ' h' }],
+                        [data.fonctionnement.nb_demarrages && { label: 'Nb démarrages', value: data.fonctionnement.nb_demarrages }]
+                    ));
+                }
+                
+                // ═══ TRAVAUX EFFECTUÉS ═══
+                if (data.travaux_effectues && data.travaux_effectues.length > 0) {
+                    children.push(sectionHeading('Travaux Effectués'));
+                    data.travaux_effectues.forEach(t => {
+                        const statusIcon = t.status === 'done' ? '✓' : (t.status === 'error' ? '✗' : '○');
+                        const statusColor = t.status === 'done' ? '22C55E' : (t.status === 'error' ? 'EF4444' : '6B7280');
+                        children.push(new Paragraph({
+                            children: [
+                                new TextRun({ text: statusIcon + '  ', color: statusColor, size: 22, font: 'Calibri' }),
+                                new TextRun({ text: t.texte, size: 20, font: 'Calibri' })
+                            ],
+                            spacing: { after: 80 },
+                            indent: { left: 200 }
+                        }));
+                    });
+                }
+                
+                // ═══ TRAVAUX À PRÉVOIR ═══
+                if (data.travaux_prevoir && data.travaux_prevoir.length > 0) {
+                    children.push(sectionHeading('Travaux à Prévoir'));
+                    data.travaux_prevoir.forEach(t => {
+                        const prioColors = { urgent: 'EF4444', normal: 'F59E0B', optionnel: '6B7280' };
+                        const prioLabels = { urgent: 'URGENT', normal: 'Normal', optionnel: 'Optionnel' };
+                        children.push(new Paragraph({
+                            children: [
+                                new TextRun({ text: '→  ', color: '6B7280', size: 20, font: 'Calibri' }),
+                                new TextRun({ text: t.texte, size: 20, font: 'Calibri' }),
+                                t.priorite ? new TextRun({ text: `  [${prioLabels[t.priorite] || t.priorite}]`, size: 18, font: 'Calibri', color: prioColors[t.priorite] || '6B7280', bold: t.priorite === 'urgent' }) : null
+                            ].filter(Boolean),
+                            spacing: { after: 80 },
+                            indent: { left: 200 }
+                        }));
+                    });
+                }
+                
+                // ═══ PIÈCES ═══
+                if (data.pieces && data.pieces.length > 0) {
+                    children.push(sectionHeading('Pièces Utilisées'));
+                    children.push(createTable(
+                        ['Référence', 'Désignation', 'Qté'],
+                        data.pieces.map(p => [p.reference, p.designation, p.quantite])
+                    ));
+                }
+                
+                // ═══ RAPPORT TECHNICIEN ═══
+                if (data.rapport_technicien) {
+                    children.push(sectionHeading('Rapport Technicien'));
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: data.rapport_technicien, size: 20, font: 'Calibri' })],
+                        spacing: { after: 200 }
+                    }));
+                }
+                
+                // ═══ REMARQUES ═══
+                if (data.remarques) {
+                    children.push(sectionHeading('Remarques'));
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: data.remarques, size: 20, font: 'Calibri' })],
+                        spacing: { after: 200 }
+                    }));
+                }
+                
+                // ═══ TESTS MISE EN SERVICE ═══
+                if (data.tests && (data.tests.pression_test_bar || data.tests.duree_test_heures || data.tests.valeur_vacuometre_mbar)) {
+                    children.push(sectionHeading('Tests Mise en Service'));
+                    children.push(infoBox(
+                        [
+                            data.tests.pression_test_bar && { label: 'Pression test', value: data.tests.pression_test_bar + ' bar' },
+                            data.tests.duree_test_heures && { label: 'Durée test', value: data.tests.duree_test_heures + ' h' }
+                        ],
+                        [
+                            data.tests.valeur_vacuometre_mbar && { label: 'Vacuomètre', value: data.tests.valeur_vacuometre_mbar + ' mbar' }
+                        ]
+                    ));
+                }
+                
+                // ═══ TUYAUTERIES ═══
+                if (data.tuyauteries && (data.tuyauteries.longueur_totale_m || data.tuyauteries.denivele_oc_ui_m || data.tuyauteries.appoint_calcule_kg)) {
+                    children.push(sectionHeading('Tuyauteries'));
+                    children.push(infoBox(
+                        [
+                            data.tuyauteries.longueur_totale_m && { label: 'Longueur totale', value: data.tuyauteries.longueur_totale_m + ' m' },
+                            data.tuyauteries.denivele_oc_ui_m && { label: 'Dénivelé UE-UI', value: data.tuyauteries.denivele_oc_ui_m + ' m' }
+                        ],
+                        [
+                            data.tuyauteries.appoint_calcule_kg && { label: 'Appoint calculé', value: data.tuyauteries.appoint_calcule_kg + ' kg' }
+                        ]
+                    ));
+                }
+                
+                // ═══ ÉLECTRIQUE ═══
+                if (data.electrique && (data.electrique.calibre_disjoncteur || data.electrique.section_cable)) {
+                    children.push(sectionHeading('Électrique'));
+                    children.push(infoBox(
+                        [data.electrique.calibre_disjoncteur && { label: 'Calibre disjoncteur', value: data.electrique.calibre_disjoncteur }],
+                        [data.electrique.section_cable && { label: 'Section câble', value: data.electrique.section_cable }]
+                    ));
+                }
+                
+                // ═══ RELEVÉS UNITÉ EXTÉRIEURE ═══
+                if (data.releves_ue && (data.releves_ue.pd1_bar || data.releves_ue.ps_bar || data.releves_ue.ta_celsius || data.releves_ue.freq_inv1_hz)) {
+                    children.push(sectionHeading('Relevés Unité Extérieure'));
+                    children.push(infoBox(
+                        [
+                            data.releves_ue.pd1_bar && { label: 'HP (Pd1)', value: data.releves_ue.pd1_bar + ' bar' },
+                            data.releves_ue.ps_bar && { label: 'BP (Ps)', value: data.releves_ue.ps_bar + ' bar' }
+                        ],
+                        [
+                            data.releves_ue.ta_celsius && { label: 'T° ext (TA)', value: data.releves_ue.ta_celsius + ' °C' },
+                            data.releves_ue.freq_inv1_hz && { label: 'Fréq compresseur', value: data.releves_ue.freq_inv1_hz + ' Hz' }
+                        ]
+                    ));
+                }
+                
+                // ═══ RELEVÉS UNITÉS INTÉRIEURES ═══
+                if (data.releves_ui && data.releves_ui.length > 0) {
+                    children.push(sectionHeading('Relevés Unités Intérieures'));
+                    children.push(createTable(
+                        ['Unité', 'T° Soufflage', 'T° Reprise', 'Delta'],
+                        data.releves_ui.map(ui => [ui.nom || '', ui.temp_soufflage || '', ui.temp_reprise || '', ui.delta || ''])
+                    ));
+                }
+                
+                // ═══ CERFA FLUIDES FRIGORIGÈNES ═══
+                if (data.cerfa && (data.cerfa.fluide_total_charge_kg || data.cerfa.fluide_total_recupere_kg || data.cerfa.attestation_capacite)) {
+                    children.push(sectionHeading('CERFA Fluides Frigorigènes'));
+                    children.push(infoBox(
+                        [
+                            data.cerfa.fluide_total_charge_kg && { label: 'Fluide chargé', value: data.cerfa.fluide_total_charge_kg + ' kg' },
+                            data.cerfa.fluide_total_recupere_kg && { label: 'Fluide récupéré', value: data.cerfa.fluide_total_recupere_kg + ' kg' }
+                        ],
+                        [
+                            data.cerfa.attestation_capacite && { label: 'N° Attestation capacité', value: data.cerfa.attestation_capacite }
+                        ]
+                    ));
+                }
+                
+                // ═══ RÉSERVES ═══
+                if (data.reserves && data.reserves.length > 0) {
+                    children.push(sectionHeading('Réserves / Alertes'));
+                    data.reserves.forEach(r => {
+                        const isWarning = r.type === 'danger';
+                        children.push(new Paragraph({
+                            children: [
+                                new TextRun({ text: isWarning ? '⚠ ' : '! ', size: 22, color: isWarning ? 'EF4444' : 'F59E0B', font: 'Calibri' }),
+                                new TextRun({ text: (r.titre || 'Attention') + ': ', bold: true, size: 20, font: 'Calibri', color: isWarning ? 'EF4444' : 'F59E0B' }),
+                                new TextRun({ text: r.texte, size: 20, font: 'Calibri' })
+                            ],
+                            spacing: { after: 100 },
+                            shading: { fill: isWarning ? 'FEF2F2' : 'FFFBEB', type: ShadingType.CLEAR }
+                        }));
+                    });
+                }
+                
+                // ═══ RÉSULTAT ═══
+                if (data.resultat) {
+                    children.push(sectionHeading('Résultat'));
+                    const resConfig = {
+                        resolu: { color: '22C55E', bg: 'DCFCE7', label: '✓ PROBLÈME RÉSOLU' },
+                        en_attente: { color: 'F59E0B', bg: 'FEF9C3', label: '◐ EN ATTENTE' },
+                        non_resolu: { color: 'EF4444', bg: 'FEE2E2', label: '✗ NON RÉSOLU' }
+                    };
+                    const rc = resConfig[data.resultat.status] || resConfig.en_attente;
+                    
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: rc.label, bold: true, size: 26, font: 'Calibri', color: rc.color })],
+                        spacing: { after: 100 },
+                        shading: { fill: rc.bg, type: ShadingType.CLEAR }
+                    }));
+                    
+                    if (data.resultat.description) {
+                        children.push(new Paragraph({
+                            children: [new TextRun({ text: data.resultat.description, size: 20, font: 'Calibri' })],
+                            spacing: { after: 200 }
+                        }));
+                    }
+                }
+                
+                // ═══ TECHNICIEN ═══
+                if (data.technicien && (data.technicien.nom || data.technicien.entreprise)) {
+                    children.push(sectionHeading('Technicien'));
+                    children.push(infoBox(
+                        [
+                            data.technicien.nom && { label: 'Nom', value: data.technicien.nom },
+                            data.technicien.entreprise && { label: 'Entreprise', value: data.technicien.entreprise }
+                        ],
+                        [
+                            (data.technicien.heure_arrivee || data.technicien.heure_depart) && { label: 'Présence', value: `${data.technicien.heure_arrivee || '?'} → ${data.technicien.heure_depart || '?'}` },
+                            data.technicien.autres && { label: 'Équipe', value: data.technicien.autres }
+                        ]
+                    ));
+                }
+                
+                // ═══ OBSERVATION CLIENT ═══
+                if (data.observation_client) {
+                    children.push(sectionHeading('Observation Client'));
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: data.observation_client, size: 20, font: 'Calibri', italics: true })],
+                        spacing: { after: 200 },
+                        shading: { fill: 'F0F9FF', type: ShadingType.CLEAR }
+                    }));
+                }
+                
+                // ═══ SIGNATURES (with images) ═══
+                if (data.signatures && (data.signatures.client || data.signatures.technicien || data.signatures.nom_client || data.signatures.nom_technicien)) {
+                    children.push(sectionHeading('Signatures'));
+                    
+                    const sigCells = [];
+                    
+                    // Client signature
+                    const clientSigContent = [];
+                    clientSigContent.push(new Paragraph({
+                        children: [new TextRun({ text: 'Client', bold: true, size: 18, font: 'Calibri', color: '6B7280' })],
+                        alignment: AlignmentType.CENTER
+                    }));
+                    
+                    if (data.signatures.client && data.signatures.client.startsWith('data:image')) {
+                        try {
+                            clientSigContent.push(new Paragraph({
+                                children: [new ImageRun({
+                                    data: base64ToUint8Array(data.signatures.client),
+                                    transformation: { width: 150, height: 60 }
+                                })],
+                                alignment: AlignmentType.CENTER
+                            }));
+                        } catch (e) { console.error('Signature client error:', e); }
+                    }
+                    
+                    clientSigContent.push(new Paragraph({
+                        children: [new TextRun({ text: data.signatures.nom_client || '________________', size: 18, font: 'Calibri' })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { before: 100 }
+                    }));
+                    
+                    sigCells.push(new TableCell({
+                        children: clientSigContent,
+                        borders: { top: {style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB'}, bottom: {style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB'}, left: {style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB'}, right: {style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB'} },
+                        margins: { top: 120, bottom: 120, left: 120, right: 120 },
+                        width: { size: 50, type: WidthType.PERCENTAGE }
+                    }));
+                    
+                    // Technician signature
+                    const techSigContent = [];
+                    techSigContent.push(new Paragraph({
+                        children: [new TextRun({ text: 'Technicien', bold: true, size: 18, font: 'Calibri', color: '6B7280' })],
+                        alignment: AlignmentType.CENTER
+                    }));
+                    
+                    if (data.signatures.technicien && data.signatures.technicien.startsWith('data:image')) {
+                        try {
+                            techSigContent.push(new Paragraph({
+                                children: [new ImageRun({
+                                    data: base64ToUint8Array(data.signatures.technicien),
+                                    transformation: { width: 150, height: 60 }
+                                })],
+                                alignment: AlignmentType.CENTER
+                            }));
+                        } catch (e) { console.error('Signature tech error:', e); }
+                    }
+                    
+                    techSigContent.push(new Paragraph({
+                        children: [new TextRun({ text: data.signatures.nom_technicien || data.technicien?.nom || '________________', size: 18, font: 'Calibri' })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { before: 100 }
+                    }));
+                    
+                    sigCells.push(new TableCell({
+                        children: techSigContent,
+                        borders: { top: {style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB'}, bottom: {style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB'}, left: {style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB'}, right: {style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB'} },
+                        margins: { top: 120, bottom: 120, left: 120, right: 120 },
+                        width: { size: 50, type: WidthType.PERCENTAGE }
+                    }));
+                    
+                    children.push(new Table({
+                        rows: [new TableRow({ children: sigCells })],
+                        width: { size: 100, type: WidthType.PERCENTAGE }
+                    }));
+                }
+                
+                // ═══ PHOTOS ANNEXE (2-column grid layout) ═══
+                const photos = data.photos || window.reportPhotos || [];
+                const validPhotos = photos.filter(p => p.data && p.data.startsWith('data:image'));
+                
+                if (validPhotos.length > 0) {
+                    children.push(new Paragraph({ children: [new PageBreak()] }));
+                    
+                    children.push(new Paragraph({
+                        children: [
+                            new TextRun({ text: '█ ', color: docPrimaryColor, size: 28 }),
+                            new TextRun({ text: 'PHOTOS DE L\'INTERVENTION', bold: true, size: 26, font: 'Calibri' })
+                        ],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 100 }
+                    }));
+                    
+                    // Photo count indicator
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: `${validPhotos.length} photo${validPhotos.length > 1 ? 's' : ''} jointe${validPhotos.length > 1 ? 's' : ''}`, size: 18, font: 'Calibri', color: '6B7280' })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 300 }
+                    }));
+                    
+                    // Process photos in pairs for 2-column grid
+                    for (let i = 0; i < validPhotos.length; i += 2) {
+                        const photo1 = validPhotos[i];
+                        const photo2 = validPhotos[i + 1];
+                        
+                        const photoBorder = { style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB' };
+                        const noBorder = { style: BorderStyle.NONE };
+                        
+                        // Create cell for photo 1
+                        const cell1Content = [];
+                        try {
+                            cell1Content.push(new Paragraph({
+                                children: [new ImageRun({
+                                    data: base64ToUint8Array(photo1.data),
+                                    transformation: { width: 220, height: 165 }
+                                })],
+                                alignment: AlignmentType.CENTER,
+                                spacing: { after: 60 }
+                            }));
+                            if (photo1.caption) {
+                                cell1Content.push(new Paragraph({
+                                    children: [new TextRun({ text: photo1.caption, size: 16, font: 'Calibri', italics: true, color: '6B7280' })],
+                                    alignment: AlignmentType.CENTER
+                                }));
+                            }
+                        } catch (e) { console.error('Photo 1 error:', e); }
+                        
+                        // Create cell for photo 2 (if exists)
+                        const cell2Content = [];
+                        if (photo2) {
+                            try {
+                                cell2Content.push(new Paragraph({
+                                    children: [new ImageRun({
+                                        data: base64ToUint8Array(photo2.data),
+                                        transformation: { width: 220, height: 165 }
+                                    })],
+                                    alignment: AlignmentType.CENTER,
+                                    spacing: { after: 60 }
+                                }));
+                                if (photo2.caption) {
+                                    cell2Content.push(new Paragraph({
+                                        children: [new TextRun({ text: photo2.caption, size: 16, font: 'Calibri', italics: true, color: '6B7280' })],
+                                        alignment: AlignmentType.CENTER
+                                    }));
+                                }
+                            } catch (e) { console.error('Photo 2 error:', e); }
+                        } else {
+                            // Empty cell placeholder
+                            cell2Content.push(new Paragraph({}));
+                        }
+                        
+                        // Create 2-column table row for this pair
+                        children.push(new Table({
+                            rows: [new TableRow({
+                                children: [
+                                    new TableCell({
+                                        children: cell1Content.length ? cell1Content : [new Paragraph({})],
+                                        borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder },
+                                        margins: { top: 80, bottom: 80, left: 40, right: 40 },
+                                        width: { size: 50, type: WidthType.PERCENTAGE },
+                                        verticalAlign: VerticalAlign.TOP
+                                    }),
+                                    new TableCell({
+                                        children: cell2Content.length ? cell2Content : [new Paragraph({})],
+                                        borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder },
+                                        margins: { top: 80, bottom: 80, left: 40, right: 40 },
+                                        width: { size: 50, type: WidthType.PERCENTAGE },
+                                        verticalAlign: VerticalAlign.TOP
+                                    })
+                                ]
+                            })],
+                            width: { size: 100, type: WidthType.PERCENTAGE }
+                        }));
+                    }
+                }
+                
+                // ═══ FOOTER ═══
+                children.push(new Paragraph({
+                    children: [new TextRun({ text: '━'.repeat(60), color: 'E5E7EB' })],
+                    spacing: { before: 400 },
+                    alignment: AlignmentType.CENTER
+                }));
+                
+                children.push(new Paragraph({
+                    children: [
+                        new TextRun({ text: 'Document généré par ', size: 16, font: 'Calibri', color: '9CA3AF' }),
+                        new TextRun({ text: 'FixAIR', size: 16, font: 'Calibri', color: primaryColor, bold: true }),
+                        new TextRun({ text: ` — ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`, size: 16, font: 'Calibri', color: '9CA3AF' })
+                    ],
+                    alignment: AlignmentType.CENTER
+                }));
+                
+                // Filter nulls and create document
+                const filteredChildren = children.filter(c => c !== null);
+                
+                // Create header (branded for enterprise)
+                const headerBrand = isEnterprise ? data.enterprise.name : 'FixAIR';
+                const docHeader = new Header({
+                    children: [
+                        new Paragraph({
+                            children: [
+                                new TextRun({ text: headerBrand, bold: true, size: 16, font: 'Calibri', color: docPrimaryColor }),
+                                new TextRun({ text: `  |  ${data.brand || ''}  |  Réf: ${data.reference || ''}  |  ${data.date || ''}`, size: 14, font: 'Calibri', color: '9CA3AF' })
+                            ],
+                            alignment: AlignmentType.RIGHT
+                        })
+                    ]
+                });
+                
+                // Create footer with page numbers (enterprise shows company info)
+                const footerTechInfo = data.technicien?.nom ? `${data.technicien.nom}` : '';
+                const footerCompany = isEnterprise ? data.enterprise.name : 'FixAIR';
+                const footerAddress = isEnterprise && data.enterprise.address ? `  |  ${data.enterprise.address}` : '';
+                
+                const docFooter = new Footer({
+                    children: [
+                        new Paragraph({
+                            children: [
+                                new TextRun({ text: footerTechInfo ? `${footerTechInfo}  |  ` : '', size: 14, font: 'Calibri', color: '6B7280' }),
+                                new TextRun({ text: footerCompany, size: 14, font: 'Calibri', color: docPrimaryColor, bold: true }),
+                                new TextRun({ text: footerAddress, size: 12, font: 'Calibri', color: '9CA3AF' }),
+                                new TextRun({ text: '  |  Page ', size: 14, font: 'Calibri', color: '6B7280' }),
+                                new TextRun({ children: [PageNumber.CURRENT], size: 14, font: 'Calibri', color: '6B7280' }),
+                                new TextRun({ text: ' / ', size: 14, font: 'Calibri', color: '6B7280' }),
+                                new TextRun({ children: [PageNumber.TOTAL_PAGES], size: 14, font: 'Calibri', color: '6B7280' }),
+                                new TextRun({ text: `  |  ${new Date().toLocaleDateString('fr-FR')}`, size: 14, font: 'Calibri', color: '6B7280' })
+                            ],
+                            alignment: AlignmentType.CENTER
+                        })
+                    ]
+                });
+                
+                const doc = new Document({
+                    sections: [{
+                        properties: {
+                            page: {
+                                margin: { top: 900, right: 720, bottom: 900, left: 720 }
+                            }
+                        },
+                        headers: { default: docHeader },
+                        footers: { default: docFooter },
+                        children: filteredChildren
+                    }]
+                });
+                
+                // Generate and download
+                const blob = await Packer.toBlob(doc);
+                const companyName = isEnterprise ? data.enterprise.name : 'FixAIR';
+                const filename = `Rapport_${companyName}_${data.brand || ''}_${data.reference || new Date().toISOString().split('T')[0]}.docx`.replace(/__/g, '_');
+                saveAs(blob, filename);
+                
+                toast('Document Word téléchargé !');
+                trackAction('report');
+                
+            } catch (error) {
+                console.error('Error generating Word document:', error);
+                toast('Erreur génération Word: ' + error.message);
+            }
         }
         
         // Generate professional PDF
@@ -12410,7 +14334,7 @@ text = text.replace(/\s*\{"type"\s*:\s*"report"[\s\S]*\}\s*$/, '').trim();
                         </div>
                         <div class="report-menu-item" onclick="exportReportPDFMenu(event, this)">
                             <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></span>
-                            <span>Export PDF</span>
+                            <span>Exporter</span>
                         </div>
                     </div>
                 </div>`;
@@ -12609,6 +14533,24 @@ text = text.replace(/\s*\{"type"\s*:\s*"report"[\s\S]*\}\s*$/, '').trim();
             const btn = document.getElementById(panel + 'ActionBtn');
             const text = input.value.trim();
             if(!text) return;
+            
+            // ═══ FREEMIUM CHECK: Track usage and show upgrade if needed ═══
+            if (typeof trackChatUsage === 'function') {
+                const usageResult = trackChatUsage(panel);
+                
+                // If at hard limit, show referral modal (with upgrade option) and don't send
+                if (usageResult.showUpgrade && !usageResult.allowed) {
+                    // Show referral modal as primary option (includes upgrade link)
+                    showReferralModal('limit');
+                    return; // Don't send the message
+                }
+                
+                // If approaching limit, show soft warning banner (but still send)
+                if (usageResult.showWarning && usageResult.remaining <= 3) {
+                    showUpgradeBanner(panel, usageResult.remaining);
+                }
+            }
+            // ═══ END FREEMIUM CHECK ═══
             
             // Add user message to UI
             addMsg(panel, 'user', text);
@@ -13327,11 +15269,11 @@ RÈGLES:
             toast('Partage disponible dans la version Pro');
         }
 
-        // Menu version of export PDF - DISABLED (Premium feature)
+        // Menu version of export
         function exportReportPDFMenu(event, el) {
             event.stopPropagation();
             el.closest('.report-menu-dropdown').classList.remove('show');
-            toast('Export PDF disponible dans la version Pro');
+            showExportMenu();
         }
 
         // Menu version of share - DISABLED (Premium feature)
@@ -14967,6 +16909,533 @@ RÈGLES:
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', setViewportHeight);
         }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // FREEMIUM PAYWALL SYSTEM
+        // ═══════════════════════════════════════════════════════════════
+        // Soft paywall: X free Copilot chats → upgrade prompt
+        // Export PDF/Word → subscription required for non-standard
+        // UX: Never block abruptly, always give value first
+        // ═══════════════════════════════════════════════════════════════
+        
+        const FREEMIUM_CONFIG = {
+            // Free tier limits
+            freeCopilotChats: 15,        // Free Copilot messages per week
+            freeAssistantChats: 25,      // Free Assistant messages per week (more generous)
+            softLimitWarning: 0.8,       // Show warning at 80% usage
+            
+            // Storage keys
+            storageKey: 'fixair_freemium_usage',
+            
+            // Features requiring Pro
+            proFeatures: ['export_pdf', 'export_word', 'share_report', 'diagrams_advanced'],
+            
+            // Pricing (for display)
+            monthlyPrice: 29,
+            yearlyPrice: 249,
+            
+            // Upgrade URL (placeholder - will be Stripe)
+            upgradeUrl: 'https://fixair.ai/upgrade'
+        };
+        
+        // Get/Set freemium usage from localStorage
+        function getFreemiumUsage() {
+            try {
+                const stored = localStorage.getItem(FREEMIUM_CONFIG.storageKey);
+                if (!stored) return createFreshUsage();
+                
+                const usage = JSON.parse(stored);
+                
+                // Check if week has reset (Monday reset)
+                const weekStart = getFreemiumWeekStart();
+                if (!usage.weekStart || new Date(usage.weekStart) < weekStart) {
+                    return createFreshUsage();
+                }
+                
+                return usage;
+            } catch (e) {
+                console.warn('[Freemium] Error reading usage:', e);
+                return createFreshUsage();
+            }
+        }
+        
+        function createFreshUsage() {
+            const fresh = {
+                weekStart: getFreemiumWeekStart().toISOString(),
+                copilotChats: 0,
+                assistantChats: 0,
+                isPro: false, // Will be updated from Supabase
+                lastChecked: new Date().toISOString()
+            };
+            saveFreemiumUsage(fresh);
+            return fresh;
+        }
+        
+        function saveFreemiumUsage(usage) {
+            try {
+                localStorage.setItem(FREEMIUM_CONFIG.storageKey, JSON.stringify(usage));
+            } catch (e) {
+                console.warn('[Freemium] Error saving usage:', e);
+            }
+        }
+        
+        function getFreemiumWeekStart() {
+            const now = new Date();
+            const dayOfWeek = now.getDay();
+            const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+            const monday = new Date(now);
+            monday.setDate(now.getDate() + mondayOffset);
+            monday.setHours(0, 0, 0, 0);
+            return monday;
+        }
+        
+        // Check subscription status from Supabase (async)
+        async function checkSubscriptionStatus() {
+            try {
+                const userId = await getCurrentUserId();
+                if (!userId || userId.startsWith('demo-')) return false;
+                
+                // Check users table for subscription_tier
+                const { data, error } = await db
+                    .from('users')
+                    .select('subscription_tier, subscription_expires')
+                    .eq('id', userId)
+                    .single();
+                
+                if (error || !data) return false;
+                
+                // Check if subscription is active
+                const isPro = data.subscription_tier === 'pro' || data.subscription_tier === 'enterprise';
+                const isExpired = data.subscription_expires && new Date(data.subscription_expires) < new Date();
+                
+                // Update local cache
+                const usage = getFreemiumUsage();
+                usage.isPro = isPro && !isExpired;
+                saveFreemiumUsage(usage);
+                
+                return usage.isPro;
+            } catch (e) {
+                console.warn('[Freemium] Error checking subscription:', e);
+                return false;
+            }
+        }
+        
+        // Track a chat message (called from sendMsg)
+        function trackChatUsage(panel) {
+            const usage = getFreemiumUsage();
+            
+            // Pro users don't need tracking (but we still track for analytics)
+            if (usage.isPro) return { allowed: true, remaining: 999 };
+            
+            const key = panel === 'copilot' ? 'copilotChats' : 'assistantChats';
+            const limit = panel === 'copilot' ? FREEMIUM_CONFIG.freeCopilotChats : FREEMIUM_CONFIG.freeAssistantChats;
+            
+            // Increment usage
+            usage[key] = (usage[key] || 0) + 1;
+            saveFreemiumUsage(usage);
+            
+            const remaining = Math.max(0, limit - usage[key]);
+            const percentUsed = usage[key] / limit;
+            
+            return {
+                allowed: usage[key] <= limit,
+                remaining: remaining,
+                total: limit,
+                used: usage[key],
+                percentUsed: percentUsed,
+                showWarning: percentUsed >= FREEMIUM_CONFIG.softLimitWarning && percentUsed < 1,
+                showUpgrade: percentUsed >= 1
+            };
+        }
+        
+        // Check if user can send a chat (preview check, doesn't increment)
+        function canSendChat(panel) {
+            const usage = getFreemiumUsage();
+            if (usage.isPro) return { allowed: true, remaining: 999 };
+            
+            const key = panel === 'copilot' ? 'copilotChats' : 'assistantChats';
+            const limit = panel === 'copilot' ? FREEMIUM_CONFIG.freeCopilotChats : FREEMIUM_CONFIG.freeAssistantChats;
+            const remaining = Math.max(0, limit - (usage[key] || 0));
+            
+            return {
+                allowed: remaining > 0,
+                remaining: remaining,
+                total: limit,
+                used: usage[key] || 0
+            };
+        }
+        
+        // Check if user can use a Pro feature
+        function canUseProFeature(feature) {
+            const usage = getFreemiumUsage();
+            return usage.isPro;
+        }
+        
+        // Show upgrade modal
+        function showUpgradeModal(context = 'generic') {
+            const overlay = document.getElementById('upgradeOverlay');
+            const title = document.getElementById('upgradeTitle');
+            const subtitle = document.getElementById('upgradeSubtitle');
+            const badge = document.getElementById('usageBadge');
+            const usageCount = document.getElementById('usageCount');
+            
+            // Customize based on context
+            switch(context) {
+                case 'copilot_limit':
+                    title.textContent = '🔥 Copilot illimité';
+                    subtitle.textContent = 'Vous avez atteint votre limite hebdomadaire. Passez à Pro pour un diagnostic illimité !';
+                    badge.style.display = 'inline-flex';
+                    const copilotUsage = canSendChat('copilot');
+                    usageCount.textContent = `${copilotUsage.used}/${copilotUsage.total}`;
+                    break;
+                    
+                case 'copilot_warning':
+                    title.textContent = 'Bientôt à la limite';
+                    subtitle.textContent = 'Il vous reste quelques messages Copilot gratuits cette semaine. Passez à Pro pour ne jamais être limité !';
+                    badge.style.display = 'inline-flex';
+                    const copilotWarn = canSendChat('copilot');
+                    usageCount.textContent = `${copilotWarn.used}/${copilotWarn.total}`;
+                    break;
+                    
+                case 'export_pdf':
+                    title.textContent = '📄 Export PDF Pro';
+                    subtitle.textContent = 'Générez des rapports PDF professionnels avec votre logo et mise en page personnalisée.';
+                    badge.style.display = 'none';
+                    break;
+                    
+                case 'export_word':
+                    title.textContent = '📝 Export Word Pro';
+                    subtitle.textContent = 'Exportez vos rapports en Word modifiable pour personnalisation avancée.';
+                    badge.style.display = 'none';
+                    break;
+                    
+                case 'share':
+                    title.textContent = '🔗 Partage Pro';
+                    subtitle.textContent = 'Partagez vos rapports directement avec vos clients par email ou lien.';
+                    badge.style.display = 'none';
+                    break;
+                    
+                default:
+                    title.textContent = 'Passez à FixAIR Pro';
+                    subtitle.textContent = 'Débloquez le plein potentiel de votre assistant HVAC';
+                    badge.style.display = 'none';
+            }
+            
+            overlay.classList.add('show');
+            
+            // Track modal view for analytics
+            console.log('[Freemium] Upgrade modal shown:', context);
+        }
+        
+        function closeUpgradeModal(event) {
+            // If clicking overlay background, close
+            if (event && event.target.id !== 'upgradeOverlay') return;
+            document.getElementById('upgradeOverlay').classList.remove('show');
+        }
+        
+        function handleUpgradeClick() {
+            // For now, show toast and redirect to upgrade page
+            toast('Redirection vers la page d\'abonnement...');
+            
+            // Track upgrade intent
+            console.log('[Freemium] Upgrade clicked');
+            
+            // Close modal
+            closeUpgradeModal();
+            
+            // Open upgrade page (placeholder - will be Stripe)
+            setTimeout(() => {
+                window.open(FREEMIUM_CONFIG.upgradeUrl, '_blank');
+            }, 500);
+        }
+        
+        // Show soft upgrade banner in chat (non-blocking)
+        function showUpgradeBanner(panel, remaining) {
+            const chatBody = document.getElementById(panel + 'Body');
+            if (!chatBody) return;
+            
+            // Don't show if already showing
+            if (chatBody.querySelector('.upgrade-banner')) return;
+            
+            const banner = document.createElement('div');
+            banner.className = 'upgrade-banner';
+            banner.innerHTML = `
+                <div class="upgrade-banner-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                        <path d="M2 17l10 5 10-5"/>
+                    </svg>
+                </div>
+                <div class="upgrade-banner-content">
+                    <div class="upgrade-banner-title">Plus que ${remaining} message${remaining > 1 ? 's' : ''} gratuit${remaining > 1 ? 's' : ''}</div>
+                    <div class="upgrade-banner-text">Passez à Pro pour un accès illimité</div>
+                </div>
+                <button class="upgrade-banner-btn" onclick="showUpgradeModal('copilot_warning')">Upgrade</button>
+            `;
+            
+            chatBody.appendChild(banner);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+        
+        // Initialize freemium on page load
+        async function initFreemium() {
+            console.log('[Freemium] Initializing...');
+            
+            // Check subscription status from database
+            await checkSubscriptionStatus();
+            
+            const usage = getFreemiumUsage();
+            console.log('[Freemium] Current usage:', usage);
+        }
+        
+        // Expose to global scope
+        window.showUpgradeModal = showUpgradeModal;
+        window.closeUpgradeModal = closeUpgradeModal;
+        window.handleUpgradeClick = handleUpgradeClick;
+        window.canSendChat = canSendChat;
+        window.trackChatUsage = trackChatUsage;
+        window.canUseProFeature = canUseProFeature;
+        
+        // ═══════════════════════════════════════════════════════════════
+        // END FREEMIUM PAYWALL SYSTEM
+        // ═══════════════════════════════════════════════════════════════
+        
+        // ═══════════════════════════════════════════════════════════════
+        // REFERRAL PROGRAM SYSTEM
+        // ═══════════════════════════════════════════════════════════════
+        
+        // Referral state
+        let referralState = {
+            code: null,
+            totalReferrals: 0,
+            bonusQueries: 0,
+            isAmbassador: false
+        };
+        
+        // Get referral link
+        function getReferralLink() {
+            if (!referralState.code) return 'https://go.fixair.ai';
+            return `https://go.fixair.ai/r/${referralState.code}`;
+        }
+        
+        // Get WhatsApp share message
+        function getWhatsAppMessage() {
+            const link = getReferralLink();
+            const message = `Salut ! J'utilise FixAir pour mes diagnostics CVC — ça m'a fait gagner 30 min aujourd'hui.\nEssaie avec mon lien, on reçoit tous les deux des requêtes IA bonus : ${link}`;
+            return encodeURIComponent(message);
+        }
+        
+        // Share on WhatsApp
+        function shareOnWhatsApp() {
+            const url = `https://wa.me/?text=${getWhatsAppMessage()}`;
+            window.open(url, '_blank');
+            
+            // Track share event
+            trackReferralShare('whatsapp');
+        }
+        
+        // Share on WhatsApp from friction modal
+        function shareOnWhatsAppFromModal() {
+            shareOnWhatsApp();
+            closeReferralModal();
+        }
+        
+        // Copy referral code
+        function copyReferralCode() {
+            if (!referralState.code) return;
+            
+            navigator.clipboard.writeText(referralState.code).then(() => {
+                showToast('Code copié !', 'success');
+            }).catch(() => {
+                // Fallback
+                const input = document.createElement('input');
+                input.value = referralState.code;
+                document.body.appendChild(input);
+                input.select();
+                document.execCommand('copy');
+                document.body.removeChild(input);
+                showToast('Code copié !', 'success');
+            });
+        }
+        
+        // Copy referral link
+        function copyReferralLink() {
+            const link = getReferralLink();
+            
+            navigator.clipboard.writeText(link).then(() => {
+                showToast('Lien copié !', 'success');
+            }).catch(() => {
+                // Fallback
+                const input = document.createElement('input');
+                input.value = link;
+                document.body.appendChild(input);
+                input.select();
+                document.execCommand('copy');
+                document.body.removeChild(input);
+                showToast('Lien copié !', 'success');
+            });
+            
+            // Track share event
+            trackReferralShare('copy_link');
+        }
+        
+        // Track referral share event (for analytics)
+        async function trackReferralShare(source) {
+            try {
+                // Could send analytics event here
+                console.log(`Referral shared via ${source}`);
+            } catch (e) {
+                console.error('Failed to track referral share:', e);
+            }
+        }
+        
+        // Show referral friction modal (called when user hits limit)
+        function showReferralModal(context = 'limit') {
+            const overlay = document.getElementById('referralModalOverlay');
+            const title = document.getElementById('referralModalTitle');
+            const text = document.getElementById('referralModalText');
+            
+            if (context === 'limit') {
+                title.textContent = 'Vous avez atteint votre limite';
+                text.textContent = 'Vous avez utilisé vos requêtes gratuites cette semaine. Débloquez plus de requêtes en invitant un collègue !';
+            } else if (context === 'onboarding') {
+                title.textContent = 'Envie de plus de requêtes ?';
+                text.textContent = 'Invitez un collègue et recevez tous les deux 30 requêtes IA bonus !';
+            }
+            
+            overlay.classList.add('active');
+        }
+        
+        // Close referral modal
+        function closeReferralModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('referralModalOverlay').classList.remove('active');
+        }
+        
+        // Load referral data from user profile
+        async function loadReferralData() {
+            if (!currentUser || !currentUser.id) return;
+            
+            try {
+                // Get user's referral data
+                const { data, error } = await sb
+                    .from('users')
+                    .select('referral_code, total_referrals, bonus_queries, is_ambassador')
+                    .eq('id', currentUser.id)
+                    .single();
+                
+                if (error) {
+                    console.error('Failed to load referral data:', error);
+                    return;
+                }
+                
+                if (data) {
+                    referralState.code = data.referral_code;
+                    referralState.totalReferrals = data.total_referrals || 0;
+                    referralState.bonusQueries = data.bonus_queries || 0;
+                    referralState.isAmbassador = data.is_ambassador || false;
+                    
+                    // Update UI
+                    updateReferralUI();
+                }
+            } catch (e) {
+                console.error('Error loading referral data:', e);
+            }
+        }
+        
+        // Update referral UI elements
+        function updateReferralUI() {
+            // Update code display
+            const codeEl = document.getElementById('myReferralCode');
+            if (codeEl && referralState.code) {
+                codeEl.textContent = referralState.code.toUpperCase();
+            }
+            
+            // Update stats
+            const countEl = document.getElementById('referralCount');
+            if (countEl) {
+                countEl.textContent = referralState.totalReferrals;
+            }
+            
+            const bonusEl = document.getElementById('bonusQueries');
+            if (bonusEl) {
+                bonusEl.textContent = referralState.bonusQueries;
+            }
+        }
+        
+        // Generate referral code if user doesn't have one
+        async function ensureReferralCode() {
+            if (!currentUser || !currentUser.id) return;
+            
+            try {
+                // Check if user already has a code
+                const { data, error } = await sb
+                    .from('users')
+                    .select('referral_code')
+                    .eq('id', currentUser.id)
+                    .single();
+                
+                if (error) {
+                    console.error('Error checking referral code:', error);
+                    return;
+                }
+                
+                if (data && data.referral_code) {
+                    referralState.code = data.referral_code;
+                    return;
+                }
+                
+                // Generate new code
+                const firstName = currentUser.first_name || currentUser.email?.split('@')[0] || 'user';
+                const baseName = firstName.toLowerCase().replace(/[^a-z]/g, '').slice(0, 10) || 'user';
+                const newCode = baseName + Math.floor(1000 + Math.random() * 9000);
+                
+                // Save to database
+                const { error: updateError } = await sb
+                    .from('users')
+                    .update({ referral_code: newCode })
+                    .eq('id', currentUser.id);
+                
+                if (updateError) {
+                    console.error('Error saving referral code:', updateError);
+                    return;
+                }
+                
+                referralState.code = newCode;
+                updateReferralUI();
+                
+            } catch (e) {
+                console.error('Error ensuring referral code:', e);
+            }
+        }
+        
+        // Initialize referral system
+        async function initReferral() {
+            await ensureReferralCode();
+            await loadReferralData();
+        }
+        
+        // Hook into profile view opening
+        const originalOpenProfile = window.openProfile;
+        window.openProfile = function() {
+            if (originalOpenProfile) originalOpenProfile();
+            // Refresh referral data when profile opens
+            loadReferralData();
+        };
+        
+        // Expose functions globally
+        window.shareOnWhatsApp = shareOnWhatsApp;
+        window.shareOnWhatsAppFromModal = shareOnWhatsAppFromModal;
+        window.copyReferralCode = copyReferralCode;
+        window.copyReferralLink = copyReferralLink;
+        window.showReferralModal = showReferralModal;
+        window.closeReferralModal = closeReferralModal;
+        window.initReferral = initReferral;
+        window.loadReferralData = loadReferralData;
+        
+        // ═══════════════════════════════════════════════════════════════
+        // END REFERRAL PROGRAM SYSTEM
+        // ═══════════════════════════════════════════════════════════════
         
         // ═══════════════════════════════════════════════════════════════
         // GAMIFICATION - REALISTIC ECONOMIC MODEL
