@@ -12001,43 +12001,102 @@ INSTRUCTIONS:
                     }));
                 }
                 
-                // ═══ PHOTOS ANNEXE ═══
+                // ═══ PHOTOS ANNEXE (2-column grid layout) ═══
                 const photos = data.photos || window.reportPhotos || [];
-                if (photos.length > 0) {
+                const validPhotos = photos.filter(p => p.data && p.data.startsWith('data:image'));
+                
+                if (validPhotos.length > 0) {
                     children.push(new Paragraph({ children: [new PageBreak()] }));
                     
                     children.push(new Paragraph({
                         children: [
-                            new TextRun({ text: '█ ', color: primaryColor, size: 28 }),
+                            new TextRun({ text: '█ ', color: docPrimaryColor, size: 28 }),
                             new TextRun({ text: 'PHOTOS DE L\'INTERVENTION', bold: true, size: 26, font: 'Calibri' })
                         ],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 100 }
+                    }));
+                    
+                    // Photo count indicator
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: `${validPhotos.length} photo${validPhotos.length > 1 ? 's' : ''} jointe${validPhotos.length > 1 ? 's' : ''}`, size: 18, font: 'Calibri', color: '6B7280' })],
                         alignment: AlignmentType.CENTER,
                         spacing: { after: 300 }
                     }));
                     
-                    for (const photo of photos) {
-                        if (photo.data && photo.data.startsWith('data:image')) {
+                    // Process photos in pairs for 2-column grid
+                    for (let i = 0; i < validPhotos.length; i += 2) {
+                        const photo1 = validPhotos[i];
+                        const photo2 = validPhotos[i + 1];
+                        
+                        const photoBorder = { style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB' };
+                        const noBorder = { style: BorderStyle.NONE };
+                        
+                        // Create cell for photo 1
+                        const cell1Content = [];
+                        try {
+                            cell1Content.push(new Paragraph({
+                                children: [new ImageRun({
+                                    data: base64ToUint8Array(photo1.data),
+                                    transformation: { width: 220, height: 165 }
+                                })],
+                                alignment: AlignmentType.CENTER,
+                                spacing: { after: 60 }
+                            }));
+                            if (photo1.caption) {
+                                cell1Content.push(new Paragraph({
+                                    children: [new TextRun({ text: photo1.caption, size: 16, font: 'Calibri', italics: true, color: '6B7280' })],
+                                    alignment: AlignmentType.CENTER
+                                }));
+                            }
+                        } catch (e) { console.error('Photo 1 error:', e); }
+                        
+                        // Create cell for photo 2 (if exists)
+                        const cell2Content = [];
+                        if (photo2) {
                             try {
-                                children.push(new Paragraph({
+                                cell2Content.push(new Paragraph({
                                     children: [new ImageRun({
-                                        data: base64ToUint8Array(photo.data),
-                                        transformation: { width: 400, height: 300 }
+                                        data: base64ToUint8Array(photo2.data),
+                                        transformation: { width: 220, height: 165 }
                                     })],
                                     alignment: AlignmentType.CENTER,
-                                    spacing: { after: 100 }
+                                    spacing: { after: 60 }
                                 }));
-                                
-                                if (photo.caption) {
-                                    children.push(new Paragraph({
-                                        children: [new TextRun({ text: photo.caption, size: 18, font: 'Calibri', italics: true, color: '6B7280' })],
-                                        alignment: AlignmentType.CENTER,
-                                        spacing: { after: 300 }
+                                if (photo2.caption) {
+                                    cell2Content.push(new Paragraph({
+                                        children: [new TextRun({ text: photo2.caption, size: 16, font: 'Calibri', italics: true, color: '6B7280' })],
+                                        alignment: AlignmentType.CENTER
                                     }));
                                 }
-                            } catch (e) {
-                                console.error('Photo error:', e);
-                            }
+                            } catch (e) { console.error('Photo 2 error:', e); }
+                        } else {
+                            // Empty cell placeholder
+                            cell2Content.push(new Paragraph({}));
                         }
+                        
+                        // Create 2-column table row for this pair
+                        children.push(new Table({
+                            rows: [new TableRow({
+                                children: [
+                                    new TableCell({
+                                        children: cell1Content.length ? cell1Content : [new Paragraph({})],
+                                        borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder },
+                                        margins: { top: 80, bottom: 80, left: 40, right: 40 },
+                                        width: { size: 50, type: WidthType.PERCENTAGE },
+                                        verticalAlign: VerticalAlign.TOP
+                                    }),
+                                    new TableCell({
+                                        children: cell2Content.length ? cell2Content : [new Paragraph({})],
+                                        borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder },
+                                        margins: { top: 80, bottom: 80, left: 40, right: 40 },
+                                        width: { size: 50, type: WidthType.PERCENTAGE },
+                                        verticalAlign: VerticalAlign.TOP
+                                    })
+                                ]
+                            })],
+                            width: { size: 100, type: WidthType.PERCENTAGE }
+                        }));
                     }
                 }
                 
