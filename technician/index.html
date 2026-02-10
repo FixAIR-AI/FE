@@ -6545,6 +6545,8 @@
         
         // Suppress debug logs in production (keeps errors visible)
         if (PRODUCTION_MODE) {
+            const originalLog = console.log;
+            console.log = function(...args) {
                 // Only show critical errors, hide debug messages
                 const msg = args[0]?.toString() || '';
                 if (msg.includes('Error') || msg.includes('error') || msg.includes('❌')) {
@@ -7217,6 +7219,8 @@
 
             if (!hasAccessToken) return false;
 
+            console.log('=== MAGIC LINK CALLBACK ===');
+            console.log('Token type:', tokenType);
 
             // Clean URL hash BEFORE setting session (prevents Supabase from processing it again)
             window.history.replaceState(null, '', window.location.pathname + window.location.search);
@@ -7234,6 +7238,7 @@
                 }
 
                 if (data.session && data.session.user) {
+                    console.log('Magic link auth successful, user:', data.session.user.id);
 
                     // Persist session to localStorage for reliability
                     localStorage.setItem('fixair-tech-auth', JSON.stringify({
@@ -7243,6 +7248,7 @@
 
                     // Handle recovery links - redirect to /auth for password reset
                     if (tokenType === 'recovery') {
+                        console.log('Recovery link - redirecting to /auth');
                         window.location.href = '/auth#' + hash.substring(1);
                         return true;
                     }
@@ -7250,6 +7256,7 @@
                     // For magic link or signup confirmation, redirect to dashboard with user ID
                     const userId = data.session.user.id;
                     const newUrl = '/technician/?user=' + userId;
+                    console.log('Redirecting to:', newUrl);
                     window.location.href = newUrl;
                     return true;
                 }
@@ -7788,6 +7795,7 @@
                 const userId = options.user || current.user;
 
                 if (!userId) {
+                    console.warn('Router.navigate: No user ID');
                     return;
                 }
 
@@ -7821,6 +7829,7 @@
 
             // Handle route changes (show correct page/panel)
             handleRouteChange(page, options = {}) {
+                console.log('Router: handleRouteChange', page, options);
 
                 // Close all overlays first
                 closeChat();
@@ -7899,6 +7908,7 @@
             init() {
                 // Handle browser back/forward
                 window.addEventListener('popstate', (e) => {
+                    console.log('Router: popstate', e.state);
                     const route = this.getRoute();
                     if (route.user) {
                         this.handleRouteChange(route.page, route);
@@ -7909,6 +7919,7 @@
 
         // ═══ APP INITIALIZATION ═══
         async function init() {
+            console.log('=== TECHNICIAN APP INIT ===');
 
             // Handle magic link callback first (auth tokens in URL hash)
             const handledMagicLink = await handleMagicLinkCallback();
@@ -7922,6 +7933,7 @@
 
             // Get route from URL
             const route = Router.getRoute();
+            console.log('Initial route:', route);
 
             // Check for user ID (query string is primary method)
             let userId = route.user;
@@ -7931,12 +7943,14 @@
                 const pathParts = window.location.pathname.split('/').filter(Boolean);
                 if (pathParts.length >= 2 && pathParts[0] === 'technician') {
                     userId = pathParts[1];
+                    console.log('User ID from path (legacy):', userId);
                 }
             }
 
             // Fallback: Hash /technician/#[uuid]
             if (!userId && window.location.hash) {
                 userId = window.location.hash.replace('#', '').replace('/', '');
+                if (userId) console.log('User ID from hash (legacy):', userId);
             }
 
             // Check if we have a valid userId (UUIDs are 36 chars, but accept 10+ to be safe)
@@ -8030,6 +8044,7 @@
                         .eq('email', email)
                         .maybeSingle();
 
+                    console.log('User lookup:', { user, error });
 
                     if (error || !user) {
                         // User not found - redirect to /auth for signup
@@ -8201,6 +8216,7 @@
         }
 
         async function loadUserDashboard(userSlug) {
+            console.log('Loading dashboard for:', userSlug);
 
             try {
                 // Load user profile by ID
@@ -8222,6 +8238,7 @@
                     return;
                 }
 
+                console.log('User loaded:', user.email);
 
                 // Set global user variables
                 currentUser = user;
@@ -8276,6 +8293,7 @@
             prefetchApiKeys();
             initLiveStatusTracking();
 
+            console.log('App loaded successfully');
         }
 
         // ═══ LOGOUT ═══
@@ -8408,6 +8426,7 @@
         }
 
         async function saveProfile() {
+            console.log('=== SAVING PROFILE ===');
 
             const firstName = document.getElementById('profileFirstName').value.trim();
             const lastName = document.getElementById('profileLastName').value.trim();
@@ -8415,6 +8434,7 @@
             const phone = document.getElementById('profilePhone')?.value.trim() || '';
             const language = currentLang || 'fr';
 
+            console.log('Form data:', { firstName, lastName, email, phone, language });
 
             if (!firstName) { toast('Entrez votre prénom'); return; }
 
@@ -8434,6 +8454,7 @@
                 userId = savedUser.id;
             }
 
+            console.log('User ID for save:', userId);
 
             if (!userId) {
                 console.error('=== NO USER ID AVAILABLE ===');
@@ -8469,6 +8490,10 @@
                     if (language) updateData.language = language;
                     // Don't update email - it's managed by auth
 
+                    console.log('=== SUPABASE UPDATE ===');
+                    console.log('Table: users');
+                    console.log('User ID:', userId);
+                    console.log('Update data:', JSON.stringify(updateData, null, 2));
 
                     const { data, error } = await db
                         .from('users')
@@ -8489,6 +8514,8 @@
                         toast('Erreur: ' + (error.message || 'Sauvegarde impossible'));
                     } else {
                         dbSaveSuccess = true;
+                        console.log('=== PROFILE SAVED SUCCESSFULLY ===');
+                        console.log('Result:', data);
 
                         // Update local profile with returned data
                         if (data && data[0]) {
@@ -8504,8 +8531,11 @@
                     toast('Erreur inattendue');
                 }
             } else {
+                console.log('Cannot save to Supabase - no userId or db not available');
             }
 
+            console.log('=== SAVE COMPLETE ===');
+            console.log('DB save success:', dbSaveSuccess);
 
             if (dbSaveSuccess) {
                 toast('Profil enregistré ✓');
@@ -8610,6 +8640,7 @@
             // Accessible after brand selection (step 2) or if step4 already done
             if (onboardingStep < 3 && !step4Done) return;
 
+            console.log('Onboarding: Starting Copilot experience');
 
             // Open Copilot with prefilled example question
             openChat('copilot');
@@ -8642,6 +8673,7 @@
             // Accessible after brand selection (step 2) or if step3 already done
             if (onboardingStep < 3 && !step3Done) return;
 
+            console.log('Onboarding: Starting Assistant experience');
 
             // Open Assistant
             openChat('assistant');
@@ -8656,6 +8688,7 @@
         function showAssistantOnboardingFlow() {
             const chatContainer = document.getElementById('assistantBody');
             if (!chatContainer) {
+                console.warn('Assistant chat container not found');
                 return;
             }
 
@@ -8741,6 +8774,7 @@
 
         // Handle "Add Photos" button click in onboarding
         function handleOnboardingAddPhotos() {
+            console.log('Onboarding: User wants to add photos');
 
             const input = document.createElement('input');
             input.type = 'file';
@@ -8750,6 +8784,7 @@
             input.onchange = async (e) => {
                 const files = Array.from(e.target.files);
                 if (files.length > 0) {
+                    console.log('Photos selected:', files.length);
                     showOnboardingPhotosPreview(files);
                     setTimeout(() => {
                         generateOnboardingReportPreview(true, files);
@@ -8762,6 +8797,7 @@
 
         // Handle "Skip" button click in onboarding
         function handleOnboardingSkipPhotos() {
+            console.log('Onboarding: User skipped photos');
 
             const photoQuestion = document.querySelector('.photo-question-msg');
             if (photoQuestion) {
@@ -8881,6 +8917,7 @@
         }
 
         function viewOnboardingFullReport() {
+            console.log('Onboarding: Opening full report view');
             toast('Dans la vraie app, le rapport complet s\'ouvrirait ici!');
             // In production, this would call openReport() or similar
         }
@@ -9412,6 +9449,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                     if (m === 'assistant' && lastReportData && Object.keys(lastReportData).length > 0) {
                         setTimeout(() => {
                             updateDrawerPreview(lastReportData);
+                            console.log('[Mode] ✅ Drawer refreshed on assistant mode');
                         }, 150);
                     }
                     return;
@@ -10280,6 +10318,7 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                 if (project.extracted_data && Object.keys(project.extracted_data).length > 0) {
                     lastReportData = project.extracted_data;
                     updateDrawerPreview(lastReportData);
+                    console.log('[Project] ✅ Loaded extracted_data:', Object.keys(lastReportData).length, 'fields');
                 }
 
                 // ═══ INITIALIZE REPORT COMPLETION STATE ═══
@@ -10439,6 +10478,7 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                 setTimeout(() => {
                     if (lastReportData && Object.keys(lastReportData).length > 0) {
                         updateDrawerPreview(lastReportData);
+                        console.log('[Project] ✅ Drawer refreshed after messages load');
                     }
                 }, 150);
 
@@ -13784,6 +13824,7 @@ INSTRUCTIONS:
                     }
                 }
             } catch (e) {
+                console.warn('Erreur sections additionnelles:', e);
             }
             
             // Signatures (interactive - click to add)
@@ -13856,6 +13897,7 @@ INSTRUCTIONS:
                     const progressValue = Math.round(completion.percentage);
 
                     // Debug logging
+                    console.log('🔄 Auto-save:', {
                         projectId: currentProjectId,
                         progress: progressValue,
                         hasExtractedData: !!lastReportData
@@ -13872,6 +13914,7 @@ INSTRUCTIONS:
                     if (error) {
                         console.error('[Drawer] Auto-save failed:', error);
                     } else {
+                        console.log('✅ Saved to DB - Progress:', progressValue + '%');
                     }
 
                     // 2. Save to reports table
@@ -14534,6 +14577,7 @@ text = text.replace(/\s*\{"type"\s*:\s*"report"[\s\S]*\}\s*$/, '').trim();
                     await saveMessage(projectData.chatId, 'user', text);
                 }
             } catch (e) {
+                console.warn('Supabase save failed (continuing anyway):', e);
             }
             // ═══ END SUPABASE ═══
             
@@ -14750,6 +14794,7 @@ RÈGLES:
                                         if (error) {
                                             console.error('[Assistant] Failed to save extracted_data:', error);
                                         } else {
+                                            console.log('[Assistant] ✅ extracted_data saved to project');
                                         }
                                     });
                             }
@@ -14788,6 +14833,7 @@ RÈGLES:
                         }
                     }
                 } catch (e) {
+                    console.warn('Supabase save AI response failed:', e);
                 }
                 // ═══ END SUPABASE ═══
                 
@@ -14878,6 +14924,7 @@ RÈGLES:
                         .eq('id', existingReport.id);
 
                     if (error) console.error('[Reports] Update failed:', error);
+                    else console.log('[Reports] ✅ Report updated');
                 } else {
                     // Create new report
                     reportRecord.created_at = new Date().toISOString();
@@ -14886,6 +14933,7 @@ RÈGLES:
                         .insert(reportRecord);
 
                     if (error) console.error('[Reports] Insert failed:', error);
+                    else console.log('[Reports] ✅ Report created');
                 }
             } catch (e) {
                 console.error('[Reports] saveReportData error:', e);
@@ -16906,6 +16954,7 @@ RÈGLES:
                 
                 return usage;
             } catch (e) {
+                console.warn('[Freemium] Error reading usage:', e);
                 return createFreshUsage();
             }
         }
@@ -16926,6 +16975,7 @@ RÈGLES:
             try {
                 localStorage.setItem(FREEMIUM_CONFIG.storageKey, JSON.stringify(usage));
             } catch (e) {
+                console.warn('[Freemium] Error saving usage:', e);
             }
         }
         
@@ -16965,6 +17015,7 @@ RÈGLES:
                 
                 return usage.isPro;
             } catch (e) {
+                console.warn('[Freemium] Error checking subscription:', e);
                 return false;
             }
         }
@@ -17073,6 +17124,7 @@ RÈGLES:
             overlay.classList.add('show');
             
             // Track modal view for analytics
+            console.log('[Freemium] Upgrade modal shown:', context);
         }
         
         function closeUpgradeModal(event) {
@@ -17086,6 +17138,7 @@ RÈGLES:
             toast('Redirection vers la page d\'abonnement...');
             
             // Track upgrade intent
+            console.log('[Freemium] Upgrade clicked');
             
             // Close modal
             closeUpgradeModal();
@@ -17126,11 +17179,13 @@ RÈGLES:
         
         // Initialize freemium on page load
         async function initFreemium() {
+            console.log('[Freemium] Initializing...');
             
             // Check subscription status from database
             await checkSubscriptionStatus();
             
             const usage = getFreemiumUsage();
+            console.log('[Freemium] Current usage:', usage);
         }
         
         // Expose to global scope
@@ -17228,6 +17283,7 @@ RÈGLES:
         async function trackReferralShare(source) {
             try {
                 // Could send analytics event here
+                console.log(`Referral shared via ${source}`);
             } catch (e) {
                 console.error('Failed to track referral share:', e);
             }
@@ -19258,6 +19314,9 @@ const TP = {
 };
 
 // Global
+function showThoughtProcess(m, q) { try { TP.show(m, q); } catch(e) { console.warn('TP:', e); } }
+function collapseThoughtProcess(m, s) { try { TP.collapse(m, s); } catch(e) { console.warn('TP:', e); } }
+function hideThoughtProcess(m) { try { TP.hide(m); } catch(e) { console.warn('TP:', e); } }
 
 // Render persisted thought process (collapsed, from database)
 function renderPersistedThoughtProcess(panel, steps, summary) {
@@ -19322,6 +19381,7 @@ function renderPersistedThoughtProcess(panel, steps, summary) {
 
         body.insertAdjacentHTML('beforeend', html);
         TP.expandedState[cardId] = false;
+    } catch (e) { console.warn('renderPersistedTP:', e); }
 }
 
 // CSS
@@ -19334,6 +19394,7 @@ function renderPersistedThoughtProcess(panel, steps, summary) {
     }
 })();
 
+console.log('✅ TP FixAIR v5');
 </script>
 </body>
 </html>
