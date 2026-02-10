@@ -11221,10 +11221,10 @@ INSTRUCTIONS:
                 const customerAddress = data.client?.adresse || data.adresse || [data.site?.adresse, data.site?.ville].filter(Boolean).join(', ') || '';
                 const reference = data.reference || data.numero_rapport || '';
                 const dateStr = data.date || new Date().toLocaleDateString('fr-FR');
-                const rawTechName = data.technicien?.nom || data.nom_technicien || '';
+                const rawTechName = data.technicien?.nom || data.nom_technicien || data.technician_name || '';
                 const techName = (rawTechName === 'FixAIR Assistant') ? '' : rawTechName;
-                const companyName = data.technicien?.entreprise || data.entreprise || '';
-                const companyAddr = data.technicien?.adresse || data.enterprise?.address || '';
+                const companyName = data.technicien?.entreprise || data.entreprise || data.company_name || '';
+                const companyAddr = data.technicien?.adresse || data.adresse || '';
 
                 // ═══ HELPERS ═══
                 let sectionCounter = 0;
@@ -11234,7 +11234,7 @@ INSTRUCTIONS:
                     sectionCounter++;
                     return new Paragraph({
                         children: [new TextRun({ text: `${sectionCounter}. ${text.toUpperCase()}`, bold: true, size: 28, font: 'Calibri', color: TEAL })],
-                        spacing: { before: 500, after: 200 }
+                        spacing: { before: 600, after: 200 }
                     });
                 };
 
@@ -11350,7 +11350,7 @@ INSTRUCTIONS:
                 const coverChildren = [];
 
                 // Top spacer
-                coverChildren.push(new Paragraph({ spacing: { before: 1900 } }));
+                coverChildren.push(new Paragraph({ spacing: { before: 2400 } }));
 
                 // Title: RAPPORT D'INTERVENTION — 28pt bold charcoal centered
                 coverChildren.push(new Paragraph({
@@ -11371,7 +11371,7 @@ INSTRUCTIONS:
                     coverChildren.push(new Paragraph({
                         children: [new TextRun({ text: brand, bold: true, size: 28, font: 'Calibri', color: DARK })],
                         alignment: AlignmentType.CENTER,
-                        spacing: { after: 200 }
+                        spacing: { after: 300 }
                     }));
                 }
 
@@ -11414,8 +11414,8 @@ INSTRUCTIONS:
                     }));
                 }
 
-                // Spacer before technician
-                coverChildren.push(new Paragraph({ spacing: { before: 1600 } }));
+                // Spacer before technician — push "Préparé par:" toward bottom
+                coverChildren.push(new Paragraph({ spacing: { before: 3600 } }));
 
                 // Technician: "Préparé par:" italic + name bold, left-aligned
                 coverChildren.push(new Paragraph({
@@ -11606,6 +11606,7 @@ INSTRUCTIONS:
                 // ═══ ADRESSAGE UNITÉS ═══
                 if (data.adressage && data.adressage.length > 0) {
                     contentChildren.push(sectionHeading('Adressage Unités'));
+                    contentChildren.push(new Paragraph({ spacing: { before: 400 } }));
                     contentChildren.push(createTable(
                         ['Réf. Usine', 'N° Série', 'Adresse', 'Désignation', 'Commentaire'],
                         data.adressage.map(a => [a.ref_usine || '', a.serie || '', a.adresse || '', a.designation || '', a.commentaire || ''])
@@ -11643,6 +11644,7 @@ INSTRUCTIONS:
                 // ═══ MESURES ═══
                 if (data.mesures && data.mesures.length > 0) {
                     contentChildren.push(sectionHeading('Mesures'));
+                    contentChildren.push(new Paragraph({ spacing: { before: 400 } }));
                     contentChildren.push(createTable(
                         ['Paramètre', 'Valeur', 'Observation'],
                         data.mesures.map(m => [m.label, `${m.valeur}${m.unite ? ' ' + m.unite : ''}`, m.note || ''])
@@ -12042,7 +12044,7 @@ INSTRUCTIONS:
                             // Content pages
                             properties: {
                                 page: {
-                                    margin: { top: 900, right: 720, bottom: 1100, left: 720 }
+                                    margin: { top: 1200, right: 720, bottom: 1100, left: 720 }
                                 }
                             },
                             headers: { default: contentHeader },
