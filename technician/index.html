@@ -9446,11 +9446,16 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                     }
 
                     // ═══ REFRESH DRAWER ON ASSISTANT MODE ═══
-                    if (m === 'assistant' && lastReportData && Object.keys(lastReportData).length > 0) {
-                        setTimeout(() => {
-                            updateDrawerPreview(lastReportData);
-                            console.log('[Mode] ✅ Drawer refreshed on assistant mode');
-                        }, 150);
+                    if (m === 'assistant') {
+                        if (!lastReportData || Object.keys(lastReportData).length === 0) {
+                            buildPartialReport();
+                        }
+                        if (lastReportData && Object.keys(lastReportData).length > 0) {
+                            setTimeout(() => {
+                                updateDrawerPreview(lastReportData);
+                                console.log('[Mode] ✅ Drawer refreshed on assistant mode');
+                            }, 150);
+                        }
                     }
                     return;
                 } else {
@@ -9536,7 +9541,12 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
         function openReport() {
             document.getElementById('reportSheet').classList.add('open');
             document.getElementById('reportBackdrop').classList.add('show');
-            
+
+            // Ensure report data is populated from chat history on first open
+            if (!lastReportData || Object.keys(lastReportData).length === 0) {
+                buildPartialReport();
+            }
+
             // Always show editable template with current data (or empty)
             updateDrawerPreview(lastReportData || {});
         }
@@ -10475,6 +10485,10 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                 }
 
                 // ═══ ENSURE DRAWER POPULATED AFTER MESSAGES LOAD ═══
+                // Build partial report from chat history if no report data found
+                if (!lastReportData || Object.keys(lastReportData).length === 0) {
+                    buildPartialReport();
+                }
                 setTimeout(() => {
                     if (lastReportData && Object.keys(lastReportData).length > 0) {
                         updateDrawerPreview(lastReportData);
@@ -11088,13 +11102,6 @@ INSTRUCTIONS:
         
         // Show export format selection menu
         function showExportMenu() {
-            // Check if user has enterprise mode enabled
-            const userProfile = window.currentUserProfile || {};
-            const companyProfile = window.currentCompanyProfile || {};
-            // TODO: Revert to production check before merge:
-            // const hasEnterprise = companyProfile.plan === 'enterprise' || userProfile.enterprise_enabled;
-            const hasEnterprise = true; // TESTING: Always show Enterprise option
-            
             // Create modal for export options
             const modal = document.createElement('div');
             modal.className = 'export-modal';
@@ -11105,21 +11112,14 @@ INSTRUCTIONS:
                         <button class="export-modal-close" onclick="this.closest('.export-modal').remove()">×</button>
                     </div>
                     <div class="export-options">
-                        <button class="export-option primary" onclick="exportReport('word', 'standard'); this.closest('.export-modal').remove();">
+                        <button class="export-option primary" onclick="exportReport('word'); this.closest('.export-modal').remove();">
                             <span class="export-icon">📄</span>
                             <span class="export-label">
-                                <strong>Word Standard</strong>
-                                <small>Format FixAIR</small>
+                                <strong>Word (.docx)</strong>
+                                <small>Rapport professionnel</small>
                             </span>
                         </button>
-                        <button class="export-option ${hasEnterprise ? 'enterprise' : 'locked'}" onclick="${hasEnterprise ? "exportReport('word', 'enterprise'); this.closest('.export-modal').remove();" : 'showEnterpriseUpsell()'}">
-                            <span class="export-icon">${hasEnterprise ? '🏢' : '🔒'}</span>
-                            <span class="export-label">
-                                <strong>Word Enterprise</strong>
-                                <small>${hasEnterprise ? 'Logo & couleurs client' : 'Offre Enterprise'}</small>
-                            </span>
-                        </button>
-                        <button class="export-option secondary" onclick="exportReport('pdf', 'standard'); this.closest('.export-modal').remove();">
+                        <button class="export-option secondary" onclick="exportReport('pdf'); this.closest('.export-modal').remove();">
                             <span class="export-icon">📋</span>
                             <span class="export-label">
                                 <strong>PDF</strong>
@@ -11130,68 +11130,21 @@ INSTRUCTIONS:
                 </div>
             `;
             document.body.appendChild(modal);
-            
+
             // Close on backdrop click
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) modal.remove();
             });
         }
         
-        // Show enterprise upsell modal
-        function showEnterpriseUpsell() {
-            document.querySelector('.export-modal')?.remove();
-            const modal = document.createElement('div');
-            modal.className = 'export-modal';
-            modal.innerHTML = `
-                <div class="export-modal-content" style="max-width: 400px;">
-                    <div class="export-modal-header">
-                        <h3>🏢 Offre Enterprise</h3>
-                        <button class="export-modal-close" onclick="this.closest('.export-modal').remove()">×</button>
-                    </div>
-                    <div style="padding: 20px; text-align: center;">
-                        <p style="margin-bottom: 15px; color: var(--text-dim);">Personnalisez vos rapports avec :</p>
-                        <ul style="text-align: left; margin: 15px 0; padding-left: 25px; color: var(--text);">
-                            <li>✓ Page de garde avec votre logo</li>
-                            <li>✓ Couleurs de votre entreprise</li>
-                            <li>✓ En-tête/pied de page personnalisés</li>
-                            <li>✓ Photo du site en couverture</li>
-                        </ul>
-                        <p style="font-size: 24px; font-weight: bold; color: var(--assistant); margin: 20px 0;">50€/utilisateur/mois</p>
-                        <a href="mailto:contact@fixair.ai?subject=Offre%20Enterprise" class="export-option primary" style="display: block; text-decoration: none; margin-top: 15px;">
-                            <span>Contactez-nous</span>
-                        </a>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
-            modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
-        }
-        
         // Export report in specified format
-        async function exportReport(format, mode = 'standard') {
+        async function exportReport(format) {
             const data = collectReportData();
             if (!data) {
                 toast('Aucun rapport à exporter');
                 return;
             }
-            
-            // Add export mode to data
-            data.exportMode = mode;
-            
-            // For enterprise mode, add company branding info
-            if (mode === 'enterprise') {
-                const companyProfile = window.currentCompanyProfile || {};
-                data.enterprise = {
-                    name: companyProfile.name || data.technicien?.entreprise || 'Entreprise',
-                    logo: companyProfile.logo_url || null,
-                    color: companyProfile.brand_color || '#1B4D4D', // Default EQWATTEUR teal
-                    address: companyProfile.address || '',
-                    phone: companyProfile.phone || '',
-                    email: companyProfile.email || '',
-                    siret: companyProfile.siret || ''
-                };
-            }
-            
+
             if (format === 'word') {
                 await generateWord(data);
             } else {
