@@ -13296,58 +13296,107 @@ INSTRUCTIONS:
         }
         
         // ═══════════════════════════════════════════════════════════════
+        // R4-FIX3: normalizeMesureLabel — Alias map for mesure dedup
+        // ═══════════════════════════════════════════════════════════════
+        const MESURE_ALIAS_MAP = {
+            'température': 'temperature', 'temperature': 'temperature', 'temp': 'temperature', 'temp.': 'temperature',
+            'pression hp': 'pression_hp', 'hp': 'pression_hp', 'haute pression': 'pression_hp', 'high pressure': 'pression_hp', 'pression haute': 'pression_hp',
+            'pression bp': 'pression_bp', 'bp': 'pression_bp', 'basse pression': 'pression_bp', 'low pressure': 'pression_bp', 'pression basse': 'pression_bp',
+            'surchauffe': 'surchauffe', 'sh': 'surchauffe', 'superheat': 'surchauffe',
+            'sous-refroidissement': 'sous_refroidissement', 'sous refroidissement': 'sous_refroidissement', 'sr': 'sous_refroidissement', 'subcooling': 'sous_refroidissement',
+            'intensité': 'intensite', 'intensite': 'intensite', 'ampérage': 'intensite', 'amperage': 'intensite', 'courant': 'intensite',
+            'tension': 'tension', 'voltage': 'tension',
+            'delta t': 'delta_t', 'δt': 'delta_t', 'deltat': 'delta_t', 'ecart': 'delta_t', 'écart': 'delta_t',
+            'débit': 'debit', 'debit': 'debit', 'flow': 'debit',
+            'hygrométrie': 'hygrometrie', 'hygrometrie': 'hygrometrie', 'humidité': 'hygrometrie', 'humidite': 'hygrometrie', 'humidity': 'hygrometrie',
+            'température soufflage': 'temp_soufflage', 'temp soufflage': 'temp_soufflage', 'soufflage': 'temp_soufflage',
+            'température reprise': 'temp_reprise', 'temp reprise': 'temp_reprise', 'reprise': 'temp_reprise',
+            'température extérieure': 'temp_ext', 'temp ext': 'temp_ext', 'temp extérieure': 'temp_ext', 'temp. ext.': 'temp_ext',
+            'température ambiante': 'temp_ambiante', 'temp ambiante': 'temp_ambiante', 'ambiance': 'temp_ambiante'
+        };
+
+        function normalizeMesureLabel(label) {
+            if (!label) return '';
+            const lower = label.toLowerCase().trim()
+                .replace(/[éèê]/g, 'e').replace(/[àâ]/g, 'a').replace(/[ùû]/g, 'u').replace(/[ôö]/g, 'o').replace(/[ïî]/g, 'i')
+                .replace(/\s+/g, ' ');
+            return MESURE_ALIAS_MAP[lower] || lower;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
         // FIX-1: normalizeReportData — Ensures BOTH chat AND extraction field names exist
         // ═══════════════════════════════════════════════════════════════
         function normalizeReportData(data) {
             if (!data || typeof data !== 'object') return data;
 
-            // 1. FLUIDE ↔ FLUIDE_GLOBAL (bidirectional)
-            // FIX-G: Skip "non_precise" / placeholder values
+            // 1. FLUIDE ↔ FLUIDE_GLOBAL ↔ ROOT (3-way sync)
+            // R4-FIX1: Also sync charge_totale/usine/appoint at root level
             const isValidFluide = v => v != null && v !== '' && v !== 'non_precise' && v !== 'Non précisé' && v !== 'non précisé';
-            // FIX-E: Helper to clean double "kg kg" and strip " kg" for numeric fields
             const cleanKg = v => String(v).replace(/\s*kg\s*kg/gi, ' kg').replace(/\s*kg$/i, '').trim();
+            const parseKg = v => { const n = parseFloat(String(v).replace(/[^\d.]/g, '')); return isNaN(n) ? null : n; };
+
+            // Ensure containers exist
+            if (!data.fluide) data.fluide = {};
+            if (!data.fluide_global) data.fluide_global = {};
+
+            // R4-FIX1: Collect from root-level fields into fluide (some extractions put charge at root)
+            if (isValidFluide(data.charge_totale) && !data.fluide.charge_totale)
+                data.fluide.charge_totale = String(data.charge_totale);
+            if (isValidFluide(data.charge_usine) && !data.fluide.charge_initiale)
+                data.fluide.charge_initiale = String(data.charge_usine);
+            if (isValidFluide(data.charge_appoint) && !data.fluide.charge_appoint)
+                data.fluide.charge_appoint = String(data.charge_appoint);
 
             // R3-Fix3: Sync fluide → fluide_global FIRST (chat corrections win)
-            if (data.fluide && data.fluide_global) {
-                if (isValidFluide(data.fluide.type)) {
-                    data.fluide_global.type = data.fluide.type;
-                }
-                if (data.fluide.charge_totale) {
-                    const num = parseFloat(String(data.fluide.charge_totale).replace(/[^\d.]/g, ''));
-                    if (!isNaN(num)) data.fluide_global.charge_totale_site_kg = num;
-                }
-                if (data.fluide.charge_initiale) {
-                    const num = parseFloat(String(data.fluide.charge_initiale).replace(/[^\d.]/g, ''));
-                    if (!isNaN(num)) data.fluide_global.charge_usine_kg = num;
-                }
+            if (isValidFluide(data.fluide.type)) {
+                data.fluide_global.type = data.fluide.type;
+            }
+            if (data.fluide.charge_totale) {
+                const num = parseKg(data.fluide.charge_totale);
+                if (num !== null) data.fluide_global.charge_totale_site_kg = num;
+            }
+            if (data.fluide.charge_initiale) {
+                const num = parseKg(data.fluide.charge_initiale);
+                if (num !== null) data.fluide_global.charge_usine_kg = num;
+            }
+            if (data.fluide.charge_appoint) {
+                const num = parseKg(data.fluide.charge_appoint);
+                if (num !== null) data.fluide_global.charge_appoint_kg = num;
             }
 
-            if (data.fluide_global && typeof data.fluide_global === 'object') {
-                if (!data.fluide) data.fluide = {};
-                if (isValidFluide(data.fluide_global.type) && !data.fluide.type)
-                    data.fluide.type = data.fluide_global.type;
-                if (isValidFluide(data.fluide_global.charge_usine_kg) && !data.fluide.charge_initiale)
-                    data.fluide.charge_initiale = String(data.fluide_global.charge_usine_kg);
-                if (isValidFluide(data.fluide_global.charge_totale_site_kg) && !data.fluide.charge_totale)
-                    data.fluide.charge_totale = String(data.fluide_global.charge_totale_site_kg);
-            }
-            if (data.fluide && typeof data.fluide === 'object') {
-                // FIX-E: Clean double "kg" in existing fluide values
-                if (data.fluide.charge_totale) data.fluide.charge_totale = cleanKg(data.fluide.charge_totale);
-                if (data.fluide.charge_initiale) data.fluide.charge_initiale = cleanKg(data.fluide.charge_initiale);
+            // fluide_global → fluide (fill gaps only)
+            if (isValidFluide(data.fluide_global.type) && !isValidFluide(data.fluide.type))
+                data.fluide.type = data.fluide_global.type;
+            if (isValidFluide(data.fluide_global.charge_usine_kg) && !data.fluide.charge_initiale)
+                data.fluide.charge_initiale = String(data.fluide_global.charge_usine_kg);
+            if (isValidFluide(data.fluide_global.charge_totale_site_kg) && !data.fluide.charge_totale)
+                data.fluide.charge_totale = String(data.fluide_global.charge_totale_site_kg);
+            if (isValidFluide(data.fluide_global.charge_appoint_kg) && !data.fluide.charge_appoint)
+                data.fluide.charge_appoint = String(data.fluide_global.charge_appoint_kg);
 
-                if (!data.fluide_global) data.fluide_global = {};
-                if (isValidFluide(data.fluide.type) && !data.fluide_global.type)
-                    data.fluide_global.type = data.fluide.type;
-                if (isValidFluide(data.fluide.charge_totale) && !data.fluide_global.charge_totale_site_kg) {
-                    const num = parseFloat(String(data.fluide.charge_totale).replace(/[^\d.]/g, ''));
-                    if (!isNaN(num)) data.fluide_global.charge_totale_site_kg = num;
-                }
-                if (isValidFluide(data.fluide.charge_initiale) && !data.fluide_global.charge_usine_kg) {
-                    const num = parseFloat(String(data.fluide.charge_initiale).replace(/[^\d.]/g, ''));
-                    if (!isNaN(num)) data.fluide_global.charge_usine_kg = num;
-                }
+            // Clean double "kg" in fluide values
+            if (data.fluide.charge_totale) data.fluide.charge_totale = cleanKg(data.fluide.charge_totale);
+            if (data.fluide.charge_initiale) data.fluide.charge_initiale = cleanKg(data.fluide.charge_initiale);
+            if (data.fluide.charge_appoint) data.fluide.charge_appoint = cleanKg(data.fluide.charge_appoint);
+
+            // Final sync: fluide → fluide_global (ensure numeric copies are consistent after clean)
+            if (isValidFluide(data.fluide.charge_totale) && !data.fluide_global.charge_totale_site_kg) {
+                const num = parseKg(data.fluide.charge_totale);
+                if (num !== null) data.fluide_global.charge_totale_site_kg = num;
             }
+            if (isValidFluide(data.fluide.charge_initiale) && !data.fluide_global.charge_usine_kg) {
+                const num = parseKg(data.fluide.charge_initiale);
+                if (num !== null) data.fluide_global.charge_usine_kg = num;
+            }
+            if (isValidFluide(data.fluide.charge_appoint) && !data.fluide_global.charge_appoint_kg) {
+                const num = parseKg(data.fluide.charge_appoint);
+                if (num !== null) data.fluide_global.charge_appoint_kg = num;
+            }
+
+            // R4-FIX1: Sync back to root level for backward compat
+            if (isValidFluide(data.fluide.charge_totale)) data.charge_totale = data.fluide.charge_totale;
+            if (isValidFluide(data.fluide.charge_initiale)) data.charge_usine = data.fluide.charge_initiale;
+            if (isValidFluide(data.fluide.charge_appoint)) data.charge_appoint = data.fluide.charge_appoint;
 
             // 2. SYSTEME ↔ EQUIPEMENTS (bidirectional)
             if (data.equipements && Array.isArray(data.equipements) && data.equipements.length > 0) {
@@ -13395,24 +13444,42 @@ INSTRUCTIONS:
                 });
             }
 
-            // 5. INTERVENTION.TYPE ↔ TYPE_INTERVENTION (R3-Fix4: bidirectional, type_intervention wins)
-            if (data.intervention && data.type_intervention) {
-                // Sync: type_intervention (chat) wins over intervention.type (extraction)
-                data.intervention.type_label = data.type_intervention;
-                data.intervention.type = data.type_intervention;
-            }
-            if (data.intervention && !data.type_intervention) {
-                data.type_intervention = data.intervention.type_label || data.intervention.type;
-            }
-            if (data.type_intervention && !data.intervention) {
-                data.intervention = { type: data.type_intervention, type_label: data.type_intervention };
+            // 5. R4-FIX2: Sync type_intervention complete — last non-empty wins across all variants
+            // Sources: data.type_intervention, data.intervention.type, .type_label, .type_detail, data.type_operation, data.nature_intervention
+            if (!data.intervention) data.intervention = {};
+
+            // Collect all candidate type values (priority order: most specific first)
+            const typeCandidates = [
+                data.type_intervention,
+                data.intervention.type_label,
+                data.intervention.type_detail,
+                data.intervention.type,
+                data.type_operation,
+                data.nature_intervention
+            ].filter(v => v && typeof v === 'string' && v.trim() !== '');
+
+            // Pick the longest non-empty value (most descriptive = most specific)
+            const bestType = typeCandidates.length > 0
+                ? typeCandidates.reduce((a, b) => a.length >= b.length ? a : b)
+                : '';
+
+            if (bestType) {
+                data.type_intervention = bestType;
+                data.intervention.type = bestType;
+                data.intervention.type_label = bestType;
+                // Sync back to alternate root fields
+                if (data.type_operation) data.type_operation = bestType;
+                if (data.nature_intervention) data.nature_intervention = bestType;
             }
 
-            // 6. MESURES : type ↔ label
+            // 6. MESURES : type ↔ label + normalize labels via alias map
             if (data.mesures && Array.isArray(data.mesures)) {
                 data.mesures.forEach(m => {
                     if (m.type && !m.label) m.label = m.sous_type ? `${m.type} - ${m.sous_type}` : m.type;
                     if (m.label && !m.type) m.type = m.label;
+                    // Normalize label for consistent dedup
+                    if (m.label) m._normalizedLabel = normalizeMesureLabel(m.label);
+                    if (m.type) m._normalizedType = normalizeMesureLabel(m.type);
                 });
             }
 
@@ -13447,21 +13514,61 @@ INSTRUCTIONS:
                 });
             }
 
-            // 9. FIX-E: Clean resultat duplicate prefixes (e.g. "Conclusion : Conclusion : ...")
-            // (Also cleaned in updateDrawerPreview and collectReportData as R3-Fix2)
-            if (data.resultat && typeof data.resultat === 'object') {
-                if (data.resultat.description) {
-                    data.resultat.description = data.resultat.description
-                        .replace(/^(Conclusion\s*:\s*)+/i, '')
-                        .replace(/^(Statut\s*:\s*)+/i, '')
-                        .trim();
-                }
-                if (data.resultat.conclusion) {
-                    data.resultat.conclusion = data.resultat.conclusion
-                        .replace(/^(Conclusion\s*:\s*)+/i, '')
-                        .trim();
+            // 9. R4-FIX5: Sync resultat between all variants + fallback conclusion
+            // Some extractions use data.conclusion (string), data.status_intervention, data.resultat_intervention
+            if (!data.resultat) data.resultat = {};
+
+            // Pull from alternate root-level fields
+            if (data.conclusion && typeof data.conclusion === 'string' && !data.resultat.conclusion) {
+                data.resultat.conclusion = data.conclusion;
+                data.resultat.description = data.resultat.description || data.conclusion;
+            }
+            if (data.status_intervention && !data.resultat.status) {
+                const statusMap = {
+                    'résolu': 'resolu', 'resolu': 'resolu', 'resolved': 'resolu',
+                    'non résolu': 'non_resolu', 'non_resolu': 'non_resolu', 'unresolved': 'non_resolu',
+                    'en cours': 'en_cours', 'en_cours': 'en_cours', 'in_progress': 'en_cours',
+                    'en attente': 'en_attente_pieces', 'en_attente_pieces': 'en_attente_pieces'
+                };
+                const mapped = statusMap[(data.status_intervention || '').toLowerCase().trim()];
+                if (mapped) data.resultat.status = mapped;
+                else data.resultat.status = data.status_intervention;
+            }
+            if (data.resultat_intervention && typeof data.resultat_intervention === 'string') {
+                if (!data.resultat.description) data.resultat.description = data.resultat_intervention;
+                if (!data.resultat.conclusion) data.resultat.conclusion = data.resultat_intervention;
+            }
+
+            // Fallback: conclusion ↔ description (keep both in sync)
+            if (data.resultat.description && !data.resultat.conclusion) {
+                data.resultat.conclusion = data.resultat.description;
+            }
+            if (data.resultat.conclusion && !data.resultat.description) {
+                data.resultat.description = data.resultat.conclusion;
+            }
+
+            // Clean duplicate prefixes
+            if (data.resultat.description) {
+                data.resultat.description = data.resultat.description
+                    .replace(/^(Conclusion\s*:\s*)+/i, '')
+                    .replace(/^(Statut\s*:\s*)+/i, '')
+                    .replace(/^(Description\s*:\s*)+/i, '')
+                    .trim();
+            }
+            if (data.resultat.conclusion) {
+                data.resultat.conclusion = data.resultat.conclusion
+                    .replace(/^(Conclusion\s*:\s*)+/i, '')
+                    .trim();
+            }
+            if (data.resultat.status) {
+                if (typeof data.resultat.status === 'string') {
+                    data.resultat.status = data.resultat.status.replace(/^(Statut\s*:\s*)+/i, '').trim();
                 }
             }
+
+            // Sync back to root for backward compat
+            if (data.resultat.conclusion) data.conclusion = data.resultat.conclusion;
+            if (data.resultat.status) data.status_intervention = data.resultat.status;
 
             // 10. R3-Fix6: TECHNICIEN — clean HH:MM placeholders
             if (data.technicien) {
@@ -13479,7 +13586,8 @@ INSTRUCTIONS:
         // FIX-2: unifiedMerge — Single merge strategy for all data sources
         // ═══════════════════════════════════════════════════════════════
         // FIX-B: Arrays that should be REPLACED (not accumulated) when source is non-empty
-        const REPLACE_ARRAYS = new Set(['travaux_effectues', 'travaux_prevoir', 'reserves', 'recommandations']);
+        // R4-FIX4: Removed 'reserves' — now uses smart dedup instead of replace
+        const REPLACE_ARRAYS = new Set(['travaux_effectues', 'travaux_prevoir', 'recommandations']);
 
         function unifiedMerge(target, source) {
             if (!source || typeof source !== 'object') return target;
@@ -13537,12 +13645,12 @@ INSTRUCTIONS:
                     };
                     break;
                 case 'mesures':
-                    // FIX-A: Match on BOTH type and label (they're aliases after normalization)
+                    // R4-FIX3: Use normalizeMesureLabel for robust dedup across label variants
                     keyFn = item => {
-                        if (typeof item === 'string') return item;
-                        const label = (item.label || item.type || '').toLowerCase().trim();
+                        if (typeof item === 'string') return normalizeMesureLabel(item);
+                        const normalized = item._normalizedLabel || item._normalizedType || normalizeMesureLabel(item.label || item.type || '');
                         const equipId = (item.equipement_id || '').toUpperCase().replace(/([A-Z]+)0*(\d+)/g, '$1$2');
-                        return `${label}|${equipId}`;
+                        return `${normalized}|${equipId}`;
                     };
                     break;
                 case 'codes_defaut':
@@ -13560,6 +13668,14 @@ INSTRUCTIONS:
                     };
                     break;
                 case 'reserves':
+                    // R4-FIX4: Smart dedup for reserves — normalize text, strip punctuation
+                    keyFn = item => {
+                        if (typeof item === 'string') return item.substring(0, 80).toLowerCase().replace(/[.,;:!?\s]+/g, ' ').trim();
+                        const text = (item.texte || item.description || item.titre || '').substring(0, 80).toLowerCase().replace(/[.,;:!?\s]+/g, ' ').trim();
+                        const type = (item.type || item.categorie || '').toLowerCase();
+                        return type ? `${type}|${text}` : text;
+                    };
+                    break;
                 case 'recommandations':
                     keyFn = item => {
                         if (typeof item === 'string') return item.substring(0, 50).toLowerCase();
