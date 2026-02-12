@@ -3979,6 +3979,52 @@
         .autosave-indicator.show { opacity: 1; }
         .autosave-indicator.success { color: var(--assistant); }
 
+        /* PHOTOS SECTION - v12.5 */
+        .rpt-photos-section { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); }
+        .photos-grid-v12 { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin: 12px 0; }
+        .photo-item-v12 { position: relative; border-radius: 8px; overflow: hidden; background: var(--bg-secondary); border: 1px solid var(--border); }
+        .photo-item-v12 img { width: 100%; height: 100px; object-fit: cover; cursor: pointer; transition: transform 0.2s; }
+        .photo-item-v12 img:hover { transform: scale(1.02); }
+        .photo-caption-input { width: 100%; padding: 6px 8px; background: transparent; border: none; border-top: 1px solid var(--border); color: var(--text); font-size: 11px; text-align: center; outline: none; }
+        .photo-caption-input::placeholder { color: var(--text-dim); font-style: italic; }
+        .photo-caption-input:focus { background: rgba(34,197,94,0.05); }
+        .photo-remove-btn-v12 { position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; border-radius: 50%; background: rgba(239,68,68,0.9); color: white; border: none; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
+        .photo-item-v12:hover .photo-remove-btn-v12 { opacity: 1; }
+        .photo-drop-zone-v12 { margin-top: 12px; padding: 24px; border: 2px dashed var(--border); border-radius: 8px; text-align: center; color: var(--text-dim); cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .photo-drop-zone-v12:hover { border-color: var(--assistant); color: var(--text); background: rgba(34,197,94,0.05); }
+        .photo-drop-zone-v12.drag-active { border-color: var(--assistant); background: rgba(34,197,94,0.1); }
+        .photo-drop-zone-v12 svg { width: 32px; height: 32px; opacity: 0.5; }
+        .photo-drop-zone-v12 span { font-size: 12px; }
+
+        /* TECHNICIEN SECTION - v12.5 */
+        .rpt-technicien-section { margin-top: 24px; padding: 16px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border); }
+        .tech-fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+        @media (max-width: 500px) { .tech-fields-grid { grid-template-columns: 1fr; } }
+        .tech-field { display: flex; align-items: center; gap: 8px; }
+        .tech-label { font-size: 11px; color: var(--text-dim); min-width: 70px; }
+        .tech-input { flex: 1; padding: 8px 10px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--text); font-size: 12px; outline: none; font-style: italic; }
+        .tech-input::placeholder { color: var(--text-dim); }
+        .tech-input:focus { border-bottom-color: var(--assistant); font-style: normal; }
+
+        /* OBSERVATION SECTION - v12.5 */
+        .rpt-observation-section { margin-top: 16px; padding: 12px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border); }
+        .observation-textarea { width: 100%; min-height: 60px; padding: 10px; background: transparent; border: none; color: var(--text); font-size: 12px; line-height: 1.5; resize: vertical; outline: none; font-family: inherit; }
+        .observation-textarea::placeholder { color: var(--text-dim); font-style: italic; }
+        .observation-textarea:focus { background: rgba(34,197,94,0.03); }
+
+        /* RÉSULTAT SECTION - v12.5 */
+        .rpt-resultat-section { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); }
+        .resultat-box { background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border); padding: 16px; }
+        .resultat-field { margin-bottom: 12px; }
+        .resultat-field:last-child { margin-bottom: 0; }
+        .resultat-label { display: block; font-size: 10px; font-weight: 500; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .resultat-select { width: 100%; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; outline: none; cursor: pointer; font-style: italic; }
+        .resultat-select:focus { border-color: var(--assistant); }
+        .resultat-select option { background: var(--bg); color: var(--text); }
+        .resultat-textarea { width: 100%; min-height: 80px; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 12px; line-height: 1.5; resize: vertical; outline: none; font-family: inherit; }
+        .resultat-textarea::placeholder { color: var(--text-dim); font-style: italic; }
+        .resultat-textarea:focus { border-color: var(--assistant); }
+
         /* ==================== HOTLINE VIEW ==================== */
         .hotline-view { position: fixed; inset: 0; display: none; z-index: 200; background: var(--bg); background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px); background-size: 32px 32px; }
         .hotline-view.active { display: block; }
@@ -14098,11 +14144,113 @@ INSTRUCTIONS:
                 });
             }
             
-            // 13. SIGNATURES
+            // 13. RÉSULTAT DE L'INTERVENTION
+            const statusOptions = [
+                { value: '', label: 'Sélectionner...' },
+                { value: 'resolu', label: '✓ Résolu' },
+                { value: 'en_cours', label: '⏳ En cours' },
+                { value: 'non_resolu', label: '✗ Non résolu' },
+                { value: 'en_attente_pieces', label: '📦 En attente pièces' },
+                { value: 'intervention_requise', label: '🔧 Nouvelle intervention requise' }
+            ];
+            const currentStatus = data.resultat?.status || '';
+            const statusOptionsHTML = statusOptions.map(opt => 
+                `<option value="${opt.value}" ${currentStatus === opt.value ? 'selected' : ''}>${opt.label}</option>`
+            ).join('');
+            
+            blocks.push(`
+                <div class="rpt-resultat-section">
+                    <div class="b b-h2"><div class="b-content">Résultat de l'intervention</div></div>
+                    <div class="resultat-box">
+                        <div class="resultat-field">
+                            <span class="resultat-label">STATUT</span>
+                            <select class="resultat-select" id="resultatStatusSelect" onchange="updateResultatStatus(this.value)">
+                                ${statusOptionsHTML}
+                            </select>
+                        </div>
+                        <div class="resultat-field">
+                            <span class="resultat-label">CONCLUSION</span>
+                            <textarea class="resultat-textarea" id="resultatConclusionInput" placeholder="Description du résultat et conclusion..." onblur="updateResultatConclusion(this.value)">${data.resultat?.description || data.resultat?.conclusion || ''}</textarea>
+                        </div>
+                    </div>
+                </div>
+            `);
+            
+            // 14. PHOTOS - with drag & drop and upload
+            const photos = window.reportPhotos || [];
+            blocks.push(`
+                <div class="rpt-photos-section">
+                    <div class="b b-h2"><div class="b-content">Photos (${photos.length}) <button class="tbl-btn" onclick="triggerPhotoUpload()" style="margin-left:8px;">+</button></div></div>
+                    <input type="file" id="photoUploadInputV12" accept="image/*" multiple style="display:none" onchange="handlePhotoUpload(event)">
+                    ${photos.length > 0 ? `
+                        <div class="photos-grid-v12" id="sortablePhotosV12">
+                            ${photos.map((p, i) => {
+                                const imgSrc = p.url || p.data || p.originalData || '';
+                                const caption = p.caption || p.name || 'Photo ' + (i+1);
+                                return `<div class="photo-item-v12" data-index="${i}">
+                                    <img src="${imgSrc}" alt="${caption}" onclick="viewPhotoFull('${imgSrc}')" onerror="this.style.display='none'">
+                                    <input type="text" class="photo-caption-input" value="${caption}" onblur="updatePhotoCaption(${i}, this.value)" placeholder="Titre de la photo">
+                                    <button class="photo-remove-btn-v12" onclick="removePhoto(${i})">×</button>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    ` : ''}
+                    <div class="photo-drop-zone-v12" onclick="triggerPhotoUpload()" ondragover="handlePhotoDragOver(event)" ondrop="handlePhotoDrop(event)">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                        <span>Glisser des photos ou cliquer pour ajouter</span>
+                    </div>
+                </div>
+            `);
+            
+            // 14. TECHNICIEN
+            blocks.push(`
+                <div class="rpt-technicien-section">
+                    <div class="b b-h2"><div class="b-content">Technicien(s)</div></div>
+                    <div class="tech-fields-grid">
+                        <div class="tech-field">
+                            <span class="tech-label">Nom :</span>
+                            <input type="text" class="tech-input" id="techNomInput" value="${data.technicien?.nom || ''}" placeholder="Nom du technicien" onblur="updateTechField('nom', this.value)">
+                        </div>
+                        <div class="tech-field">
+                            <span class="tech-label">Arrivée :</span>
+                            <input type="text" class="tech-input" id="techArriveeInput" value="${data.technicien?.heure_arrivee || ''}" placeholder="HH:MM" onblur="updateTechField('heure_arrivee', this.value)">
+                        </div>
+                        <div class="tech-field">
+                            <span class="tech-label">Entreprise :</span>
+                            <input type="text" class="tech-input" id="techEntrepriseInput" value="${data.technicien?.entreprise || ''}" placeholder="Nom STA" onblur="updateTechField('entreprise', this.value)">
+                        </div>
+                        <div class="tech-field">
+                            <span class="tech-label">Départ :</span>
+                            <input type="text" class="tech-input" id="techDepartInput" value="${data.technicien?.heure_depart || ''}" placeholder="HH:MM" onblur="updateTechField('heure_depart', this.value)">
+                        </div>
+                    </div>
+                    <div class="tech-field" style="margin-top:8px;">
+                        <span class="tech-label">Autre(s) technicien(s) :</span>
+                        <input type="text" class="tech-input" id="techAutresInput" value="${data.technicien?.autres || ''}" placeholder="Noms des autres techniciens présents" onblur="updateTechField('autres', this.value)" style="flex:1;">
+                    </div>
+                </div>
+            `);
+            
+            // 15. OBSERVATION CLIENT
+            blocks.push(`
+                <div class="rpt-observation-section">
+                    <div class="b b-h3"><div class="b-content">Observation(s) Client</div></div>
+                    <textarea class="observation-textarea" id="observationClientInput" placeholder="Observations du client..." onblur="updateObservationClient(this.value)">${data.observation_client || ''}</textarea>
+                </div>
+            `);
+            
+            // 16. SIGNATURES
             const clientName = data.client?.contact || data.client?.societe || '';
             const techName = data.technicien?.nom || '';
-            const clientSig = data.signatures?.client?.image || data.signature_client || '';
-            const techSig = data.signatures?.technicien?.image || data.signature_technicien || '';
+            const clientSig = data.signatures?.client?.image || data.signatures?.client || data.signature_client || '';
+            const techSig = data.signatures?.technicien?.image || data.signatures?.technicien || data.signature_technicien || '';
+            // Ensure we get string values for signatures
+            const clientSigStr = typeof clientSig === 'string' ? clientSig : '';
+            const techSigStr = typeof techSig === 'string' ? techSig : '';
             
             blocks.push(`
                 <div class="rpt-signature-section">
@@ -14111,14 +14259,14 @@ INSTRUCTIONS:
                         <div class="rpt-signature-box">
                             <div class="rpt-signature-box-title">SIGNATURE CLIENT</div>
                             <div class="rpt-signature-area" id="sigAreaClient" onclick="openSignaturePad('client')">
-                                ${clientSig ? `<img src="${clientSig}" alt="Signature client">` : '<span class="rpt-signature-placeholder">Touchez pour signer</span>'}
+                                ${clientSigStr ? `<img src="${clientSigStr}" alt="Signature client">` : '<span class="rpt-signature-placeholder">Touchez pour signer</span>'}
                             </div>
                             <input type="text" class="rpt-signature-name-input" id="sigNameClient" placeholder="Nom du signataire" value="${clientName}" onblur="drawerAutoSave()">
                         </div>
                         <div class="rpt-signature-box">
                             <div class="rpt-signature-box-title">SIGNATURE TECHNICIEN</div>
                             <div class="rpt-signature-area" id="sigAreaTech" onclick="openSignaturePad('technicien')">
-                                ${techSig ? `<img src="${techSig}" alt="Signature technicien">` : '<span class="rpt-signature-placeholder">Touchez pour signer</span>'}
+                                ${techSigStr ? `<img src="${techSigStr}" alt="Signature technicien">` : '<span class="rpt-signature-placeholder">Touchez pour signer</span>'}
                             </div>
                             <input type="text" class="rpt-signature-name-input" id="sigNameTech" placeholder="Nom du signataire" value="${techName}" onblur="drawerAutoSave()">
                         </div>
@@ -14484,6 +14632,81 @@ INSTRUCTIONS:
                     }
                 });
             }
+            
+            // Extract technicien fields from v12.5 inputs
+            const techNom = document.getElementById('techNomInput')?.value;
+            const techArrivee = document.getElementById('techArriveeInput')?.value;
+            const techEntreprise = document.getElementById('techEntrepriseInput')?.value;
+            const techDepart = document.getElementById('techDepartInput')?.value;
+            const techAutres = document.getElementById('techAutresInput')?.value;
+            
+            if (techNom || techArrivee || techEntreprise || techDepart || techAutres) {
+                if (!data.technicien) data.technicien = {};
+                if (techNom) data.technicien.nom = techNom;
+                if (techArrivee) data.technicien.heure_arrivee = techArrivee;
+                if (techEntreprise) data.technicien.entreprise = techEntreprise;
+                if (techDepart) data.technicien.heure_depart = techDepart;
+                if (techAutres) data.technicien.autres = techAutres;
+            }
+            
+            // Extract observation client
+            const observationClient = document.getElementById('observationClientInput')?.value;
+            if (observationClient) {
+                data.observation_client = observationClient;
+            }
+        }
+        
+        // ═══ HELPER FUNCTIONS FOR V12.5 SECTIONS ═══
+        
+        function updateTechField(field, value) {
+            if (!lastReportData) lastReportData = {};
+            if (!lastReportData.technicien) lastReportData.technicien = {};
+            lastReportData.technicien[field] = value;
+            drawerAutoSave();
+        }
+        
+        function updateObservationClient(value) {
+            if (!lastReportData) lastReportData = {};
+            lastReportData.observation_client = value;
+            drawerAutoSave();
+        }
+        
+        function updateResultatStatus(value) {
+            if (!lastReportData) lastReportData = {};
+            if (!lastReportData.resultat) lastReportData.resultat = {};
+            lastReportData.resultat.status = value;
+            // Set label based on status
+            const labels = {
+                'resolu': 'Résolu',
+                'en_cours': 'En cours',
+                'non_resolu': 'Non résolu',
+                'en_attente_pieces': 'En attente pièces',
+                'intervention_requise': 'Nouvelle intervention requise'
+            };
+            lastReportData.resultat.label = labels[value] || '';
+            drawerAutoSave();
+        }
+        
+        function updateResultatConclusion(value) {
+            if (!lastReportData) lastReportData = {};
+            if (!lastReportData.resultat) lastReportData.resultat = {};
+            lastReportData.resultat.description = value;
+            lastReportData.resultat.conclusion = value;
+            drawerAutoSave();
+        }
+        
+        function updatePhotoCaption(index, caption) {
+            if (window.reportPhotos && window.reportPhotos[index]) {
+                window.reportPhotos[index].caption = caption;
+                window.reportPhotos[index].name = caption;
+                drawerAutoSave();
+            }
+        }
+        
+        // Override triggerPhotoUpload to work with v12.5 input
+        function triggerPhotoUpload() {
+            const input = document.getElementById('photoUploadInputV12') || document.getElementById('photoUploadInput');
+            if (input) input.click();
         }
         
         // Complete report function
@@ -17132,7 +17355,9 @@ RÈGLES:
         // ═══════════════════════════════════════════════════════════════
         
         function triggerPhotoUpload() {
-            document.getElementById('photoUploadInput').click();
+            // Support both old and v12.5 input IDs
+            const input = document.getElementById('photoUploadInputV12') || document.getElementById('photoUploadInput');
+            if (input) input.click();
         }
         
         function handlePhotoUpload(event) {
@@ -17211,13 +17436,16 @@ RÈGLES:
         // Initialize drag-drop for photo reordering
         function initPhotoDragDrop() {
             setTimeout(() => {
-                const container = document.getElementById('sortablePhotos');
+                // Support both old and v12.5 container IDs
+                const container = document.getElementById('sortablePhotosV12') || document.getElementById('sortablePhotos');
                 if (!container) return;
                 
-                const items = container.querySelectorAll('.draggable-photo');
+                const items = container.querySelectorAll('.photo-item-v12, .draggable-photo');
                 let draggedItem = null;
                 
                 items.forEach(item => {
+                    item.draggable = true;
+                    
                     item.addEventListener('dragstart', function(e) {
                         draggedItem = this;
                         this.classList.add('dragging');
@@ -17230,13 +17458,14 @@ RÈGLES:
                         
                         // Update array order based on DOM order
                         const newOrder = [];
-                        container.querySelectorAll('.draggable-photo').forEach(el => {
+                        container.querySelectorAll('.photo-item-v12, .draggable-photo').forEach(el => {
                             const idx = parseInt(el.dataset.index);
                             if (window.reportPhotos[idx]) {
                                 newOrder.push(window.reportPhotos[idx]);
                             }
                         });
                         window.reportPhotos = newOrder;
+                        drawerAutoSave && drawerAutoSave();
                     });
                     
                     item.addEventListener('dragover', function(e) {
