@@ -12016,11 +12016,16 @@ INSTRUCTIONS:
                         alignment: AlignmentType.CENTER
                     }));
 
-                    if (data.signatures.client && data.signatures.client.startsWith('data:image')) {
+                    // Handle both formats: string (old) or object {image: "...", nom: "..."} (new)
+                    const clientSigImage = typeof data.signatures.client === 'string' 
+                        ? data.signatures.client 
+                        : data.signatures.client?.image;
+                    
+                    if (clientSigImage && clientSigImage.startsWith('data:image')) {
                         try {
                             clientSigContent.push(new Paragraph({
                                 children: [new ImageRun({
-                                    data: b64toU8(data.signatures.client),
+                                    data: b64toU8(clientSigImage),
                                     transformation: { width: 150, height: 60 }
                                 })],
                                 alignment: AlignmentType.CENTER
@@ -12028,8 +12033,14 @@ INSTRUCTIONS:
                         } catch (e) { console.error('Signature client error:', e); }
                     }
 
+                    // Get client name from multiple possible sources
+                    const clientSigName = data.signatures.nom_client || 
+                                         data.signatures.client?.nom || 
+                                         data.client?.contact || 
+                                         '________________';
+                    
                     clientSigContent.push(new Paragraph({
-                        children: [new TextRun({ text: data.signatures.nom_client || '________________', size: 21, font: 'Calibri', color: BODY })],
+                        children: [new TextRun({ text: clientSigName, size: 21, font: 'Calibri', color: BODY })],
                         alignment: AlignmentType.CENTER,
                         spacing: { before: 100 }
                     }));
@@ -12048,11 +12059,16 @@ INSTRUCTIONS:
                         alignment: AlignmentType.CENTER
                     }));
 
-                    if (data.signatures.technicien && data.signatures.technicien.startsWith('data:image')) {
+                    // Handle both formats: string (old) or object {image: "...", nom: "..."} (new)
+                    const techSigImage = typeof data.signatures.technicien === 'string' 
+                        ? data.signatures.technicien 
+                        : data.signatures.technicien?.image;
+                    
+                    if (techSigImage && techSigImage.startsWith('data:image')) {
                         try {
                             techSigContent.push(new Paragraph({
                                 children: [new ImageRun({
-                                    data: b64toU8(data.signatures.technicien),
+                                    data: b64toU8(techSigImage),
                                     transformation: { width: 150, height: 60 }
                                 })],
                                 alignment: AlignmentType.CENTER
@@ -12060,8 +12076,14 @@ INSTRUCTIONS:
                         } catch (e) { console.error('Signature tech error:', e); }
                     }
 
+                    // Get tech name from multiple possible sources
+                    const techSigName = data.signatures.nom_technicien || 
+                                       data.signatures.technicien?.nom || 
+                                       data.technicien?.nom || 
+                                       '________________';
+                    
                     techSigContent.push(new Paragraph({
-                        children: [new TextRun({ text: data.signatures.nom_technicien || data.technicien?.nom || '________________', size: 21, font: 'Calibri', color: BODY })],
+                        children: [new TextRun({ text: techSigName, size: 21, font: 'Calibri', color: BODY })],
                         alignment: AlignmentType.CENTER,
                         spacing: { before: 100 }
                     }));
