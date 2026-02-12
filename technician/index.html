@@ -9578,11 +9578,12 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                                     try {
                                         const reportDataMatch = msg.content.match(/\[REPORT_DATA\]([\s\S]*?)\[\/REPORT_DATA\]/);
                                         if (reportDataMatch) {
-                                            const reportData = JSON.parse(reportDataMatch[1].trim());
+                                            let reportData = JSON.parse(reportDataMatch[1].trim());
+                                            reportData = normalizeReportData(reportData);
                                             if (!lastReportData) {
                                                 lastReportData = { brand: brand, brand_key: brand, status: 'en_cours', date: new Date().toLocaleDateString('fr-FR') };
                                             }
-                                            mergeReportData(lastReportData, reportData);
+                                            lastReportData = unifiedMerge(lastReportData, reportData);
                                             updateDrawerPreview(lastReportData);
                                         }
                                     } catch (e) {
@@ -10482,7 +10483,7 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
 
                 // ═══ LOAD extracted_data from project ═══
                 if (project.extracted_data && Object.keys(project.extracted_data).length > 0) {
-                    lastReportData = project.extracted_data;
+                    lastReportData = normalizeReportData(project.extracted_data);  // FIX-1: Normalize on load
                     updateDrawerPreview(lastReportData);
                     console.log('[Project] ✅ Loaded extracted_data:', Object.keys(lastReportData).length, 'fields');
                 }
@@ -10625,11 +10626,12 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                                     try {
                                         const reportDataMatch = msg.content.match(/\[REPORT_DATA\]([\s\S]*?)\[\/REPORT_DATA\]/);
                                         if (reportDataMatch) {
-                                            const reportData = JSON.parse(reportDataMatch[1].trim());
+                                            let reportData = JSON.parse(reportDataMatch[1].trim());
+                                            reportData = normalizeReportData(reportData);
                                             if (!lastReportData) {
                                                 lastReportData = { brand: brand, brand_key: brand, status: 'en_cours', date: new Date().toLocaleDateString('fr-FR') };
                                             }
-                                            mergeReportData(lastReportData, reportData);
+                                            lastReportData = unifiedMerge(lastReportData, reportData);
                                             updateDrawerPreview(lastReportData);
                                         }
                                     } catch (e) {
@@ -11314,8 +11316,8 @@ INSTRUCTIONS:
         // Collect all report data from lastReportData + photos + signatures
         function collectReportData() {
             if (!lastReportData) return null;
-            
-            const data = { ...lastReportData };
+
+            const data = normalizeReportData({ ...lastReportData });  // FIX-1: Normalize before export
             
             // Add photos from global
             if (window.reportPhotos && window.reportPhotos.length > 0) {
@@ -13248,11 +13250,274 @@ INSTRUCTIONS:
                 }
             }
             
-            // Update the stored data and refresh preview
-            lastReportData = partialData;
-            updateDrawerPreview(partialData);
+            // Update the stored data and refresh preview  (FIX-3: Don't overwrite extraction data)
+            if (!lastReportData || Object.keys(lastReportData).length <= 4) {
+                // Only use partial data if lastReportData is empty/minimal (brand, brand_key, status, date)
+                lastReportData = partialData;
+            } else {
+                // Merge partial data INTO existing data (don't replace)
+                lastReportData = unifiedMerge(lastReportData, partialData);
+            }
+            updateDrawerPreview(lastReportData);
         }
         
+        // ═══════════════════════════════════════════════════════════════
+        // FIX-1: normalizeReportData — Ensures BOTH chat AND extraction field names exist
+        // ═══════════════════════════════════════════════════════════════
+        function normalizeReportData(data) {
+            if (!data || typeof data !== 'object') return data;
+
+            // 1. FLUIDE ↔ FLUIDE_GLOBAL (bidirectional)
+            if (data.fluide_global && typeof data.fluide_global === 'object') {
+                if (!data.fluide) data.fluide = {};
+                if (data.fluide_global.type && !data.fluide.type)
+                    data.fluide.type = data.fluide_global.type;
+                if (data.fluide_global.charge_usine_kg != null && !data.fluide.charge_initiale)
+                    data.fluide.charge_initiale = String(data.fluide_global.charge_usine_kg) + ' kg';
+                if (data.fluide_global.charge_totale_site_kg != null && !data.fluide.charge_totale)
+                    data.fluide.charge_totale = String(data.fluide_global.charge_totale_site_kg) + ' kg';
+            }
+            if (data.fluide && typeof data.fluide === 'object') {
+                if (!data.fluide_global) data.fluide_global = {};
+                if (data.fluide.type && !data.fluide_global.type)
+                    data.fluide_global.type = data.fluide.type;
+                if (data.fluide.charge_totale && !data.fluide_global.charge_totale_site_kg) {
+                    const num = parseFloat(String(data.fluide.charge_totale).replace(/[^\d.]/g, ''));
+                    if (!isNaN(num)) data.fluide_global.charge_totale_site_kg = num;
+                }
+                if (data.fluide.charge_initiale && !data.fluide_global.charge_usine_kg) {
+                    const num = parseFloat(String(data.fluide.charge_initiale).replace(/[^\d.]/g, ''));
+                    if (!isNaN(num)) data.fluide_global.charge_usine_kg = num;
+                }
+            }
+
+            // 2. SYSTEME ↔ EQUIPEMENTS (bidirectional)
+            if (data.equipements && Array.isArray(data.equipements) && data.equipements.length > 0) {
+                if (!data.systeme || !data.systeme.modele) {
+                    const mainEquip = data.equipements.find(e =>
+                        e.role === 'ue' || e.role === 'outdoor' || e.role === 'unite_exterieure'
+                    ) || data.equipements[0];
+                    data.systeme = data.systeme || {};
+                    if (!data.systeme.modele) data.systeme.modele = mainEquip.modele;
+                    if (!data.systeme.type) data.systeme.type = mainEquip.type_ui || mainEquip.role;
+                    if (!data.systeme.serie) data.systeme.serie = mainEquip.numero_serie;
+                }
+            }
+            if (data.systeme && data.systeme.modele && (!data.equipements || data.equipements.length === 0)) {
+                data.equipements = [{
+                    id: 'sys-1',
+                    modele: data.systeme.modele,
+                    marque: data.brand || data.brand_key || '',
+                    role: 'ue',
+                    type_ui: data.systeme.type || '',
+                    numero_serie: data.systeme.serie || ''
+                }];
+            }
+
+            // 3. TRAVAUX_EFFECTUES : contenu ↔ texte
+            if (data.travaux_effectues && Array.isArray(data.travaux_effectues)) {
+                data.travaux_effectues.forEach(t => {
+                    if (t.contenu && !t.texte) t.texte = t.contenu;
+                    if (t.texte && !t.contenu) t.contenu = t.texte;
+                });
+            }
+
+            // 4. RESERVES : description ↔ texte
+            if (data.reserves && Array.isArray(data.reserves)) {
+                data.reserves.forEach(r => {
+                    if (typeof r === 'string') return;
+                    if (r.description && !r.texte) r.texte = r.description;
+                    if (r.texte && !r.description) r.description = r.texte;
+                });
+                data.reserves = data.reserves.map(r => {
+                    if (typeof r === 'string') {
+                        return { titre: r.substring(0, 60), texte: r, description: r, type: 'reserve' };
+                    }
+                    return r;
+                });
+            }
+
+            // 5. INTERVENTION.TYPE ↔ TYPE_INTERVENTION
+            if (data.intervention && data.intervention.type && !data.type_intervention) {
+                data.type_intervention = data.intervention.type_label || data.intervention.type;
+            }
+            if (data.type_intervention && !data.intervention) {
+                data.intervention = {
+                    type: data.type_intervention,
+                    type_label: data.type_intervention
+                };
+            }
+
+            // 6. MESURES : type ↔ label
+            if (data.mesures && Array.isArray(data.mesures)) {
+                data.mesures.forEach(m => {
+                    if (m.type && !m.label) m.label = m.sous_type ? `${m.type} - ${m.sous_type}` : m.type;
+                    if (m.label && !m.type) m.type = m.label;
+                });
+            }
+
+            // 7. ADRESSAGE : normalize equipment_id format
+            if (data.adressage && Array.isArray(data.adressage)) {
+                data.adressage.forEach(a => {
+                    if (a.equipement_id && !a.ref_usine) a.ref_usine = a.equipement_id;
+                    if (a.ref_usine && !a.equipement_id) a.equipement_id = a.ref_usine;
+                    if (a.numero_serie && !a.serie) a.serie = a.numero_serie;
+                    if (a.serie && !a.numero_serie) a.numero_serie = a.serie;
+                });
+            }
+
+            // 8. RECOMMANDATIONS : normalize strings to objects
+            if (data.recommandations && Array.isArray(data.recommandations)) {
+                data.recommandations = data.recommandations.map(r => {
+                    if (typeof r === 'string') {
+                        return { titre: r.substring(0, 60), description: r, texte: r };
+                    }
+                    if (r && !r.texte && r.description) r.texte = r.description;
+                    if (r && !r.description && r.texte) r.description = r.texte;
+                    return r;
+                });
+            }
+
+            return data;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // FIX-2: unifiedMerge — Single merge strategy for all data sources
+        // ═══════════════════════════════════════════════════════════════
+        function unifiedMerge(target, source) {
+            if (!source || typeof source !== 'object') return target;
+            if (!target || typeof target !== 'object') return { ...source };
+
+            const result = { ...target };
+
+            for (const key of Object.keys(source)) {
+                const sourceVal = source[key];
+                const targetVal = result[key];
+
+                if (sourceVal == null) continue;
+                if (key === '_metadata') continue;
+
+                if (Array.isArray(sourceVal)) {
+                    if (!Array.isArray(targetVal) || targetVal.length === 0) {
+                        result[key] = [...sourceVal];
+                    } else {
+                        result[key] = deduplicateArray(key, targetVal, sourceVal);
+                    }
+                } else if (typeof sourceVal === 'object' && typeof targetVal === 'object') {
+                    result[key] = unifiedMerge(targetVal, sourceVal);
+                } else if (sourceVal !== '' && sourceVal !== null && sourceVal !== undefined) {
+                    result[key] = sourceVal;  // LAST-WRITE-WINS for primitives
+                }
+            }
+
+            return result;
+        }
+
+        function deduplicateArray(fieldName, existing, incoming) {
+            const combined = [...existing, ...incoming];
+            let keyFn;
+            switch (fieldName) {
+                case 'equipements':
+                    keyFn = item => {
+                        if (typeof item === 'string') return item;
+                        const model = (item.modele || '').toUpperCase().replace(/-[A-Z]\d*$/, '');
+                        return `${model}|${item.role || ''}`;
+                    };
+                    break;
+                case 'adressage':
+                    keyFn = item => {
+                        if (typeof item === 'string') return item;
+                        const id = (item.equipement_id || item.ref_usine || item.adresse || '')
+                            .toUpperCase().replace(/UI0*(\d+)/i, 'UI$1');
+                        return id;
+                    };
+                    break;
+                case 'mesures':
+                    keyFn = item => {
+                        if (typeof item === 'string') return item;
+                        const type = (item.type || item.label || '').toLowerCase();
+                        const sousType = (item.sous_type || '').toLowerCase();
+                        const equipId = (item.equipement_id || '').toUpperCase();
+                        return `${type}|${sousType}|${equipId}`;
+                    };
+                    break;
+                case 'codes_defaut':
+                    keyFn = item => {
+                        if (typeof item === 'string') return item;
+                        return (item.code || '').toUpperCase();
+                    };
+                    break;
+                case 'travaux_effectues':
+                case 'travaux_prevoir':
+                    keyFn = item => {
+                        if (typeof item === 'string') return item;
+                        const text = (item.texte || item.contenu || item.titre || '').substring(0, 50).toLowerCase();
+                        return text;
+                    };
+                    break;
+                case 'reserves':
+                case 'recommandations':
+                    keyFn = item => {
+                        if (typeof item === 'string') return item.substring(0, 50).toLowerCase();
+                        const text = (item.titre || item.texte || item.description || '').substring(0, 50).toLowerCase();
+                        return text;
+                    };
+                    break;
+                default:
+                    keyFn = item => JSON.stringify(item);
+            }
+
+            const map = new Map();
+            for (const item of combined) {
+                const key = keyFn(item);
+                if (key) map.set(key, item);
+            }
+            return Array.from(map.values());
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // FIX-4: debouncedSaveExtractedData — Centralized debounced Supabase write
+        // ═══════════════════════════════════════════════════════════════
+        let _saveTimeout = null;
+        let _pendingSaveData = null;
+
+        function debouncedSaveExtractedData(data, progressOverride) {
+            _pendingSaveData = { data, progressOverride };
+
+            if (_saveTimeout) clearTimeout(_saveTimeout);
+
+            _saveTimeout = setTimeout(async () => {
+                const { data: saveData, progressOverride: prog } = _pendingSaveData;
+                _pendingSaveData = null;
+
+                if (!currentProjectId || !saveData) return;
+
+                try {
+                    const updatePayload = {
+                        extracted_data: saveData,
+                        updated_at: new Date().toISOString()
+                    };
+
+                    if (prog != null) {
+                        updatePayload.progress = Math.round(prog);
+                        if (prog >= 90) {
+                            updatePayload.completion_status = 'completed';
+                            updatePayload.completed_at = new Date().toISOString();
+                        }
+                    }
+
+                    const { error } = await db.from('projects')
+                        .update(updatePayload)
+                        .eq('id', currentProjectId);
+
+                    if (error) console.error('[debouncedSave] Error:', error);
+                    else console.log('[debouncedSave] ✅ Saved to Supabase');
+                } catch (err) {
+                    console.error('[debouncedSave] Exception:', err);
+                }
+            }, 800);
+        }
+
         // Merge incoming data into existing report data
         function mergeReportData(target, source) {
             if (!source) return;
@@ -14728,29 +14993,22 @@ INSTRUCTIONS:
                 try {
                     const completion = calculateReportCompletion(lastReportData);
                     const progressValue = Math.round(completion.percentage);
-                    
-                    const { error } = await db.from('projects')
-                        .update({ 
-                            extracted_data: lastReportData,
-                            progress: progressValue,
-                            updated_at: new Date().toISOString()
-                        })
-                        .eq('id', currentProjectId);
-                    
-                    if (error) throw error;
-                    
+
+                    // FIX-4: Use centralized debounced save
+                    debouncedSaveExtractedData(lastReportData, progressValue);
+
                     // Update progress bar
                     const progressFill = document.getElementById('reportProgressFill');
                     const progressText = document.getElementById('reportProgressText');
                     if (progressFill) progressFill.style.width = progressValue + '%';
                     if (progressText) progressText.textContent = progressValue + '%';
-                    
+
                     if (indicator) {
                         indicator.textContent = 'Enregistré ✓';
                         indicator.classList.add('success');
                         setTimeout(() => indicator.classList.remove('show'), 1500);
                     }
-                    
+
                     console.log('[AutoSave] ✅ Saved - Progress:', progressValue + '%');
                 } catch (err) {
                     console.error('[AutoSave] ❌ Error:', err);
@@ -14963,17 +15221,20 @@ INSTRUCTIONS:
             if (progressText) progressText.textContent = '100%';
             
             try {
+                // FIX-4: Direct write for completion (needs status: 'completed' immediately)
                 const { error } = await db.from('projects')
-                    .update({ 
+                    .update({
                         extracted_data: lastReportData,
                         progress: 100,
                         status: 'completed',
+                        completion_status: 'completed',
+                        completed_at: new Date().toISOString(),
                         updated_at: new Date().toISOString()
                     })
                     .eq('id', currentProjectId);
-                
+
                 if (error) throw error;
-                
+
                 updateReportFooterButtonsV12(true);
                 showNotification('Rapport complété !', 'success');
             } catch (err) {
@@ -15059,36 +15320,13 @@ INSTRUCTIONS:
             // Auto-save indicator
             showAutoSaveIndicator();
 
-            // ═══ AUTO-SAVE extracted_data AND progress with debounce ═══
+            // ═══ AUTO-SAVE extracted_data AND progress with debounce ═══  (FIX-4)
             if (currentProjectId && lastReportData) {
+                const completion = calculateReportCompletion(lastReportData);
+                debouncedSaveExtractedData(lastReportData, completion.percentage);
+                // Also save to reports table (debounced separately)
                 clearTimeout(extractedDataSaveTimeout);
                 extractedDataSaveTimeout = setTimeout(async () => {
-                    // Calculate current progress
-                    const completion = calculateReportCompletion(lastReportData);
-                    const progressValue = Math.round(completion.percentage);
-
-                    // Debug logging
-                    console.log('🔄 Auto-save:', {
-                        projectId: currentProjectId,
-                        progress: progressValue,
-                        hasExtractedData: !!lastReportData
-                    });
-
-                    // 1. Save to projects table (with progress)
-                    const { error } = await db.from('projects')
-                        .update({
-                            extracted_data: lastReportData,
-                            progress: progressValue,
-                            updated_at: new Date().toISOString()
-                        })
-                        .eq('id', currentProjectId);
-                    if (error) {
-                        console.error('[Drawer] Auto-save failed:', error);
-                    } else {
-                        console.log('✅ Saved to DB - Progress:', progressValue + '%');
-                    }
-
-                    // 2. Save to reports table
                     await saveReportData(currentProjectId, lastReportData);
                 }, 1500);
             }
@@ -15759,6 +15997,8 @@ text = text.replace(/\s*\{"type"\s*:\s*"report"[\s\S]*\}\s*$/, '').trim();
             if (!extractedData) return;
             console.log('[Extraction] 📊 Updating drawer with extraction data');
 
+            extractedData = normalizeReportData(extractedData);  // FIX-1: Normalize extraction data
+
             if (!lastReportData) {
                 lastReportData = {
                     brand: extractedData.brand || (typeof brand !== 'undefined' ? brand : 'general'),
@@ -15768,7 +16008,7 @@ text = text.replace(/\s*\{"type"\s*:\s*"report"[\s\S]*\}\s*$/, '').trim();
                 };
             }
 
-            smartMergeExtraction(lastReportData, extractedData);
+            lastReportData = unifiedMerge(lastReportData, extractedData);  // FIX-2: Unified merge
             updateDrawerPreview(lastReportData);
 
             if (completionPercentage !== undefined) {
@@ -15783,13 +16023,7 @@ text = text.replace(/\s*\{"type"\s*:\s*"report"[\s\S]*\}\s*$/, '').trim();
             }
 
             if (currentProjectId && lastReportData) {
-                db.from('projects')
-                    .update({ extracted_data: lastReportData, completion_percentage: completionPercentage || null })
-                    .eq('id', currentProjectId)
-                    .then(({ error }) => {
-                        if (error) console.warn('[Extraction] Supabase save failed:', error);
-                        else console.log('[Extraction] ✅ Saved to Supabase');
-                    });
+                debouncedSaveExtractedData(lastReportData, completionPercentage);  // FIX-4: Debounced save
             }
         }
 
@@ -16083,7 +16317,8 @@ RÈGLES:
                     const reportDataMatch = aiResponse.match(/\[REPORT_DATA\]([\s\S]*?)\[\/REPORT_DATA\]/);
                     if (reportDataMatch) {
                         try {
-                            const extractedData = JSON.parse(reportDataMatch[1].trim());
+                            let extractedData = JSON.parse(reportDataMatch[1].trim());
+                            extractedData = normalizeReportData(extractedData);  // FIX-1: Normalize chat data
 
                             // Merge with existing data
                             if (!lastReportData) {
@@ -16102,23 +16337,15 @@ RÈGLES:
                                 }
                             }
 
-                            mergeReportData(lastReportData, extractedData);
+                            lastReportData = unifiedMerge(lastReportData, extractedData);  // FIX-2: Unified merge
 
                             // Immediately update preview
                             updateDrawerPreview(lastReportData);
 
                             // ═══ PERSIST extracted_data to Supabase ═══
                             if (currentProjectId && lastReportData && Object.keys(lastReportData).length > 0) {
-                                db.from('projects')
-                                    .update({ extracted_data: lastReportData })
-                                    .eq('id', currentProjectId)
-                                    .then(({ error }) => {
-                                        if (error) {
-                                            console.error('[Assistant] Failed to save extracted_data:', error);
-                                        } else {
-                                            console.log('[Assistant] ✅ extracted_data saved to project');
-                                        }
-                                    });
+                                const completion = calculateReportCompletion(lastReportData);
+                                debouncedSaveExtractedData(lastReportData, completion.percentage);  // FIX-4: Debounced save
                             }
                         } catch (e) {
                             // Failed to parse REPORT_DATA
