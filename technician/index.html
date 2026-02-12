@@ -11357,7 +11357,16 @@ INSTRUCTIONS:
                 if (clientSigName) data.signatures.nom_client = clientSigName;
                 if (techSigName) data.signatures.nom_technicien = techSigName;
             }
-            
+
+            // R3-Fix2: Clean duplicate prefixes in resultat before export
+            if (data && data.resultat) {
+                ['status', 'label', 'description', 'conclusion'].forEach(k => {
+                    if (data.resultat[k] && typeof data.resultat[k] === 'string') {
+                        data.resultat[k] = data.resultat[k].replace(/^(Statut|Status|Conclusion|Description)\s*:\s*/i, '').trim();
+                    }
+                });
+            }
+
             return data;
         }
         
@@ -12861,6 +12870,15 @@ INSTRUCTIONS:
                 }
             }
             
+            // R3-Fix2: Clean duplicate prefixes in resultat before rendering
+            if (reportData && reportData.resultat) {
+                ['status', 'label', 'description', 'conclusion'].forEach(k => {
+                    if (reportData.resultat[k] && typeof reportData.resultat[k] === 'string') {
+                        reportData.resultat[k] = reportData.resultat[k].replace(/^(Statut|Status|Conclusion|Description)\s*:\s*/i, '').trim();
+                    }
+                });
+            }
+
             // Generate editable template HTML - v12.5
             const previewHtml = renderReportPreviewV12(reportData, completionStatus);
             previewContent.innerHTML = previewHtml;
@@ -13289,6 +13307,21 @@ INSTRUCTIONS:
             // FIX-E: Helper to clean double "kg kg" and strip " kg" for numeric fields
             const cleanKg = v => String(v).replace(/\s*kg\s*kg/gi, ' kg').replace(/\s*kg$/i, '').trim();
 
+            // R3-Fix3: Sync fluide → fluide_global FIRST (chat corrections win)
+            if (data.fluide && data.fluide_global) {
+                if (isValidFluide(data.fluide.type)) {
+                    data.fluide_global.type = data.fluide.type;
+                }
+                if (data.fluide.charge_totale) {
+                    const num = parseFloat(String(data.fluide.charge_totale).replace(/[^\d.]/g, ''));
+                    if (!isNaN(num)) data.fluide_global.charge_totale_site_kg = num;
+                }
+                if (data.fluide.charge_initiale) {
+                    const num = parseFloat(String(data.fluide.charge_initiale).replace(/[^\d.]/g, ''));
+                    if (!isNaN(num)) data.fluide_global.charge_usine_kg = num;
+                }
+            }
+
             if (data.fluide_global && typeof data.fluide_global === 'object') {
                 if (!data.fluide) data.fluide = {};
                 if (isValidFluide(data.fluide_global.type) && !data.fluide.type)
@@ -13362,15 +13395,17 @@ INSTRUCTIONS:
                 });
             }
 
-            // 5. INTERVENTION.TYPE ↔ TYPE_INTERVENTION
-            if (data.intervention && data.intervention.type && !data.type_intervention) {
+            // 5. INTERVENTION.TYPE ↔ TYPE_INTERVENTION (R3-Fix4: bidirectional, type_intervention wins)
+            if (data.intervention && data.type_intervention) {
+                // Sync: type_intervention (chat) wins over intervention.type (extraction)
+                data.intervention.type_label = data.type_intervention;
+                data.intervention.type = data.type_intervention;
+            }
+            if (data.intervention && !data.type_intervention) {
                 data.type_intervention = data.intervention.type_label || data.intervention.type;
             }
             if (data.type_intervention && !data.intervention) {
-                data.intervention = {
-                    type: data.type_intervention,
-                    type_label: data.type_intervention
-                };
+                data.intervention = { type: data.type_intervention, type_label: data.type_intervention };
             }
 
             // 6. MESURES : type ↔ label
@@ -13413,6 +13448,7 @@ INSTRUCTIONS:
             }
 
             // 9. FIX-E: Clean resultat duplicate prefixes (e.g. "Conclusion : Conclusion : ...")
+            // (Also cleaned in updateDrawerPreview and collectReportData as R3-Fix2)
             if (data.resultat && typeof data.resultat === 'object') {
                 if (data.resultat.description) {
                     data.resultat.description = data.resultat.description
@@ -13425,6 +13461,15 @@ INSTRUCTIONS:
                         .replace(/^(Conclusion\s*:\s*)+/i, '')
                         .trim();
                 }
+            }
+
+            // 10. R3-Fix6: TECHNICIEN — clean HH:MM placeholders
+            if (data.technicien) {
+                ['heure_arrivee', 'heure_depart'].forEach(k => {
+                    if (data.technicien[k] === 'HH:MM' || data.technicien[k] === 'hh:mm' || data.technicien[k] === '') {
+                        delete data.technicien[k];
+                    }
+                });
             }
 
             return data;
@@ -13451,7 +13496,7 @@ INSTRUCTIONS:
 
                 if (Array.isArray(sourceVal)) {
                     if (sourceVal.length === 0) continue;  // Don't overwrite with empty
-                    if (REPLACE_ARRAYS.has(key)) {
+                    if (REPLACE_ARRAYS.has(key) && sourceVal.some(item => item != null)) {
                         // FIX-B: Replace entirely — extraction sends the full authoritative list
                         result[key] = [...sourceVal];
                     } else if (!Array.isArray(targetVal) || targetVal.length === 0) {
