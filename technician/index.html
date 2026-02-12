@@ -9689,7 +9689,16 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
         
         // Send message
         // n8n Webhook URL
-        const WEBHOOKS = {     'copilot': 'https://cherhabil.app.n8n.cloud/webhook/fixair-copilot',     'assistant': 'https://cherhabil.app.n8n.cloud/webhook/fixair-assistant' };  function getWebhookUrl(panel) {     return WEBHOOKS[panel] || WEBHOOKS['assistant']; }
+        // n8n Webhook URL - DEV VERSION
+        const WEBHOOKS = {
+            'copilot': 'https://cherhabil.app.n8n.cloud/webhook/fixair-copilot',
+            'assistant': 'https://cherhabil.app.n8n.cloud/webhook/fixair-assistant-dev'  // DEV
+        };
+        const EXTRACTION_WEBHOOK = 'https://cherhabil.app.n8n.cloud/webhook/fixair-extraction-dev';  // DEV
+        
+        function getWebhookUrl(panel) {
+            return WEBHOOKS[panel] || WEBHOOKS['assistant'];
+        }
         
         // Session IDs will be set based on project when a project is opened
         // This ensures memory persists across page reloads for the same project
@@ -14416,6 +14425,145 @@ text = text.replace(/\s*\{"type"\s*:\s*"report"[\s\S]*\}\s*$/, '').trim();
         window.ThoughtProcessUI = ThoughtProcessUI;
         window.thoughtManager = thoughtManager;
 
+        // ═══════════════════════════════════════════════════════════════
+        // PARALLEL EXTRACTION — Calls new workflow after each message
+        // ═══════════════════════════════════════════════════════════════
+        async function triggerExtraction(chatPayload) {
+            try {
+                const allMessages = chatHistory.assistant || [];
+                const fullConversation = allMessages
+                    .filter(m => m.role === 'user' || m.role === 'assistant')
+                    .map(m => {
+                        const role = m.role === 'user' ? 'TECHNICIEN' : 'ASSISTANT';
+                        let content = m.content || '';
+                        content = content.replace(/\[REPORT_DATA\][\s\S]*?\[\/REPORT_DATA\]/g, '').trim();
+                        return `${role}: ${content}`;
+                    })
+                    .join('\n\n');
+
+                const extractionPayload = {
+                    project_id: chatPayload.project_id,
+                    user_id: currentUserId,
+                    chat_id: chatPayload.chat_id,
+                    session_id: chatPayload.session_id,
+                    brand: chatPayload.brand,
+                    brand_name: chatPayload.brand_name,
+                    message: chatPayload.message,
+                    message_count: allMessages.length,
+                    panel: 'assistant',
+                    full_conversation: fullConversation,
+                    current_report_data: lastReportData || {},
+                    timestamp: new Date().toISOString()
+                };
+
+                console.log('[Extraction] 🔄 Triggering parallel extraction...');
+
+                const response = await fetch(EXTRACTION_WEBHOOK, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(extractionPayload)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('[Extraction] ✅ Got extraction result');
+                    if (result.extracted_data) {
+                        handleExtractionResult(result.extracted_data, result.completion_percentage);
+                    }
+                } else {
+                    console.warn('[Extraction] ⚠️ Extraction failed:', response.status);
+                }
+            } catch (e) {
+                console.warn('[Extraction] ⚠️ Extraction error (non-blocking):', e.message);
+            }
+        }
+
+        function handleExtractionResult(extractedData, completionPercentage) {
+            if (!extractedData) return;
+            console.log('[Extraction] 📊 Updating drawer with extraction data');
+
+            if (!lastReportData) {
+                lastReportData = {
+                    brand: extractedData.brand || (typeof brand !== 'undefined' ? brand : 'general'),
+                    brand_key: extractedData.brand_key || brand || 'general',
+                    status: 'en_cours',
+                    date: new Date().toLocaleDateString('fr-FR')
+                };
+            }
+
+            smartMergeExtraction(lastReportData, extractedData);
+            updateDrawerPreview(lastReportData);
+
+            if (completionPercentage !== undefined) {
+                const progressFill = document.getElementById('reportProgressFill');
+                const progressText = document.getElementById('reportProgressText');
+                const headerProgress = document.getElementById('reportHeaderProgress');
+                if (progressFill && progressText && headerProgress) {
+                    headerProgress.style.display = 'flex';
+                    progressFill.style.width = completionPercentage + '%';
+                    progressText.textContent = completionPercentage + '%';
+                }
+            }
+
+            if (currentProjectId && lastReportData) {
+                db.from('projects')
+                    .update({ extracted_data: lastReportData, completion_percentage: completionPercentage || null })
+                    .eq('id', currentProjectId)
+                    .then(({ error }) => {
+                        if (error) console.warn('[Extraction] Supabase save failed:', error);
+                        else console.log('[Extraction] ✅ Saved to Supabase');
+                    });
+            }
+        }
+
+        function smartMergeExtraction(target, source) {
+            if (!source || typeof source !== 'object') return;
+            for (const key of Object.keys(source)) {
+                const sourceVal = source[key];
+                const targetVal = target[key];
+                if (sourceVal === null || sourceVal === undefined) continue;
+
+                if (Array.isArray(sourceVal)) {
+                    switch (key) {
+                        case 'equipements':
+                            target[key] = deduplicateBy([...(targetVal || []), ...sourceVal], item => (item.id || item.modele || '').toLowerCase());
+                            break;
+                        case 'adressage':
+                            target[key] = deduplicateBy([...(targetVal || []), ...sourceVal], item => item.equipement_id || item.adresse || '');
+                            break;
+                        case 'mesures':
+                            target[key] = deduplicateBy([...(targetVal || []), ...sourceVal], item => `${item.type || ''}|${item.sous_type || ''}|${item.equipement_id || ''}`);
+                            break;
+                        case 'travaux_effectues':
+                        case 'tableaux':
+                        case 'reserves':
+                        case 'recommandations':
+                        case 'travaux_prevoir':
+                        case 'listes':
+                            target[key] = sourceVal;
+                            break;
+                        default:
+                            target[key] = sourceVal;
+                    }
+                } else if (typeof sourceVal === 'object' && !Array.isArray(sourceVal)) {
+                    if (!target[key] || typeof target[key] !== 'object') target[key] = {};
+                    smartMergeExtraction(target[key], sourceVal);
+                } else {
+                    target[key] = sourceVal;
+                }
+            }
+        }
+
+        function deduplicateBy(array, keyFn) {
+            const seen = new Map();
+            for (const item of array) {
+                const key = keyFn(item);
+                if (!key) seen.set(Math.random().toString(), item);
+                else if (!seen.has(key) || JSON.stringify(item).length > JSON.stringify(seen.get(key)).length) seen.set(key, item);
+            }
+            return Array.from(seen.values());
+        }
+
         // Send message to n8n
         async function sendMsg(panel) {
             const input = document.getElementById(panel + 'Input');
@@ -14620,6 +14768,11 @@ RÈGLES:
                 
                 // Get the right webhook based on panel (copilot vs assistant)
                 const webhookUrl = getWebhookUrl(panel);
+
+                // ═══ PARALLEL EXTRACTION: Fire extraction workflow (non-blocking) ═══
+                if (panel === 'assistant') {
+                    triggerExtraction(payload);
+                }
 
                 // Call n8n webhook
                 const response = await fetch(webhookUrl, {
@@ -16884,10 +17037,20 @@ RÈGLES:
                 const userId = await getCurrentUserId();
                 if (!userId || userId.startsWith('demo-')) return false;
                 
+                // ═══ OWNER BYPASS ═══
+                const OWNER_IDS = ['d5baabf1-147a-4ee5-a07a-8f80212fbc9a'];
+                if (OWNER_IDS.includes(userId)) {
+                    console.log('[Freemium] 👑 Owner detected - PRO access granted');
+                    const usage = getFreemiumUsage();
+                    usage.isPro = true;
+                    saveFreemiumUsage(usage);
+                    return true;
+                }
+                
                 // Check users table for subscription_tier
                 const { data, error } = await db
                     .from('users')
-                    .select('subscription_tier, subscription_expires')
+                    .select('subscription_tier')
                     .eq('id', userId)
                     .single();
                 
@@ -16895,13 +17058,13 @@ RÈGLES:
                 
                 // Check if subscription is active
                 const isPro = data.subscription_tier === 'pro' || data.subscription_tier === 'enterprise';
-                const isExpired = data.subscription_expires && new Date(data.subscription_expires) < new Date();
                 
                 // Update local cache
                 const usage = getFreemiumUsage();
-                usage.isPro = isPro && !isExpired;
+                usage.isPro = isPro;
                 saveFreemiumUsage(usage);
                 
+                console.log('[Freemium] Subscription check:', isPro ? 'PRO ✅' : 'FREE');
                 return usage.isPro;
             } catch (e) {
                 console.warn('[Freemium] Error checking subscription:', e);
@@ -16915,6 +17078,11 @@ RÈGLES:
             
             // Pro users don't need tracking (but we still track for analytics)
             if (usage.isPro) return { allowed: true, remaining: 999 };
+            
+            // ═══ OWNER BYPASS ═══
+            if (currentUserId === 'd5baabf1-147a-4ee5-a07a-8f80212fbc9a') {
+                return { allowed: true, remaining: 999 };
+            }
             
             const key = panel === 'copilot' ? 'copilotChats' : 'assistantChats';
             const limit = panel === 'copilot' ? FREEMIUM_CONFIG.freeCopilotChats : FREEMIUM_CONFIG.freeAssistantChats;
@@ -16941,6 +17109,10 @@ RÈGLES:
         function canSendChat(panel) {
             const usage = getFreemiumUsage();
             if (usage.isPro) return { allowed: true, remaining: 999 };
+            // ═══ OWNER BYPASS ═══
+            if (currentUserId === 'd5baabf1-147a-4ee5-a07a-8f80212fbc9a') {
+                return { allowed: true, remaining: 999 };
+            }
             
             const key = panel === 'copilot' ? 'copilotChats' : 'assistantChats';
             const limit = panel === 'copilot' ? FREEMIUM_CONFIG.freeCopilotChats : FREEMIUM_CONFIG.freeAssistantChats;
@@ -16956,6 +17128,8 @@ RÈGLES:
         
         // Check if user can use a Pro feature
         function canUseProFeature(feature) {
+            // ═══ OWNER BYPASS ═══
+            if (currentUserId === 'd5baabf1-147a-4ee5-a07a-8f80212fbc9a') return true;
             const usage = getFreemiumUsage();
             return usage.isPro;
         }
@@ -17207,7 +17381,7 @@ RÈGLES:
             
             try {
                 // Get user's referral data
-                const { data, error } = await sb
+                const { data, error } = await db
                     .from('users')
                     .select('referral_code, total_referrals, bonus_queries, is_ambassador')
                     .eq('id', currentUser.id)
@@ -17258,7 +17432,7 @@ RÈGLES:
             
             try {
                 // Check if user already has a code
-                const { data, error } = await sb
+                const { data, error } = await db
                     .from('users')
                     .select('referral_code')
                     .eq('id', currentUser.id)
@@ -17280,7 +17454,7 @@ RÈGLES:
                 const newCode = baseName + Math.floor(1000 + Math.random() * 9000);
                 
                 // Save to database
-                const { error: updateError } = await sb
+                const { error: updateError } = await db
                     .from('users')
                     .update({ referral_code: newCode })
                     .eq('id', currentUser.id);
