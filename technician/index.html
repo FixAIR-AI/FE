@@ -12816,6 +12816,10 @@ INSTRUCTIONS:
             
             if (!previewContent) return;
             
+            // Clear undo/redo stacks when loading new content
+            drawerUndoStack = [];
+            drawerRedoStack = [];
+            
             // Always hide empty state - we show editable template instead
             if (emptyState) emptyState.style.display = 'none';
             previewContent.style.display = 'block';
@@ -12845,6 +12849,9 @@ INSTRUCTIONS:
             
             // Initialize v12.5 features (drag-drop, auto-save, etc.)
             initDrawerV12Features();
+            
+            // Save initial state for undo (so user can always undo to starting point)
+            setTimeout(() => drawerSaveState(), 100);
             
             // Update footer buttons based on completion status
             const isCompleted = reportData.status === 'completed' || completionStatus?.percentage >= 100;
@@ -14020,6 +14027,114 @@ INSTRUCTIONS:
         let drawerAutoSaveTimeout = null;
         let reportIsCompleted = false;
         
+        // Undo/Redo system
+        let drawerUndoStack = [];
+        let drawerRedoStack = [];
+        const DRAWER_MAX_UNDO = 50;
+        
+        // Save current state to undo stack
+        function drawerSaveState() {
+            const doc = document.getElementById('rptDoc');
+            if (!doc) return;
+            
+            const state = doc.innerHTML;
+            
+            // Don't save if identical to last state
+            if (drawerUndoStack.length > 0 && drawerUndoStack[drawerUndoStack.length - 1] === state) {
+                return;
+            }
+            
+            drawerUndoStack.push(state);
+            if (drawerUndoStack.length > DRAWER_MAX_UNDO) {
+                drawerUndoStack.shift();
+            }
+            
+            // Clear redo stack when new action is taken
+            drawerRedoStack = [];
+            
+            console.log('[Undo] State saved, stack size:', drawerUndoStack.length);
+        }
+        
+        // Undo last action
+        function drawerUndo() {
+            if (drawerUndoStack.length === 0) {
+                console.log('[Undo] Nothing to undo');
+                return;
+            }
+            
+            const doc = document.getElementById('rptDoc');
+            if (!doc) return;
+            
+            // Save current state to redo stack
+            drawerRedoStack.push(doc.innerHTML);
+            
+            // Restore previous state
+            const prevState = drawerUndoStack.pop();
+            doc.innerHTML = prevState;
+            
+            // Reinitialize event listeners
+            initDrawerV12Features();
+            
+            // Save to database
+            drawerAutoSave();
+            
+            console.log('[Undo] Restored state, remaining:', drawerUndoStack.length);
+            toast('Action annulée');
+        }
+        
+        // Redo last undone action
+        function drawerRedo() {
+            if (drawerRedoStack.length === 0) {
+                console.log('[Redo] Nothing to redo');
+                return;
+            }
+            
+            const doc = document.getElementById('rptDoc');
+            if (!doc) return;
+            
+            // Save current state to undo stack
+            drawerUndoStack.push(doc.innerHTML);
+            
+            // Restore redo state
+            const nextState = drawerRedoStack.pop();
+            doc.innerHTML = nextState;
+            
+            // Reinitialize event listeners
+            initDrawerV12Features();
+            
+            // Save to database
+            drawerAutoSave();
+            
+            console.log('[Redo] Restored state, remaining redo:', drawerRedoStack.length);
+            toast('Action rétablie');
+        }
+        
+        // Initialize keyboard shortcuts for drawer
+        function initDrawerKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                // Only work when drawer is open
+                const drawer = document.getElementById('reportDrawer');
+                if (!drawer || !drawer.classList.contains('open')) return;
+                
+                // Ctrl+Z or Cmd+Z = Undo
+                if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+                    e.preventDefault();
+                    drawerUndo();
+                }
+                
+                // Ctrl+Y or Cmd+Shift+Z = Redo
+                if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+                    e.preventDefault();
+                    drawerRedo();
+                }
+            });
+            
+            console.log('[Drawer] Keyboard shortcuts initialized (Ctrl+Z, Ctrl+Y)');
+        }
+        
+        // Call this on page load
+        document.addEventListener('DOMContentLoaded', initDrawerKeyboardShortcuts);
+        
         function renderReportPreviewV12(data, completionStatus) {
             if (!data || Object.keys(data).length === 0) {
                 return '';
@@ -14308,13 +14423,53 @@ INSTRUCTIONS:
             
             // Init drag & drop on all drag handles
             doc.querySelectorAll('.drag-handle').forEach(handle => {
-                handle.addEventListener('mousedown', drawerStartDrag);
-                handle.addEventListener('touchstart', drawerStartDrag, { passive: false });
+                handle.addEventListener('mousedown', (e) => {
+                    drawerSaveState(); // Save state before drag
+                    drawerStartDrag(e);
+                });
+                handle.addEventListener('touchstart', (e) => {
+                    drawerSaveState();
+                    drawerStartDrag(e);
+                }, { passive: false });
             });
             
             // Init auto-save on all editable elements
             doc.querySelectorAll('[contenteditable="true"]').forEach(el => {
-                el.addEventListener('blur', drawerAutoSave);
+                // Save state when user starts editing
+                el.addEventListener('focus', () => {
+                    drawerSaveState();
+                });
+                
+                // Handle blur - auto-save and check for empty lines
+                el.addEventListener('blur', (e) => {
+                    const block = e.target.closest('.b');
+                    const content = e.target.textContent.trim();
+                    
+                    // Check if this is a deletable block (not h1, h2, or table)
+                    const blockType = block?.className || '';
+                    const isDeletable = block && 
+                        !blockType.includes('b-h1') && 
+                        !blockType.includes('b-h2') && 
+                        !blockType.includes('b-table') &&
+                        !block.querySelector('.rpt-signature-section');
+                    
+                    // Remove empty blocks (except headers, tables, signatures)
+                    if (isDeletable && !content) {
+                        // Check if this is a placeholder field that should remain
+                        const dataField = e.target.dataset.field || block.dataset.field || '';
+                        const isPlaceholder = dataField.includes('technicien') || 
+                                             dataField.includes('observation') ||
+                                             dataField.includes('resultat');
+                        
+                        if (!isPlaceholder) {
+                            console.log('[Drawer] Removing empty block:', dataField);
+                            block.remove();
+                        }
+                    }
+                    
+                    drawerAutoSave();
+                });
+                
                 el.addEventListener('keydown', drawerHandleBlockKey);
             });
             
@@ -14434,6 +14589,7 @@ INSTRUCTIONS:
             
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
+                drawerSaveState(); // Save state before adding new block
                 const newType = ['bullet', 'num', 'arrow'].includes(block.dataset.type) ? block.dataset.type : 'p';
                 const newBlock = drawerCreateBlock(newType);
                 block.parentNode.insertBefore(newBlock, block.nextSibling);
@@ -14443,6 +14599,7 @@ INSTRUCTIONS:
             
             if (e.key === 'Backspace' && text === '') {
                 e.preventDefault();
+                drawerSaveState(); // Save state before deleting block
                 const prev = block.previousElementSibling;
                 block.remove();
                 if (prev?.querySelector('.b-content')) prev.querySelector('.b-content').focus();
@@ -14479,6 +14636,7 @@ INSTRUCTIONS:
         
         // Table functions
         function drawerAddTableRow(btn) {
+            drawerSaveState(); // Save state before change
             const wrapper = btn.closest('.b-table');
             const tbody = wrapper?.querySelector('tbody');
             const cols = wrapper?.querySelectorAll('thead th').length || 3;
@@ -14488,6 +14646,7 @@ INSTRUCTIONS:
                 for (let i = 0; i < cols; i++) {
                     const td = document.createElement('td');
                     td.contentEditable = true;
+                    td.addEventListener('focus', drawerSaveState);
                     td.addEventListener('blur', drawerAutoSave);
                     tr.appendChild(td);
                 }
@@ -14497,6 +14656,7 @@ INSTRUCTIONS:
         }
         
         function drawerAddTableCol(btn) {
+            drawerSaveState(); // Save state before change
             const wrapper = btn.closest('.b-table');
             const table = wrapper?.querySelector('table');
             if (!table) return;
@@ -14504,6 +14664,7 @@ INSTRUCTIONS:
             const th = document.createElement('th');
             th.contentEditable = true;
             th.textContent = 'Nouvelle';
+            th.addEventListener('focus', drawerSaveState);
             th.addEventListener('blur', drawerAutoSave);
             table.querySelector('thead tr')?.appendChild(th);
             
@@ -14518,6 +14679,7 @@ INSTRUCTIONS:
         }
         
         function drawerRemoveTableRow(btn) {
+            drawerSaveState(); // Save state before change
             const wrapper = btn.closest('.b-table');
             const tbody = wrapper?.querySelector('tbody');
             const rows = tbody?.querySelectorAll('tr');
@@ -14528,6 +14690,7 @@ INSTRUCTIONS:
         }
         
         function drawerRemoveTableCol(btn) {
+            drawerSaveState(); // Save state before change
             const wrapper = btn.closest('.b-table');
             const table = wrapper?.querySelector('table');
             if (!table) return;
@@ -17403,6 +17566,7 @@ RÈGLES:
         }
         
         function saveSignature() {
+            drawerSaveState(); // Save state before adding signature
             const canvas = document.getElementById('signatureCanvas');
             const signatureData = canvas.toDataURL('image/png');
             
@@ -17480,6 +17644,7 @@ RÈGLES:
         }
         
         function addPhotoToReportDirect(photoData, caption = 'Photo') {
+            drawerSaveState(); // Save state before adding photo
             if (!window.reportPhotos) window.reportPhotos = [];
 
             window.reportPhotos.push({
@@ -17494,6 +17659,7 @@ RÈGLES:
         }
         
         function removePhoto(index) {
+            drawerSaveState(); // Save state before removing photo
             if (!window.reportPhotos) return;
             window.reportPhotos.splice(index, 1);
             refreshReportPreview();
