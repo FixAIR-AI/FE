@@ -9433,8 +9433,11 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                                         const reportDataMatch = msg.content.match(/\[REPORT_DATA\]([\s\S]*?)\[\/REPORT_DATA\]/);
                                         if (reportDataMatch) {
                                             const reportData = JSON.parse(reportDataMatch[1].trim());
-                                            lastReportData = reportData;
-                                            updateDrawerPreview(reportData);
+                                            if (!lastReportData) {
+                                                lastReportData = { brand: brand, brand_key: brand, status: 'en_cours', date: new Date().toLocaleDateString('fr-FR') };
+                                            }
+                                            mergeReportData(lastReportData, reportData);
+                                            updateDrawerPreview(lastReportData);
                                         }
                                     } catch (e) {
                                         // Could not parse saved REPORT_DATA
@@ -9446,11 +9449,16 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                     }
 
                     // ═══ REFRESH DRAWER ON ASSISTANT MODE ═══
-                    if (m === 'assistant' && lastReportData && Object.keys(lastReportData).length > 0) {
-                        setTimeout(() => {
-                            updateDrawerPreview(lastReportData);
-                            console.log('[Mode] ✅ Drawer refreshed on assistant mode');
-                        }, 150);
+                    if (m === 'assistant') {
+                        if (!lastReportData || Object.keys(lastReportData).length === 0) {
+                            buildPartialReport();
+                        }
+                        if (lastReportData && Object.keys(lastReportData).length > 0) {
+                            setTimeout(() => {
+                                updateDrawerPreview(lastReportData);
+                                console.log('[Mode] ✅ Drawer refreshed on assistant mode');
+                            }, 150);
+                        }
                     }
                     return;
                 } else {
@@ -9536,7 +9544,10 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
         function openReport() {
             document.getElementById('reportSheet').classList.add('open');
             document.getElementById('reportBackdrop').classList.add('show');
-            
+
+            // Always rebuild report data from chat history (not just when empty)
+            buildPartialReport();
+
             // Always show editable template with current data (or empty)
             updateDrawerPreview(lastReportData || {});
         }
@@ -9677,16 +9688,8 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
         }
         
         // Send message
-        // n8n Webhook URL - DEV VERSION
-        const WEBHOOKS = {
-            'copilot': 'https://cherhabil.app.n8n.cloud/webhook/fixair-copilot',
-            'assistant': 'https://cherhabil.app.n8n.cloud/webhook/fixair-assistant-dev'  // DEV
-        };
-        const EXTRACTION_WEBHOOK = 'https://cherhabil.app.n8n.cloud/webhook/fixair-extraction-dev';  // DEV
-
-        function getWebhookUrl(panel) {
-            return WEBHOOKS[panel] || WEBHOOKS['assistant'];
-        }
+        // n8n Webhook URL
+        const WEBHOOKS = {     'copilot': 'https://cherhabil.app.n8n.cloud/webhook/fixair-copilot',     'assistant': 'https://cherhabil.app.n8n.cloud/webhook/fixair-assistant' };  function getWebhookUrl(panel) {     return WEBHOOKS[panel] || WEBHOOKS['assistant']; }
         
         // Session IDs will be set based on project when a project is opened
         // This ensures memory persists across page reloads for the same project
@@ -10468,8 +10471,11 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                                         const reportDataMatch = msg.content.match(/\[REPORT_DATA\]([\s\S]*?)\[\/REPORT_DATA\]/);
                                         if (reportDataMatch) {
                                             const reportData = JSON.parse(reportDataMatch[1].trim());
-                                            lastReportData = reportData;
-                                            updateDrawerPreview(reportData);
+                                            if (!lastReportData) {
+                                                lastReportData = { brand: brand, brand_key: brand, status: 'en_cours', date: new Date().toLocaleDateString('fr-FR') };
+                                            }
+                                            mergeReportData(lastReportData, reportData);
+                                            updateDrawerPreview(lastReportData);
                                         }
                                     } catch (e) {
                                         // Could not parse saved REPORT_DATA
@@ -10483,6 +10489,10 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                 }
 
                 // ═══ ENSURE DRAWER POPULATED AFTER MESSAGES LOAD ═══
+                // Build partial report from chat history if no report data found
+                if (!lastReportData || Object.keys(lastReportData).length === 0) {
+                    buildPartialReport();
+                }
                 setTimeout(() => {
                     if (lastReportData && Object.keys(lastReportData).length > 0) {
                         updateDrawerPreview(lastReportData);
@@ -11091,18 +11101,11 @@ INSTRUCTIONS:
         
         // Main export function - shows export menu
         function exportReportPDF() {
-            showExportMenu();
+            exportReport('word');
         }
         
         // Show export format selection menu
         function showExportMenu() {
-            // Check if user has enterprise mode enabled
-            const userProfile = window.currentUserProfile || {};
-            const companyProfile = window.currentCompanyProfile || {};
-            // TODO: Revert to production check before merge:
-            // const hasEnterprise = companyProfile.plan === 'enterprise' || userProfile.enterprise_enabled;
-            const hasEnterprise = true; // TESTING: Always show Enterprise option
-            
             // Create modal for export options
             const modal = document.createElement('div');
             modal.className = 'export-modal';
@@ -11113,21 +11116,14 @@ INSTRUCTIONS:
                         <button class="export-modal-close" onclick="this.closest('.export-modal').remove()">×</button>
                     </div>
                     <div class="export-options">
-                        <button class="export-option primary" onclick="exportReport('word', 'standard'); this.closest('.export-modal').remove();">
+                        <button class="export-option primary" onclick="exportReport('word'); this.closest('.export-modal').remove();">
                             <span class="export-icon">📄</span>
                             <span class="export-label">
-                                <strong>Word Standard</strong>
-                                <small>Format FixAIR</small>
+                                <strong>Word (.docx)</strong>
+                                <small>Rapport professionnel</small>
                             </span>
                         </button>
-                        <button class="export-option ${hasEnterprise ? 'enterprise' : 'locked'}" onclick="${hasEnterprise ? "exportReport('word', 'enterprise'); this.closest('.export-modal').remove();" : 'showEnterpriseUpsell()'}">
-                            <span class="export-icon">${hasEnterprise ? '🏢' : '🔒'}</span>
-                            <span class="export-label">
-                                <strong>Word Enterprise</strong>
-                                <small>${hasEnterprise ? 'Logo & couleurs client' : 'Offre Enterprise'}</small>
-                            </span>
-                        </button>
-                        <button class="export-option secondary" onclick="exportReport('pdf', 'standard'); this.closest('.export-modal').remove();">
+                        <button class="export-option secondary" onclick="exportReport('pdf'); this.closest('.export-modal').remove();">
                             <span class="export-icon">📋</span>
                             <span class="export-label">
                                 <strong>PDF</strong>
@@ -11138,68 +11134,21 @@ INSTRUCTIONS:
                 </div>
             `;
             document.body.appendChild(modal);
-            
+
             // Close on backdrop click
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) modal.remove();
             });
         }
         
-        // Show enterprise upsell modal
-        function showEnterpriseUpsell() {
-            document.querySelector('.export-modal')?.remove();
-            const modal = document.createElement('div');
-            modal.className = 'export-modal';
-            modal.innerHTML = `
-                <div class="export-modal-content" style="max-width: 400px;">
-                    <div class="export-modal-header">
-                        <h3>🏢 Offre Enterprise</h3>
-                        <button class="export-modal-close" onclick="this.closest('.export-modal').remove()">×</button>
-                    </div>
-                    <div style="padding: 20px; text-align: center;">
-                        <p style="margin-bottom: 15px; color: var(--text-dim);">Personnalisez vos rapports avec :</p>
-                        <ul style="text-align: left; margin: 15px 0; padding-left: 25px; color: var(--text);">
-                            <li>✓ Page de garde avec votre logo</li>
-                            <li>✓ Couleurs de votre entreprise</li>
-                            <li>✓ En-tête/pied de page personnalisés</li>
-                            <li>✓ Photo du site en couverture</li>
-                        </ul>
-                        <p style="font-size: 24px; font-weight: bold; color: var(--assistant); margin: 20px 0;">50€/utilisateur/mois</p>
-                        <a href="mailto:contact@fixair.ai?subject=Offre%20Enterprise" class="export-option primary" style="display: block; text-decoration: none; margin-top: 15px;">
-                            <span>Contactez-nous</span>
-                        </a>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
-            modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
-        }
-        
         // Export report in specified format
-        async function exportReport(format, mode = 'standard') {
+        async function exportReport(format) {
             const data = collectReportData();
             if (!data) {
                 toast('Aucun rapport à exporter');
                 return;
             }
-            
-            // Add export mode to data
-            data.exportMode = mode;
-            
-            // For enterprise mode, add company branding info
-            if (mode === 'enterprise') {
-                const companyProfile = window.currentCompanyProfile || {};
-                data.enterprise = {
-                    name: companyProfile.name || data.technicien?.entreprise || 'Entreprise',
-                    logo: companyProfile.logo_url || null,
-                    color: companyProfile.brand_color || '#1B4D4D', // Default EQWATTEUR teal
-                    address: companyProfile.address || '',
-                    phone: companyProfile.phone || '',
-                    email: companyProfile.email || '',
-                    siret: companyProfile.siret || ''
-                };
-            }
-            
+
             if (format === 'word') {
                 await generateWord(data);
             } else {
@@ -11235,130 +11184,161 @@ INSTRUCTIONS:
         // WORD EXPORT - Professional .docx Generation v2.0
         // ═══════════════════════════════════════════════════════════════
         
-        // FixAIR Logo as base64 PNG (orange flame icon)
-        const FIXAIR_LOGO_BASE64 = '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';
-        
+        // FixAIR Logo as base64 PNG (logo-email.png)
+        const FIXAIR_LOGO_BASE64 = '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';
+
         async function generateWord(data) {
             try {
                 toast('Génération du document Word...');
-                
-                const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, 
+
+                const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
                         WidthType, AlignmentType, BorderStyle, HeadingLevel, Header, Footer,
                         ImageRun, PageBreak, ShadingType, TableLayoutType,
                         VerticalAlign, convertInchesToTwip, PageNumber } = window.docx;
-                
-                // Brand colors
-                const brandKey = data.brand_key || 'general';
-                const brandColors = {
-                    carrier: 'F97316', daikin: '00A0E9', mitsubishi: 'E60012',
-                    toshiba: 'FF0000', panasonic: '0046AD', lg: 'A50034',
-                    samsung: '1428A0', hitachi: 'E60012', fujitsu: 'ED1C24',
-                    general: 'F97316'
-                };
-                const primaryColor = brandColors[brandKey] || brandColors.general;
-                
-                // Status colors and labels
-                const statusConfig = {
-                    conforme: { color: '22C55E', label: '✓ CONFORME', bg: 'DCFCE7' },
-                    non_conforme: { color: 'EF4444', label: '✗ NON CONFORME', bg: 'FEE2E2' },
-                    en_cours: { color: 'EAB308', label: '◐ EN COURS', bg: 'FEF9C3' }
-                };
-                
+
+                // ═══ DESIGN CONSTANTS ═══
+                const CORAL = 'E85D4A';
+                const DARK = '2D3436';
+                const TEAL = '2D5F5D';
+                const GRAY = '888888';
+                const BODY = '333333';
+                const TBL_BORDER_COLOR = 'CCCCCC';
+                const TBL_ALT = 'F5F5F5';
+
                 // Helper: Convert base64 to Uint8Array
-                const base64ToUint8Array = (base64) => {
+                const b64toU8 = (base64) => {
                     const raw = atob(base64.replace(/^data:image\/\w+;base64,/, ''));
                     const arr = new Uint8Array(raw.length);
                     for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
                     return arr;
                 };
-                
-                // Helper: Section heading with accent bar (defined later with docPrimaryColor)
-                
-                // Helper: Key-value with proper styling
-                const kvRow = (label, value, options = {}) => {
-                    if (!value) return null;
+
+                const logoBytes = b64toU8(FIXAIR_LOGO_BASE64);
+                const noBorder = { style: BorderStyle.NONE };
+                const noBorders = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder };
+                const tblBorder = { style: BorderStyle.SINGLE, size: 1, color: TBL_BORDER_COLOR };
+
+                // ═══ DATA MAPPING ═══
+                const subtitle = (data.type_intervention || 'DIAGNOSTIC').toUpperCase();
+                const brand = (data.marque || data.equipement?.marque || data.brand || '').toUpperCase();
+                const customerName = data.client?.nom || data.nom_client || data.client?.societe || '';
+                const customerAddress = data.client?.adresse || data.adresse || [data.site?.adresse, data.site?.ville].filter(Boolean).join(', ') || '';
+                const reference = data.reference || data.numero_rapport || '';
+                const dateStr = data.date || new Date().toLocaleDateString('fr-FR');
+                const rawTechName = data.technicien?.nom || data.nom_technicien || data.technician_name || '';
+                const techName = (rawTechName === 'FixAIR Assistant') ? '' : rawTechName;
+                const companyName = data.technicien?.entreprise || data.entreprise || data.company_name || '';
+                const companyAddr = data.technicien?.adresse || data.adresse || '';
+
+                // ═══ HELPERS ═══
+                let sectionCounter = 0;
+
+                // Section heading: numbered, bold 14pt, teal, no border
+                const sectionHeading = (text) => {
+                    sectionCounter++;
                     return new Paragraph({
-                        children: [
-                            new TextRun({ text: label, bold: true, size: 20, font: 'Calibri', color: '374151' }),
-                            new TextRun({ text: ':  ', size: 20, font: 'Calibri', color: '6B7280' }),
-                            new TextRun({ text: String(value), size: 20, font: 'Calibri', color: options.color || '111827' })
-                        ],
-                        spacing: { after: 80 },
-                        indent: { left: options.indent || 0 }
+                        children: [new TextRun({ text: `${sectionCounter}. ${text.toUpperCase()}`, bold: true, size: 28, font: 'Calibri', color: TEAL })],
+                        spacing: { before: 600, after: 200 }
                     });
                 };
-                
-                // Helper: Professional table with borders
-                const createTable = (headers, rows, options = {}) => {
-                    const borderStyle = { style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB' };
-                    
+
+                // Subsection heading: bold 12pt, teal, underlined
+                const subsectionHeading = (prefix, text) => new Paragraph({
+                    children: [new TextRun({ text: `${prefix} ${text}`, bold: true, size: 24, font: 'Calibri', color: TEAL, underline: {} })],
+                    spacing: { before: 280, after: 120 }
+                });
+
+                // Sub-subsection heading: bold 11pt, teal, no underline
+                const subsubHeading = (text) => new Paragraph({
+                    children: [new TextRun({ text: text, bold: true, size: 22, font: 'Calibri', color: TEAL })],
+                    spacing: { before: 240, after: 80 }
+                });
+
+                // Body text: 10.5pt, #333333, 1.3 line spacing
+                const bodyText = (text) => {
+                    if (!text) return null;
+                    return new Paragraph({
+                        children: [new TextRun({ text: String(text), size: 21, font: 'Calibri', color: BODY })],
+                        spacing: { after: 120, line: 312 }
+                    });
+                };
+
+                // Bullet with bold keyword + colon + regular text
+                const bulletItem = (keyword, description) => new Paragraph({
+                    children: [
+                        new TextRun({ text: keyword + ' : ', bold: true, size: 21, font: 'Calibri', color: BODY }),
+                        new TextRun({ text: String(description || '—'), size: 21, font: 'Calibri', color: BODY })
+                    ],
+                    spacing: { after: 120, line: 312 },
+                    bullet: { level: 0 }
+                });
+
+                // Key-value as bullet
+                const kvRow = (label, value) => {
+                    if (!value) return null;
+                    return bulletItem(label, String(value));
+                };
+
+                // Professional table with teal headers
+                const createTable = (headers, rows) => {
                     const headerRow = new TableRow({
                         children: headers.map(h => new TableCell({
-                            children: [new Paragraph({ 
-                                children: [new TextRun({ text: h, bold: true, size: 18, font: 'Calibri', color: '374151' })],
+                            children: [new Paragraph({
+                                children: [new TextRun({ text: h, bold: true, size: 20, font: 'Calibri', color: 'FFFFFF' })],
                                 alignment: AlignmentType.LEFT
                             })],
-                            shading: { fill: 'F3F4F6', type: ShadingType.CLEAR },
-                            borders: { top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle },
+                            shading: { fill: TEAL, type: ShadingType.CLEAR },
+                            borders: { top: tblBorder, bottom: tblBorder, left: tblBorder, right: tblBorder },
                             margins: { top: 80, bottom: 80, left: 120, right: 120 }
                         })),
                         tableHeader: true
                     });
-                    
+
                     const dataRows = rows.map((row, idx) => new TableRow({
                         children: row.map(cell => new TableCell({
-                            children: [new Paragraph({ 
-                                children: [new TextRun({ text: String(cell || '—'), size: 18, font: 'Calibri' })]
+                            children: [new Paragraph({
+                                children: [new TextRun({ text: String(cell || '—'), size: 21, font: 'Calibri', color: BODY })]
                             })],
-                            borders: { top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle },
+                            borders: { top: tblBorder, bottom: tblBorder, left: tblBorder, right: tblBorder },
                             margins: { top: 60, bottom: 60, left: 120, right: 120 },
-                            shading: idx % 2 === 1 ? { fill: 'FAFAFA', type: ShadingType.CLEAR } : undefined
+                            shading: idx % 2 === 1 ? { fill: TBL_ALT, type: ShadingType.CLEAR } : undefined
                         }))
                     }));
-                    
+
                     return new Table({
                         rows: [headerRow, ...dataRows],
                         width: { size: 100, type: WidthType.PERCENTAGE },
                         layout: TableLayoutType.FIXED
                     });
                 };
-                
-                // Helper: Two-column info box
+
+                // Two-column info box
                 const infoBox = (leftItems, rightItems) => {
-                    const borderStyle = { style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB' };
-                    
-                    const leftContent = leftItems.filter(Boolean).map(item => 
+                    const formatItems = (items) => items.filter(Boolean).map(item =>
                         new Paragraph({
                             children: [
-                                new TextRun({ text: item.label + ': ', bold: true, size: 18, font: 'Calibri', color: '6B7280' }),
-                                new TextRun({ text: String(item.value || '—'), size: 18, font: 'Calibri' })
+                                new TextRun({ text: item.label + ' : ', bold: true, size: 21, font: 'Calibri', color: TEAL }),
+                                new TextRun({ text: String(item.value || '—'), size: 21, font: 'Calibri', color: BODY })
                             ],
-                            spacing: { after: 60 }
+                            spacing: { after: 80, line: 312 }
                         })
                     );
-                    
-                    const rightContent = rightItems.filter(Boolean).map(item =>
-                        new Paragraph({
-                            children: [
-                                new TextRun({ text: item.label + ': ', bold: true, size: 18, font: 'Calibri', color: '6B7280' }),
-                                new TextRun({ text: String(item.value || '—'), size: 18, font: 'Calibri' })
-                            ],
-                            spacing: { after: 60 }
-                        })
-                    );
-                    
+
+                    const left = formatItems(leftItems);
+                    const right = formatItems(rightItems);
+
                     return new Table({
                         rows: [new TableRow({
                             children: [
                                 new TableCell({
-                                    children: leftContent.length ? leftContent : [new Paragraph({})],
-                                    borders: { top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle },
+                                    children: left.length ? left : [new Paragraph({})],
+                                    borders: { top: tblBorder, bottom: tblBorder, left: tblBorder, right: tblBorder },
                                     margins: { top: 120, bottom: 120, left: 160, right: 160 },
                                     width: { size: 50, type: WidthType.PERCENTAGE }
                                 }),
                                 new TableCell({
-                                    children: rightContent.length ? rightContent : [new Paragraph({})],
-                                    borders: { top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle },
+                                    children: right.length ? right : [new Paragraph({})],
+                                    borders: { top: tblBorder, bottom: tblBorder, left: tblBorder, right: tblBorder },
                                     margins: { top: 120, bottom: 120, left: 160, right: 160 },
                                     width: { size: 50, type: WidthType.PERCENTAGE }
                                 })
@@ -11367,261 +11347,220 @@ INSTRUCTIONS:
                         width: { size: 100, type: WidthType.PERCENTAGE }
                     });
                 };
-                
-                // ═══ BUILD DOCUMENT ═══
-                const children = [];
-                const isEnterprise = data.exportMode === 'enterprise' && data.enterprise;
-                
-                // Override primary color for enterprise mode
-                const docPrimaryColor = isEnterprise 
-                    ? (data.enterprise.color || '#1B4D4D').replace('#', '') 
-                    : primaryColor;
-                
-                // Helper: Section heading with accent bar (uses docPrimaryColor for enterprise support)
-                const sectionHeading = (text) => new Paragraph({
-                    children: [
-                        new TextRun({ text: '█ ', color: docPrimaryColor, size: 24 }),
-                        new TextRun({ text: text.toUpperCase(), bold: true, size: 22, font: 'Calibri' })
-                    ],
-                    spacing: { before: 400, after: 150 }
-                });
-                
-                // ═══ ENTERPRISE COVER PAGE ═══
-                if (isEnterprise) {
-                    const ent = data.enterprise;
-                    
-                    // Large enterprise name/logo at top
-                    children.push(new Paragraph({
-                        children: [new TextRun({ 
-                            text: ent.name.toUpperCase(), 
-                            bold: true, 
-                            size: 56, 
-                            font: 'Calibri', 
-                            color: docPrimaryColor 
-                        })],
-                        alignment: AlignmentType.CENTER,
-                        spacing: { before: 600, after: 200 }
-                    }));
-                    
-                    // Decorative line
-                    children.push(new Paragraph({
-                        children: [new TextRun({ 
-                            text: '━'.repeat(40), 
-                            color: docPrimaryColor,
-                            size: 20
-                        })],
-                        alignment: AlignmentType.CENTER,
-                        spacing: { after: 400 }
-                    }));
-                    
-                    // Main title
-                    children.push(new Paragraph({
-                        children: [new TextRun({ 
-                            text: "RAPPORT D'INTERVENTION", 
-                            bold: true, 
-                            size: 44, 
-                            font: 'Calibri', 
-                            color: '111827' 
-                        })],
-                        alignment: AlignmentType.CENTER,
-                        spacing: { after: 200 }
-                    }));
-                    
-                    // Brand/equipment
-                    children.push(new Paragraph({
-                        children: [new TextRun({ 
-                            text: data.brand || 'Climatisation', 
-                            size: 32, 
-                            font: 'Calibri', 
-                            color: '6B7280' 
-                        })],
-                        alignment: AlignmentType.CENTER,
-                        spacing: { after: 400 }
-                    }));
-                    
-                    // Site photo placeholder or site address
-                    const photos = data.photos || window.reportPhotos || [];
-                    if (photos.length > 0 && photos[0].data && photos[0].data.startsWith('data:image')) {
-                        try {
-                            children.push(new Paragraph({
-                                children: [new ImageRun({
-                                    data: base64ToUint8Array(photos[0].data),
-                                    transformation: { width: 450, height: 300 }
-                                })],
-                                alignment: AlignmentType.CENTER,
-                                spacing: { after: 300 }
-                            }));
-                        } catch (e) { console.error('Cover photo error:', e); }
-                    }
-                    
-                    // Site info box
-                    const coverBorder = { style: BorderStyle.SINGLE, size: 2, color: docPrimaryColor };
-                    children.push(new Table({
-                        rows: [new TableRow({
-                            children: [new TableCell({
-                                children: [
-                                    new Paragraph({
-                                        children: [new TextRun({ text: 'SITE', bold: true, size: 20, font: 'Calibri', color: docPrimaryColor })],
-                                        alignment: AlignmentType.CENTER,
-                                        spacing: { after: 100 }
-                                    }),
-                                    new Paragraph({
-                                        children: [new TextRun({ text: data.site?.adresse || '', size: 22, font: 'Calibri' })],
-                                        alignment: AlignmentType.CENTER
-                                    }),
-                                    new Paragraph({
-                                        children: [new TextRun({ text: data.site?.ville || '', size: 22, font: 'Calibri' })],
-                                        alignment: AlignmentType.CENTER,
-                                        spacing: { after: 100 }
-                                    }),
-                                    new Paragraph({
-                                        children: [new TextRun({ text: `Réf: ${data.reference || ''}`, size: 18, font: 'Calibri', color: '6B7280' })],
-                                        alignment: AlignmentType.CENTER
-                                    })
-                                ],
-                                borders: { top: coverBorder, bottom: coverBorder, left: coverBorder, right: coverBorder },
-                                margins: { top: 200, bottom: 200, left: 300, right: 300 },
-                                shading: { fill: 'F9FAFB', type: ShadingType.CLEAR }
-                            })]
-                        })],
-                        width: { size: 80, type: WidthType.PERCENTAGE },
-                        alignment: AlignmentType.CENTER
-                    }));
-                    
-                    // Date at bottom
-                    children.push(new Paragraph({
-                        children: [new TextRun({ 
-                            text: data.date || new Date().toLocaleDateString('fr-FR'), 
-                            size: 24, 
-                            font: 'Calibri', 
-                            color: '6B7280' 
-                        })],
-                        alignment: AlignmentType.CENTER,
-                        spacing: { before: 400 }
-                    }));
-                    
-                    // Enterprise footer info on cover
-                    const entFooter = [ent.address, ent.phone, ent.email].filter(Boolean).join('  •  ');
-                    if (entFooter) {
-                        children.push(new Paragraph({
-                            children: [new TextRun({ 
-                                text: entFooter, 
-                                size: 16, 
-                                font: 'Calibri', 
-                                color: '9CA3AF' 
-                            })],
-                            alignment: AlignmentType.CENTER,
-                            spacing: { before: 600 }
-                        }));
-                    }
-                    
-                    // Page break after cover
-                    children.push(new Paragraph({ children: [new PageBreak()] }));
-                }
-                
-                // ═══ HEADER WITH LOGOS (Standard mode or after Enterprise cover) ═══
-                // Logo row: FixAIR left, Enterprise logo right
-                const logoTable = new Table({
-                    rows: [new TableRow({
-                        children: [
-                            new TableCell({
-                                children: [
-                                    new Paragraph({
-                                        children: isEnterprise ? [
-                                            new TextRun({ text: data.enterprise.name, bold: true, size: 28, font: 'Calibri', color: docPrimaryColor })
-                                        ] : [
-                                            new ImageRun({
-                                                data: base64ToUint8Array(FIXAIR_LOGO_BASE64),
-                                                transformation: { width: 50, height: 50 }
-                                            }),
-                                            new TextRun({ text: '  FixAIR', bold: true, size: 36, font: 'Calibri', color: docPrimaryColor })
-                                        ],
-                                        alignment: AlignmentType.LEFT
-                                    })
-                                ],
-                                borders: { top: {style: BorderStyle.NONE}, bottom: {style: BorderStyle.NONE}, left: {style: BorderStyle.NONE}, right: {style: BorderStyle.NONE} },
-                                width: { size: 50, type: WidthType.PERCENTAGE }
-                            }),
-                            new TableCell({
-                                children: [
-                                    new Paragraph({
-                                        children: [
-                                            new TextRun({ 
-                                                text: isEnterprise ? (data.technicien?.entreprise || '') : (data.enterprise_name || '[LOGO ENTREPRISE]'), 
-                                                size: 20, 
-                                                font: 'Calibri', 
-                                                color: '9CA3AF', 
-                                                italics: !isEnterprise && !data.enterprise_name 
-                                            })
-                                        ],
-                                        alignment: AlignmentType.RIGHT
-                                    })
-                                ],
-                                borders: { top: {style: BorderStyle.NONE}, bottom: {style: BorderStyle.NONE}, left: {style: BorderStyle.NONE}, right: {style: BorderStyle.NONE} },
-                                width: { size: 50, type: WidthType.PERCENTAGE },
-                                verticalAlign: VerticalAlign.CENTER
-                            })
-                        ]
-                    })],
-                    width: { size: 100, type: WidthType.PERCENTAGE }
-                });
-                children.push(logoTable);
-                
-                // Title
-                children.push(new Paragraph({
-                    children: [new TextRun({ text: "RAPPORT D'INTERVENTION", bold: true, size: 32, font: 'Calibri', color: '111827' })],
-                    alignment: AlignmentType.CENTER,
-                    spacing: { before: 300, after: 100 }
-                }));
-                
-                // Brand subtitle
-                children.push(new Paragraph({
-                    children: [new TextRun({ text: data.brand || 'Multi-marques', size: 24, font: 'Calibri', color: docPrimaryColor })],
+
+                // ══════════════════════════════════════════
+                // ═══ SECTION 1: COVER PAGE ═══
+                // ══════════════════════════════════════════
+                const coverChildren = [];
+
+                // Top spacer
+                coverChildren.push(new Paragraph({ spacing: { before: 2400 } }));
+
+                // Title: RAPPORT D'INTERVENTION — 28pt bold charcoal centered
+                coverChildren.push(new Paragraph({
+                    children: [new TextRun({ text: "RAPPORT D'INTERVENTION", bold: true, size: 56, font: 'Calibri', color: DARK })],
                     alignment: AlignmentType.CENTER,
                     spacing: { after: 200 }
                 }));
-                
-                // Reference info bar
-                const refInfo = [];
-                if (data.reference) refInfo.push(`Réf: ${data.reference}`);
-                if (data.date) refInfo.push(`Date: ${data.date}`);
-                if (data.type_intervention) refInfo.push(data.type_intervention);
-                
-                if (refInfo.length > 0) {
-                    children.push(new Paragraph({
-                        children: [new TextRun({ text: refInfo.join('   •   '), size: 20, font: 'Calibri', color: '6B7280' })],
+
+                // Subtitle: Type d'intervention — 22pt bold coral centered
+                coverChildren.push(new Paragraph({
+                    children: [new TextRun({ text: subtitle, bold: true, size: 44, font: 'Calibri', color: CORAL })],
+                    alignment: AlignmentType.CENTER,
+                    spacing: { after: 150 }
+                }));
+
+                // Brand — 14pt bold charcoal centered
+                if (brand) {
+                    coverChildren.push(new Paragraph({
+                        children: [new TextRun({ text: brand, bold: true, size: 28, font: 'Calibri', color: DARK })],
                         alignment: AlignmentType.CENTER,
-                        spacing: { after: 200 }
+                        spacing: { after: 300 }
                     }));
                 }
-                
-                // Status badge
-                if (data.status && statusConfig[data.status]) {
-                    const sc = statusConfig[data.status];
-                    children.push(new Paragraph({
-                        children: [new TextRun({ 
-                            text: `  ${sc.label}  `,
-                            bold: true, size: 24, font: 'Calibri', color: sc.color
+
+                // Customer box — bordered rectangle, centered
+                const boxBorder = { style: BorderStyle.SINGLE, size: 2, color: DARK };
+                const customerBoxContent = [];
+
+                if (customerName) {
+                    customerBoxContent.push(new Paragraph({
+                        children: [new TextRun({ text: customerName, bold: true, size: 36, font: 'Calibri', color: DARK })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 80 }
+                    }));
+                }
+                if (customerAddress) {
+                    customerBoxContent.push(new Paragraph({
+                        children: [new TextRun({ text: customerAddress, size: 24, font: 'Calibri', color: BODY })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 120 }
+                    }));
+                }
+                if (reference || dateStr) {
+                    customerBoxContent.push(new Paragraph({
+                        children: [new TextRun({ text: `Réf: ${reference} | ${dateStr}`, italics: true, size: 22, font: 'Calibri', color: GRAY })],
+                        alignment: AlignmentType.CENTER
+                    }));
+                }
+
+                if (customerBoxContent.length > 0) {
+                    coverChildren.push(new Table({
+                        rows: [new TableRow({
+                            children: [new TableCell({
+                                children: customerBoxContent,
+                                borders: { top: boxBorder, bottom: boxBorder, left: boxBorder, right: boxBorder },
+                                margins: { top: 200, bottom: 200, left: 300, right: 300 }
+                            })]
                         })],
-                        alignment: AlignmentType.CENTER,
-                        spacing: { after: 300 },
-                        shading: { fill: sc.bg, type: ShadingType.CLEAR }
+                        width: { size: 70, type: WidthType.PERCENTAGE },
+                        alignment: AlignmentType.CENTER
                     }));
                 }
-                
+
+                // Spacer before technician — push "Préparé par:" toward bottom
+                coverChildren.push(new Paragraph({ spacing: { before: 3600 } }));
+
+                // Technician: "Préparé par:" italic + name bold, left-aligned
+                coverChildren.push(new Paragraph({
+                    children: [
+                        new TextRun({ text: 'Préparé par: ', italics: true, size: 22, font: 'Calibri', color: BODY }),
+                        new TextRun({ text: techName, bold: true, size: 22, font: 'Calibri', color: BODY })
+                    ],
+                    alignment: AlignmentType.LEFT
+                }));
+
+                // Cover header: logo left, brand|ref|date right
+                const noTableBorders = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder, insideHorizontal: noBorder, insideVertical: noBorder };
+                const coverHeader = new Header({
+                    children: [new Table({
+                        rows: [new TableRow({
+                            children: [
+                                new TableCell({
+                                    children: [new Paragraph({
+                                        children: [new ImageRun({
+                                            data: logoBytes,
+                                            transformation: { width: 110, height: 22 }
+                                        })]
+                                    })],
+                                    borders: noBorders,
+                                    width: { size: 40, type: WidthType.PERCENTAGE }
+                                }),
+                                new TableCell({
+                                    children: [new Paragraph({
+                                        children: [new TextRun({ text: [brand, `Réf: ${reference}`, dateStr].filter(Boolean).join(' | '), size: 18, font: 'Calibri', color: GRAY })],
+                                        alignment: AlignmentType.RIGHT
+                                    })],
+                                    borders: noBorders,
+                                    width: { size: 60, type: WidthType.PERCENTAGE },
+                                    verticalAlign: VerticalAlign.CENTER
+                                })
+                            ]
+                        })],
+                        borders: noTableBorders,
+                        width: { size: 100, type: WidthType.PERCENTAGE }
+                    })]
+                });
+
+                // Cover footer: company name + address
+                const coverFooterText = [companyName, companyAddr].filter(Boolean).join(', ');
+                const coverFooter = new Footer({
+                    children: [
+                        new Paragraph({
+                            children: [new TextRun({ text: coverFooterText, size: 20, font: 'Calibri', color: GRAY })],
+                            alignment: AlignmentType.LEFT,
+                            border: { top: { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC', space: 4 } }
+                        })
+                    ]
+                });
+
+                // ══════════════════════════════════════════
+                // ═══ SECTION 2: CONTENT PAGES ═══
+                // ══════════════════════════════════════════
+                const contentChildren = [];
+
+                // Content header: small logo left, brand|ref|date right
+                const contentHeader = new Header({
+                    children: [new Table({
+                        rows: [new TableRow({
+                            children: [
+                                new TableCell({
+                                    children: [new Paragraph({
+                                        children: [new ImageRun({
+                                            data: logoBytes,
+                                            transformation: { width: 85, height: 17 }
+                                        })]
+                                    })],
+                                    borders: noBorders,
+                                    width: { size: 35, type: WidthType.PERCENTAGE }
+                                }),
+                                new TableCell({
+                                    children: [new Paragraph({
+                                        children: [new TextRun({ text: [brand, `Réf: ${reference}`, dateStr].filter(Boolean).join(' | '), size: 18, font: 'Calibri', color: GRAY })],
+                                        alignment: AlignmentType.RIGHT
+                                    })],
+                                    borders: noBorders,
+                                    width: { size: 65, type: WidthType.PERCENTAGE },
+                                    verticalAlign: VerticalAlign.CENTER
+                                })
+                            ]
+                        })],
+                        borders: noTableBorders,
+                        width: { size: 100, type: WidthType.PERCENTAGE }
+                    })]
+                });
+
+                // Content footer: 3 columns (tech name | company + address | page)
+                const contentFooterCompany = [companyName, companyAddr].filter(Boolean).join(', ');
+                const contentFooter = new Footer({
+                    children: [
+                        new Table({
+                            rows: [new TableRow({
+                                children: [
+                                    new TableCell({
+                                        children: [new Paragraph({
+                                            children: [new TextRun({ text: techName, bold: true, size: 18, font: 'Calibri', color: BODY })],
+                                            alignment: AlignmentType.LEFT
+                                        })],
+                                        borders: noBorders,
+                                        width: { size: 33, type: WidthType.PERCENTAGE }
+                                    }),
+                                    new TableCell({
+                                        children: [new Paragraph({
+                                            children: [new TextRun({ text: contentFooterCompany, size: 18, font: 'Calibri', color: BODY })],
+                                            alignment: AlignmentType.CENTER
+                                        })],
+                                        borders: noBorders,
+                                        width: { size: 34, type: WidthType.PERCENTAGE }
+                                    }),
+                                    new TableCell({
+                                        children: [new Paragraph({
+                                            children: [
+                                                new TextRun({ text: 'Page ', size: 18, font: 'Calibri', color: BODY }),
+                                                new TextRun({ children: [PageNumber.CURRENT], size: 18, font: 'Calibri', color: BODY })
+                                            ],
+                                            alignment: AlignmentType.RIGHT
+                                        })],
+                                        borders: noBorders,
+                                        width: { size: 33, type: WidthType.PERCENTAGE }
+                                    })
+                                ]
+                            })],
+                            borders: noTableBorders,
+                            width: { size: 100, type: WidthType.PERCENTAGE }
+                        })
+                    ]
+                });
+
                 // ═══ RÉSUMÉ ═══
                 if (data.resume) {
-                    children.push(sectionHeading('Résumé'));
-                    children.push(new Paragraph({
-                        children: [new TextRun({ text: data.resume, size: 20, font: 'Calibri' })],
-                        spacing: { after: 200 },
-                        shading: { fill: 'F9FAFB', type: ShadingType.CLEAR }
-                    }));
+                    contentChildren.push(sectionHeading('Résumé'));
+                    contentChildren.push(bodyText(data.resume));
                 }
-                
-                // ═══ SITE & CLIENT (Two columns) ═══
-                children.push(sectionHeading('Site & Client'));
-                children.push(infoBox(
+
+                // ═══ SITE & CLIENT ═══
+                contentChildren.push(sectionHeading('Site & Client'));
+                contentChildren.push(infoBox(
                     [
                         data.site?.numero_affaire && { label: 'N° Affaire', value: data.site.numero_affaire },
                         data.site?.adresse && { label: 'Adresse', value: data.site.adresse },
@@ -11634,11 +11573,11 @@ INSTRUCTIONS:
                         data.client?.reference && { label: 'Réf. Client', value: data.client.reference }
                     ]
                 ));
-                
+
                 // ═══ DATES ═══
                 if (data.dates && (data.dates.debut_date || data.dates.fin_date)) {
-                    children.push(sectionHeading('Dates Intervention'));
-                    children.push(infoBox(
+                    contentChildren.push(sectionHeading('Dates Intervention'));
+                    contentChildren.push(infoBox(
                         [
                             data.dates.debut_date && { label: 'Début', value: `${data.dates.debut_date}${data.dates.debut_heure ? ' à ' + data.dates.debut_heure : ''}` }
                         ],
@@ -11647,11 +11586,11 @@ INSTRUCTIONS:
                         ]
                     ));
                 }
-                
-                // ═══ SYSTÈME & FLUIDE (Two columns) ═══
+
+                // ═══ ÉQUIPEMENT ═══
                 if ((data.systeme && Object.values(data.systeme).some(v => v)) || (data.fluide && Object.values(data.fluide).some(v => v))) {
-                    children.push(sectionHeading('Équipement'));
-                    children.push(infoBox(
+                    contentChildren.push(sectionHeading('Équipement'));
+                    contentChildren.push(infoBox(
                         [
                             data.systeme?.type && { label: 'Type', value: data.systeme.type },
                             data.systeme?.modele && { label: 'Modèle', value: data.systeme.modele },
@@ -11667,135 +11606,124 @@ INSTRUCTIONS:
                         ]
                     ));
                 }
-                
+
                 // ═══ ADRESSAGE UNITÉS ═══
                 if (data.adressage && data.adressage.length > 0) {
-                    children.push(sectionHeading('Adressage Unités'));
-                    children.push(createTable(
+                    contentChildren.push(sectionHeading('Adressage Unités'));
+                    contentChildren.push(new Paragraph({ spacing: { before: 400 } }));
+                    contentChildren.push(createTable(
                         ['Réf. Usine', 'N° Série', 'Adresse', 'Désignation', 'Commentaire'],
                         data.adressage.map(a => [a.ref_usine || '', a.serie || '', a.adresse || '', a.designation || '', a.commentaire || ''])
                     ));
                 }
-                
+
                 // ═══ CODES DÉFAUT ═══
                 if (data.codes_defaut && data.codes_defaut.length > 0) {
-                    children.push(sectionHeading('Codes Défaut'));
-                    children.push(createTable(
+                    contentChildren.push(sectionHeading('Codes Défaut'));
+                    contentChildren.push(createTable(
                         ['Code', 'Description', 'Résolution'],
                         data.codes_defaut.map(c => [c.code, c.description, c.resolution])
                     ));
                 }
-                
+
                 // ═══ SÉCURITÉ ═══
                 if (data.securite && (data.securite.etat || data.securite.risques)) {
-                    children.push(sectionHeading('Sécurité'));
+                    contentChildren.push(sectionHeading('Sécurité'));
                     if (data.securite.etat) {
                         const etatColors = { 'OK': '22C55E', 'À surveiller': 'F59E0B', 'Critique': 'EF4444' };
-                        children.push(new Paragraph({
+                        contentChildren.push(new Paragraph({
                             children: [
-                                new TextRun({ text: 'État: ', bold: true, size: 20, font: 'Calibri' }),
-                                new TextRun({ text: data.securite.etat, size: 20, font: 'Calibri', color: etatColors[data.securite.etat] || '374151' })
+                                new TextRun({ text: 'État : ', bold: true, size: 21, font: 'Calibri', color: BODY }),
+                                new TextRun({ text: data.securite.etat, bold: true, size: 21, font: 'Calibri', color: etatColors[data.securite.etat] || BODY })
                             ],
-                            spacing: { after: 80 }
+                            spacing: { after: 120, line: 312 }
                         }));
                     }
                     if (data.securite.risques) {
-                        children.push(new Paragraph({
-                            children: [new TextRun({ text: 'Risques identifiés:', bold: true, size: 20, font: 'Calibri', color: 'EF4444' })],
-                            spacing: { after: 60 }
-                        }));
-                        children.push(new Paragraph({
-                            children: [new TextRun({ text: data.securite.risques, size: 20, font: 'Calibri' })],
-                            spacing: { after: 100 },
-                            shading: { fill: 'FEF2F2', type: ShadingType.CLEAR }
-                        }));
+                        contentChildren.push(subsubHeading('Risques identifiés'));
+                        contentChildren.push(bodyText(data.securite.risques));
                     }
                 }
-                
+
                 // ═══ MESURES ═══
                 if (data.mesures && data.mesures.length > 0) {
-                    children.push(sectionHeading('Mesures'));
-                    children.push(createTable(
+                    contentChildren.push(sectionHeading('Mesures'));
+                    contentChildren.push(new Paragraph({ spacing: { before: 400 } }));
+                    contentChildren.push(createTable(
                         ['Paramètre', 'Valeur', 'Observation'],
                         data.mesures.map(m => [m.label, `${m.valeur}${m.unite ? ' ' + m.unite : ''}`, m.note || ''])
                     ));
                 }
-                
+
                 // ═══ FONCTIONNEMENT ═══
                 if (data.fonctionnement && (data.fonctionnement.heures_compresseur || data.fonctionnement.nb_demarrages)) {
-                    children.push(sectionHeading('Fonctionnement'));
-                    children.push(infoBox(
+                    contentChildren.push(sectionHeading('Fonctionnement'));
+                    contentChildren.push(infoBox(
                         [data.fonctionnement.heures_compresseur && { label: 'Heures compresseur', value: data.fonctionnement.heures_compresseur + ' h' }],
                         [data.fonctionnement.nb_demarrages && { label: 'Nb démarrages', value: data.fonctionnement.nb_demarrages }]
                     ));
                 }
-                
+
                 // ═══ TRAVAUX EFFECTUÉS ═══
                 if (data.travaux_effectues && data.travaux_effectues.length > 0) {
-                    children.push(sectionHeading('Travaux Effectués'));
+                    contentChildren.push(sectionHeading('Travaux Effectués'));
                     data.travaux_effectues.forEach(t => {
                         const statusIcon = t.status === 'done' ? '✓' : (t.status === 'error' ? '✗' : '○');
-                        const statusColor = t.status === 'done' ? '22C55E' : (t.status === 'error' ? 'EF4444' : '6B7280');
-                        children.push(new Paragraph({
+                        const statusColor = t.status === 'done' ? '22C55E' : (t.status === 'error' ? 'EF4444' : GRAY);
+                        contentChildren.push(new Paragraph({
                             children: [
-                                new TextRun({ text: statusIcon + '  ', color: statusColor, size: 22, font: 'Calibri' }),
-                                new TextRun({ text: t.texte, size: 20, font: 'Calibri' })
+                                new TextRun({ text: statusIcon + '  ', color: statusColor, size: 21, font: 'Calibri' }),
+                                new TextRun({ text: t.texte, size: 21, font: 'Calibri', color: BODY })
                             ],
-                            spacing: { after: 80 },
+                            spacing: { after: 120, line: 312 },
                             indent: { left: 200 }
                         }));
                     });
                 }
-                
+
                 // ═══ TRAVAUX À PRÉVOIR ═══
                 if (data.travaux_prevoir && data.travaux_prevoir.length > 0) {
-                    children.push(sectionHeading('Travaux à Prévoir'));
+                    contentChildren.push(sectionHeading('Travaux à Prévoir'));
                     data.travaux_prevoir.forEach(t => {
-                        const prioColors = { urgent: 'EF4444', normal: 'F59E0B', optionnel: '6B7280' };
+                        const prioColors = { urgent: 'EF4444', normal: 'F59E0B', optionnel: GRAY };
                         const prioLabels = { urgent: 'URGENT', normal: 'Normal', optionnel: 'Optionnel' };
-                        children.push(new Paragraph({
+                        contentChildren.push(new Paragraph({
                             children: [
-                                new TextRun({ text: '→  ', color: '6B7280', size: 20, font: 'Calibri' }),
-                                new TextRun({ text: t.texte, size: 20, font: 'Calibri' }),
-                                t.priorite ? new TextRun({ text: `  [${prioLabels[t.priorite] || t.priorite}]`, size: 18, font: 'Calibri', color: prioColors[t.priorite] || '6B7280', bold: t.priorite === 'urgent' }) : null
+                                new TextRun({ text: '→  ', color: GRAY, size: 21, font: 'Calibri' }),
+                                new TextRun({ text: t.texte, size: 21, font: 'Calibri', color: BODY }),
+                                t.priorite ? new TextRun({ text: `  [${prioLabels[t.priorite] || t.priorite}]`, size: 18, font: 'Calibri', color: prioColors[t.priorite] || GRAY, bold: t.priorite === 'urgent' }) : null
                             ].filter(Boolean),
-                            spacing: { after: 80 },
+                            spacing: { after: 120, line: 312 },
                             indent: { left: 200 }
                         }));
                     });
                 }
-                
+
                 // ═══ PIÈCES ═══
                 if (data.pieces && data.pieces.length > 0) {
-                    children.push(sectionHeading('Pièces Utilisées'));
-                    children.push(createTable(
+                    contentChildren.push(sectionHeading('Pièces Utilisées'));
+                    contentChildren.push(createTable(
                         ['Référence', 'Désignation', 'Qté'],
                         data.pieces.map(p => [p.reference, p.designation, p.quantite])
                     ));
                 }
-                
+
                 // ═══ RAPPORT TECHNICIEN ═══
                 if (data.rapport_technicien) {
-                    children.push(sectionHeading('Rapport Technicien'));
-                    children.push(new Paragraph({
-                        children: [new TextRun({ text: data.rapport_technicien, size: 20, font: 'Calibri' })],
-                        spacing: { after: 200 }
-                    }));
+                    contentChildren.push(sectionHeading('Rapport Technicien'));
+                    contentChildren.push(bodyText(data.rapport_technicien));
                 }
-                
+
                 // ═══ REMARQUES ═══
                 if (data.remarques) {
-                    children.push(sectionHeading('Remarques'));
-                    children.push(new Paragraph({
-                        children: [new TextRun({ text: data.remarques, size: 20, font: 'Calibri' })],
-                        spacing: { after: 200 }
-                    }));
+                    contentChildren.push(sectionHeading('Remarques'));
+                    contentChildren.push(bodyText(data.remarques));
                 }
-                
+
                 // ═══ TESTS MISE EN SERVICE ═══
                 if (data.tests && (data.tests.pression_test_bar || data.tests.duree_test_heures || data.tests.valeur_vacuometre_mbar)) {
-                    children.push(sectionHeading('Tests Mise en Service'));
-                    children.push(infoBox(
+                    contentChildren.push(sectionHeading('Tests Mise en Service'));
+                    contentChildren.push(infoBox(
                         [
                             data.tests.pression_test_bar && { label: 'Pression test', value: data.tests.pression_test_bar + ' bar' },
                             data.tests.duree_test_heures && { label: 'Durée test', value: data.tests.duree_test_heures + ' h' }
@@ -11805,11 +11733,11 @@ INSTRUCTIONS:
                         ]
                     ));
                 }
-                
+
                 // ═══ TUYAUTERIES ═══
                 if (data.tuyauteries && (data.tuyauteries.longueur_totale_m || data.tuyauteries.denivele_oc_ui_m || data.tuyauteries.appoint_calcule_kg)) {
-                    children.push(sectionHeading('Tuyauteries'));
-                    children.push(infoBox(
+                    contentChildren.push(sectionHeading('Tuyauteries'));
+                    contentChildren.push(infoBox(
                         [
                             data.tuyauteries.longueur_totale_m && { label: 'Longueur totale', value: data.tuyauteries.longueur_totale_m + ' m' },
                             data.tuyauteries.denivele_oc_ui_m && { label: 'Dénivelé UE-UI', value: data.tuyauteries.denivele_oc_ui_m + ' m' }
@@ -11819,20 +11747,20 @@ INSTRUCTIONS:
                         ]
                     ));
                 }
-                
+
                 // ═══ ÉLECTRIQUE ═══
                 if (data.electrique && (data.electrique.calibre_disjoncteur || data.electrique.section_cable)) {
-                    children.push(sectionHeading('Électrique'));
-                    children.push(infoBox(
+                    contentChildren.push(sectionHeading('Électrique'));
+                    contentChildren.push(infoBox(
                         [data.electrique.calibre_disjoncteur && { label: 'Calibre disjoncteur', value: data.electrique.calibre_disjoncteur }],
                         [data.electrique.section_cable && { label: 'Section câble', value: data.electrique.section_cable }]
                     ));
                 }
-                
+
                 // ═══ RELEVÉS UNITÉ EXTÉRIEURE ═══
                 if (data.releves_ue && (data.releves_ue.pd1_bar || data.releves_ue.ps_bar || data.releves_ue.ta_celsius || data.releves_ue.freq_inv1_hz)) {
-                    children.push(sectionHeading('Relevés Unité Extérieure'));
-                    children.push(infoBox(
+                    contentChildren.push(sectionHeading('Relevés Unité Extérieure'));
+                    contentChildren.push(infoBox(
                         [
                             data.releves_ue.pd1_bar && { label: 'HP (Pd1)', value: data.releves_ue.pd1_bar + ' bar' },
                             data.releves_ue.ps_bar && { label: 'BP (Ps)', value: data.releves_ue.ps_bar + ' bar' }
@@ -11843,20 +11771,20 @@ INSTRUCTIONS:
                         ]
                     ));
                 }
-                
+
                 // ═══ RELEVÉS UNITÉS INTÉRIEURES ═══
                 if (data.releves_ui && data.releves_ui.length > 0) {
-                    children.push(sectionHeading('Relevés Unités Intérieures'));
-                    children.push(createTable(
+                    contentChildren.push(sectionHeading('Relevés Unités Intérieures'));
+                    contentChildren.push(createTable(
                         ['Unité', 'T° Soufflage', 'T° Reprise', 'Delta'],
                         data.releves_ui.map(ui => [ui.nom || '', ui.temp_soufflage || '', ui.temp_reprise || '', ui.delta || ''])
                     ));
                 }
-                
+
                 // ═══ CERFA FLUIDES FRIGORIGÈNES ═══
                 if (data.cerfa && (data.cerfa.fluide_total_charge_kg || data.cerfa.fluide_total_recupere_kg || data.cerfa.attestation_capacite)) {
-                    children.push(sectionHeading('CERFA Fluides Frigorigènes'));
-                    children.push(infoBox(
+                    contentChildren.push(sectionHeading('CERFA Fluides Frigorigènes'));
+                    contentChildren.push(infoBox(
                         [
                             data.cerfa.fluide_total_charge_kg && { label: 'Fluide chargé', value: data.cerfa.fluide_total_charge_kg + ' kg' },
                             data.cerfa.fluide_total_recupere_kg && { label: 'Fluide récupéré', value: data.cerfa.fluide_total_recupere_kg + ' kg' }
@@ -11866,54 +11794,50 @@ INSTRUCTIONS:
                         ]
                     ));
                 }
-                
+
                 // ═══ RÉSERVES ═══
                 if (data.reserves && data.reserves.length > 0) {
-                    children.push(sectionHeading('Réserves / Alertes'));
+                    contentChildren.push(sectionHeading('Réserves / Alertes'));
                     data.reserves.forEach(r => {
                         const isWarning = r.type === 'danger';
-                        children.push(new Paragraph({
+                        contentChildren.push(new Paragraph({
                             children: [
-                                new TextRun({ text: isWarning ? '⚠ ' : '! ', size: 22, color: isWarning ? 'EF4444' : 'F59E0B', font: 'Calibri' }),
-                                new TextRun({ text: (r.titre || 'Attention') + ': ', bold: true, size: 20, font: 'Calibri', color: isWarning ? 'EF4444' : 'F59E0B' }),
-                                new TextRun({ text: r.texte, size: 20, font: 'Calibri' })
+                                new TextRun({ text: isWarning ? '⚠ ' : '! ', size: 21, color: isWarning ? 'EF4444' : 'F59E0B', font: 'Calibri' }),
+                                new TextRun({ text: (r.titre || 'Attention') + ' : ', bold: true, size: 21, font: 'Calibri', color: isWarning ? 'EF4444' : 'F59E0B' }),
+                                new TextRun({ text: r.texte, size: 21, font: 'Calibri', color: BODY })
                             ],
-                            spacing: { after: 100 },
-                            shading: { fill: isWarning ? 'FEF2F2' : 'FFFBEB', type: ShadingType.CLEAR }
+                            spacing: { after: 120, line: 312 }
                         }));
                     });
                 }
-                
+
                 // ═══ RÉSULTAT ═══
                 if (data.resultat) {
-                    children.push(sectionHeading('Résultat'));
+                    contentChildren.push(sectionHeading('Résultat'));
                     const resConfig = {
                         resolu: { color: '22C55E', bg: 'DCFCE7', label: '✓ PROBLÈME RÉSOLU' },
                         en_attente: { color: 'F59E0B', bg: 'FEF9C3', label: '◐ EN ATTENTE' },
                         non_resolu: { color: 'EF4444', bg: 'FEE2E2', label: '✗ NON RÉSOLU' }
                     };
                     const rc = resConfig[data.resultat.status] || resConfig.en_attente;
-                    
-                    children.push(new Paragraph({
+
+                    contentChildren.push(new Paragraph({
                         children: [new TextRun({ text: rc.label, bold: true, size: 26, font: 'Calibri', color: rc.color })],
-                        spacing: { after: 100 },
+                        spacing: { after: 120 },
                         shading: { fill: rc.bg, type: ShadingType.CLEAR }
                     }));
-                    
+
                     if (data.resultat.description) {
-                        children.push(new Paragraph({
-                            children: [new TextRun({ text: data.resultat.description, size: 20, font: 'Calibri' })],
-                            spacing: { after: 200 }
-                        }));
+                        contentChildren.push(bodyText(data.resultat.description));
                     }
                 }
-                
+
                 // ═══ TECHNICIEN ═══
                 if (data.technicien && (data.technicien.nom || data.technicien.entreprise)) {
-                    children.push(sectionHeading('Technicien'));
-                    children.push(infoBox(
+                    contentChildren.push(sectionHeading('Technicien'));
+                    contentChildren.push(infoBox(
                         [
-                            data.technicien.nom && { label: 'Nom', value: data.technicien.nom },
+                            data.technicien.nom && data.technicien.nom !== 'FixAIR Assistant' && { label: 'Nom', value: data.technicien.nom },
                             data.technicien.entreprise && { label: 'Entreprise', value: data.technicien.entreprise }
                         ],
                         [
@@ -11922,130 +11846,122 @@ INSTRUCTIONS:
                         ]
                     ));
                 }
-                
+
                 // ═══ OBSERVATION CLIENT ═══
                 if (data.observation_client) {
-                    children.push(sectionHeading('Observation Client'));
-                    children.push(new Paragraph({
-                        children: [new TextRun({ text: data.observation_client, size: 20, font: 'Calibri', italics: true })],
-                        spacing: { after: 200 },
+                    contentChildren.push(sectionHeading('Observation Client'));
+                    contentChildren.push(new Paragraph({
+                        children: [new TextRun({ text: data.observation_client, size: 21, font: 'Calibri', italics: true, color: BODY })],
+                        spacing: { after: 200, line: 312 },
                         shading: { fill: 'F0F9FF', type: ShadingType.CLEAR }
                     }));
                 }
-                
-                // ═══ SIGNATURES (with images) ═══
+
+                // ═══ SIGNATURES ═══
                 if (data.signatures && (data.signatures.client || data.signatures.technicien || data.signatures.nom_client || data.signatures.nom_technicien)) {
-                    children.push(sectionHeading('Signatures'));
-                    
+                    contentChildren.push(sectionHeading('Signatures'));
+
                     const sigCells = [];
-                    
+
                     // Client signature
                     const clientSigContent = [];
                     clientSigContent.push(new Paragraph({
-                        children: [new TextRun({ text: 'Client', bold: true, size: 18, font: 'Calibri', color: '6B7280' })],
+                        children: [new TextRun({ text: 'Client', bold: true, size: 21, font: 'Calibri', color: TEAL })],
                         alignment: AlignmentType.CENTER
                     }));
-                    
+
                     if (data.signatures.client && data.signatures.client.startsWith('data:image')) {
                         try {
                             clientSigContent.push(new Paragraph({
                                 children: [new ImageRun({
-                                    data: base64ToUint8Array(data.signatures.client),
+                                    data: b64toU8(data.signatures.client),
                                     transformation: { width: 150, height: 60 }
                                 })],
                                 alignment: AlignmentType.CENTER
                             }));
                         } catch (e) { console.error('Signature client error:', e); }
                     }
-                    
+
                     clientSigContent.push(new Paragraph({
-                        children: [new TextRun({ text: data.signatures.nom_client || '________________', size: 18, font: 'Calibri' })],
+                        children: [new TextRun({ text: data.signatures.nom_client || '________________', size: 21, font: 'Calibri', color: BODY })],
                         alignment: AlignmentType.CENTER,
                         spacing: { before: 100 }
                     }));
-                    
+
                     sigCells.push(new TableCell({
                         children: clientSigContent,
-                        borders: { top: {style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB'}, bottom: {style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB'}, left: {style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB'}, right: {style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB'} },
+                        borders: { top: tblBorder, bottom: tblBorder, left: tblBorder, right: tblBorder },
                         margins: { top: 120, bottom: 120, left: 120, right: 120 },
                         width: { size: 50, type: WidthType.PERCENTAGE }
                     }));
-                    
+
                     // Technician signature
                     const techSigContent = [];
                     techSigContent.push(new Paragraph({
-                        children: [new TextRun({ text: 'Technicien', bold: true, size: 18, font: 'Calibri', color: '6B7280' })],
+                        children: [new TextRun({ text: 'Technicien', bold: true, size: 21, font: 'Calibri', color: TEAL })],
                         alignment: AlignmentType.CENTER
                     }));
-                    
+
                     if (data.signatures.technicien && data.signatures.technicien.startsWith('data:image')) {
                         try {
                             techSigContent.push(new Paragraph({
                                 children: [new ImageRun({
-                                    data: base64ToUint8Array(data.signatures.technicien),
+                                    data: b64toU8(data.signatures.technicien),
                                     transformation: { width: 150, height: 60 }
                                 })],
                                 alignment: AlignmentType.CENTER
                             }));
                         } catch (e) { console.error('Signature tech error:', e); }
                     }
-                    
+
                     techSigContent.push(new Paragraph({
-                        children: [new TextRun({ text: data.signatures.nom_technicien || data.technicien?.nom || '________________', size: 18, font: 'Calibri' })],
+                        children: [new TextRun({ text: data.signatures.nom_technicien || data.technicien?.nom || '________________', size: 21, font: 'Calibri', color: BODY })],
                         alignment: AlignmentType.CENTER,
                         spacing: { before: 100 }
                     }));
-                    
+
                     sigCells.push(new TableCell({
                         children: techSigContent,
-                        borders: { top: {style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB'}, bottom: {style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB'}, left: {style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB'}, right: {style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB'} },
+                        borders: { top: tblBorder, bottom: tblBorder, left: tblBorder, right: tblBorder },
                         margins: { top: 120, bottom: 120, left: 120, right: 120 },
                         width: { size: 50, type: WidthType.PERCENTAGE }
                     }));
-                    
-                    children.push(new Table({
+
+                    contentChildren.push(new Table({
                         rows: [new TableRow({ children: sigCells })],
                         width: { size: 100, type: WidthType.PERCENTAGE }
                     }));
                 }
-                
-                // ═══ PHOTOS ANNEXE (2-column grid layout) ═══
+
+                // ═══ PHOTOS ANNEXE (2-column grid) ═══
                 const photos = data.photos || window.reportPhotos || [];
                 const validPhotos = photos.filter(p => p.data && p.data.startsWith('data:image'));
-                
+
                 if (validPhotos.length > 0) {
-                    children.push(new Paragraph({ children: [new PageBreak()] }));
-                    
-                    children.push(new Paragraph({
-                        children: [
-                            new TextRun({ text: '█ ', color: docPrimaryColor, size: 28 }),
-                            new TextRun({ text: 'PHOTOS DE L\'INTERVENTION', bold: true, size: 26, font: 'Calibri' })
-                        ],
+                    contentChildren.push(new Paragraph({ children: [new PageBreak()] }));
+
+                    contentChildren.push(new Paragraph({
+                        children: [new TextRun({ text: 'PHOTOS DE L\'INTERVENTION', bold: true, size: 28, font: 'Calibri', color: TEAL })],
                         alignment: AlignmentType.CENTER,
                         spacing: { after: 100 }
                     }));
-                    
-                    // Photo count indicator
-                    children.push(new Paragraph({
-                        children: [new TextRun({ text: `${validPhotos.length} photo${validPhotos.length > 1 ? 's' : ''} jointe${validPhotos.length > 1 ? 's' : ''}`, size: 18, font: 'Calibri', color: '6B7280' })],
+
+                    contentChildren.push(new Paragraph({
+                        children: [new TextRun({ text: `${validPhotos.length} photo${validPhotos.length > 1 ? 's' : ''} jointe${validPhotos.length > 1 ? 's' : ''}`, size: 21, font: 'Calibri', color: GRAY })],
                         alignment: AlignmentType.CENTER,
                         spacing: { after: 300 }
                     }));
-                    
+
                     // Process photos in pairs for 2-column grid
                     for (let i = 0; i < validPhotos.length; i += 2) {
                         const photo1 = validPhotos[i];
                         const photo2 = validPhotos[i + 1];
-                        
-                        const photoBorder = { style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB' };
-                        const noBorder = { style: BorderStyle.NONE };
-                        
-                        // Create cell for photo 1
+
                         const cell1Content = [];
                         try {
                             cell1Content.push(new Paragraph({
                                 children: [new ImageRun({
-                                    data: base64ToUint8Array(photo1.data),
+                                    data: b64toU8(photo1.data),
                                     transformation: { width: 220, height: 165 }
                                 })],
                                 alignment: AlignmentType.CENTER,
@@ -12053,19 +11969,18 @@ INSTRUCTIONS:
                             }));
                             if (photo1.caption) {
                                 cell1Content.push(new Paragraph({
-                                    children: [new TextRun({ text: photo1.caption, size: 16, font: 'Calibri', italics: true, color: '6B7280' })],
+                                    children: [new TextRun({ text: photo1.caption, size: 18, font: 'Calibri', italics: true, color: GRAY })],
                                     alignment: AlignmentType.CENTER
                                 }));
                             }
-                        } catch (e) { console.error('Photo 1 error:', e); }
-                        
-                        // Create cell for photo 2 (if exists)
+                        } catch (e) { console.error('Photo error:', e); }
+
                         const cell2Content = [];
                         if (photo2) {
                             try {
                                 cell2Content.push(new Paragraph({
                                     children: [new ImageRun({
-                                        data: base64ToUint8Array(photo2.data),
+                                        data: b64toU8(photo2.data),
                                         transformation: { width: 220, height: 165 }
                                     })],
                                     alignment: AlignmentType.CENTER,
@@ -12073,30 +11988,28 @@ INSTRUCTIONS:
                                 }));
                                 if (photo2.caption) {
                                     cell2Content.push(new Paragraph({
-                                        children: [new TextRun({ text: photo2.caption, size: 16, font: 'Calibri', italics: true, color: '6B7280' })],
+                                        children: [new TextRun({ text: photo2.caption, size: 18, font: 'Calibri', italics: true, color: GRAY })],
                                         alignment: AlignmentType.CENTER
                                     }));
                                 }
-                            } catch (e) { console.error('Photo 2 error:', e); }
+                            } catch (e) { console.error('Photo error:', e); }
                         } else {
-                            // Empty cell placeholder
                             cell2Content.push(new Paragraph({}));
                         }
-                        
-                        // Create 2-column table row for this pair
-                        children.push(new Table({
+
+                        contentChildren.push(new Table({
                             rows: [new TableRow({
                                 children: [
                                     new TableCell({
                                         children: cell1Content.length ? cell1Content : [new Paragraph({})],
-                                        borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder },
+                                        borders: noBorders,
                                         margins: { top: 80, bottom: 80, left: 40, right: 40 },
                                         width: { size: 50, type: WidthType.PERCENTAGE },
                                         verticalAlign: VerticalAlign.TOP
                                     }),
                                     new TableCell({
                                         children: cell2Content.length ? cell2Content : [new Paragraph({})],
-                                        borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder },
+                                        borders: noBorders,
                                         margins: { top: 80, bottom: 80, left: 40, right: 40 },
                                         width: { size: 50, type: WidthType.PERCENTAGE },
                                         verticalAlign: VerticalAlign.TOP
@@ -12107,91 +12020,59 @@ INSTRUCTIONS:
                         }));
                     }
                 }
-                
-                // ═══ FOOTER ═══
-                children.push(new Paragraph({
-                    children: [new TextRun({ text: '━'.repeat(60), color: 'E5E7EB' })],
-                    spacing: { before: 400 },
-                    alignment: AlignmentType.CENTER
+
+                // ═══ GENERATED BY MENTION ═══
+                contentChildren.push(new Paragraph({
+                    children: [new TextRun({ text: 'Ce rapport a été généré par FixAIR Assistant | fixair.ai', size: 16, font: 'Calibri', color: 'AAAAAA' })],
+                    alignment: AlignmentType.CENTER,
+                    spacing: { before: 400 }
                 }));
-                
-                children.push(new Paragraph({
-                    children: [
-                        new TextRun({ text: 'Document généré par ', size: 16, font: 'Calibri', color: '9CA3AF' }),
-                        new TextRun({ text: 'FixAIR', size: 16, font: 'Calibri', color: primaryColor, bold: true }),
-                        new TextRun({ text: ` — ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`, size: 16, font: 'Calibri', color: '9CA3AF' })
-                    ],
-                    alignment: AlignmentType.CENTER
-                }));
-                
-                // Filter nulls and create document
-                const filteredChildren = children.filter(c => c !== null);
-                
-                // Create header (branded for enterprise)
-                const headerBrand = isEnterprise ? data.enterprise.name : 'FixAIR';
-                const docHeader = new Header({
-                    children: [
-                        new Paragraph({
-                            children: [
-                                new TextRun({ text: headerBrand, bold: true, size: 16, font: 'Calibri', color: docPrimaryColor }),
-                                new TextRun({ text: `  |  ${data.brand || ''}  |  Réf: ${data.reference || ''}  |  ${data.date || ''}`, size: 14, font: 'Calibri', color: '9CA3AF' })
-                            ],
-                            alignment: AlignmentType.RIGHT
-                        })
-                    ]
-                });
-                
-                // Create footer with page numbers (enterprise shows company info)
-                const footerTechInfo = data.technicien?.nom ? `${data.technicien.nom}` : '';
-                const footerCompany = isEnterprise ? data.enterprise.name : 'FixAIR';
-                const footerAddress = isEnterprise && data.enterprise.address ? `  |  ${data.enterprise.address}` : '';
-                
-                const docFooter = new Footer({
-                    children: [
-                        new Paragraph({
-                            children: [
-                                new TextRun({ text: footerTechInfo ? `${footerTechInfo}  |  ` : '', size: 14, font: 'Calibri', color: '6B7280' }),
-                                new TextRun({ text: footerCompany, size: 14, font: 'Calibri', color: docPrimaryColor, bold: true }),
-                                new TextRun({ text: footerAddress, size: 12, font: 'Calibri', color: '9CA3AF' }),
-                                new TextRun({ text: '  |  Page ', size: 14, font: 'Calibri', color: '6B7280' }),
-                                new TextRun({ children: [PageNumber.CURRENT], size: 14, font: 'Calibri', color: '6B7280' }),
-                                new TextRun({ text: ' / ', size: 14, font: 'Calibri', color: '6B7280' }),
-                                new TextRun({ children: [PageNumber.TOTAL_PAGES], size: 14, font: 'Calibri', color: '6B7280' }),
-                                new TextRun({ text: `  |  ${new Date().toLocaleDateString('fr-FR')}`, size: 14, font: 'Calibri', color: '6B7280' })
-                            ],
-                            alignment: AlignmentType.CENTER
-                        })
-                    ]
-                });
-                
+
+                // ═══ BUILD TWO-SECTION DOCUMENT ═══
+                const filteredContent = contentChildren.filter(c => c !== null);
+
                 const doc = new Document({
-                    sections: [{
-                        properties: {
-                            page: {
-                                margin: { top: 900, right: 720, bottom: 900, left: 720 }
-                            }
+                    sections: [
+                        {
+                            // Cover page
+                            properties: {
+                                page: {
+                                    margin: { top: 900, right: 720, bottom: 1100, left: 720 }
+                                }
+                            },
+                            headers: { default: coverHeader },
+                            footers: { default: coverFooter },
+                            children: coverChildren
                         },
-                        headers: { default: docHeader },
-                        footers: { default: docFooter },
-                        children: filteredChildren
-                    }]
+                        {
+                            // Content pages
+                            properties: {
+                                page: {
+                                    margin: { top: 1200, right: 720, bottom: 1100, left: 720 }
+                                }
+                            },
+                            headers: { default: contentHeader },
+                            footers: { default: contentFooter },
+                            children: filteredContent
+                        }
+                    ]
                 });
-                
+
                 // Generate and download
                 const blob = await Packer.toBlob(doc);
-                const companyName = isEnterprise ? data.enterprise.name : 'FixAIR';
-                const filename = `Rapport_${companyName}_${data.brand || ''}_${data.reference || new Date().toISOString().split('T')[0]}.docx`.replace(/__/g, '_');
+                const fileCompany = companyName || 'Rapport';
+                const filename = `Rapport_${fileCompany}_${brand}_${reference || new Date().toISOString().split('T')[0]}.docx`.replace(/__/g, '_').replace(/_+/g, '_');
                 saveAs(blob, filename);
-                
+
                 toast('Document Word téléchargé !');
                 trackAction('report');
-                
+
             } catch (error) {
                 console.error('Error generating Word document:', error);
                 toast('Erreur génération Word: ' + error.message);
             }
         }
-        
+
         // Generate professional PDF
         async function generatePDF(data) {
             try {
@@ -12853,8 +12734,8 @@ INSTRUCTIONS:
         // Build partial report from conversation
         // Called when we detect report-relevant info in the chat
         function buildPartialReport() {
-            // Get info from chatHistory
-            const history = chatHistory.assistant || [];
+            // Get info from chatHistory — scan BOTH panels for report data
+            const history = [...(chatHistory.assistant || []), ...(chatHistory.copilot || [])];
             const userMessages = history.filter(m => m.role === 'user').map(m => m.content);
             const aiMessages = history.filter(m => m.role === 'assistant').map(m => m.content);
             const allText = userMessages.join(' ').toLowerCase();
@@ -14535,174 +14416,6 @@ text = text.replace(/\s*\{"type"\s*:\s*"report"[\s\S]*\}\s*$/, '').trim();
         window.ThoughtProcessUI = ThoughtProcessUI;
         window.thoughtManager = thoughtManager;
 
-        // ═══════════════════════════════════════════════════════════════
-        // PARALLEL EXTRACTION — Calls new workflow after each message
-        // ═══════════════════════════════════════════════════════════════
-        async function triggerExtraction(chatPayload) {
-            try {
-                // Build the full conversation text for extraction
-                const allMessages = chatHistory.assistant || [];
-                const fullConversation = allMessages
-                    .filter(m => m.role === 'user' || m.role === 'assistant')
-                    .map(m => {
-                        const role = m.role === 'user' ? 'TECHNICIEN' : 'ASSISTANT';
-                        // Strip [REPORT_DATA] blocks from assistant messages
-                        let content = m.content || '';
-                        content = content.replace(/\[REPORT_DATA\][\s\S]*?\[\/REPORT_DATA\]/g, '').trim();
-                        return `${role}: ${content}`;
-                    })
-                    .join('\n\n');
-
-                const extractionPayload = {
-                    project_id: chatPayload.project_id,
-                    user_id: currentUserId,
-                    chat_id: chatPayload.chat_id,
-                    session_id: chatPayload.session_id,
-                    brand: chatPayload.brand,
-                    brand_name: chatPayload.brand_name,
-                    message: chatPayload.message,
-                    message_count: allMessages.length,
-                    panel: 'assistant',
-                    full_conversation: fullConversation,
-                    current_report_data: lastReportData || {},
-                    timestamp: new Date().toISOString()
-                };
-
-                console.log('[Extraction] 🔄 Triggering parallel extraction...');
-
-                const response = await fetch(EXTRACTION_WEBHOOK, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(extractionPayload)
-                });
-
-                if (response.ok) {
-                    const result = await response.json();
-                    console.log('[Extraction] ✅ Got extraction result');
-
-                    if (result.extracted_data) {
-                        handleExtractionResult(result.extracted_data, result.completion_percentage);
-                    }
-                } else {
-                    console.warn('[Extraction] ⚠️ Extraction failed:', response.status);
-                }
-            } catch (e) {
-                console.warn('[Extraction] ⚠️ Extraction error (non-blocking):', e.message);
-            }
-        }
-
-        // ═══════════════════════════════════════════════════════════════
-        // HANDLE EXTRACTION RESULT — Update drawer with new data
-        // ═══════════════════════════════════════════════════════════════
-        function handleExtractionResult(extractedData, completionPercentage) {
-            if (!extractedData) return;
-
-            console.log('[Extraction] 📊 Updating drawer with extraction data');
-
-            if (!lastReportData) {
-                lastReportData = {
-                    brand: extractedData.brand || (typeof brand !== 'undefined' ? brand : 'general'),
-                    brand_key: extractedData.brand_key || brand || 'general',
-                    status: 'en_cours',
-                    date: new Date().toLocaleDateString('fr-FR')
-                };
-            }
-
-            smartMergeExtraction(lastReportData, extractedData);
-            updateDrawerPreview(lastReportData);
-
-            if (completionPercentage !== undefined) {
-                const progressFill = document.getElementById('reportProgressFill');
-                const progressText = document.getElementById('reportProgressText');
-                const headerProgress = document.getElementById('reportHeaderProgress');
-                if (progressFill && progressText && headerProgress) {
-                    headerProgress.style.display = 'flex';
-                    progressFill.style.width = completionPercentage + '%';
-                    progressText.textContent = completionPercentage + '%';
-                }
-            }
-
-            if (currentProjectId && lastReportData) {
-                db.from('projects')
-                    .update({ 
-                        extracted_data: lastReportData,
-                        completion_percentage: completionPercentage || null
-                    })
-                    .eq('id', currentProjectId)
-                    .then(({ error }) => {
-                        if (error) {
-                            console.warn('[Extraction] Supabase save failed:', error);
-                        } else {
-                            console.log('[Extraction] ✅ Saved to Supabase');
-                        }
-                    });
-            }
-        }
-
-        // ═══════════════════════════════════════════════════════════════
-        // SMART MERGE — Intelligent merge with deduplication
-        // ═══════════════════════════════════════════════════════════════
-        function smartMergeExtraction(target, source) {
-            if (!source || typeof source !== 'object') return;
-
-            for (const key of Object.keys(source)) {
-                const sourceVal = source[key];
-                const targetVal = target[key];
-
-                if (sourceVal === null || sourceVal === undefined) continue;
-
-                if (Array.isArray(sourceVal)) {
-                    switch (key) {
-                        case 'equipements':
-                            target[key] = deduplicateBy([...(targetVal || []), ...sourceVal], 
-                                item => (item.id || item.modele || '').toLowerCase());
-                            break;
-                        case 'adressage':
-                            target[key] = deduplicateBy([...(targetVal || []), ...sourceVal], 
-                                item => item.equipement_id || item.adresse || '');
-                            break;
-                        case 'mesures':
-                            target[key] = deduplicateBy([...(targetVal || []), ...sourceVal], 
-                                item => `${item.type || ''}|${item.sous_type || ''}|${item.equipement_id || ''}`);
-                            break;
-                        case 'travaux_effectues':
-                        case 'tableaux':
-                        case 'reserves':
-                        case 'recommandations':
-                        case 'travaux_prevoir':
-                        case 'listes':
-                            target[key] = sourceVal;
-                            break;
-                        default:
-                            target[key] = sourceVal;
-                    }
-                } else if (typeof sourceVal === 'object' && !Array.isArray(sourceVal)) {
-                    if (!target[key] || typeof target[key] !== 'object') {
-                        target[key] = {};
-                    }
-                    smartMergeExtraction(target[key], sourceVal);
-                } else {
-                    target[key] = sourceVal;
-                }
-            }
-        }
-
-        // ═══════════════════════════════════════════════════════════════
-        // DEDUPLICATE BY KEY — Helper for array deduplication
-        // ═══════════════════════════════════════════════════════════════
-        function deduplicateBy(array, keyFn) {
-            const seen = new Map();
-            for (const item of array) {
-                const key = keyFn(item);
-                if (!key) {
-                    seen.set(Math.random().toString(), item);
-                } else if (!seen.has(key) || JSON.stringify(item).length > JSON.stringify(seen.get(key)).length) {
-                    seen.set(key, item);
-                }
-            }
-            return Array.from(seen.values());
-        }
-
         // Send message to n8n
         async function sendMsg(panel) {
             const input = document.getElementById(panel + 'Input');
@@ -14908,11 +14621,6 @@ RÈGLES:
                 // Get the right webhook based on panel (copilot vs assistant)
                 const webhookUrl = getWebhookUrl(panel);
 
-                // ═══ PARALLEL EXTRACTION: Fire extraction workflow (non-blocking) ═══
-                if (panel === 'assistant') {
-                    triggerExtraction(payload);
-                }
-
                 // Call n8n webhook
                 const response = await fetch(webhookUrl, {
                     method: 'POST',
@@ -14937,12 +14645,8 @@ RÈGLES:
                 // Parse markdown and add AI response
                 const aiResponse = data.response || data.message || data.output || 'Désolé, une erreur est survenue.';
                 
-                // ═══ REPORT DATA NOW HANDLED BY PARALLEL EXTRACTION WORKFLOW ═══
-                // The new extraction workflow (triggerExtraction) handles all
-                // structured data extraction. Keep buildPartialReport() as fallback.
+                // ═══ EXTRACT REPORT_DATA FROM AI RESPONSE ═══
                 if (panel === 'assistant') {
-                    // Old inline extraction disabled - using parallel workflow instead
-                    /*
                     const reportDataMatch = aiResponse.match(/\[REPORT_DATA\]([\s\S]*?)\[\/REPORT_DATA\]/);
                     if (reportDataMatch) {
                         try {
@@ -14987,9 +14691,8 @@ RÈGLES:
                             // Failed to parse REPORT_DATA
                         }
                     }
-                    */
                     
-                    // Fallback: build partial report from text
+                    // Also try to build partial report from text (fallback)
                     buildPartialReport();
                 }
                 
@@ -17181,34 +16884,24 @@ RÈGLES:
                 const userId = await getCurrentUserId();
                 if (!userId || userId.startsWith('demo-')) return false;
                 
-                // ═══ OWNER BYPASS ═══
-                const OWNER_IDS = ['d5baabf1-147a-4ee5-a07a-8f80212fbc9a'];
-                if (OWNER_IDS.includes(userId)) {
-                    console.log('[Freemium] Owner detected - PRO access granted');
-                    const usage = getFreemiumUsage();
-                    usage.isPro = true;
-                    saveFreemiumUsage(usage);
-                    return true;
-                }
-                
                 // Check users table for subscription_tier
                 const { data, error } = await db
                     .from('users')
-                    .select('subscription_tier')
+                    .select('subscription_tier, subscription_expires')
                     .eq('id', userId)
                     .single();
                 
                 if (error || !data) return false;
                 
-                // Check if subscription is active (pro or enterprise = unlimited)
+                // Check if subscription is active
                 const isPro = data.subscription_tier === 'pro' || data.subscription_tier === 'enterprise';
+                const isExpired = data.subscription_expires && new Date(data.subscription_expires) < new Date();
                 
                 // Update local cache
                 const usage = getFreemiumUsage();
-                usage.isPro = isPro;
+                usage.isPro = isPro && !isExpired;
                 saveFreemiumUsage(usage);
                 
-                console.log('[Freemium] Subscription check:', isPro ? 'PRO ✅' : 'FREE');
                 return usage.isPro;
             } catch (e) {
                 console.warn('[Freemium] Error checking subscription:', e);
@@ -17222,11 +16915,6 @@ RÈGLES:
             
             // Pro users don't need tracking (but we still track for analytics)
             if (usage.isPro) return { allowed: true, remaining: 999 };
-            
-            // ═══ OWNER BYPASS (backup) ═══
-            if (currentUserId === 'd5baabf1-147a-4ee5-a07a-8f80212fbc9a') {
-                return { allowed: true, remaining: 999 };
-            }
             
             const key = panel === 'copilot' ? 'copilotChats' : 'assistantChats';
             const limit = panel === 'copilot' ? FREEMIUM_CONFIG.freeCopilotChats : FREEMIUM_CONFIG.freeAssistantChats;
@@ -17253,10 +16941,6 @@ RÈGLES:
         function canSendChat(panel) {
             const usage = getFreemiumUsage();
             if (usage.isPro) return { allowed: true, remaining: 999 };
-            // ═══ OWNER BYPASS ═══
-            if (currentUserId === 'd5baabf1-147a-4ee5-a07a-8f80212fbc9a') {
-                return { allowed: true, remaining: 999 };
-            }
             
             const key = panel === 'copilot' ? 'copilotChats' : 'assistantChats';
             const limit = panel === 'copilot' ? FREEMIUM_CONFIG.freeCopilotChats : FREEMIUM_CONFIG.freeAssistantChats;
@@ -17273,8 +16957,6 @@ RÈGLES:
         // Check if user can use a Pro feature
         function canUseProFeature(feature) {
             const usage = getFreemiumUsage();
-            // ═══ OWNER BYPASS ═══
-            if (currentUserId === 'd5baabf1-147a-4ee5-a07a-8f80212fbc9a') return true;
             return usage.isPro;
         }
         
@@ -17525,7 +17207,7 @@ RÈGLES:
             
             try {
                 // Get user's referral data
-                const { data, error } = await db
+                const { data, error } = await sb
                     .from('users')
                     .select('referral_code, total_referrals, bonus_queries, is_ambassador')
                     .eq('id', currentUser.id)
@@ -17576,7 +17258,7 @@ RÈGLES:
             
             try {
                 // Check if user already has a code
-                const { data, error } = await db
+                const { data, error } = await sb
                     .from('users')
                     .select('referral_code')
                     .eq('id', currentUser.id)
@@ -17598,7 +17280,7 @@ RÈGLES:
                 const newCode = baseName + Math.floor(1000 + Math.random() * 9000);
                 
                 // Save to database
-                const { error: updateError } = await db
+                const { error: updateError } = await sb
                     .from('users')
                     .update({ referral_code: newCode })
                     .eq('id', currentUser.id);
