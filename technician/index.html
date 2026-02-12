@@ -3877,6 +3877,105 @@
         .r-btn.secondary { background: var(--card); border: 1px solid var(--border); color: rgba(255,255,255,0.6); }
         .r-btn .icon { width: 14px; height: 14px; }
 
+        /* ═══ DRAWER v12.5 EDITABLE REPORT STYLES ═══ */
+        .rpt-doc { outline: none; min-height: 100%; padding: 0 4px; }
+        
+        /* BLOCKS */
+        .b { position: relative; margin-bottom: 2px; padding: 2px 4px 2px 28px; border-radius: 4px; }
+        .b:hover { background: rgba(255,255,255,0.03); }
+        .b:focus-within { background: rgba(0,212,170,0.05); }
+        .b-content { outline: none; min-height: 20px; color: var(--text); }
+        .b-content:empty::before { content: attr(data-ph); color: var(--text-dim); font-style: italic; }
+        .b-content:focus { outline: none; }
+        
+        .b-h1 .b-content { font-size: 18px; font-weight: 600; line-height: 1.3; margin-bottom: 12px; color: var(--text); }
+        .b-h2 .b-content { font-size: 14px; font-weight: 600; line-height: 1.4; margin-top: 16px; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid var(--border); color: var(--text); }
+        .b-h3 .b-content { font-size: 12px; font-weight: 600; line-height: 1.4; margin-top: 10px; margin-bottom: 4px; color: var(--text); }
+        .b-p .b-content { font-size: 12px; line-height: 1.6; color: var(--text); }
+        .b-p .b-content, .b-bullet .b-content, .b-arrow .b-content { text-align: justify; }
+        
+        .b .lbl { color: var(--text-dim); font-size: 11px; }
+        .b .val { color: var(--text); font-weight: 500; }
+        
+        .b-bullet { padding-left: 40px; }
+        .b-bullet::before { content: "•"; position: absolute; left: 28px; color: var(--assistant); font-weight: bold; }
+        .b-bullet .b-content { font-size: 12px; line-height: 1.5; }
+        
+        .b-num { padding-left: 40px; }
+        .b-num::before { content: attr(data-num) "."; position: absolute; left: 28px; color: var(--assistant); font-size: 12px; }
+        
+        .b-arrow { padding-left: 40px; }
+        .b-arrow::before { content: "→"; position: absolute; left: 28px; color: var(--assistant); }
+        
+        /* DRAG HANDLE - 6 dots */
+        .drag-handle {
+          position: absolute; left: 4px; top: 50%; transform: translateY(-50%);
+          width: 14px; height: 18px; cursor: grab; opacity: 0; transition: opacity 0.15s;
+          display: grid; grid-template-columns: repeat(2, 4px); grid-template-rows: repeat(3, 4px);
+          gap: 2px; align-content: center;
+        }
+        .drag-handle span { width: 3px; height: 3px; background: var(--text-dim); border-radius: 50%; }
+        .b:hover .drag-handle { opacity: 0.6; }
+        .drag-handle:active { cursor: grabbing; }
+        .b.dragging { opacity: 0.4; background: var(--bg-secondary); }
+        .b.drag-over { border-top: 2px solid var(--assistant); }
+        
+        /* TABLES */
+        .b-table { margin: 10px 0; padding-left: 4px; }
+        .rpt-tbl { width: 100%; border-collapse: collapse; font-size: 11px; background: transparent; border-radius: 6px; overflow: hidden; }
+        .rpt-tbl th, .rpt-tbl td { border: 1px solid var(--border); padding: 5px 8px; text-align: left; outline: none; background: transparent; }
+        .rpt-tbl th { background: var(--bg-secondary); font-weight: 500; color: var(--text-dim); text-transform: uppercase; font-size: 9px; letter-spacing: 0.5px; }
+        .rpt-tbl td { color: var(--text); }
+        .rpt-tbl td:focus, .rpt-tbl th:focus { background: rgba(34,197,94,0.1); outline: none; }
+        .rpt-tbl tbody tr:hover { background: rgba(255,255,255,0.02); }
+        .tbl-actions { margin-top: 6px; display: flex; gap: 6px; flex-wrap: wrap; opacity: 0; transition: opacity 0.2s; }
+        .b-table:hover .tbl-actions { opacity: 1; }
+        .tbl-btn { font-size: 9px; padding: 4px 8px; background: transparent; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; color: var(--text-dim); }
+        .tbl-btn:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+        .tbl-btn-danger { color: #ef4444; border-color: rgba(239,68,68,0.3); }
+        .tbl-btn-danger:hover { background: rgba(239,68,68,0.1); }
+        
+        /* FLOATING FONT TOOLBAR */
+        .font-toolbar {
+          position: fixed; display: none; background: #ffffff; border-radius: 8px;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.25); padding: 4px 8px; gap: 2px; z-index: 1000; align-items: center;
+        }
+        .font-toolbar.visible { display: flex; }
+        .ft-btn { width: 26px; height: 26px; border: none; background: transparent; color: #333; font-size: 11px; cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+        .ft-btn:hover { background: #f0f0f0; }
+        .ft-btn.active { background: #e0e0e0; }
+        .ft-sep { width: 1px; height: 16px; background: #ddd; margin: 0 4px; }
+        .ft-dropdown { position: relative; }
+        .ft-dropdown-btn { padding: 4px 8px; background: transparent; border: none; color: #333; font-size: 11px; cursor: pointer; border-radius: 4px; display: flex; align-items: center; gap: 4px; }
+        .ft-dropdown-btn:hover { background: #f0f0f0; }
+        .ft-dropdown-menu { position: absolute; top: 100%; left: 0; background: #fff; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); padding: 4px; min-width: 120px; display: none; z-index: 1001; }
+        .ft-dropdown:hover .ft-dropdown-menu { display: block; }
+        .ft-dropdown-item { padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; color: #333; }
+        .ft-dropdown-item:hover { background: #f0f0f0; }
+        .ft-dropdown-item.h1 { font-size: 14px; font-weight: 600; }
+        .ft-dropdown-item.h2 { font-size: 12px; font-weight: 600; }
+        .ft-dropdown-item.h3 { font-size: 11px; font-weight: 600; }
+        
+        /* SIGNATURE SECTION */
+        .rpt-signature-section { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--border); }
+        .rpt-signature-title { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin-bottom: 10px; }
+        .rpt-signature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media (max-width: 500px) { .rpt-signature-grid { grid-template-columns: 1fr; } }
+        .rpt-signature-box { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 10px; }
+        .rpt-signature-box-title { font-size: 9px; font-weight: 500; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .rpt-signature-area { height: 70px; border: 2px dashed var(--border); border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: border-color 0.2s; }
+        .rpt-signature-area:hover { border-color: var(--assistant); }
+        .rpt-signature-area img { max-height: 100%; max-width: 100%; object-fit: contain; }
+        .rpt-signature-placeholder { color: var(--text-dim); font-size: 10px; font-style: italic; }
+        .rpt-signature-name-input { margin-top: 6px; width: 100%; text-align: center; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--text); font-size: 11px; padding: 4px; outline: none; }
+        .rpt-signature-name-input:focus { border-bottom-color: var(--assistant); }
+        .rpt-signature-name-input::placeholder { color: var(--text-dim); font-style: italic; }
+        
+        /* AUTO-SAVE INDICATOR */
+        .autosave-indicator { position: fixed; bottom: 80px; right: 20px; padding: 6px 10px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; font-size: 10px; color: var(--text-dim); opacity: 0; transition: opacity 0.3s; z-index: 100; }
+        .autosave-indicator.show { opacity: 1; }
+        .autosave-indicator.success { color: var(--assistant); }
+
         /* ==================== HOTLINE VIEW ==================== */
         .hotline-view { position: fixed; inset: 0; display: none; z-index: 200; background: var(--bg); background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px); background-size: 32px 32px; }
         .hotline-view.active { display: block; }
@@ -6443,10 +6542,37 @@
                 <div id="reportPreviewContent" style="display:none;"></div>
             </div>
         </div>
-        <div class="report-footer">
-            <button class="r-btn primary" onclick="showCompletionPopup()" style="flex: 1;">✓ Compléter le rapport</button>
+        <div class="report-footer" id="reportFooter">
+            <button class="r-btn primary" onclick="completeReportV12()" style="flex: 1;">✓ Compléter le rapport</button>
         </div>
     </div>
+
+    <!-- FLOATING FONT TOOLBAR for v12.5 -->
+    <div class="font-toolbar" id="fontToolbar">
+        <div class="ft-dropdown">
+            <button class="ft-dropdown-btn">
+                <span id="ftBlockType">Paragraphe</span>
+                <span>▼</span>
+            </button>
+            <div class="ft-dropdown-menu">
+                <div class="ft-dropdown-item h1" data-type="h1">Titre 1</div>
+                <div class="ft-dropdown-item h2" data-type="h2">Titre 2</div>
+                <div class="ft-dropdown-item h3" data-type="h3">Titre 3</div>
+                <div class="ft-dropdown-item" data-type="p">Paragraphe</div>
+                <div class="ft-dropdown-item" data-type="bullet">• Liste à puces</div>
+                <div class="ft-dropdown-item" data-type="arrow">→ Flèche</div>
+            </div>
+        </div>
+        <div class="ft-sep"></div>
+        <button class="ft-btn" id="ftBold" title="Gras"><b>B</b></button>
+        <button class="ft-btn" id="ftItalic" title="Italique"><i>I</i></button>
+        <button class="ft-btn" id="ftUnderline" title="Souligné"><u>U</u></button>
+        <div class="ft-sep"></div>
+        <button class="ft-btn" id="ftAlignLeft" title="Gauche">☰</button>
+        <button class="ft-btn" id="ftAlignCenter" title="Centre">☰</button>
+        <button class="ft-btn" id="ftJustify" title="Justifier">☰</button>
+    </div>
+    <div class="autosave-indicator" id="autosaveIndicator">Enregistré ✓</div>
 
     <!-- PHOTO MODAL -->
     <!-- HIDDEN FILE INPUTS -->
@@ -12636,12 +12762,16 @@ INSTRUCTIONS:
                 }
             }
             
-            // Generate editable template HTML
-            const previewHtml = renderReportPreview(reportData, completionStatus);
+            // Generate editable template HTML - v12.5
+            const previewHtml = renderReportPreviewV12(reportData, completionStatus);
             previewContent.innerHTML = previewHtml;
             
-            // Attach event listeners for editable fields
-            initEditableReport();
+            // Initialize v12.5 features (drag-drop, auto-save, etc.)
+            initDrawerV12Features();
+            
+            // Update footer buttons based on completion status
+            const isCompleted = reportData.status === 'completed' || completionStatus?.percentage >= 100;
+            updateReportFooterButtonsV12(isCompleted);
             
             // Drawer preview updated
         }
@@ -13754,6 +13884,624 @@ INSTRUCTIONS:
         }
         
         // ═══════════════════════════════════════════════════════════════
+        // DRAWER v12.5 - NEW EDITABLE REPORT SYSTEM
+        // ═══════════════════════════════════════════════════════════════
+        
+        let drawerDraggedElement = null;
+        let drawerActiveEditable = null;
+        let drawerNumCounter = 0;
+        let drawerAutoSaveTimeout = null;
+        let reportIsCompleted = false;
+        
+        function renderReportPreviewV12(data, completionStatus) {
+            if (!data || Object.keys(data).length === 0) {
+                return '';
+            }
+            
+            drawerNumCounter = 0;
+            const blocks = [];
+            
+            // Helper function to create a block
+            const createBlockHTML = (type, content, fieldId = '', dataAttrs = '') => {
+                const dragHandle = '<div class="drag-handle"><span></span><span></span><span></span><span></span><span></span><span></span></div>';
+                const dataField = fieldId ? ` data-field="${fieldId}"` : '';
+                const numAttr = type === 'num' ? ` data-num="${++drawerNumCounter}"` : '';
+                return `<div class="b b-${type}"${dataField}${numAttr} ${dataAttrs}>${dragHandle}<div class="b-content" contenteditable="true">${content}</div></div>`;
+            };
+            
+            // 1. TITLE
+            const typeLabels = {
+                'mise_en_service': 'Mise en service',
+                'sav': 'SAV / Dépannage',
+                'maintenance': 'Maintenance',
+                'maintenance_preventive': 'Maintenance préventive',
+                'audit': 'Audit'
+            };
+            const typeLabel = data.intervention?.type_label || typeLabels[data.intervention?.type] || data.intervention?.type || 'Intervention';
+            blocks.push(createBlockHTML('h1', `Rapport d'intervention - ${typeLabel}`, 'title'));
+            
+            // 2. RÉSUMÉ
+            if (data.resume) {
+                blocks.push(createBlockHTML('h2', 'Résumé', 'section_resume'));
+                blocks.push(createBlockHTML('p', data.resume, 'resume_content'));
+            }
+            
+            // 3. CLIENT
+            if (data.client && (data.client.societe || data.client.contact)) {
+                blocks.push(createBlockHTML('h2', 'Client', 'section_client'));
+                if (data.client.societe) blocks.push(createBlockHTML('p', `<span class="lbl">Client :</span> <span class="val">${data.client.societe}</span>`, 'client_societe'));
+                if (data.client.contact) blocks.push(createBlockHTML('p', `<span class="lbl">Contact :</span> <span class="val">${data.client.contact}</span>`, 'client_contact'));
+                if (data.client.telephone) blocks.push(createBlockHTML('p', `<span class="lbl">Téléphone :</span> <span class="val">${data.client.telephone}</span>`, 'client_tel'));
+            }
+            
+            // 4. SITE
+            if (data.site && (data.site.adresse || data.site.ville)) {
+                blocks.push(createBlockHTML('h2', 'Site', 'section_site'));
+                if (data.site.adresse) blocks.push(createBlockHTML('p', `<span class="lbl">Adresse :</span> <span class="val">${data.site.adresse}</span>`, 'site_adresse'));
+                if (data.site.ville) blocks.push(createBlockHTML('p', `<span class="lbl">Ville :</span> <span class="val">${data.site.ville}</span>`, 'site_ville'));
+                if (data.site.numero_affaire) blocks.push(createBlockHTML('p', `<span class="lbl">N° Affaire :</span> <span class="val">${data.site.numero_affaire}</span>`, 'site_affaire'));
+            }
+            
+            // 5. INTERVENANT
+            if (data.technicien && (data.technicien.entreprise || data.technicien.nom)) {
+                blocks.push(createBlockHTML('h2', 'Intervenant', 'section_intervenant'));
+                if (data.technicien.entreprise) blocks.push(createBlockHTML('p', `<span class="lbl">Entreprise :</span> <span class="val">${data.technicien.entreprise}</span>`, 'tech_entreprise'));
+                if (data.technicien.nom) blocks.push(createBlockHTML('p', `<span class="lbl">Technicien :</span> <span class="val">${data.technicien.nom}</span>`, 'tech_nom'));
+            }
+            
+            // 6. ÉQUIPEMENTS
+            if (data.equipements && data.equipements.length > 0) {
+                blocks.push(createBlockHTML('h2', 'Équipements', 'section_equipements'));
+                data.equipements.forEach((eq, i) => {
+                    let text = '';
+                    if (eq.marque) text += eq.marque + ' ';
+                    text += eq.modele || 'Équipement';
+                    if (eq.type_ui) text += ` (${eq.type_ui})`;
+                    if (eq.role) text += ` [${eq.role.replace('_', ' ')}]`;
+                    blocks.push(createBlockHTML('bullet', text, `eq_${i}`));
+                });
+            }
+            
+            // 7. ADRESSAGE TABLE
+            if (data.adressage && data.adressage.length > 0) {
+                blocks.push(createBlockHTML('h2', 'Adressage réseau', 'section_adressage'));
+                let tableHTML = `<div class="b b-table" data-field="table_adressage">
+                    <table class="rpt-tbl">
+                        <thead><tr>
+                            <th contenteditable="true">RÉF.</th>
+                            <th contenteditable="true">ADRESSE</th>
+                            <th contenteditable="true">MODÈLE</th>
+                            <th contenteditable="true">ZONE</th>
+                            <th contenteditable="true">N° SÉRIE</th>
+                        </tr></thead>
+                        <tbody>`;
+                
+                data.adressage.forEach(entry => {
+                    tableHTML += `<tr>
+                        <td contenteditable="true">${entry.equipement_id || entry.ref_usine || ''}</td>
+                        <td contenteditable="true">${entry.adresse || ''}</td>
+                        <td contenteditable="true">${entry.modele || 'À compléter'}</td>
+                        <td contenteditable="true">${entry.designation || entry.zone || 'À compléter'}</td>
+                        <td contenteditable="true">${entry.numero_serie || 'En attente'}</td>
+                    </tr>`;
+                });
+                
+                tableHTML += `</tbody></table>
+                    <div class="tbl-actions">
+                        <button class="tbl-btn" onclick="drawerAddTableRow(this)">+ Ligne</button>
+                        <button class="tbl-btn" onclick="drawerAddTableCol(this)">+ Colonne</button>
+                        <button class="tbl-btn tbl-btn-danger" onclick="drawerRemoveTableRow(this)">- Ligne</button>
+                    </div>
+                </div>`;
+                blocks.push(tableHTML);
+            }
+            
+            // 8. FLUIDE
+            if (data.fluide_global && (data.fluide_global.type || data.fluide_global.charge_totale_site_kg)) {
+                blocks.push(createBlockHTML('h2', 'Fluide frigorigène', 'section_fluide'));
+                if (data.fluide_global.type) blocks.push(createBlockHTML('p', `<span class="lbl">Type :</span> <span class="val">${data.fluide_global.type}</span>`, 'fluide_type'));
+                if (data.fluide_global.charge_usine_kg) blocks.push(createBlockHTML('p', `<span class="lbl">Charge usine :</span> <span class="val">${data.fluide_global.charge_usine_kg} kg</span>`, 'fluide_charge'));
+                if (data.fluide_global.charge_totale_site_kg) blocks.push(createBlockHTML('p', `<span class="lbl">Charge totale :</span> <span class="val">${data.fluide_global.charge_totale_site_kg} kg</span>`, 'fluide_total'));
+            }
+            
+            // 9. MESURES TABLE
+            if (data.mesures && data.mesures.length > 0) {
+                blocks.push(createBlockHTML('h2', 'Mesures', 'section_mesures'));
+                let tableHTML = `<div class="b b-table" data-field="table_mesures">
+                    <table class="rpt-tbl">
+                        <thead><tr>
+                            <th contenteditable="true">PARAMÈTRE</th>
+                            <th contenteditable="true">VALEUR</th>
+                            <th contenteditable="true">UNITÉ</th>
+                            <th contenteditable="true">STATUS</th>
+                        </tr></thead>
+                        <tbody>`;
+                
+                data.mesures.forEach(m => {
+                    tableHTML += `<tr>
+                        <td contenteditable="true">${m.label || m.type || ''}</td>
+                        <td contenteditable="true">${m.valeur || m.valeur_texte || ''}</td>
+                        <td contenteditable="true">${m.unite || ''}</td>
+                        <td contenteditable="true">${m.status === 'conforme' ? 'Conforme' : (m.status || '')}</td>
+                    </tr>`;
+                });
+                
+                tableHTML += `</tbody></table>
+                    <div class="tbl-actions">
+                        <button class="tbl-btn" onclick="drawerAddTableRow(this)">+ Ligne</button>
+                        <button class="tbl-btn tbl-btn-danger" onclick="drawerRemoveTableRow(this)">- Ligne</button>
+                    </div>
+                </div>`;
+                blocks.push(tableHTML);
+            }
+            
+            // 10. TRAVAUX EFFECTUÉS
+            if (data.travaux_effectues && data.travaux_effectues.length > 0) {
+                blocks.push(createBlockHTML('h2', 'Travaux effectués', 'section_travaux'));
+                data.travaux_effectues.forEach((t, i) => {
+                    const content = t.contenu || t.texte || t.titre || '';
+                    blocks.push(createBlockHTML('arrow', content, `travaux_${i}`));
+                });
+            }
+            
+            // 11. RESERVES
+            if (data.reserves && data.reserves.length > 0) {
+                blocks.push(createBlockHTML('h2', 'Réserves', 'section_reserves'));
+                data.reserves.forEach((r, i) => {
+                    const content = r.titre || r.description || '';
+                    blocks.push(createBlockHTML('bullet', content, `reserve_${i}`));
+                });
+            }
+            
+            // 12. RECOMMANDATIONS
+            if (data.recommandations && data.recommandations.length > 0) {
+                blocks.push(createBlockHTML('h2', 'Recommandations', 'section_recommandations'));
+                data.recommandations.forEach((r, i) => {
+                    const content = r.titre || r.description || r.texte || '';
+                    blocks.push(createBlockHTML('arrow', content, `reco_${i}`));
+                });
+            }
+            
+            // 13. SIGNATURES
+            const clientName = data.client?.contact || data.client?.societe || '';
+            const techName = data.technicien?.nom || '';
+            const clientSig = data.signatures?.client?.image || data.signature_client || '';
+            const techSig = data.signatures?.technicien?.image || data.signature_technicien || '';
+            
+            blocks.push(`
+                <div class="rpt-signature-section">
+                    <div class="rpt-signature-title">Signatures</div>
+                    <div class="rpt-signature-grid">
+                        <div class="rpt-signature-box">
+                            <div class="rpt-signature-box-title">SIGNATURE CLIENT</div>
+                            <div class="rpt-signature-area" id="sigAreaClient" onclick="openSignaturePad('client')">
+                                ${clientSig ? `<img src="${clientSig}" alt="Signature client">` : '<span class="rpt-signature-placeholder">Touchez pour signer</span>'}
+                            </div>
+                            <input type="text" class="rpt-signature-name-input" id="sigNameClient" placeholder="Nom du signataire" value="${clientName}" onblur="drawerAutoSave()">
+                        </div>
+                        <div class="rpt-signature-box">
+                            <div class="rpt-signature-box-title">SIGNATURE TECHNICIEN</div>
+                            <div class="rpt-signature-area" id="sigAreaTech" onclick="openSignaturePad('technicien')">
+                                ${techSig ? `<img src="${techSig}" alt="Signature technicien">` : '<span class="rpt-signature-placeholder">Touchez pour signer</span>'}
+                            </div>
+                            <input type="text" class="rpt-signature-name-input" id="sigNameTech" placeholder="Nom du signataire" value="${techName}" onblur="drawerAutoSave()">
+                        </div>
+                    </div>
+                </div>
+            `);
+            
+            return `<div class="rpt-doc" id="rptDoc">${blocks.join('')}</div>`;
+        }
+        
+        // Initialize v12.5 features after rendering
+        function initDrawerV12Features() {
+            const doc = document.getElementById('rptDoc');
+            if (!doc) return;
+            
+            // Init drag & drop on all drag handles
+            doc.querySelectorAll('.drag-handle').forEach(handle => {
+                handle.addEventListener('mousedown', drawerStartDrag);
+                handle.addEventListener('touchstart', drawerStartDrag, { passive: false });
+            });
+            
+            // Init auto-save on all editable elements
+            doc.querySelectorAll('[contenteditable="true"]').forEach(el => {
+                el.addEventListener('blur', drawerAutoSave);
+                el.addEventListener('keydown', drawerHandleBlockKey);
+            });
+            
+            // Init floating toolbar
+            initDrawerFloatingToolbar();
+            
+            console.log('[Drawer v12.5] Features initialized');
+        }
+        
+        // Floating toolbar initialization
+        function initDrawerFloatingToolbar() {
+            const fontToolbar = document.getElementById('fontToolbar');
+            if (!fontToolbar) return;
+            
+            document.addEventListener('focusin', (e) => {
+                if (e.target.matches('#rptDoc .b-content[contenteditable="true"]')) {
+                    drawerActiveEditable = e.target;
+                    showDrawerFontToolbar(e.target);
+                }
+            });
+            
+            document.addEventListener('click', (e) => {
+                if (!fontToolbar.contains(e.target) && !e.target.closest('#rptDoc .b-content[contenteditable]')) {
+                    hideDrawerFontToolbar();
+                }
+            });
+            
+            document.getElementById('ftBold')?.addEventListener('click', () => document.execCommand('bold'));
+            document.getElementById('ftItalic')?.addEventListener('click', () => document.execCommand('italic'));
+            document.getElementById('ftUnderline')?.addEventListener('click', () => document.execCommand('underline'));
+            document.getElementById('ftAlignLeft')?.addEventListener('click', () => document.execCommand('justifyLeft'));
+            document.getElementById('ftAlignCenter')?.addEventListener('click', () => document.execCommand('justifyCenter'));
+            document.getElementById('ftJustify')?.addEventListener('click', () => document.execCommand('justifyFull'));
+            
+            document.querySelectorAll('.ft-dropdown-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const type = item.dataset.type;
+                    if (drawerActiveEditable) {
+                        const block = drawerActiveEditable.closest('.b');
+                        if (block) {
+                            block.className = 'b b-' + type;
+                            document.getElementById('ftBlockType').textContent = item.textContent;
+                            drawerAutoSave();
+                        }
+                    }
+                });
+            });
+        }
+        
+        function showDrawerFontToolbar(element) {
+            const fontToolbar = document.getElementById('fontToolbar');
+            if (!fontToolbar) return;
+            const rect = element.getBoundingClientRect();
+            fontToolbar.style.left = Math.min(rect.left, window.innerWidth - 280) + 'px';
+            fontToolbar.style.top = Math.max(10, rect.top - 40) + 'px';
+            fontToolbar.classList.add('visible');
+        }
+        
+        function hideDrawerFontToolbar() {
+            document.getElementById('fontToolbar')?.classList.remove('visible');
+            drawerActiveEditable = null;
+        }
+        
+        // Drag & Drop functions
+        function drawerStartDrag(e) {
+            const block = e.target.closest('.b');
+            if (!block) return;
+            e.preventDefault();
+            
+            drawerDraggedElement = block;
+            block.classList.add('dragging');
+            
+            document.addEventListener('mousemove', drawerOnDrag);
+            document.addEventListener('mouseup', drawerEndDrag);
+            document.addEventListener('touchmove', drawerOnDrag, { passive: false });
+            document.addEventListener('touchend', drawerEndDrag);
+        }
+        
+        function drawerOnDrag(e) {
+            if (!drawerDraggedElement) return;
+            e.preventDefault();
+            
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            document.querySelectorAll('#rptDoc .b:not(.dragging)').forEach(block => {
+                const rect = block.getBoundingClientRect();
+                block.classList.toggle('drag-over', clientY < rect.top + rect.height / 2 && clientY > rect.top - 20);
+            });
+        }
+        
+        function drawerEndDrag() {
+            if (!drawerDraggedElement) return;
+            
+            const dropTarget = document.querySelector('#rptDoc .b.drag-over');
+            if (dropTarget && dropTarget !== drawerDraggedElement) {
+                dropTarget.parentNode.insertBefore(drawerDraggedElement, dropTarget);
+                drawerAutoSave();
+            }
+            
+            drawerDraggedElement.classList.remove('dragging');
+            document.querySelectorAll('#rptDoc .b.drag-over').forEach(b => b.classList.remove('drag-over'));
+            drawerDraggedElement = null;
+            
+            document.removeEventListener('mousemove', drawerOnDrag);
+            document.removeEventListener('mouseup', drawerEndDrag);
+            document.removeEventListener('touchmove', drawerOnDrag);
+            document.removeEventListener('touchend', drawerEndDrag);
+        }
+        
+        // Block keyboard handling
+        function drawerHandleBlockKey(e) {
+            const block = e.target.closest('.b');
+            if (!block) return;
+            
+            const content = block.querySelector('.b-content');
+            const text = content?.textContent || '';
+            
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                const newType = ['bullet', 'num', 'arrow'].includes(block.dataset.type) ? block.dataset.type : 'p';
+                const newBlock = drawerCreateBlock(newType);
+                block.parentNode.insertBefore(newBlock, block.nextSibling);
+                newBlock.querySelector('.b-content')?.focus();
+                drawerAutoSave();
+            }
+            
+            if (e.key === 'Backspace' && text === '') {
+                e.preventDefault();
+                const prev = block.previousElementSibling;
+                block.remove();
+                if (prev?.querySelector('.b-content')) prev.querySelector('.b-content').focus();
+                drawerAutoSave();
+            }
+        }
+        
+        function drawerCreateBlock(type, content = '') {
+            const div = document.createElement('div');
+            div.className = `b b-${type}`;
+            div.dataset.type = type;
+            
+            if (type === 'num') {
+                drawerNumCounter++;
+                div.dataset.num = drawerNumCounter;
+            }
+            
+            const dragHandle = document.createElement('div');
+            dragHandle.className = 'drag-handle';
+            for (let i = 0; i < 6; i++) dragHandle.appendChild(document.createElement('span'));
+            dragHandle.addEventListener('mousedown', drawerStartDrag);
+            div.appendChild(dragHandle);
+            
+            const contentEl = document.createElement('div');
+            contentEl.className = 'b-content';
+            contentEl.contentEditable = true;
+            contentEl.innerHTML = content;
+            contentEl.addEventListener('blur', drawerAutoSave);
+            contentEl.addEventListener('keydown', drawerHandleBlockKey);
+            div.appendChild(contentEl);
+            
+            return div;
+        }
+        
+        // Table functions
+        function drawerAddTableRow(btn) {
+            const wrapper = btn.closest('.b-table');
+            const tbody = wrapper?.querySelector('tbody');
+            const cols = wrapper?.querySelectorAll('thead th').length || 3;
+            
+            if (tbody) {
+                const tr = document.createElement('tr');
+                for (let i = 0; i < cols; i++) {
+                    const td = document.createElement('td');
+                    td.contentEditable = true;
+                    td.addEventListener('blur', drawerAutoSave);
+                    tr.appendChild(td);
+                }
+                tbody.appendChild(tr);
+                drawerAutoSave();
+            }
+        }
+        
+        function drawerAddTableCol(btn) {
+            const wrapper = btn.closest('.b-table');
+            const table = wrapper?.querySelector('table');
+            if (!table) return;
+            
+            const th = document.createElement('th');
+            th.contentEditable = true;
+            th.textContent = 'Nouvelle';
+            th.addEventListener('blur', drawerAutoSave);
+            table.querySelector('thead tr')?.appendChild(th);
+            
+            table.querySelectorAll('tbody tr').forEach(tr => {
+                const td = document.createElement('td');
+                td.contentEditable = true;
+                td.addEventListener('blur', drawerAutoSave);
+                tr.appendChild(td);
+            });
+            
+            drawerAutoSave();
+        }
+        
+        function drawerRemoveTableRow(btn) {
+            const wrapper = btn.closest('.b-table');
+            const tbody = wrapper?.querySelector('tbody');
+            const rows = tbody?.querySelectorAll('tr');
+            if (rows && rows.length > 0) {
+                rows[rows.length - 1].remove();
+                drawerAutoSave();
+            }
+        }
+        
+        // Auto-save function
+        function drawerAutoSave() {
+            if (drawerAutoSaveTimeout) clearTimeout(drawerAutoSaveTimeout);
+            
+            drawerAutoSaveTimeout = setTimeout(async () => {
+                if (!currentProjectId || !lastReportData) return;
+                
+                const doc = document.getElementById('rptDoc');
+                if (!doc) return;
+                
+                drawerExtractDataFromDOM(doc, lastReportData);
+                
+                const indicator = document.getElementById('autosaveIndicator');
+                if (indicator) {
+                    indicator.textContent = 'Enregistrement...';
+                    indicator.classList.remove('success');
+                    indicator.classList.add('show');
+                }
+                
+                try {
+                    const completion = calculateReportCompletion(lastReportData);
+                    const progressValue = Math.round(completion.percentage);
+                    
+                    const { error } = await db.from('projects')
+                        .update({ 
+                            extracted_data: lastReportData,
+                            progress: progressValue,
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('id', currentProjectId);
+                    
+                    if (error) throw error;
+                    
+                    // Update progress bar
+                    const progressFill = document.getElementById('reportProgressFill');
+                    const progressText = document.getElementById('reportProgressText');
+                    if (progressFill) progressFill.style.width = progressValue + '%';
+                    if (progressText) progressText.textContent = progressValue + '%';
+                    
+                    if (indicator) {
+                        indicator.textContent = 'Enregistré ✓';
+                        indicator.classList.add('success');
+                        setTimeout(() => indicator.classList.remove('show'), 1500);
+                    }
+                    
+                    console.log('[AutoSave] ✅ Saved - Progress:', progressValue + '%');
+                } catch (err) {
+                    console.error('[AutoSave] ❌ Error:', err);
+                    if (indicator) {
+                        indicator.textContent = 'Erreur sauvegarde';
+                        setTimeout(() => indicator.classList.remove('show'), 2000);
+                    }
+                }
+            }, 800);
+        }
+        
+        function drawerExtractDataFromDOM(doc, data) {
+            const getFieldText = (selector) => {
+                const el = doc.querySelector(selector);
+                return el?.textContent?.trim() || '';
+            };
+            
+            // Extract resume
+            const resumeEl = doc.querySelector('[data-field="resume_content"] .b-content');
+            if (resumeEl) data.resume = resumeEl.textContent.trim();
+            
+            // Extract signatures names
+            if (!data.signatures) data.signatures = {};
+            const clientSigName = document.getElementById('sigNameClient')?.value;
+            const techSigName = document.getElementById('sigNameTech')?.value;
+            if (clientSigName) {
+                if (!data.signatures.client) data.signatures.client = {};
+                data.signatures.client.nom = clientSigName;
+            }
+            if (techSigName) {
+                if (!data.signatures.technicien) data.signatures.technicien = {};
+                data.signatures.technicien.nom = techSigName;
+            }
+            
+            // Extract adressage table
+            const adressageTable = doc.querySelector('[data-field="table_adressage"] tbody');
+            if (adressageTable) {
+                data.adressage = [];
+                adressageTable.querySelectorAll('tr').forEach(tr => {
+                    const cells = tr.querySelectorAll('td');
+                    if (cells.length >= 5) {
+                        data.adressage.push({
+                            equipement_id: cells[0].textContent.trim(),
+                            adresse: cells[1].textContent.trim(),
+                            modele: cells[2].textContent.trim(),
+                            designation: cells[3].textContent.trim(),
+                            numero_serie: cells[4].textContent.trim()
+                        });
+                    }
+                });
+            }
+            
+            // Extract mesures table
+            const mesuresTable = doc.querySelector('[data-field="table_mesures"] tbody');
+            if (mesuresTable) {
+                data.mesures = [];
+                mesuresTable.querySelectorAll('tr').forEach(tr => {
+                    const cells = tr.querySelectorAll('td');
+                    if (cells.length >= 4) {
+                        data.mesures.push({
+                            label: cells[0].textContent.trim(),
+                            valeur: cells[1].textContent.trim(),
+                            unite: cells[2].textContent.trim(),
+                            status: cells[3].textContent.trim().toLowerCase()
+                        });
+                    }
+                });
+            }
+        }
+        
+        // Complete report function
+        async function completeReportV12() {
+            if (!currentProjectId || !lastReportData) return;
+            
+            const doc = document.getElementById('rptDoc');
+            if (doc) drawerExtractDataFromDOM(doc, lastReportData);
+            
+            lastReportData.status = 'completed';
+            lastReportData.completed_at = new Date().toISOString();
+            reportIsCompleted = true;
+            
+            const progressFill = document.getElementById('reportProgressFill');
+            const progressText = document.getElementById('reportProgressText');
+            if (progressFill) progressFill.style.width = '100%';
+            if (progressText) progressText.textContent = '100%';
+            
+            try {
+                const { error } = await db.from('projects')
+                    .update({ 
+                        extracted_data: lastReportData,
+                        progress: 100,
+                        status: 'completed',
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', currentProjectId);
+                
+                if (error) throw error;
+                
+                updateReportFooterButtonsV12(true);
+                showNotification('Rapport complété !', 'success');
+            } catch (err) {
+                console.error('[Complete] Error:', err);
+                showNotification('Erreur lors de la complétion', 'error');
+            }
+        }
+        
+        function updateReportFooterButtonsV12(isCompleted) {
+            const footer = document.getElementById('reportFooter');
+            if (!footer) return;
+            
+            if (isCompleted) {
+                footer.innerHTML = `
+                    <button class="r-btn secondary" onclick="exportReportWordV12()" style="flex: 1;">
+                        <span style="margin-right:6px;">📄</span> Exporter Word
+                    </button>
+                `;
+            } else {
+                footer.innerHTML = `
+                    <button class="r-btn primary" onclick="completeReportV12()" style="flex: 1;">
+                        ✓ Compléter le rapport
+                    </button>
+                `;
+            }
+        }
+        
+        async function exportReportWordV12() {
+            if (typeof generateAndDownloadReport === 'function') {
+                generateAndDownloadReport();
+            } else {
+                showNotification('Export Word en cours...', 'info');
+                // Fallback - use existing export logic
+                if (typeof showCompletionPopup === 'function') {
+                    showCompletionPopup();
+                }
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
         // EDITABLE REPORT FUNCTIONS
         // ═══════════════════════════════════════════════════════════════
         
@@ -13877,17 +14625,21 @@ INSTRUCTIONS:
             // Item removed from list
         }
         
-        // Refresh the report preview with current data
+        // Refresh the report preview with current data - v12.5
         function refreshReportPreview() {
             const previewContent = document.getElementById('reportPreviewContent');
             if (!previewContent) return;
             
             const completionStatus = calculateReportCompletion(lastReportData || {});
-            const html = renderReportPreview(lastReportData, completionStatus);
+            const html = renderReportPreviewV12(lastReportData, completionStatus);
             previewContent.innerHTML = html;
             
-            // Re-attach event listeners
-            attachEditableListeners();
+            // Initialize v12.5 features
+            initDrawerV12Features();
+            
+            // Update footer buttons
+            const isCompleted = lastReportData?.status === 'completed' || completionStatus?.percentage >= 100;
+            updateReportFooterButtonsV12(isCompleted);
             
             // Initialize photo drag-drop
             initPhotoDragDrop();
