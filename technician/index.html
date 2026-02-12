@@ -17181,6 +17181,16 @@ RÈGLES:
                 const userId = await getCurrentUserId();
                 if (!userId || userId.startsWith('demo-')) return false;
                 
+                // ═══ OWNER BYPASS ═══
+                const OWNER_IDS = ['d5baabf1-147a-4ee5-a07a-8f80212fbc9a'];
+                if (OWNER_IDS.includes(userId)) {
+                    console.log('[Freemium] Owner detected - PRO access granted');
+                    const usage = getFreemiumUsage();
+                    usage.isPro = true;
+                    saveFreemiumUsage(usage);
+                    return true;
+                }
+                
                 // Check users table for subscription_tier
                 const { data, error } = await db
                     .from('users')
@@ -17213,6 +17223,11 @@ RÈGLES:
             // Pro users don't need tracking (but we still track for analytics)
             if (usage.isPro) return { allowed: true, remaining: 999 };
             
+            // ═══ OWNER BYPASS (backup) ═══
+            if (currentUserId === 'd5baabf1-147a-4ee5-a07a-8f80212fbc9a') {
+                return { allowed: true, remaining: 999 };
+            }
+            
             const key = panel === 'copilot' ? 'copilotChats' : 'assistantChats';
             const limit = panel === 'copilot' ? FREEMIUM_CONFIG.freeCopilotChats : FREEMIUM_CONFIG.freeAssistantChats;
             
@@ -17238,6 +17253,10 @@ RÈGLES:
         function canSendChat(panel) {
             const usage = getFreemiumUsage();
             if (usage.isPro) return { allowed: true, remaining: 999 };
+            // ═══ OWNER BYPASS ═══
+            if (currentUserId === 'd5baabf1-147a-4ee5-a07a-8f80212fbc9a') {
+                return { allowed: true, remaining: 999 };
+            }
             
             const key = panel === 'copilot' ? 'copilotChats' : 'assistantChats';
             const limit = panel === 'copilot' ? FREEMIUM_CONFIG.freeCopilotChats : FREEMIUM_CONFIG.freeAssistantChats;
@@ -17254,6 +17273,8 @@ RÈGLES:
         // Check if user can use a Pro feature
         function canUseProFeature(feature) {
             const usage = getFreemiumUsage();
+            // ═══ OWNER BYPASS ═══
+            if (currentUserId === 'd5baabf1-147a-4ee5-a07a-8f80212fbc9a') return true;
             return usage.isPro;
         }
         
