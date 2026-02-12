@@ -14789,7 +14789,10 @@ RÈGLES:
                     throw new Error('Erreur serveur: ' + response.status);
                 }
                 
-                const data = await response.json();
+                const rawData = await response.json();
+                
+                // Handle both array and object response formats
+                const data = Array.isArray(rawData) ? rawData[0] : rawData;
 
                 // Remove loading
                 removeLoadingMsg(panel);
