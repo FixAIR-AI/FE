@@ -3877,102 +3877,105 @@
         .r-btn.secondary { background: var(--card); border: 1px solid var(--border); color: rgba(255,255,255,0.6); }
         .r-btn .icon { width: 14px; height: 14px; }
 
-        /* ═══ DRAWER v12.5 EDITABLE REPORT STYLES ═══ */
-        .rpt-doc { outline: none; min-height: 100%; padding: 0 4px; }
+        /* ═══ DRAWER v12.5 EDITABLE REPORT STYLES - EXACT FROM STANDALONE ═══ */
+        .rpt-doc { outline: none; min-height: 100%; padding: 0 8px; }
         
-        /* BLOCKS */
-        .b { position: relative; margin-bottom: 2px; padding: 2px 4px 2px 28px; border-radius: 4px; }
-        .b:hover { background: rgba(255,255,255,0.03); }
-        .b:focus-within { background: rgba(0,212,170,0.05); }
+        /* BLOCKS - exact from standalone */
+        .b { position: relative; margin-bottom: 2px; padding: 2px 4px 2px 32px; border-radius: 2px; }
+        .b:hover { background: rgba(255,255,255,0.04); }
+        .b:focus-within { background: rgba(0,212,170,0.06); }
         .b-content { outline: none; min-height: 20px; color: var(--text); }
         .b-content:empty::before { content: attr(data-ph); color: var(--text-dim); font-style: italic; }
         .b-content:focus { outline: none; }
         
-        .b-h1 .b-content { font-size: 18px; font-weight: 600; line-height: 1.3; margin-bottom: 12px; color: var(--text); }
-        .b-h2 .b-content { font-size: 14px; font-weight: 600; line-height: 1.4; margin-top: 16px; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid var(--border); color: var(--text); }
-        .b-h3 .b-content { font-size: 12px; font-weight: 600; line-height: 1.4; margin-top: 10px; margin-bottom: 4px; color: var(--text); }
-        .b-p .b-content { font-size: 12px; line-height: 1.6; color: var(--text); }
+        .b-h1 .b-content { font-size: 22px; font-weight: 600; line-height: 1.3; margin-bottom: 16px; color: var(--text); }
+        .b-h2 .b-content { font-size: 16px; font-weight: 600; line-height: 1.4; margin-top: 24px; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 0.5px solid rgba(138,146,160,0.3); color: var(--text); }
+        .b-h3 .b-content { font-size: 14px; font-weight: 600; line-height: 1.4; margin-top: 14px; margin-bottom: 6px; color: var(--text); }
+        .b-p .b-content { font-size: 13px; line-height: 1.7; color: var(--text); }
         .b-p .b-content, .b-bullet .b-content, .b-arrow .b-content { text-align: justify; }
         
-        .b .lbl { color: var(--text-dim); font-size: 11px; }
+        .b .lbl { color: var(--text-dim); font-size: 12px; }
         .b .val { color: var(--text); font-weight: 500; }
         
-        .b-bullet { padding-left: 40px; }
-        .b-bullet::before { content: "•"; position: absolute; left: 28px; color: var(--assistant); font-weight: bold; }
-        .b-bullet .b-content { font-size: 12px; line-height: 1.5; }
+        /* BULLETS - exact spacing from standalone */
+        .b-bullet { padding-left: 52px; }
+        .b-bullet::before { content: "•"; position: absolute; left: 32px; color: var(--assistant); font-weight: bold; font-size: 14px; }
+        .b-bullet .b-content { font-size: 13px; line-height: 1.6; }
         
-        .b-num { padding-left: 40px; }
-        .b-num::before { content: attr(data-num) "."; position: absolute; left: 28px; color: var(--assistant); font-size: 12px; }
+        .b-num { padding-left: 52px; }
+        .b-num::before { content: attr(data-num) "."; position: absolute; left: 32px; color: var(--assistant); font-size: 13px; }
         
-        .b-arrow { padding-left: 40px; }
-        .b-arrow::before { content: "→"; position: absolute; left: 28px; color: var(--assistant); }
+        /* ARROWS - with proper spacing (space after arrow) */
+        .b-arrow { padding-left: 52px; }
+        .b-arrow::before { content: "→  "; position: absolute; left: 32px; color: var(--assistant); font-size: 14px; white-space: pre; }
+        .b-arrow .b-content { font-size: 13px; line-height: 1.6; }
         
         /* DRAG HANDLE - 6 dots */
         .drag-handle {
-          position: absolute; left: 4px; top: 50%; transform: translateY(-50%);
-          width: 14px; height: 18px; cursor: grab; opacity: 0; transition: opacity 0.15s;
-          display: grid; grid-template-columns: repeat(2, 4px); grid-template-rows: repeat(3, 4px);
+          position: absolute; left: 6px; top: 50%; transform: translateY(-50%);
+          width: 16px; height: 20px; cursor: grab; opacity: 0; transition: opacity 0.15s;
+          display: grid; grid-template-columns: repeat(2, 5px); grid-template-rows: repeat(3, 5px);
           gap: 2px; align-content: center;
         }
-        .drag-handle span { width: 3px; height: 3px; background: var(--text-dim); border-radius: 50%; }
-        .b:hover .drag-handle { opacity: 0.6; }
+        .drag-handle span { width: 4px; height: 4px; background: var(--text-dim); border-radius: 50%; }
+        .b:hover .drag-handle { opacity: 0.8; }
         .drag-handle:active { cursor: grabbing; }
-        .b.dragging { opacity: 0.4; background: var(--bg-secondary); }
+        .b.dragging { opacity: 0.5; background: var(--bg-secondary); }
         .b.drag-over { border-top: 2px solid var(--assistant); }
         
-        /* TABLES */
-        .b-table { margin: 10px 0; padding-left: 4px; }
-        .rpt-tbl { width: 100%; border-collapse: collapse; font-size: 11px; background: transparent; border-radius: 6px; overflow: hidden; }
-        .rpt-tbl th, .rpt-tbl td { border: 1px solid var(--border); padding: 5px 8px; text-align: left; outline: none; background: transparent; }
-        .rpt-tbl th { background: var(--bg-secondary); font-weight: 500; color: var(--text-dim); text-transform: uppercase; font-size: 9px; letter-spacing: 0.5px; }
-        .rpt-tbl td { color: var(--text); }
+        /* TABLES - exact from standalone */
+        .b-table { margin: 16px 0; padding-left: 4px; }
+        .rpt-tbl { width: 100%; border-collapse: collapse; font-size: 12px; background: transparent; border-radius: 8px; overflow: hidden; }
+        .rpt-tbl th, .rpt-tbl td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; outline: none; background: transparent; }
+        .rpt-tbl th { background: rgba(255,255,255,0.04); font-weight: 500; color: var(--text-dim); text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; }
+        .rpt-tbl td { color: var(--text); font-size: 12px; }
         .rpt-tbl td:focus, .rpt-tbl th:focus { background: rgba(34,197,94,0.1); outline: none; }
-        .rpt-tbl tbody tr:hover { background: rgba(255,255,255,0.02); }
-        .tbl-actions { margin-top: 6px; display: flex; gap: 6px; flex-wrap: wrap; opacity: 0; transition: opacity 0.2s; }
-        .b-table:hover .tbl-actions { opacity: 1; }
-        .tbl-btn { font-size: 9px; padding: 4px 8px; background: transparent; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; color: var(--text-dim); }
+        .rpt-tbl tbody tr:hover { background: rgba(255,255,255,0.03); }
+        /* Table actions - ALWAYS visible */
+        .tbl-actions { margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; }
+        .tbl-btn { font-size: 11px; padding: 6px 10px; background: transparent; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; color: var(--text-dim); transition: all 0.2s; }
         .tbl-btn:hover { background: rgba(255,255,255,0.05); color: var(--text); }
         .tbl-btn-danger { color: #ef4444; border-color: rgba(239,68,68,0.3); }
         .tbl-btn-danger:hover { background: rgba(239,68,68,0.1); }
         
         /* FLOATING FONT TOOLBAR */
         .font-toolbar {
-          position: fixed; display: none; background: #ffffff; border-radius: 8px;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.25); padding: 4px 8px; gap: 2px; z-index: 1000; align-items: center;
+          position: fixed; display: none; background: #ffffff; border-radius: 10px;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.25); padding: 6px 10px; gap: 2px; z-index: 1000; align-items: center;
         }
         .font-toolbar.visible { display: flex; }
-        .ft-btn { width: 26px; height: 26px; border: none; background: transparent; color: #333; font-size: 11px; cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+        .ft-btn { width: 32px; height: 32px; border: none; background: transparent; color: #333; font-size: 13px; cursor: pointer; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
         .ft-btn:hover { background: #f0f0f0; }
         .ft-btn.active { background: #e0e0e0; }
-        .ft-sep { width: 1px; height: 16px; background: #ddd; margin: 0 4px; }
+        .ft-sep { width: 1px; height: 20px; background: #ddd; margin: 0 4px; }
         .ft-dropdown { position: relative; }
-        .ft-dropdown-btn { padding: 4px 8px; background: transparent; border: none; color: #333; font-size: 11px; cursor: pointer; border-radius: 4px; display: flex; align-items: center; gap: 4px; }
+        .ft-dropdown-btn { padding: 4px 10px; background: transparent; border: none; color: #333; font-size: 13px; cursor: pointer; border-radius: 6px; display: flex; align-items: center; gap: 4px; }
         .ft-dropdown-btn:hover { background: #f0f0f0; }
-        .ft-dropdown-menu { position: absolute; top: 100%; left: 0; background: #fff; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); padding: 4px; min-width: 120px; display: none; z-index: 1001; }
+        .ft-dropdown-menu { position: absolute; top: 100%; left: 0; background: #fff; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); padding: 4px; min-width: 150px; display: none; z-index: 1001; }
         .ft-dropdown:hover .ft-dropdown-menu { display: block; }
-        .ft-dropdown-item { padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; color: #333; }
+        .ft-dropdown-item { padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; color: #333; }
         .ft-dropdown-item:hover { background: #f0f0f0; }
-        .ft-dropdown-item.h1 { font-size: 14px; font-weight: 600; }
-        .ft-dropdown-item.h2 { font-size: 12px; font-weight: 600; }
-        .ft-dropdown-item.h3 { font-size: 11px; font-weight: 600; }
+        .ft-dropdown-item.h1 { font-size: 18px; font-weight: 600; }
+        .ft-dropdown-item.h2 { font-size: 16px; font-weight: 600; }
+        .ft-dropdown-item.h3 { font-size: 14px; font-weight: 600; }
         
         /* SIGNATURE SECTION */
-        .rpt-signature-section { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--border); }
-        .rpt-signature-title { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin-bottom: 10px; }
-        .rpt-signature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .rpt-signature-section { margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--border); }
+        .rpt-signature-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin-bottom: 16px; }
+        .rpt-signature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media (max-width: 500px) { .rpt-signature-grid { grid-template-columns: 1fr; } }
-        .rpt-signature-box { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 10px; }
-        .rpt-signature-box-title { font-size: 9px; font-weight: 500; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .rpt-signature-area { height: 70px; border: 2px dashed var(--border); border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: border-color 0.2s; }
+        .rpt-signature-box { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 14px; }
+        .rpt-signature-box-title { font-size: 11px; font-weight: 500; color: var(--text-dim); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .rpt-signature-area { height: 90px; border: 2px dashed var(--border); border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: border-color 0.2s; }
         .rpt-signature-area:hover { border-color: var(--assistant); }
         .rpt-signature-area img { max-height: 100%; max-width: 100%; object-fit: contain; }
-        .rpt-signature-placeholder { color: var(--text-dim); font-size: 10px; font-style: italic; }
-        .rpt-signature-name-input { margin-top: 6px; width: 100%; text-align: center; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--text); font-size: 11px; padding: 4px; outline: none; }
+        .rpt-signature-placeholder { color: var(--text-dim); font-size: 12px; font-style: italic; }
+        .rpt-signature-name-input { margin-top: 10px; width: 100%; text-align: center; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--text); font-size: 12px; padding: 6px 8px; outline: none; }
         .rpt-signature-name-input:focus { border-bottom-color: var(--assistant); }
         .rpt-signature-name-input::placeholder { color: var(--text-dim); font-style: italic; }
         
         /* AUTO-SAVE INDICATOR */
-        .autosave-indicator { position: fixed; bottom: 80px; right: 20px; padding: 6px 10px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; font-size: 10px; color: var(--text-dim); opacity: 0; transition: opacity 0.3s; z-index: 100; }
+        .autosave-indicator { position: fixed; bottom: 80px; right: 20px; padding: 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; font-size: 11px; color: var(--text-dim); opacity: 0; transition: opacity 0.3s; z-index: 100; }
         .autosave-indicator.show { opacity: 1; }
         .autosave-indicator.success { color: var(--assistant); }
 
@@ -11302,14 +11305,22 @@ INSTRUCTIONS:
                 data.photos = window.reportPhotos;
             }
             
-            // Collect signatures from drawer if present
-            const clientSig = document.querySelector('.signature-area[data-type="client"] img');
-            const techSig = document.querySelector('.signature-area[data-type="technicien"] img');
+            // Collect signatures from drawer if present (support both old and v12.5 selectors)
+            const clientSig = document.querySelector('.signature-area[data-type="client"] img') || 
+                             document.querySelector('#sigAreaClient img');
+            const techSig = document.querySelector('.signature-area[data-type="technicien"] img') ||
+                           document.querySelector('#sigAreaTech img');
             
-            if (clientSig || techSig) {
+            // Also get signature names from v12.5 inputs
+            const clientSigName = document.getElementById('sigNameClient')?.value;
+            const techSigName = document.getElementById('sigNameTech')?.value;
+            
+            if (clientSig || techSig || clientSigName || techSigName) {
                 data.signatures = data.signatures || {};
                 if (clientSig) data.signatures.client = clientSig.src;
                 if (techSig) data.signatures.technicien = techSig.src;
+                if (clientSigName) data.signatures.nom_client = clientSigName;
+                if (techSigName) data.signatures.nom_technicien = techSigName;
             }
             
             return data;
@@ -13991,6 +14002,7 @@ INSTRUCTIONS:
                         <button class="tbl-btn" onclick="drawerAddTableRow(this)">+ Ligne</button>
                         <button class="tbl-btn" onclick="drawerAddTableCol(this)">+ Colonne</button>
                         <button class="tbl-btn tbl-btn-danger" onclick="drawerRemoveTableRow(this)">- Ligne</button>
+                        <button class="tbl-btn tbl-btn-danger" onclick="drawerRemoveTableCol(this)">- Colonne</button>
                     </div>
                 </div>`;
                 blocks.push(tableHTML);
@@ -14029,7 +14041,9 @@ INSTRUCTIONS:
                 tableHTML += `</tbody></table>
                     <div class="tbl-actions">
                         <button class="tbl-btn" onclick="drawerAddTableRow(this)">+ Ligne</button>
+                        <button class="tbl-btn" onclick="drawerAddTableCol(this)">+ Colonne</button>
                         <button class="tbl-btn tbl-btn-danger" onclick="drawerRemoveTableRow(this)">- Ligne</button>
+                        <button class="tbl-btn tbl-btn-danger" onclick="drawerRemoveTableCol(this)">- Colonne</button>
                     </div>
                 </div>`;
                 blocks.push(tableHTML);
@@ -14319,6 +14333,22 @@ INSTRUCTIONS:
             }
         }
         
+        function drawerRemoveTableCol(btn) {
+            const wrapper = btn.closest('.b-table');
+            const table = wrapper?.querySelector('table');
+            if (!table) return;
+            
+            const headerCells = table.querySelectorAll('thead th');
+            if (headerCells.length > 1) {
+                headerCells[headerCells.length - 1].remove();
+                table.querySelectorAll('tbody tr').forEach(tr => {
+                    const cells = tr.querySelectorAll('td');
+                    if (cells.length > 0) cells[cells.length - 1].remove();
+                });
+                drawerAutoSave();
+            }
+        }
+        
         // Auto-save function
         function drawerAutoSave() {
             if (drawerAutoSaveTimeout) clearTimeout(drawerAutoSaveTimeout);
@@ -14490,14 +14520,27 @@ INSTRUCTIONS:
         }
         
         async function exportReportWordV12() {
-            if (typeof generateAndDownloadReport === 'function') {
-                generateAndDownloadReport();
+            console.log('[Export v12.5] Starting export...');
+            
+            // Extract latest data from DOM before export
+            const doc = document.getElementById('rptDoc');
+            if (doc && lastReportData) {
+                drawerExtractDataFromDOM(doc, lastReportData);
+                console.log('[Export v12.5] Extracted data from DOM');
+            }
+            
+            console.log('[Export v12.5] lastReportData:', lastReportData);
+            
+            // Use the existing export function
+            if (typeof exportReport === 'function') {
+                console.log('[Export v12.5] Calling exportReport("word")');
+                exportReport('word');
+            } else if (typeof exportReportPDF === 'function') {
+                console.log('[Export v12.5] Calling exportReportPDF()');
+                exportReportPDF();
             } else {
-                showNotification('Export Word en cours...', 'info');
-                // Fallback - use existing export logic
-                if (typeof showCompletionPopup === 'function') {
-                    showCompletionPopup();
-                }
+                console.error('[Export v12.5] No export function found!');
+                showNotification('Erreur: fonction export non disponible', 'error');
             }
         }
         
