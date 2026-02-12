@@ -11772,26 +11772,38 @@ INSTRUCTIONS:
 
                 // ═══ ADRESSAGE UNITÉS ═══
                 if (data.adressage && data.adressage.length > 0) {
-                    contentChildren.push(sectionHeading('Adressage Unités'));
-                    contentChildren.push(new Paragraph({ spacing: { before: 400 } }));
-                    contentChildren.push(createTable(
-                        ['Réf.', 'Adresse', 'Modèle', 'Zone', 'N° Série'],
-                        data.adressage.map(a => [
-                            a.equipement_id || a.ref_usine || '',
-                            a.adresse || '',
-                            a.modele || '',
-                            a.designation || a.zone || '',
-                            a.numero_serie || a.serie || ''
-                        ])
-                    ));
+                    // Filter out malformed entries (raw text dumps, entries with very long field values)
+                    const validAdressage = data.adressage.filter(a => {
+                        const adr = a.adresse || a.equipement_id || a.ref_usine || '';
+                        // Skip if any field is too long (likely a raw text dump)
+                        if (adr.length > 20) return false;
+                        // Skip if contains keywords that indicate raw text
+                        if (/adressage|SW1|Soft:|Code \d{3}|verif electrique|VAC|disjoncteur/i.test(adr)) return false;
+                        return true;
+                    });
+                    
+                    if (validAdressage.length > 0) {
+                        contentChildren.push(sectionHeading('Adressage Unités'));
+                        contentChildren.push(new Paragraph({ spacing: { before: 400 } }));
+                        contentChildren.push(createTable(
+                            ['Adr', 'Modèle', 'Zone', 'N° Série'],
+                            validAdressage.map(a => [
+                                a.adresse || a.equipement_id || a.ref_usine || '',
+                                a.modele || a.model || '',
+                                a.zone || a.designation || '',
+                                a.numero_serie || a.serie || ''
+                            ])
+                        ));
+                    }
                 }
 
                 // ═══ CODES DÉFAUT ═══
-                if (data.codes_defaut && data.codes_defaut.length > 0) {
+                const validCodes = (data.codes_defaut || []).filter(c => c.code && c.code !== 'A2' && c.code.trim());
+                if (validCodes.length > 0) {
                     contentChildren.push(sectionHeading('Codes Défaut'));
                     contentChildren.push(createTable(
                         ['Code', 'Description', 'Résolution'],
-                        data.codes_defaut.map(c => [c.code, c.description, c.resolution])
+                        validCodes.map(c => [c.code || '', c.description || '', c.resolution || ''])
                     ));
                 }
 
@@ -11834,9 +11846,10 @@ INSTRUCTIONS:
                 }
 
                 // ═══ TRAVAUX EFFECTUÉS ═══
-                if (data.travaux_effectues && data.travaux_effectues.length > 0) {
+                const validTravaux = (data.travaux_effectues || []).filter(t => t.texte && t.texte.trim());
+                if (validTravaux.length > 0) {
                     contentChildren.push(sectionHeading('Travaux Effectués'));
-                    data.travaux_effectues.forEach(t => {
+                    validTravaux.forEach(t => {
                         const statusIcon = t.status === 'done' ? '✓' : (t.status === 'error' ? '✗' : '○');
                         const statusColor = t.status === 'done' ? '22C55E' : (t.status === 'error' ? 'EF4444' : GRAY);
                         contentChildren.push(new Paragraph({
@@ -11851,9 +11864,10 @@ INSTRUCTIONS:
                 }
 
                 // ═══ TRAVAUX À PRÉVOIR ═══
-                if (data.travaux_prevoir && data.travaux_prevoir.length > 0) {
+                const validTravauxPrevoir = (data.travaux_prevoir || []).filter(t => t.texte && t.texte.trim());
+                if (validTravauxPrevoir.length > 0) {
                     contentChildren.push(sectionHeading('Travaux à Prévoir'));
-                    data.travaux_prevoir.forEach(t => {
+                    validTravauxPrevoir.forEach(t => {
                         const prioColors = { urgent: 'EF4444', normal: 'F59E0B', optionnel: GRAY };
                         const prioLabels = { urgent: 'URGENT', normal: 'Normal', optionnel: 'Optionnel' };
                         contentChildren.push(new Paragraph({
@@ -11981,23 +11995,37 @@ INSTRUCTIONS:
                 }
 
                 // ═══ RÉSULTAT ═══
-                if (data.resultat) {
+                if (data.resultat && (data.resultat.status || data.resultat.label || data.resultat.description)) {
                     contentChildren.push(sectionHeading('Résultat'));
                     const resConfig = {
                         resolu: { color: '22C55E', bg: 'DCFCE7', label: '✓ PROBLÈME RÉSOLU' },
                         en_attente: { color: 'F59E0B', bg: 'FEF9C3', label: '◐ EN ATTENTE' },
-                        non_resolu: { color: 'EF4444', bg: 'FEE2E2', label: '✗ NON RÉSOLU' }
+                        non_resolu: { color: 'EF4444', bg: 'FEE2E2', label: '✗ NON RÉSOLU' },
+                        intervention_requise: { color: 'EF4444', bg: 'FEE2E2', label: '🔧 NOUVELLE INTERVENTION' }
                     };
+                    
+                    // Get status label - use data.resultat.label if available, or map from status
+                    let statusLabel = data.resultat.label || (resConfig[data.resultat.status]?.label) || '◐ EN ATTENTE';
                     const rc = resConfig[data.resultat.status] || resConfig.en_attente;
 
                     contentChildren.push(new Paragraph({
-                        children: [new TextRun({ text: rc.label, bold: true, size: 26, font: 'Calibri', color: rc.color })],
+                        children: [new TextRun({ text: statusLabel, bold: true, size: 26, font: 'Calibri', color: rc.color })],
                         spacing: { after: 120 },
                         shading: { fill: rc.bg, type: ShadingType.CLEAR }
                     }));
 
-                    if (data.resultat.description) {
-                        contentChildren.push(bodyText(data.resultat.description));
+                    // Clean up description - remove any "Conclusion :" prefix to avoid duplication
+                    let description = data.resultat.description || data.resultat.conclusion || '';
+                    description = description.replace(/^Conclusion\s*:\s*/i, '').trim();
+                    
+                    if (description && description !== 'Description du résultat...') {
+                        contentChildren.push(new Paragraph({
+                            children: [
+                                new TextRun({ text: 'Conclusion : ', bold: true, size: 21, font: 'Calibri', color: BODY }),
+                                new TextRun({ text: description, size: 21, font: 'Calibri', color: BODY })
+                            ],
+                            spacing: { after: 120, line: 312 }
+                        }));
                     }
                 }
 
@@ -12017,13 +12045,94 @@ INSTRUCTIONS:
                 }
 
                 // ═══ OBSERVATION CLIENT ═══
-                if (data.observation_client) {
+                if (data.observation_client && data.observation_client !== 'Observations du client...') {
                     contentChildren.push(sectionHeading('Observation Client'));
                     contentChildren.push(new Paragraph({
                         children: [new TextRun({ text: data.observation_client, size: 21, font: 'Calibri', italics: true, color: BODY })],
                         spacing: { after: 200, line: 312 },
                         shading: { fill: 'F0F9FF', type: ShadingType.CLEAR }
                     }));
+                }
+
+                // ═══ PHOTOS (BEFORE SIGNATURES) ═══
+                const photos = data.photos || window.reportPhotos || [];
+                const validPhotos = photos.filter(p => p.data && p.data.startsWith('data:image'));
+
+                if (validPhotos.length > 0) {
+                    contentChildren.push(sectionHeading('Photos de l\'intervention'));
+                    contentChildren.push(new Paragraph({
+                        children: [new TextRun({ text: `${validPhotos.length} photo${validPhotos.length > 1 ? 's' : ''} jointe${validPhotos.length > 1 ? 's' : ''}`, size: 21, font: 'Calibri', color: GRAY })],
+                        spacing: { after: 200 }
+                    }));
+
+                    // Process photos in pairs for 2-column grid
+                    for (let i = 0; i < validPhotos.length; i += 2) {
+                        const photo1 = validPhotos[i];
+                        const photo2 = validPhotos[i + 1];
+
+                        const cell1Content = [];
+                        try {
+                            cell1Content.push(new Paragraph({
+                                children: [new ImageRun({
+                                    data: b64toU8(photo1.data),
+                                    transformation: { width: 200, height: 150 }
+                                })],
+                                alignment: AlignmentType.CENTER,
+                                spacing: { after: 60 }
+                            }));
+                            if (photo1.caption) {
+                                cell1Content.push(new Paragraph({
+                                    children: [new TextRun({ text: photo1.caption, size: 18, font: 'Calibri', italics: true, color: GRAY })],
+                                    alignment: AlignmentType.CENTER
+                                }));
+                            }
+                        } catch (e) { console.error('Photo error:', e); }
+
+                        const cell2Content = [];
+                        if (photo2) {
+                            try {
+                                cell2Content.push(new Paragraph({
+                                    children: [new ImageRun({
+                                        data: b64toU8(photo2.data),
+                                        transformation: { width: 200, height: 150 }
+                                    })],
+                                    alignment: AlignmentType.CENTER,
+                                    spacing: { after: 60 }
+                                }));
+                                if (photo2.caption) {
+                                    cell2Content.push(new Paragraph({
+                                        children: [new TextRun({ text: photo2.caption, size: 18, font: 'Calibri', italics: true, color: GRAY })],
+                                        alignment: AlignmentType.CENTER
+                                    }));
+                                }
+                            } catch (e) { console.error('Photo error:', e); }
+                        } else {
+                            cell2Content.push(new Paragraph({}));
+                        }
+
+                        contentChildren.push(new Table({
+                            rows: [new TableRow({
+                                children: [
+                                    new TableCell({
+                                        children: cell1Content.length ? cell1Content : [new Paragraph({})],
+                                        borders: noBorders,
+                                        margins: { top: 80, bottom: 80, left: 40, right: 40 },
+                                        width: { size: 50, type: WidthType.PERCENTAGE },
+                                        verticalAlign: VerticalAlign.TOP
+                                    }),
+                                    new TableCell({
+                                        children: cell2Content.length ? cell2Content : [new Paragraph({})],
+                                        borders: noBorders,
+                                        margins: { top: 80, bottom: 80, left: 40, right: 40 },
+                                        width: { size: 50, type: WidthType.PERCENTAGE },
+                                        verticalAlign: VerticalAlign.TOP
+                                    })
+                                ]
+                            })],
+                            borders: noTableBorders,
+                            width: { size: 100, type: WidthType.PERCENTAGE }
+                        }));
+                    }
                 }
 
                 // ═══ SIGNATURES ═══
@@ -12122,94 +12231,6 @@ INSTRUCTIONS:
                         rows: [new TableRow({ children: sigCells })],
                         width: { size: 100, type: WidthType.PERCENTAGE }
                     }));
-                }
-
-                // ═══ PHOTOS ANNEXE (2-column grid) ═══
-                const photos = data.photos || window.reportPhotos || [];
-                const validPhotos = photos.filter(p => p.data && p.data.startsWith('data:image'));
-
-                if (validPhotos.length > 0) {
-                    contentChildren.push(new Paragraph({ children: [new PageBreak()] }));
-
-                    contentChildren.push(new Paragraph({
-                        children: [new TextRun({ text: 'PHOTOS DE L\'INTERVENTION', bold: true, size: 28, font: 'Calibri', color: TEAL })],
-                        alignment: AlignmentType.CENTER,
-                        spacing: { after: 100 }
-                    }));
-
-                    contentChildren.push(new Paragraph({
-                        children: [new TextRun({ text: `${validPhotos.length} photo${validPhotos.length > 1 ? 's' : ''} jointe${validPhotos.length > 1 ? 's' : ''}`, size: 21, font: 'Calibri', color: GRAY })],
-                        alignment: AlignmentType.CENTER,
-                        spacing: { after: 300 }
-                    }));
-
-                    // Process photos in pairs for 2-column grid
-                    for (let i = 0; i < validPhotos.length; i += 2) {
-                        const photo1 = validPhotos[i];
-                        const photo2 = validPhotos[i + 1];
-
-                        const cell1Content = [];
-                        try {
-                            cell1Content.push(new Paragraph({
-                                children: [new ImageRun({
-                                    data: b64toU8(photo1.data),
-                                    transformation: { width: 220, height: 165 }
-                                })],
-                                alignment: AlignmentType.CENTER,
-                                spacing: { after: 60 }
-                            }));
-                            if (photo1.caption) {
-                                cell1Content.push(new Paragraph({
-                                    children: [new TextRun({ text: photo1.caption, size: 18, font: 'Calibri', italics: true, color: GRAY })],
-                                    alignment: AlignmentType.CENTER
-                                }));
-                            }
-                        } catch (e) { console.error('Photo error:', e); }
-
-                        const cell2Content = [];
-                        if (photo2) {
-                            try {
-                                cell2Content.push(new Paragraph({
-                                    children: [new ImageRun({
-                                        data: b64toU8(photo2.data),
-                                        transformation: { width: 220, height: 165 }
-                                    })],
-                                    alignment: AlignmentType.CENTER,
-                                    spacing: { after: 60 }
-                                }));
-                                if (photo2.caption) {
-                                    cell2Content.push(new Paragraph({
-                                        children: [new TextRun({ text: photo2.caption, size: 18, font: 'Calibri', italics: true, color: GRAY })],
-                                        alignment: AlignmentType.CENTER
-                                    }));
-                                }
-                            } catch (e) { console.error('Photo error:', e); }
-                        } else {
-                            cell2Content.push(new Paragraph({}));
-                        }
-
-                        contentChildren.push(new Table({
-                            rows: [new TableRow({
-                                children: [
-                                    new TableCell({
-                                        children: cell1Content.length ? cell1Content : [new Paragraph({})],
-                                        borders: noBorders,
-                                        margins: { top: 80, bottom: 80, left: 40, right: 40 },
-                                        width: { size: 50, type: WidthType.PERCENTAGE },
-                                        verticalAlign: VerticalAlign.TOP
-                                    }),
-                                    new TableCell({
-                                        children: cell2Content.length ? cell2Content : [new Paragraph({})],
-                                        borders: noBorders,
-                                        margins: { top: 80, bottom: 80, left: 40, right: 40 },
-                                        width: { size: 50, type: WidthType.PERCENTAGE },
-                                        verticalAlign: VerticalAlign.TOP
-                                    })
-                                ]
-                            })],
-                            width: { size: 100, type: WidthType.PERCENTAGE }
-                        }));
-                    }
                 }
 
                 // ═══ GENERATED BY MENTION ═══
@@ -13161,6 +13182,56 @@ INSTRUCTIONS:
                 }
             }
             
+            // ═══ FIX MALFORMED ADRESSAGE FROM BACKEND ═══
+            // If adressage exists but has malformed entries (raw text dumps), try to extract UI data
+            if (partialData.adressage && partialData.adressage.length > 0) {
+                const firstEntry = partialData.adressage[0];
+                const equipId = firstEntry.equipement_id || firstEntry.ref_usine || '';
+                
+                // Detect if this is a raw text dump (contains keywords like "adressage", "SW1", long strings)
+                if (equipId.length > 50 || /adressage|SW1|Soft:|Code \d{3}|verif electrique/i.test(equipId)) {
+                    console.log('[Drawer] Detected malformed adressage, attempting to parse from conversation...');
+                    
+                    // Try to parse UI data from conversation text
+                    // Pattern: "UI01 PLFY-P15VFM-E1 serie 42M01760 - bureau 1"
+                    const uiPattern = /UI(\d{1,2})\s+([A-Z]{2,4}Y?-[A-Z0-9\-]+)\s+(?:serie|série|n°|s\/n)?\s*([A-Z0-9]+)\s*[-–]?\s*(.+?)(?=UI\d|$)/gi;
+                    
+                    const extractedUnits = [];
+                    let match;
+                    while ((match = uiPattern.exec(allTextOriginal)) !== null) {
+                        extractedUnits.push({
+                            adresse: match[1].padStart(2, '0'),
+                            modele: match[2],
+                            numero_serie: match[3],
+                            designation: (match[4] || '').trim(),
+                            zone: (match[4] || '').trim()
+                        });
+                    }
+                    
+                    // Also try simpler pattern: "01 PLFY-P15VFM-E1 bureau 1"
+                    if (extractedUnits.length === 0) {
+                        const simplePattern = /(\d{1,2})\s+([A-Z]{2,4}Y?-[A-Z0-9\-]+)\s+(.+?)(?=\d{1,2}\s+[A-Z]|$)/gi;
+                        while ((match = simplePattern.exec(allTextOriginal)) !== null) {
+                            extractedUnits.push({
+                                adresse: match[1].padStart(2, '0'),
+                                modele: match[2],
+                                designation: (match[3] || '').trim(),
+                                zone: (match[3] || '').trim()
+                            });
+                        }
+                    }
+                    
+                    if (extractedUnits.length > 0) {
+                        console.log(`[Drawer] Extracted ${extractedUnits.length} units from conversation`);
+                        partialData.adressage = extractedUnits;
+                    } else {
+                        // Clear malformed data to avoid showing garbage
+                        console.log('[Drawer] Could not parse units, clearing malformed adressage');
+                        partialData.adressage = [];
+                    }
+                }
+            }
+            
             // Detect fluide
             if (!partialData.fluide?.type) {
                 const fluideMatch = allText.match(/(r410a|r32|r134a|r407c|r290|r744)/i);
@@ -14005,10 +14076,20 @@ INSTRUCTIONS:
                 if (data.technicien.nom) blocks.push(createBlockHTML('p', `<span class="lbl">Technicien :</span> <span class="val">${data.technicien.nom}</span>`, 'tech_nom'));
             }
             
-            // 6. ÉQUIPEMENTS
+            // 6. ÉQUIPEMENTS - with deduplication
             if (data.equipements && data.equipements.length > 0) {
                 blocks.push(createBlockHTML('h2', 'Équipements', 'section_equipements'));
-                data.equipements.forEach((eq, i) => {
+                
+                // Deduplicate equipment by modele
+                const seen = new Set();
+                const uniqueEquipements = data.equipements.filter(eq => {
+                    const key = (eq.modele || '').toLowerCase().trim();
+                    if (seen.has(key) || !key) return false;
+                    seen.add(key);
+                    return true;
+                });
+                
+                uniqueEquipements.forEach((eq, i) => {
                     let text = '';
                     if (eq.marque) text += eq.marque + ' ';
                     text += eq.modele || 'Équipement';
@@ -14024,8 +14105,7 @@ INSTRUCTIONS:
                 let tableHTML = `<div class="b b-table" data-field="table_adressage">
                     <table class="rpt-tbl">
                         <thead><tr>
-                            <th contenteditable="true">RÉF.</th>
-                            <th contenteditable="true">ADRESSE</th>
+                            <th contenteditable="true">ADR</th>
                             <th contenteditable="true">MODÈLE</th>
                             <th contenteditable="true">ZONE</th>
                             <th contenteditable="true">N° SÉRIE</th>
@@ -14033,12 +14113,17 @@ INSTRUCTIONS:
                         <tbody>`;
                 
                 data.adressage.forEach(entry => {
+                    // Handle multiple field name formats from backend
+                    const adr = entry.adresse || entry.equipement_id || entry.ref_usine || '';
+                    const modele = entry.modele || entry.model || '';
+                    const zone = entry.zone || entry.designation || '';
+                    const serie = entry.numero_serie || entry.serie || '';
+                    
                     tableHTML += `<tr>
-                        <td contenteditable="true">${entry.equipement_id || entry.ref_usine || ''}</td>
-                        <td contenteditable="true">${entry.adresse || ''}</td>
-                        <td contenteditable="true">${entry.modele || 'À compléter'}</td>
-                        <td contenteditable="true">${entry.designation || entry.zone || 'À compléter'}</td>
-                        <td contenteditable="true">${entry.numero_serie || 'En attente'}</td>
+                        <td contenteditable="true">${adr}</td>
+                        <td contenteditable="true">${modele || 'À compléter'}</td>
+                        <td contenteditable="true">${zone || 'À compléter'}</td>
+                        <td contenteditable="true">${serie || 'En attente'}</td>
                     </tr>`;
                 });
                 
@@ -14537,20 +14622,28 @@ INSTRUCTIONS:
                 data.signatures.technicien.nom = techSigName;
             }
             
-            // Extract adressage table
+            // Extract adressage table (4 columns: ADR, MODÈLE, ZONE, N° SÉRIE)
             const adressageTable = doc.querySelector('[data-field="table_adressage"] tbody');
             if (adressageTable) {
                 data.adressage = [];
                 adressageTable.querySelectorAll('tr').forEach(tr => {
                     const cells = tr.querySelectorAll('td');
-                    if (cells.length >= 5) {
-                        data.adressage.push({
-                            equipement_id: cells[0].textContent.trim(),
-                            adresse: cells[1].textContent.trim(),
-                            modele: cells[2].textContent.trim(),
-                            designation: cells[3].textContent.trim(),
-                            numero_serie: cells[4].textContent.trim()
-                        });
+                    if (cells.length >= 4) {
+                        const adr = cells[0].textContent.trim();
+                        const modele = cells[1].textContent.trim();
+                        const zone = cells[2].textContent.trim();
+                        const serie = cells[3].textContent.trim();
+                        
+                        // Only add if not placeholder text
+                        if (adr || (modele && modele !== 'À compléter')) {
+                            data.adressage.push({
+                                adresse: adr,
+                                modele: modele !== 'À compléter' ? modele : '',
+                                zone: zone !== 'À compléter' ? zone : '',
+                                designation: zone !== 'À compléter' ? zone : '',
+                                numero_serie: serie !== 'En attente' ? serie : ''
+                            });
+                        }
                     }
                 });
             }
