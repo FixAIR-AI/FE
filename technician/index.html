@@ -19020,25 +19020,30 @@ RÈGLES:
         }
         
         function closeUpgradeModal(event) {
-            // If clicking overlay background, close
-            if (event && event.target.id !== 'upgradeOverlay') return;
+            if (event && event.target && event.target.id !== 'upgradeOverlay') return;
             document.getElementById('upgradeOverlay').classList.remove('show');
         }
-        
+
         function handleUpgradeClick() {
-            // For now, show toast and redirect to upgrade page
-            toast('Redirection vers la page d\'abonnement...');
-            
-            // Track upgrade intent
             console.log('[Freemium] Upgrade clicked');
-            
-            // Close modal
             closeUpgradeModal();
-            
-            // Open upgrade page (placeholder - will be Stripe)
-            setTimeout(() => {
-                window.open(FREEMIUM_CONFIG.upgradeUrl, '_blank');
-            }, 500);
+
+            // Build Stripe URL with user identification
+            const stripeBaseUrl = FREEMIUM_CONFIG.upgradeUrl;
+            const params = new URLSearchParams();
+
+            if (currentUserId) {
+                params.set('client_reference_id', currentUserId);
+            }
+            if (currentUser && currentUser.email) {
+                params.set('prefilled_email', currentUser.email);
+            }
+
+            const fullUrl = params.toString() ? `${stripeBaseUrl}?${params.toString()}` : stripeBaseUrl;
+            window.open(fullUrl, '_blank');
+
+            // Poll Supabase to detect when payment completes
+            startPaymentPolling();
         }
         
         // Show soft upgrade banner in chat (non-blocking)
