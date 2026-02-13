@@ -19092,6 +19092,297 @@ RÈGLES:
             }, 1500);
         }
         
+        // ═══ INVITE FLOW HANDLER ═══
+        function handleInviteClick() {
+            closeUpgradeModal();
+            closePendingPopup();
+            shareOnWhatsAppWithVariant();
+            grantInviteBuffer();
+            setTimeout(() => {
+                showInviteConfirmPopup();
+            }, 500);
+        }
+        // WhatsApp message with rotation (avoid same text to 5 people)
+        function shareOnWhatsAppWithVariant() {
+            const link = getReferralLink();
+            const variant = Math.floor(Math.random() * 3);
+
+            let message;
+            switch(variant) {
+                case 0:
+                    message = `Salut ! Je viens de trouver un truc pour les dépannages CVC — diagnostic IA + rapports auto en 30 secondes. C'est trop con de garder ça pour moi.\nTeste avec mon lien, on gagne tous les deux 1 semaine gratuite : ${link}`;
+                    break;
+                case 1:
+                    message = `Hey ! Je te partage un outil que j'utilise sur le terrain (diagnostic + rapports auto). Je t'offre 1 semaine gratuite pour tester :\n${link}\nTeste-le maintenant sur un vrai dépannage.`;
+                    break;
+                case 2:
+                    message = `Salut ! Tu connais FixAIR ? C'est un assistant IA pour les techs CVC — tu lui donnes un code erreur et il te sort le diagnostic + le rapport. Ça m'a changé la vie.\nEssaie gratuit : ${link}`;
+                    break;
+            }
+
+            const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+            trackReferralShare('whatsapp');
+        }
+        // Grant immediate buffer after invite sent
+        function grantInviteBuffer() {
+            const usage = getFreemiumUsage();
+            usage.bufferQueries = (usage.bufferQueries || 0) + FREEMIUM_CONFIG.bufferQueriesOnInvite;
+            const bufferEnd = new Date();
+            bufferEnd.setHours(bufferEnd.getHours() + FREEMIUM_CONFIG.bufferHoursOnInvite);
+            usage.bufferUntil = bufferEnd.toISOString();
+            usage.invitesSentThisWeek = (usage.invitesSentThisWeek || 0) + 1;
+            saveFreemiumUsage(usage);
+            console.log('[Referral] Buffer granted: +5 queries + 24h access');
+        }
+        // Show post-invite confirmation popup
+        function showInviteConfirmPopup() {
+            const popup = document.getElementById('inviteConfirmPopup');
+            if (popup) popup.classList.add('show');
+            setTimeout(() => { closeInviteConfirmPopup(); }, 8000);
+        }
+        function closeInviteConfirmPopup() {
+            const popup = document.getElementById('inviteConfirmPopup');
+            if (popup) popup.classList.remove('show');
+        }
+        // Show pending referral popup (on app re-open if no conversions)
+        function showPendingReferralPopup() {
+            const usage = getFreemiumUsage();
+            if ((usage.invitesSentThisWeek || 0) === 0) return;
+            if (referralState.totalReferrals > 0) return;
+
+            const variants = [
+                'Plus tu partages, plus tu débloques vite ton accès gratuit.',
+                'Un seul collègue qui s\'inscrit = 1 semaine gratuite pour vous deux.',
+                'Les meilleurs retours viennent souvent du 2e ou 3e collègue invité.'
+            ];
+            const microCopy = document.getElementById('pendingMicroCopy');
+            if (microCopy) {
+                microCopy.textContent = variants[Math.floor(Math.random() * variants.length)];
+            }
+
+            const popup = document.getElementById('referralPendingPopup');
+            if (popup) popup.classList.add('show');
+        }
+        function closePendingPopup() {
+            const popup = document.getElementById('referralPendingPopup');
+            if (popup) popup.classList.remove('show');
+        }
+        // ═══ SPRINT CHALLENGE (Day 3+) ═══
+        function checkSprintChallenge() {
+            if (!currentUser || !currentUser.created_at) return;
+
+            const usage = getFreemiumUsage();
+            if (usage.isPro) return;
+
+            const signupDate = new Date(currentUser.created_at);
+            const now = new Date();
+            const daysSinceSignup = Math.floor((now - signupDate) / (1000 * 60 * 60 * 24));
+
+            if (daysSinceSignup < FREEMIUM_CONFIG.sprintShowAfterDays) return;
+            if (referralState.isAmbassador) return;
+
+            const lastDismissed = localStorage.getItem('fixair_sprint_dismissed');
+            if (lastDismissed) {
+                const dismissed = new Date(lastDismissed);
+                const hoursSince = (now - dismissed) / (1000 * 60 * 60);
+                if (hoursSince < 24) return;
+            }
+
+            injectSprintBanner();
+        }
+        function injectSprintBanner() {
+            const homepage = document.getElementById('homepageContent');
+            if (!homepage) return;
+            if (homepage.querySelector('.sprint-banner')) return;
+
+            const completed = referralState.totalReferrals || 0;
+            const target = FREEMIUM_CONFIG.sprintTarget;
+
+            const banner = document.createElement('div');
+            banner.className = 'sprint-banner';
+            banner.onclick = function() { showUpgradeModal('sprint'); };
+            banner.innerHTML = `
+                <div class="sprint-banner-header">
+                    <span class="sprint-banner-emoji">⚡</span>
+                    <span class="sprint-banner-title">Défi 10 jours</span>
+                </div>
+                <div class="sprint-banner-desc">
+                    Invite ${target} techniciens CVC qui s'inscrivent → 2 mois FixAIR offerts (100€ de valeur)<br>
+                    <strong>${completed}/${target} complétés</strong>
+                </div>
+                <button class="sprint-banner-cta" onclick="event.stopPropagation(); handleInviteClick();">
+                    🎯 Inviter maintenant
+                </button>
+            `;
+
+            homepage.insertBefore(banner, homepage.firstChild);
+        }
+        // ═══ RE-ENTRY PROMPT (returning users) ═══
+        function showReentryPrompt(panel) {
+            const chatBody = document.getElementById(panel + 'Body');
+            if (!chatBody) return;
+            if (chatBody.querySelector('.reentry-prompt')) return;
+            if (chatBody.children.length > 1) return;
+
+            const examples = [
+                { code: 'E1', brand: 'Daikin', desc: 'Défaut capteur température extérieure' },
+                { code: 'F3', brand: 'Mitsubishi', desc: 'Erreur débit réfrigérant faible' },
+                { code: 'H6', brand: 'Panasonic', desc: 'Défaut compresseur position locked' },
+                { code: 'L5', brand: 'Toshiba', desc: 'Surcharge instantanée' }
+            ];
+            const ex = examples[Math.floor(Math.random() * examples.length)];
+
+            const prompt = document.createElement('div');
+            prompt.className = 'reentry-prompt';
+            prompt.onclick = function() {
+                const input = document.getElementById(panel + 'Input');
+                if (input) {
+                    input.value = `Code erreur ${ex.code} sur ${ex.brand} — diagnostic ?`;
+                    input.dispatchEvent(new Event('input'));
+                    prompt.remove();
+                }
+            };
+            prompt.innerHTML = `
+                <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px;">
+                    🔧 Un diagnostic rapide ?
+                </div>
+                <div style="font-size: 12px; color: var(--text-dim); line-height: 1.4;">
+                    Exemple : <strong>Code ${ex.code} ${ex.brand}</strong> — ${ex.desc}<br>
+                    <span style="color: var(--copilot); font-weight: 500;">Cliquez pour tester →</span>
+                </div>
+            `;
+
+            chatBody.appendChild(prompt);
+        }
+        // ═══ CHECK WEEK FREE STATUS ═══
+        async function checkWeekFreeStatus() {
+            try {
+                const userId = await getCurrentUserId();
+                if (!userId) return false;
+
+                const { data, error } = await db
+                    .from('users')
+                    .select('week_free_granted_at, completed_referrals, is_ambassador')
+                    .eq('id', userId)
+                    .single();
+
+                if (error || !data || !data.week_free_granted_at) return false;
+
+                const grantedAt = new Date(data.week_free_granted_at);
+                const now = new Date();
+                const freeDays = data.is_ambassador ? 60 : 7;
+                const expiresAt = new Date(grantedAt);
+                expiresAt.setDate(expiresAt.getDate() + freeDays);
+
+                if (now < expiresAt) {
+                    const usage = getFreemiumUsage();
+                    usage.isPro = true;
+                    saveFreemiumUsage(usage);
+                    console.log(`[Referral] Free period active — ${freeDays} days from ${grantedAt.toISOString()}`);
+                    return true;
+                }
+
+                return false;
+            } catch (e) {
+                console.warn('[Referral] Error checking week free status:', e);
+                return false;
+            }
+        }
+        // ═══ PAYMENT POLLING (detect Stripe payment completion) ═══
+        let paymentPollInterval = null;
+        function startPaymentPolling() {
+            if (paymentPollInterval) clearInterval(paymentPollInterval);
+
+            let attempts = 0;
+            const maxAttempts = 60;
+
+            console.log('[Payment] Starting payment polling...');
+
+            paymentPollInterval = setInterval(async () => {
+                attempts++;
+
+                if (attempts > maxAttempts) {
+                    clearInterval(paymentPollInterval);
+                    paymentPollInterval = null;
+                    console.log('[Payment] Polling timeout');
+                    return;
+                }
+
+                try {
+                    const userId = await getCurrentUserId();
+                    if (!userId) return;
+
+                    const { data } = await db
+                        .from('users')
+                        .select('subscription_tier')
+                        .eq('id', userId)
+                        .single();
+
+                    if (data && (data.subscription_tier === 'pro' || data.subscription_tier === 'enterprise')) {
+                        clearInterval(paymentPollInterval);
+                        paymentPollInterval = null;
+
+                        console.log('[Payment] ✅ Payment confirmed! User is now Pro');
+
+                        const usage = getFreemiumUsage();
+                        usage.isPro = true;
+                        saveFreemiumUsage(usage);
+
+                        toast('🎉 Bienvenue chez FixAIR Pro ! Accès illimité activé.');
+
+                        document.querySelectorAll('.upgrade-banner').forEach(b => b.remove());
+                        document.querySelectorAll('.sprint-banner').forEach(b => b.remove());
+                    }
+                } catch (e) {
+                    console.warn('[Payment] Polling error:', e);
+                }
+            }, 5000);
+        }
+        window.addEventListener('beforeunload', () => {
+            if (paymentPollInterval) clearInterval(paymentPollInterval);
+        });
+        document.addEventListener('visibilitychange', async () => {
+            if (document.visibilityState === 'visible' && paymentPollInterval) {
+                try {
+                    const userId = await getCurrentUserId();
+                    if (!userId) return;
+
+                    const { data } = await db
+                        .from('users')
+                        .select('subscription_tier')
+                        .eq('id', userId)
+                        .single();
+
+                    if (data && (data.subscription_tier === 'pro' || data.subscription_tier === 'enterprise')) {
+                        clearInterval(paymentPollInterval);
+                        paymentPollInterval = null;
+
+                        const usage = getFreemiumUsage();
+                        usage.isPro = true;
+                        saveFreemiumUsage(usage);
+
+                        toast('🎉 Bienvenue chez FixAIR Pro ! Accès illimité activé.');
+
+                        document.querySelectorAll('.upgrade-banner').forEach(b => b.remove());
+                        document.querySelectorAll('.sprint-banner').forEach(b => b.remove());
+                    }
+                } catch (e) {}
+            }
+        });
+        // Expose all new functions
+        window.handleInviteClick = handleInviteClick;
+        window.shareOnWhatsAppWithVariant = shareOnWhatsAppWithVariant;
+        window.grantInviteBuffer = grantInviteBuffer;
+        window.showInviteConfirmPopup = showInviteConfirmPopup;
+        window.closeInviteConfirmPopup = closeInviteConfirmPopup;
+        window.showPendingReferralPopup = showPendingReferralPopup;
+        window.closePendingPopup = closePendingPopup;
+        window.checkSprintChallenge = checkSprintChallenge;
+        window.showReentryPrompt = showReentryPrompt;
+        window.checkWeekFreeStatus = checkWeekFreeStatus;
+        window.startPaymentPolling = startPaymentPolling;
+
         // Expose to global scope
         window.showUpgradeModal = showUpgradeModal;
         window.closeUpgradeModal = closeUpgradeModal;
