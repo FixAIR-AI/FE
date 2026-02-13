@@ -5198,13 +5198,10 @@
    FREEMIUM PAYWALL SYSTEM - Soft Upgrade Prompts
    ═══════════════════════════════════════════════════════════════ */
 
-/* Upgrade Modal Overlay */
+/* ═══ UNIFIED PAYWALL POPUP (Referral-First) ═══ */
 .upgrade-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
@@ -5221,210 +5218,263 @@
     opacity: 1;
     visibility: visible;
 }
-
-/* Upgrade Modal Card */
 .upgrade-modal {
     background: var(--bg-secondary);
     border: 1px solid var(--border);
     border-radius: 20px;
     max-width: 400px;
     width: 100%;
-    padding: 32px 28px;
+    overflow: hidden;
     transform: translateY(20px) scale(0.95);
     transition: transform 0.3s ease;
-    text-align: center;
 }
 .upgrade-overlay.show .upgrade-modal {
     transform: translateY(0) scale(1);
 }
-
-/* Upgrade Icon */
-.upgrade-icon {
-    width: 72px;
-    height: 72px;
+.upgrade-modal-accent {
+    height: 3px;
+    background: linear-gradient(90deg, #6C5CE7, #00b894, #6C5CE7);
+}
+.upgrade-modal-body {
+    padding: 28px 24px 24px;
+    text-align: center;
+}
+.upgrade-fire-icon {
+    width: 68px; height: 68px;
+    border-radius: 50%;
+    background: rgba(108, 92, 231, 0.08);
+    border: 2px solid rgba(108, 92, 231, 0.2);
+    display: flex; align-items: center; justify-content: center;
     margin: 0 auto 20px;
-    background: linear-gradient(135deg, var(--copilot) 0%, #FF8F5C 100%);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 8px 32px rgba(255, 107, 53, 0.3);
+    font-size: 30px;
 }
-.upgrade-icon svg {
-    width: 36px;
-    height: 36px;
-    color: white;
-}
-
-/* Upgrade Title & Text */
-.upgrade-title {
-    font-size: 22px;
-    font-weight: 700;
+.upgrade-modal-title {
+    font-size: 19px; font-weight: 800;
     color: var(--text);
-    margin-bottom: 12px;
+    margin-bottom: 8px;
 }
-.upgrade-subtitle {
-    font-size: 15px;
+.upgrade-modal-subtitle {
+    font-size: 13px;
     color: var(--text-dim);
-    line-height: 1.5;
     margin-bottom: 24px;
+    line-height: 1.55;
 }
-
-/* Usage Counter Badge */
-.usage-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(255, 107, 53, 0.1);
-    border: 1px solid rgba(255, 107, 53, 0.2);
-    padding: 10px 16px;
-    border-radius: 12px;
-    margin-bottom: 24px;
-    font-size: 13px;
-    color: var(--copilot);
-    font-weight: 600;
+.upgrade-referral-block {
+    background: rgba(0, 184, 148, 0.07);
+    border: 1px solid rgba(0, 184, 148, 0.15);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 16px;
 }
-.usage-badge .usage-count {
-    background: var(--copilot);
-    color: white;
-    padding: 2px 8px;
-    border-radius: 6px;
-    font-size: 12px;
+.upgrade-referral-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 10px;
 }
-
-/* Benefits List */
-.upgrade-benefits {
-    text-align: left;
-    margin-bottom: 24px;
-    padding: 16px;
-    background: var(--card);
-    border-radius: 12px;
-    border: 1px solid var(--border);
+.upgrade-referral-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: rgba(0, 184, 148, 0.12);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
 }
-.upgrade-benefit {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 8px 0;
+.upgrade-referral-info { text-align: left; }
+.upgrade-referral-title {
+    font-size: 14px; font-weight: 700; color: #00b894;
 }
-.upgrade-benefit:not(:last-child) {
-    border-bottom: 1px solid var(--border);
+.upgrade-referral-desc {
+    font-size: 11.5px; color: var(--text-dim);
+    margin-top: 2px; line-height: 1.4;
 }
-.upgrade-benefit-icon {
-    width: 20px;
-    height: 20px;
-    background: rgba(34, 197, 94, 0.15);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    margin-top: 2px;
+.upgrade-referral-btn {
+    width: 100%; padding: 13px 20px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #00b894, #00a381);
+    color: white; border: none;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(0, 184, 148, 0.3);
+    transition: all 0.2s;
 }
-.upgrade-benefit-icon svg {
-    width: 12px;
-    height: 12px;
-    color: #22c55e;
+.upgrade-referral-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 22px rgba(0, 184, 148, 0.4);
 }
-.upgrade-benefit-text {
-    font-size: 13px;
-    color: var(--text);
-    line-height: 1.4;
+.upgrade-pro-btn {
+    width: 100%; padding: 13px 20px;
+    border-radius: 10px;
+    background: rgba(108, 92, 231, 0.12);
+    border: 1px solid rgba(108, 92, 231, 0.2);
+    color: #8b7cf7;
+    font-size: 13.5px; font-weight: 600;
+    cursor: pointer; margin-bottom: 4px;
+    transition: all 0.2s;
 }
-
-/* Upgrade Buttons */
-.upgrade-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+.upgrade-pro-btn:hover { background: rgba(108, 92, 231, 0.18); }
+.upgrade-pro-note {
+    font-size: 10.5px; color: rgba(255, 255, 255, 0.2);
+    margin-bottom: 14px;
 }
-.upgrade-btn {
-    padding: 14px 24px;
-    border-radius: 12px;
-    font-size: 15px;
-    font-weight: 600;
+.upgrade-later-btn {
+    background: transparent; border: none;
+    color: rgba(255, 255, 255, 0.18);
+    font-size: 12px; cursor: pointer; padding: 4px 0;
+}
+.upgrade-later-btn:hover { color: rgba(255, 255, 255, 0.35); }
+/* Post-Invite Confirmation Popup */
+.invite-confirm-popup {
+    position: fixed;
+    bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--bg-secondary);
+    border: 1px solid rgba(0, 184, 148, 0.2);
+    border-radius: 16px;
+    padding: 20px 24px;
+    max-width: 380px; width: 90%;
+    text-align: center;
+    z-index: 10001;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    opacity: 0;
+    visibility: hidden;
+}
+.invite-confirm-popup.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1; visibility: visible;
+}
+.invite-confirm-title {
+    font-size: 15px; font-weight: 700; color: #00b894;
+    margin-bottom: 6px;
+}
+.invite-confirm-text {
+    font-size: 12px; color: var(--text-dim);
+    line-height: 1.5; margin-bottom: 16px;
+}
+.invite-confirm-buttons {
+    display: flex; flex-direction: column; gap: 8px;
+}
+.invite-confirm-btn-primary {
+    width: 100%; padding: 11px 16px;
+    border-radius: 10px;
+    background: rgba(0, 184, 148, 0.12);
+    border: 1px solid rgba(0, 184, 148, 0.2);
+    color: #00b894; font-size: 13px; font-weight: 600;
+    cursor: pointer;
+}
+.invite-confirm-btn-secondary {
+    width: 100%; padding: 11px 16px;
+    border-radius: 10px;
+    background: rgba(108, 92, 231, 0.1);
+    border: 1px solid rgba(108, 92, 231, 0.15);
+    color: #8b7cf7; font-size: 12px; font-weight: 600;
+    cursor: pointer;
+}
+/* Sprint Challenge Banner */
+.sprint-banner {
+    background: linear-gradient(135deg, rgba(108, 92, 231, 0.08), rgba(0, 184, 148, 0.06));
+    border: 1px solid rgba(108, 92, 231, 0.15);
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin: 12px 16px;
     cursor: pointer;
     transition: all 0.2s;
-    border: none;
 }
-.upgrade-btn.primary {
-    background: linear-gradient(135deg, var(--copilot) 0%, #FF8F5C 100%);
-    color: white;
-    box-shadow: 0 4px 16px rgba(255, 107, 53, 0.3);
+.sprint-banner:hover {
+    border-color: rgba(108, 92, 231, 0.25);
 }
-.upgrade-btn.primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 24px rgba(255, 107, 53, 0.4);
+.sprint-banner-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 8px;
 }
-.upgrade-btn.secondary {
-    background: transparent;
-    color: var(--text-dim);
-    border: 1px solid var(--border);
+.sprint-banner-emoji { font-size: 18px; }
+.sprint-banner-title {
+    font-size: 14px; font-weight: 700; color: var(--text);
 }
-.upgrade-btn.secondary:hover {
-    background: var(--card);
-    color: var(--text);
+.sprint-banner-desc {
+    font-size: 12px; color: var(--text-dim);
+    line-height: 1.5; margin-bottom: 10px;
 }
-
-/* Soft Banner (in-chat) */
+.sprint-banner-cta {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: rgba(0, 184, 148, 0.12);
+    border: 1px solid rgba(0, 184, 148, 0.2);
+    color: #00b894; font-size: 12px; font-weight: 600;
+    cursor: pointer;
+}
+/* Soft Warning Banner */
 .upgrade-banner {
-    background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(255, 143, 92, 0.08) 100%);
-    border: 1px solid rgba(255, 107, 53, 0.2);
+    background: rgba(108, 92, 231, 0.05);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(108, 92, 231, 0.1);
     border-radius: 12px;
-    padding: 16px;
+    padding: 11px 16px;
     margin: 12px 0;
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    display: flex; align-items: center; gap: 14px;
+    animation: fadeIn 0.3s ease;
 }
-.upgrade-banner-icon {
-    width: 40px;
-    height: 40px;
-    background: var(--copilot);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-.upgrade-banner-icon svg {
-    width: 20px;
-    height: 20px;
-    color: white;
-}
-.upgrade-banner-content {
-    flex: 1;
-}
+.upgrade-banner-content { flex: 1; }
 .upgrade-banner-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-    margin-bottom: 2px;
+    font-size: 12.5px; font-weight: 600;
+    color: var(--text); opacity: 0.75;
 }
 .upgrade-banner-text {
-    font-size: 12px;
-    color: var(--text-dim);
+    font-size: 11px; color: var(--text-dim); margin-top: 2px;
 }
 .upgrade-banner-btn {
-    padding: 8px 14px;
-    background: var(--copilot);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 600;
+    padding: 8px 16px; border-radius: 8px;
+    background: rgba(0, 184, 148, 0.15);
+    border: 1px solid rgba(0, 184, 148, 0.25);
+    color: #00b894; font-size: 12px; font-weight: 600;
+    cursor: pointer; white-space: nowrap;
+    transition: all 0.2s;
+}
+.upgrade-banner-btn:hover { background: rgba(0, 184, 148, 0.22); }
+/* Pending Referral Status */
+.referral-pending-popup {
+    position: fixed;
+    bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--bg-secondary);
+    border: 1px solid rgba(108, 92, 231, 0.15);
+    border-radius: 16px;
+    padding: 20px 24px;
+    max-width: 380px; width: 90%;
+    text-align: center;
+    z-index: 10001;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    opacity: 0; visibility: hidden;
+}
+.referral-pending-popup.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1; visibility: visible;
+}
+/* Re-entry prompt */
+.reentry-prompt {
+    background: rgba(255, 107, 53, 0.06);
+    border: 1px solid rgba(255, 107, 53, 0.12);
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin: 12px 0;
     cursor: pointer;
-    white-space: nowrap;
+    transition: all 0.2s;
 }
-
+.reentry-prompt:hover {
+    background: rgba(255, 107, 53, 0.1);
+    border-color: rgba(255, 107, 53, 0.2);
+}
 /* Light theme overrides */
-[data-theme="light"] .upgrade-modal {
-    background: #FFFFFF;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-}
-[data-theme="light"] .upgrade-benefits {
-    background: #F8FAFC;
-}
+[data-theme="light"] .upgrade-modal { background: #FFFFFF; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15); }
+[data-theme="light"] .upgrade-modal-title { color: #1E293B; }
+[data-theme="light"] .upgrade-modal-subtitle { color: #64748B; }
+[data-theme="light"] .upgrade-referral-desc { color: #64748B; }
+[data-theme="light"] .upgrade-pro-note { color: rgba(0, 0, 0, 0.3); }
+[data-theme="light"] .upgrade-later-btn { color: rgba(0, 0, 0, 0.25); }
+[data-theme="light"] .upgrade-fire-icon { background: rgba(108, 92, 231, 0.06); border-color: rgba(108, 92, 231, 0.15); }
+[data-theme="light"] .invite-confirm-popup { background: #FFFFFF; box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15); }
+[data-theme="light"] .sprint-banner { background: linear-gradient(135deg, rgba(108, 92, 231, 0.05), rgba(0, 184, 148, 0.04)); }
 
 /* ═══════════════════════════════════════════════════════════════ */
 
@@ -5570,135 +5620,15 @@
             background: rgba(255, 255, 255, 0.05);
         }
         
-        /* Referral Modal (friction point) */
-        .referral-modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.75);
-            z-index: 9999;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        .referral-modal-overlay.active {
-            display: flex;
-        }
-        
-        .referral-modal {
-            background: var(--bg-secondary);
-            border-radius: 20px;
-            padding: 32px 24px;
-            max-width: 400px;
-            width: 100%;
-            text-align: center;
-            border: 1px solid var(--border);
-            animation: modalSlideIn 0.3s ease;
-        }
-        
-        @keyframes modalSlideIn {
-            from { opacity: 0; transform: translateY(20px) scale(0.95); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        
-        .referral-modal-icon {
-            font-size: 56px;
-            margin-bottom: 16px;
-        }
-        
-        .referral-modal-title {
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--text);
-            margin-bottom: 8px;
-        }
-        
-        .referral-modal-text {
-            font-size: 14px;
-            color: var(--text-dim);
-            margin-bottom: 24px;
-            line-height: 1.5;
-        }
-        
-        .referral-modal-bonus {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(255, 107, 53, 0.1));
-            border: 1px solid rgba(139, 92, 246, 0.2);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 24px;
-        }
-        
-        .referral-modal-bonus-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #8b5cf6;
-            margin-bottom: 4px;
-        }
-        
-        .referral-modal-bonus-value {
-            font-size: 28px;
-            font-weight: 700;
-            background: linear-gradient(135deg, #8b5cf6, #FF6B35);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .referral-modal-btn {
-            width: 100%;
-            padding: 14px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            margin-bottom: 10px;
-            transition: all 0.2s;
-        }
-        
-        .referral-modal-btn.primary {
-            background: #25D366;
-            color: white;
-        }
-        
-        .referral-modal-btn.primary:hover {
-            background: #1da851;
-        }
-        
-        .referral-modal-btn.secondary {
-            background: linear-gradient(135deg, #FF6B35, #E55A2B);
-            color: white;
-        }
-        
-        .referral-modal-btn.secondary:hover {
-            opacity: 0.9;
-        }
-        
-        .referral-modal-btn.tertiary {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text-dim);
-        }
-        
-        .referral-modal-btn.tertiary:hover {
-            background: rgba(255, 255, 255, 0.05);
-        }
-        
         /* Light theme */
         [data-theme="light"] .referral-section {
             background: linear-gradient(135deg, rgba(139, 92, 246, 0.06), rgba(255, 107, 53, 0.06));
         }
-        
+
         [data-theme="light"] .referral-stat {
             background: rgba(0, 0, 0, 0.02);
         }
-        
-        [data-theme="light"] .referral-modal {
-            background: #FFFFFF;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-        }
-        
+
         /* Ambassador badge */
         .ambassador-badge {
             display: inline-flex;
