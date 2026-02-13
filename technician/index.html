@@ -18806,8 +18806,13 @@ RÈGLES:
                 weekStart: getFreemiumWeekStart().toISOString(),
                 copilotChats: 0,
                 assistantChats: 0,
-                isPro: false, // Will be updated from Supabase
-                lastChecked: new Date().toISOString()
+                reportsGenerated: 0,
+                bufferQueries: 0,
+                bufferUntil: null,
+                isPro: false,
+                lastChecked: new Date().toISOString(),
+                invitesSentThisWeek: 0,
+                reportProjects: []
             };
             saveFreemiumUsage(fresh);
             return fresh;
