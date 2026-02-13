@@ -5745,101 +5745,73 @@
     <!-- ═══════════════════════════════════════════════════════════════
          FREEMIUM PAYWALL - UPGRADE MODAL
          ═══════════════════════════════════════════════════════════════ -->
+    <!-- ═══ UNIFIED PAYWALL POPUP (Referral-First) ═══ -->
     <div id="upgradeOverlay" class="upgrade-overlay" onclick="closeUpgradeModal(event)">
         <div class="upgrade-modal" onclick="event.stopPropagation()">
-            <div class="upgrade-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                    <path d="M2 17l10 5 10-5"/>
-                    <path d="M2 12l10 5 10-5"/>
-                </svg>
-            </div>
-            
-            <h2 class="upgrade-title" id="upgradeTitle">Passez à FixAIR Pro</h2>
-            <p class="upgrade-subtitle" id="upgradeSubtitle">
-                Débloquez le plein potentiel de votre assistant HVAC
-            </p>
-            
-            <div class="usage-badge" id="usageBadge">
-                <span>Utilisations gratuites</span>
-                <span class="usage-count" id="usageCount">5/5</span>
-            </div>
-            
-            <div class="upgrade-benefits">
-                <div class="upgrade-benefit">
-                    <div class="upgrade-benefit-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <polyline points="20 6 9 17 4 12"/>
-                        </svg>
+            <div class="upgrade-modal-accent"></div>
+            <div class="upgrade-modal-body">
+                <div class="upgrade-fire-icon">🔥</div>
+                <h2 class="upgrade-modal-title" id="upgradeTitle">Vous êtes un power user !</h2>
+                <p class="upgrade-modal-subtitle" id="upgradeSubtitle">Vous avez atteint votre limite gratuite cette semaine</p>
+
+                <div class="upgrade-referral-block">
+                    <div class="upgrade-referral-header">
+                        <div class="upgrade-referral-icon">🎁</div>
+                        <div class="upgrade-referral-info">
+                            <div class="upgrade-referral-title">Invitez, continuez gratuitement</div>
+                            <div class="upgrade-referral-desc">Un collègue s'inscrit → 1 semaine gratuite pour vous deux</div>
+                        </div>
                     </div>
-                    <span class="upgrade-benefit-text">Diagnostic Copilot <strong>illimité</strong></span>
+                    <button class="upgrade-referral-btn" onclick="handleInviteClick()">
+                        Inviter un collègue
+                    </button>
                 </div>
-                <div class="upgrade-benefit">
-                    <div class="upgrade-benefit-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <polyline points="20 6 9 17 4 12"/>
-                        </svg>
-                    </div>
-                    <span class="upgrade-benefit-text">Export PDF & Word professionnel des rapports</span>
-                </div>
-                <div class="upgrade-benefit">
-                    <div class="upgrade-benefit-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <polyline points="20 6 9 17 4 12"/>
-                        </svg>
-                    </div>
-                    <span class="upgrade-benefit-text">Schémas techniques interactifs</span>
-                </div>
-                <div class="upgrade-benefit">
-                    <div class="upgrade-benefit-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <polyline points="20 6 9 17 4 12"/>
-                        </svg>
-                    </div>
-                    <span class="upgrade-benefit-text">Support prioritaire 24/7</span>
-                </div>
-            </div>
-            
-            <div class="upgrade-buttons">
-                <button class="upgrade-btn primary" onclick="handleUpgradeClick()">
-                    Passer à Pro — 29€/mois
+
+                <button class="upgrade-pro-btn" onclick="handleUpgradeClick()">
+                    Passer à Pro — 49€/mois
                 </button>
-                <button class="upgrade-btn secondary" onclick="closeUpgradeModal()">
-                    Plus tard
-                </button>
+                <div class="upgrade-pro-note">Annulable à tout moment · Facturation mensuelle</div>
+
+                <button class="upgrade-later-btn" onclick="closeUpgradeModal()">Plus tard</button>
             </div>
         </div>
     </div>
-    <!-- END FREEMIUM PAYWALL -->
-    
-    <!-- ═══════════════════════════════════════════════════════════════
-         REFERRAL FRICTION MODAL
-         ═══════════════════════════════════════════════════════════════ -->
-    <div id="referralModalOverlay" class="referral-modal-overlay" onclick="closeReferralModal(event)">
-        <div class="referral-modal" onclick="event.stopPropagation()">
-            <div class="referral-modal-icon">⚡</div>
-            <h2 class="referral-modal-title" id="referralModalTitle">Vous avez atteint votre limite</h2>
-            <p class="referral-modal-text" id="referralModalText">
-                Vous avez utilisé vos requêtes gratuites cette semaine. Débloquez plus de requêtes en invitant un collègue !
-            </p>
-            
-            <div class="referral-modal-bonus">
-                <div class="referral-modal-bonus-title">Bonus parrainage</div>
-                <div class="referral-modal-bonus-value">+30 requêtes IA</div>
-            </div>
-            
-            <button class="referral-modal-btn primary" onclick="shareOnWhatsAppFromModal()">
-                📱 Partager sur WhatsApp
+    <div id="inviteConfirmPopup" class="invite-confirm-popup">
+        <div class="invite-confirm-title">✅ Invitation envoyée</div>
+        <div class="invite-confirm-text">
+            Dès que ton collègue s'inscrit avec ton lien, tu débloques 1 semaine gratuite.<br>
+            En attendant, tu as accès temporairement.
+        </div>
+        <div class="invite-confirm-buttons">
+            <button class="invite-confirm-btn-primary" onclick="handleInviteClick()">
+                👥 Inviter quelqu'un d'autre
             </button>
-            <button class="referral-modal-btn secondary" onclick="handleUpgradeClick(); closeReferralModal();">
-                ⭐ Passer à Pro — 29€/mois
-            </button>
-            <button class="referral-modal-btn tertiary" onclick="closeReferralModal()">
-                Plus tard
+            <button class="invite-confirm-btn-secondary" onclick="handleUpgradeClick()">
+                💳 Passer Pro — 49€/mois
             </button>
         </div>
     </div>
-    <!-- END REFERRAL FRICTION MODAL -->
+    <div id="referralPendingPopup" class="referral-pending-popup">
+        <div style="font-size: 24px; margin-bottom: 12px;">⏳</div>
+        <div style="font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 6px;">
+            Aucun collègue ne s'est encore inscrit
+        </div>
+        <div style="font-size: 12px; color: var(--text-dim); line-height: 1.5; margin-bottom: 16px;" id="pendingMicroCopy">
+            Un seul collègue qui s'inscrit = 1 semaine gratuite pour vous deux.
+        </div>
+        <div class="invite-confirm-buttons">
+            <button class="invite-confirm-btn-primary" onclick="handleInviteClick()">
+                👥 Inviter un technicien maintenant
+            </button>
+            <button class="invite-confirm-btn-secondary" onclick="handleUpgradeClick()">
+                💳 Passer Pro — 49€/mois
+            </button>
+        </div>
+        <button class="upgrade-later-btn" onclick="closePendingPopup()" style="margin-top: 8px;">
+            Plus tard
+        </button>
+    </div>
+    <!-- END UNIFIED PAYWALL -->
     
     <!-- SVG DEFS -->
     <svg style="position:absolute;width:0;height:0;">
