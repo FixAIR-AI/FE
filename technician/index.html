@@ -19437,7 +19437,7 @@ RÈGLES:
             if (!referralState.code) return;
             
             navigator.clipboard.writeText(referralState.code).then(() => {
-                showToast('Code copié !', 'success');
+                toast('Code copié !');
             }).catch(() => {
                 // Fallback
                 const input = document.createElement('input');
@@ -19446,7 +19446,7 @@ RÈGLES:
                 input.select();
                 document.execCommand('copy');
                 document.body.removeChild(input);
-                showToast('Code copié !', 'success');
+                toast('Code copié !');
             });
         }
         
@@ -19455,7 +19455,7 @@ RÈGLES:
             const link = getReferralLink();
             
             navigator.clipboard.writeText(link).then(() => {
-                showToast('Lien copié !', 'success');
+                toast('Lien copié !');
             }).catch(() => {
                 // Fallback
                 const input = document.createElement('input');
@@ -19464,7 +19464,7 @@ RÈGLES:
                 input.select();
                 document.execCommand('copy');
                 document.body.removeChild(input);
-                showToast('Lien copié !', 'success');
+                toast('Lien copié !');
             });
             
             // Track share event
