@@ -19050,26 +19050,18 @@ RÈGLES:
         function showUpgradeBanner(panel, remaining) {
             const chatBody = document.getElementById(panel + 'Body');
             if (!chatBody) return;
-            
-            // Don't show if already showing
             if (chatBody.querySelector('.upgrade-banner')) return;
-            
+
             const banner = document.createElement('div');
             banner.className = 'upgrade-banner';
             banner.innerHTML = `
-                <div class="upgrade-banner-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                        <path d="M2 17l10 5 10-5"/>
-                    </svg>
-                </div>
                 <div class="upgrade-banner-content">
-                    <div class="upgrade-banner-title">Plus que ${remaining} message${remaining > 1 ? 's' : ''} gratuit${remaining > 1 ? 's' : ''}</div>
+                    <div class="upgrade-banner-title">Vous approchez de votre limite hebdomadaire</div>
                     <div class="upgrade-banner-text">Passez à Pro pour un accès illimité</div>
                 </div>
-                <button class="upgrade-banner-btn" onclick="showUpgradeModal('copilot_warning')">Upgrade</button>
+                <button class="upgrade-banner-btn" onclick="showUpgradeModal('banner_click')">Passer à Pro</button>
             `;
-            
+
             chatBody.appendChild(banner);
             chatBody.scrollTop = chatBody.scrollHeight;
         }
