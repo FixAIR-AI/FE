@@ -19011,55 +19011,12 @@ RÈGLES:
             const overlay = document.getElementById('upgradeOverlay');
             const title = document.getElementById('upgradeTitle');
             const subtitle = document.getElementById('upgradeSubtitle');
-            const badge = document.getElementById('usageBadge');
-            const usageCount = document.getElementById('usageCount');
-            
-            // Customize based on context
-            switch(context) {
-                case 'copilot_limit':
-                    title.textContent = '🔥 Copilot illimité';
-                    subtitle.textContent = 'Vous avez atteint votre limite hebdomadaire. Passez à Pro pour un diagnostic illimité !';
-                    badge.style.display = 'inline-flex';
-                    const copilotUsage = canSendChat('copilot');
-                    usageCount.textContent = `${copilotUsage.used}/${copilotUsage.total}`;
-                    break;
-                    
-                case 'copilot_warning':
-                    title.textContent = 'Bientôt à la limite';
-                    subtitle.textContent = 'Il vous reste quelques messages Copilot gratuits cette semaine. Passez à Pro pour ne jamais être limité !';
-                    badge.style.display = 'inline-flex';
-                    const copilotWarn = canSendChat('copilot');
-                    usageCount.textContent = `${copilotWarn.used}/${copilotWarn.total}`;
-                    break;
-                    
-                case 'export_pdf':
-                    title.textContent = '📄 Export PDF Pro';
-                    subtitle.textContent = 'Générez des rapports PDF professionnels avec votre logo et mise en page personnalisée.';
-                    badge.style.display = 'none';
-                    break;
-                    
-                case 'export_word':
-                    title.textContent = '📝 Export Word Pro';
-                    subtitle.textContent = 'Exportez vos rapports en Word modifiable pour personnalisation avancée.';
-                    badge.style.display = 'none';
-                    break;
-                    
-                case 'share':
-                    title.textContent = '🔗 Partage Pro';
-                    subtitle.textContent = 'Partagez vos rapports directement avec vos clients par email ou lien.';
-                    badge.style.display = 'none';
-                    break;
-                    
-                default:
-                    title.textContent = 'Passez à FixAIR Pro';
-                    subtitle.textContent = 'Débloquez le plein potentiel de votre assistant HVAC';
-                    badge.style.display = 'none';
-            }
-            
+
+            title.textContent = 'Vous êtes un power user ! 🔥';
+            subtitle.textContent = 'Vous avez atteint votre limite gratuite cette semaine';
+
             overlay.classList.add('show');
-            
-            // Track modal view for analytics
-            console.log('[Freemium] Upgrade modal shown:', context);
+            console.log('[Freemium] Unified modal shown:', context);
         }
         
         function closeUpgradeModal(event) {
