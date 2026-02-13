@@ -18757,22 +18757,27 @@ RÈGLES:
         
         const FREEMIUM_CONFIG = {
             // Free tier limits
-            freeCopilotChats: 15,        // Free Copilot messages per week
-            freeAssistantChats: 25,      // Free Assistant messages per week (more generous)
-            softLimitWarning: 0.8,       // Show warning at 80% usage
-            
-            // Storage keys
+            freeCopilotChats: 20,
+            freeReports: 3,
+            softLimitWarning: 0.8,
+
+            // Referral
+            bufferQueriesOnInvite: 5,
+            bufferHoursOnInvite: 24,
+            weekFreeDaysOnConvert: 7,
+            sprintTarget: 3,
+            sprintRewardDays: 60,
+            sprintShowAfterDays: 3,
+
+            // Pricing
+            monthlyPrice: 49,
+
+            // Storage & URLs
             storageKey: 'fixair_freemium_usage',
-            
-            // Features requiring Pro
-            proFeatures: ['export_pdf', 'export_word', 'share_report', 'diagrams_advanced'],
-            
-            // Pricing (for display)
-            monthlyPrice: 29,
-            yearlyPrice: 249,
-            
-            // Upgrade URL (placeholder - will be Stripe)
-            upgradeUrl: 'https://fixair.ai/upgrade'
+            upgradeUrl: 'https://pay.fixair.ai/b/dRm7sKa3MbPAgxdfgR2VG00',
+
+            // Pro features
+            proFeatures: ['export_pdf', 'export_word', 'share_report', 'diagrams_advanced']
         };
         
         // Get/Set freemium usage from localStorage
