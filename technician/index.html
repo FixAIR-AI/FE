@@ -5198,13 +5198,10 @@
    FREEMIUM PAYWALL SYSTEM - Soft Upgrade Prompts
    ═══════════════════════════════════════════════════════════════ */
 
-/* Upgrade Modal Overlay */
+/* ═══ UNIFIED PAYWALL POPUP (Referral-First) ═══ */
 .upgrade-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
@@ -5221,210 +5218,263 @@
     opacity: 1;
     visibility: visible;
 }
-
-/* Upgrade Modal Card */
 .upgrade-modal {
     background: var(--bg-secondary);
     border: 1px solid var(--border);
     border-radius: 20px;
     max-width: 400px;
     width: 100%;
-    padding: 32px 28px;
+    overflow: hidden;
     transform: translateY(20px) scale(0.95);
     transition: transform 0.3s ease;
-    text-align: center;
 }
 .upgrade-overlay.show .upgrade-modal {
     transform: translateY(0) scale(1);
 }
-
-/* Upgrade Icon */
-.upgrade-icon {
-    width: 72px;
-    height: 72px;
+.upgrade-modal-accent {
+    height: 3px;
+    background: linear-gradient(90deg, #6C5CE7, #00b894, #6C5CE7);
+}
+.upgrade-modal-body {
+    padding: 28px 24px 24px;
+    text-align: center;
+}
+.upgrade-fire-icon {
+    width: 68px; height: 68px;
+    border-radius: 50%;
+    background: rgba(108, 92, 231, 0.08);
+    border: 2px solid rgba(108, 92, 231, 0.2);
+    display: flex; align-items: center; justify-content: center;
     margin: 0 auto 20px;
-    background: linear-gradient(135deg, var(--copilot) 0%, #FF8F5C 100%);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 8px 32px rgba(255, 107, 53, 0.3);
+    font-size: 30px;
 }
-.upgrade-icon svg {
-    width: 36px;
-    height: 36px;
-    color: white;
-}
-
-/* Upgrade Title & Text */
-.upgrade-title {
-    font-size: 22px;
-    font-weight: 700;
+.upgrade-modal-title {
+    font-size: 19px; font-weight: 800;
     color: var(--text);
-    margin-bottom: 12px;
+    margin-bottom: 8px;
 }
-.upgrade-subtitle {
-    font-size: 15px;
+.upgrade-modal-subtitle {
+    font-size: 13px;
     color: var(--text-dim);
-    line-height: 1.5;
     margin-bottom: 24px;
+    line-height: 1.55;
 }
-
-/* Usage Counter Badge */
-.usage-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(255, 107, 53, 0.1);
-    border: 1px solid rgba(255, 107, 53, 0.2);
-    padding: 10px 16px;
-    border-radius: 12px;
-    margin-bottom: 24px;
-    font-size: 13px;
-    color: var(--copilot);
-    font-weight: 600;
+.upgrade-referral-block {
+    background: rgba(0, 184, 148, 0.07);
+    border: 1px solid rgba(0, 184, 148, 0.15);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 16px;
 }
-.usage-badge .usage-count {
-    background: var(--copilot);
-    color: white;
-    padding: 2px 8px;
-    border-radius: 6px;
-    font-size: 12px;
+.upgrade-referral-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 10px;
 }
-
-/* Benefits List */
-.upgrade-benefits {
-    text-align: left;
-    margin-bottom: 24px;
-    padding: 16px;
-    background: var(--card);
-    border-radius: 12px;
-    border: 1px solid var(--border);
+.upgrade-referral-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: rgba(0, 184, 148, 0.12);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
 }
-.upgrade-benefit {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 8px 0;
+.upgrade-referral-info { text-align: left; }
+.upgrade-referral-title {
+    font-size: 14px; font-weight: 700; color: #00b894;
 }
-.upgrade-benefit:not(:last-child) {
-    border-bottom: 1px solid var(--border);
+.upgrade-referral-desc {
+    font-size: 11.5px; color: var(--text-dim);
+    margin-top: 2px; line-height: 1.4;
 }
-.upgrade-benefit-icon {
-    width: 20px;
-    height: 20px;
-    background: rgba(34, 197, 94, 0.15);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    margin-top: 2px;
+.upgrade-referral-btn {
+    width: 100%; padding: 13px 20px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #00b894, #00a381);
+    color: white; border: none;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(0, 184, 148, 0.3);
+    transition: all 0.2s;
 }
-.upgrade-benefit-icon svg {
-    width: 12px;
-    height: 12px;
-    color: #22c55e;
+.upgrade-referral-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 22px rgba(0, 184, 148, 0.4);
 }
-.upgrade-benefit-text {
-    font-size: 13px;
-    color: var(--text);
-    line-height: 1.4;
+.upgrade-pro-btn {
+    width: 100%; padding: 13px 20px;
+    border-radius: 10px;
+    background: rgba(108, 92, 231, 0.12);
+    border: 1px solid rgba(108, 92, 231, 0.2);
+    color: #8b7cf7;
+    font-size: 13.5px; font-weight: 600;
+    cursor: pointer; margin-bottom: 4px;
+    transition: all 0.2s;
 }
-
-/* Upgrade Buttons */
-.upgrade-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+.upgrade-pro-btn:hover { background: rgba(108, 92, 231, 0.18); }
+.upgrade-pro-note {
+    font-size: 10.5px; color: rgba(255, 255, 255, 0.2);
+    margin-bottom: 14px;
 }
-.upgrade-btn {
-    padding: 14px 24px;
-    border-radius: 12px;
-    font-size: 15px;
-    font-weight: 600;
+.upgrade-later-btn {
+    background: transparent; border: none;
+    color: rgba(255, 255, 255, 0.18);
+    font-size: 12px; cursor: pointer; padding: 4px 0;
+}
+.upgrade-later-btn:hover { color: rgba(255, 255, 255, 0.35); }
+/* Post-Invite Confirmation Popup */
+.invite-confirm-popup {
+    position: fixed;
+    bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--bg-secondary);
+    border: 1px solid rgba(0, 184, 148, 0.2);
+    border-radius: 16px;
+    padding: 20px 24px;
+    max-width: 380px; width: 90%;
+    text-align: center;
+    z-index: 10001;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    opacity: 0;
+    visibility: hidden;
+}
+.invite-confirm-popup.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1; visibility: visible;
+}
+.invite-confirm-title {
+    font-size: 15px; font-weight: 700; color: #00b894;
+    margin-bottom: 6px;
+}
+.invite-confirm-text {
+    font-size: 12px; color: var(--text-dim);
+    line-height: 1.5; margin-bottom: 16px;
+}
+.invite-confirm-buttons {
+    display: flex; flex-direction: column; gap: 8px;
+}
+.invite-confirm-btn-primary {
+    width: 100%; padding: 11px 16px;
+    border-radius: 10px;
+    background: rgba(0, 184, 148, 0.12);
+    border: 1px solid rgba(0, 184, 148, 0.2);
+    color: #00b894; font-size: 13px; font-weight: 600;
+    cursor: pointer;
+}
+.invite-confirm-btn-secondary {
+    width: 100%; padding: 11px 16px;
+    border-radius: 10px;
+    background: rgba(108, 92, 231, 0.1);
+    border: 1px solid rgba(108, 92, 231, 0.15);
+    color: #8b7cf7; font-size: 12px; font-weight: 600;
+    cursor: pointer;
+}
+/* Sprint Challenge Banner */
+.sprint-banner {
+    background: linear-gradient(135deg, rgba(108, 92, 231, 0.08), rgba(0, 184, 148, 0.06));
+    border: 1px solid rgba(108, 92, 231, 0.15);
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin: 12px 16px;
     cursor: pointer;
     transition: all 0.2s;
-    border: none;
 }
-.upgrade-btn.primary {
-    background: linear-gradient(135deg, var(--copilot) 0%, #FF8F5C 100%);
-    color: white;
-    box-shadow: 0 4px 16px rgba(255, 107, 53, 0.3);
+.sprint-banner:hover {
+    border-color: rgba(108, 92, 231, 0.25);
 }
-.upgrade-btn.primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 24px rgba(255, 107, 53, 0.4);
+.sprint-banner-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 8px;
 }
-.upgrade-btn.secondary {
-    background: transparent;
-    color: var(--text-dim);
-    border: 1px solid var(--border);
+.sprint-banner-emoji { font-size: 18px; }
+.sprint-banner-title {
+    font-size: 14px; font-weight: 700; color: var(--text);
 }
-.upgrade-btn.secondary:hover {
-    background: var(--card);
-    color: var(--text);
+.sprint-banner-desc {
+    font-size: 12px; color: var(--text-dim);
+    line-height: 1.5; margin-bottom: 10px;
 }
-
-/* Soft Banner (in-chat) */
+.sprint-banner-cta {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: rgba(0, 184, 148, 0.12);
+    border: 1px solid rgba(0, 184, 148, 0.2);
+    color: #00b894; font-size: 12px; font-weight: 600;
+    cursor: pointer;
+}
+/* Soft Warning Banner */
 .upgrade-banner {
-    background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(255, 143, 92, 0.08) 100%);
-    border: 1px solid rgba(255, 107, 53, 0.2);
+    background: rgba(108, 92, 231, 0.05);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(108, 92, 231, 0.1);
     border-radius: 12px;
-    padding: 16px;
+    padding: 11px 16px;
     margin: 12px 0;
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    display: flex; align-items: center; gap: 14px;
+    animation: fadeIn 0.3s ease;
 }
-.upgrade-banner-icon {
-    width: 40px;
-    height: 40px;
-    background: var(--copilot);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-.upgrade-banner-icon svg {
-    width: 20px;
-    height: 20px;
-    color: white;
-}
-.upgrade-banner-content {
-    flex: 1;
-}
+.upgrade-banner-content { flex: 1; }
 .upgrade-banner-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-    margin-bottom: 2px;
+    font-size: 12.5px; font-weight: 600;
+    color: var(--text); opacity: 0.75;
 }
 .upgrade-banner-text {
-    font-size: 12px;
-    color: var(--text-dim);
+    font-size: 11px; color: var(--text-dim); margin-top: 2px;
 }
 .upgrade-banner-btn {
-    padding: 8px 14px;
-    background: var(--copilot);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 600;
+    padding: 8px 16px; border-radius: 8px;
+    background: rgba(0, 184, 148, 0.15);
+    border: 1px solid rgba(0, 184, 148, 0.25);
+    color: #00b894; font-size: 12px; font-weight: 600;
+    cursor: pointer; white-space: nowrap;
+    transition: all 0.2s;
+}
+.upgrade-banner-btn:hover { background: rgba(0, 184, 148, 0.22); }
+/* Pending Referral Status */
+.referral-pending-popup {
+    position: fixed;
+    bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--bg-secondary);
+    border: 1px solid rgba(108, 92, 231, 0.15);
+    border-radius: 16px;
+    padding: 20px 24px;
+    max-width: 380px; width: 90%;
+    text-align: center;
+    z-index: 10001;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    opacity: 0; visibility: hidden;
+}
+.referral-pending-popup.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1; visibility: visible;
+}
+/* Re-entry prompt */
+.reentry-prompt {
+    background: rgba(255, 107, 53, 0.06);
+    border: 1px solid rgba(255, 107, 53, 0.12);
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin: 12px 0;
     cursor: pointer;
-    white-space: nowrap;
+    transition: all 0.2s;
 }
-
+.reentry-prompt:hover {
+    background: rgba(255, 107, 53, 0.1);
+    border-color: rgba(255, 107, 53, 0.2);
+}
 /* Light theme overrides */
-[data-theme="light"] .upgrade-modal {
-    background: #FFFFFF;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-}
-[data-theme="light"] .upgrade-benefits {
-    background: #F8FAFC;
-}
+[data-theme="light"] .upgrade-modal { background: #FFFFFF; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15); }
+[data-theme="light"] .upgrade-modal-title { color: #1E293B; }
+[data-theme="light"] .upgrade-modal-subtitle { color: #64748B; }
+[data-theme="light"] .upgrade-referral-desc { color: #64748B; }
+[data-theme="light"] .upgrade-pro-note { color: rgba(0, 0, 0, 0.3); }
+[data-theme="light"] .upgrade-later-btn { color: rgba(0, 0, 0, 0.25); }
+[data-theme="light"] .upgrade-fire-icon { background: rgba(108, 92, 231, 0.06); border-color: rgba(108, 92, 231, 0.15); }
+[data-theme="light"] .invite-confirm-popup { background: #FFFFFF; box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15); }
+[data-theme="light"] .sprint-banner { background: linear-gradient(135deg, rgba(108, 92, 231, 0.05), rgba(0, 184, 148, 0.04)); }
 
 /* ═══════════════════════════════════════════════════════════════ */
 
@@ -5570,135 +5620,15 @@
             background: rgba(255, 255, 255, 0.05);
         }
         
-        /* Referral Modal (friction point) */
-        .referral-modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.75);
-            z-index: 9999;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        .referral-modal-overlay.active {
-            display: flex;
-        }
-        
-        .referral-modal {
-            background: var(--bg-secondary);
-            border-radius: 20px;
-            padding: 32px 24px;
-            max-width: 400px;
-            width: 100%;
-            text-align: center;
-            border: 1px solid var(--border);
-            animation: modalSlideIn 0.3s ease;
-        }
-        
-        @keyframes modalSlideIn {
-            from { opacity: 0; transform: translateY(20px) scale(0.95); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        
-        .referral-modal-icon {
-            font-size: 56px;
-            margin-bottom: 16px;
-        }
-        
-        .referral-modal-title {
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--text);
-            margin-bottom: 8px;
-        }
-        
-        .referral-modal-text {
-            font-size: 14px;
-            color: var(--text-dim);
-            margin-bottom: 24px;
-            line-height: 1.5;
-        }
-        
-        .referral-modal-bonus {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(255, 107, 53, 0.1));
-            border: 1px solid rgba(139, 92, 246, 0.2);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 24px;
-        }
-        
-        .referral-modal-bonus-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #8b5cf6;
-            margin-bottom: 4px;
-        }
-        
-        .referral-modal-bonus-value {
-            font-size: 28px;
-            font-weight: 700;
-            background: linear-gradient(135deg, #8b5cf6, #FF6B35);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .referral-modal-btn {
-            width: 100%;
-            padding: 14px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            margin-bottom: 10px;
-            transition: all 0.2s;
-        }
-        
-        .referral-modal-btn.primary {
-            background: #25D366;
-            color: white;
-        }
-        
-        .referral-modal-btn.primary:hover {
-            background: #1da851;
-        }
-        
-        .referral-modal-btn.secondary {
-            background: linear-gradient(135deg, #FF6B35, #E55A2B);
-            color: white;
-        }
-        
-        .referral-modal-btn.secondary:hover {
-            opacity: 0.9;
-        }
-        
-        .referral-modal-btn.tertiary {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text-dim);
-        }
-        
-        .referral-modal-btn.tertiary:hover {
-            background: rgba(255, 255, 255, 0.05);
-        }
-        
         /* Light theme */
         [data-theme="light"] .referral-section {
             background: linear-gradient(135deg, rgba(139, 92, 246, 0.06), rgba(255, 107, 53, 0.06));
         }
-        
+
         [data-theme="light"] .referral-stat {
             background: rgba(0, 0, 0, 0.02);
         }
-        
-        [data-theme="light"] .referral-modal {
-            background: #FFFFFF;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-        }
-        
+
         /* Ambassador badge */
         .ambassador-badge {
             display: inline-flex;
@@ -5745,101 +5675,73 @@
     <!-- ═══════════════════════════════════════════════════════════════
          FREEMIUM PAYWALL - UPGRADE MODAL
          ═══════════════════════════════════════════════════════════════ -->
+    <!-- ═══ UNIFIED PAYWALL POPUP (Referral-First) ═══ -->
     <div id="upgradeOverlay" class="upgrade-overlay" onclick="closeUpgradeModal(event)">
         <div class="upgrade-modal" onclick="event.stopPropagation()">
-            <div class="upgrade-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                    <path d="M2 17l10 5 10-5"/>
-                    <path d="M2 12l10 5 10-5"/>
-                </svg>
-            </div>
-            
-            <h2 class="upgrade-title" id="upgradeTitle">Passez à FixAIR Pro</h2>
-            <p class="upgrade-subtitle" id="upgradeSubtitle">
-                Débloquez le plein potentiel de votre assistant HVAC
-            </p>
-            
-            <div class="usage-badge" id="usageBadge">
-                <span>Utilisations gratuites</span>
-                <span class="usage-count" id="usageCount">5/5</span>
-            </div>
-            
-            <div class="upgrade-benefits">
-                <div class="upgrade-benefit">
-                    <div class="upgrade-benefit-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <polyline points="20 6 9 17 4 12"/>
-                        </svg>
+            <div class="upgrade-modal-accent"></div>
+            <div class="upgrade-modal-body">
+                <div class="upgrade-fire-icon">🔥</div>
+                <h2 class="upgrade-modal-title" id="upgradeTitle">Vous êtes un power user !</h2>
+                <p class="upgrade-modal-subtitle" id="upgradeSubtitle">Vous avez atteint votre limite gratuite cette semaine</p>
+
+                <div class="upgrade-referral-block">
+                    <div class="upgrade-referral-header">
+                        <div class="upgrade-referral-icon">🎁</div>
+                        <div class="upgrade-referral-info">
+                            <div class="upgrade-referral-title">Invitez, continuez gratuitement</div>
+                            <div class="upgrade-referral-desc">Un collègue s'inscrit → 1 semaine gratuite pour vous deux</div>
+                        </div>
                     </div>
-                    <span class="upgrade-benefit-text">Diagnostic Copilot <strong>illimité</strong></span>
+                    <button class="upgrade-referral-btn" onclick="handleInviteClick()">
+                        Inviter un collègue
+                    </button>
                 </div>
-                <div class="upgrade-benefit">
-                    <div class="upgrade-benefit-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <polyline points="20 6 9 17 4 12"/>
-                        </svg>
-                    </div>
-                    <span class="upgrade-benefit-text">Export PDF & Word professionnel des rapports</span>
-                </div>
-                <div class="upgrade-benefit">
-                    <div class="upgrade-benefit-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <polyline points="20 6 9 17 4 12"/>
-                        </svg>
-                    </div>
-                    <span class="upgrade-benefit-text">Schémas techniques interactifs</span>
-                </div>
-                <div class="upgrade-benefit">
-                    <div class="upgrade-benefit-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <polyline points="20 6 9 17 4 12"/>
-                        </svg>
-                    </div>
-                    <span class="upgrade-benefit-text">Support prioritaire 24/7</span>
-                </div>
-            </div>
-            
-            <div class="upgrade-buttons">
-                <button class="upgrade-btn primary" onclick="handleUpgradeClick()">
-                    Passer à Pro — 29€/mois
+
+                <button class="upgrade-pro-btn" onclick="handleUpgradeClick()">
+                    Passer à Pro — 49€/mois
                 </button>
-                <button class="upgrade-btn secondary" onclick="closeUpgradeModal()">
-                    Plus tard
-                </button>
+                <div class="upgrade-pro-note">Annulable à tout moment · Facturation mensuelle</div>
+
+                <button class="upgrade-later-btn" onclick="closeUpgradeModal()">Plus tard</button>
             </div>
         </div>
     </div>
-    <!-- END FREEMIUM PAYWALL -->
-    
-    <!-- ═══════════════════════════════════════════════════════════════
-         REFERRAL FRICTION MODAL
-         ═══════════════════════════════════════════════════════════════ -->
-    <div id="referralModalOverlay" class="referral-modal-overlay" onclick="closeReferralModal(event)">
-        <div class="referral-modal" onclick="event.stopPropagation()">
-            <div class="referral-modal-icon">⚡</div>
-            <h2 class="referral-modal-title" id="referralModalTitle">Vous avez atteint votre limite</h2>
-            <p class="referral-modal-text" id="referralModalText">
-                Vous avez utilisé vos requêtes gratuites cette semaine. Débloquez plus de requêtes en invitant un collègue !
-            </p>
-            
-            <div class="referral-modal-bonus">
-                <div class="referral-modal-bonus-title">Bonus parrainage</div>
-                <div class="referral-modal-bonus-value">+30 requêtes IA</div>
-            </div>
-            
-            <button class="referral-modal-btn primary" onclick="shareOnWhatsAppFromModal()">
-                📱 Partager sur WhatsApp
+    <div id="inviteConfirmPopup" class="invite-confirm-popup">
+        <div class="invite-confirm-title">✅ Invitation envoyée</div>
+        <div class="invite-confirm-text">
+            Dès que ton collègue s'inscrit avec ton lien, tu débloques 1 semaine gratuite.<br>
+            En attendant, tu as accès temporairement.
+        </div>
+        <div class="invite-confirm-buttons">
+            <button class="invite-confirm-btn-primary" onclick="handleInviteClick()">
+                👥 Inviter quelqu'un d'autre
             </button>
-            <button class="referral-modal-btn secondary" onclick="handleUpgradeClick(); closeReferralModal();">
-                ⭐ Passer à Pro — 29€/mois
-            </button>
-            <button class="referral-modal-btn tertiary" onclick="closeReferralModal()">
-                Plus tard
+            <button class="invite-confirm-btn-secondary" onclick="handleUpgradeClick()">
+                💳 Passer Pro — 49€/mois
             </button>
         </div>
     </div>
-    <!-- END REFERRAL FRICTION MODAL -->
+    <div id="referralPendingPopup" class="referral-pending-popup">
+        <div style="font-size: 24px; margin-bottom: 12px;">⏳</div>
+        <div style="font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 6px;">
+            Aucun collègue ne s'est encore inscrit
+        </div>
+        <div style="font-size: 12px; color: var(--text-dim); line-height: 1.5; margin-bottom: 16px;" id="pendingMicroCopy">
+            Un seul collègue qui s'inscrit = 1 semaine gratuite pour vous deux.
+        </div>
+        <div class="invite-confirm-buttons">
+            <button class="invite-confirm-btn-primary" onclick="handleInviteClick()">
+                👥 Inviter un technicien maintenant
+            </button>
+            <button class="invite-confirm-btn-secondary" onclick="handleUpgradeClick()">
+                💳 Passer Pro — 49€/mois
+            </button>
+        </div>
+        <button class="upgrade-later-btn" onclick="closePendingPopup()" style="margin-top: 8px;">
+            Plus tard
+        </button>
+    </div>
+    <!-- END UNIFIED PAYWALL -->
     
     <!-- SVG DEFS -->
     <svg style="position:absolute;width:0;height:0;">
@@ -12993,6 +12895,15 @@ INSTRUCTIONS:
         // Build partial report from conversation
         // Called when we detect report-relevant info in the chat
         function buildPartialReport() {
+            // Track report generation for freemium
+            if (typeof trackReportGeneration === 'function') {
+                const reportCheck = trackReportGeneration();
+                if (reportCheck.showUpgrade && !reportCheck.allowed) {
+                    showUpgradeModal('report_limit');
+                    return;
+                }
+            }
+
             // Get info from chatHistory — scan BOTH panels for report data
             const history = [...(chatHistory.assistant || []), ...(chatHistory.copilot || [])];
             const userMessages = history.filter(m => m.role === 'user').map(m => m.content);
@@ -16364,16 +16275,13 @@ text = text.replace(/\s*\{"type"\s*:\s*"report"[\s\S]*\}\s*$/, '').trim();
             // ═══ FREEMIUM CHECK: Track usage and show upgrade if needed ═══
             if (typeof trackChatUsage === 'function') {
                 const usageResult = trackChatUsage(panel);
-                
-                // If at hard limit, show referral modal (with upgrade option) and don't send
+
                 if (usageResult.showUpgrade && !usageResult.allowed) {
-                    // Show referral modal as primary option (includes upgrade link)
-                    showReferralModal('limit');
-                    return; // Don't send the message
+                    showUpgradeModal('limit');
+                    return;
                 }
-                
-                // If approaching limit, show soft warning banner (but still send)
-                if (usageResult.showWarning && usageResult.remaining <= 3) {
+
+                if (usageResult.showWarning) {
                     showUpgradeBanner(panel, usageResult.remaining);
                 }
             }
@@ -18757,22 +18665,27 @@ RÈGLES:
         
         const FREEMIUM_CONFIG = {
             // Free tier limits
-            freeCopilotChats: 15,        // Free Copilot messages per week
-            freeAssistantChats: 25,      // Free Assistant messages per week (more generous)
-            softLimitWarning: 0.8,       // Show warning at 80% usage
-            
-            // Storage keys
+            freeCopilotChats: 20,
+            freeReports: 3,
+            softLimitWarning: 0.8,
+
+            // Referral
+            bufferQueriesOnInvite: 5,
+            bufferHoursOnInvite: 24,
+            weekFreeDaysOnConvert: 7,
+            sprintTarget: 3,
+            sprintRewardDays: 60,
+            sprintShowAfterDays: 3,
+
+            // Pricing
+            monthlyPrice: 49,
+
+            // Storage & URLs
             storageKey: 'fixair_freemium_usage',
-            
-            // Features requiring Pro
-            proFeatures: ['export_pdf', 'export_word', 'share_report', 'diagrams_advanced'],
-            
-            // Pricing (for display)
-            monthlyPrice: 29,
-            yearlyPrice: 249,
-            
-            // Upgrade URL (placeholder - will be Stripe)
-            upgradeUrl: 'https://fixair.ai/upgrade'
+            upgradeUrl: 'https://pay.fixair.ai/b/dRm7sKa3MbPAgxdfgR2VG00',
+
+            // Pro features
+            proFeatures: ['export_pdf', 'export_word', 'share_report', 'diagrams_advanced']
         };
         
         // Get/Set freemium usage from localStorage
@@ -18801,8 +18714,13 @@ RÈGLES:
                 weekStart: getFreemiumWeekStart().toISOString(),
                 copilotChats: 0,
                 assistantChats: 0,
-                isPro: false, // Will be updated from Supabase
-                lastChecked: new Date().toISOString()
+                reportsGenerated: 0,
+                bufferQueries: 0,
+                bufferUntil: null,
+                isPro: false,
+                lastChecked: new Date().toISOString(),
+                invitesSentThisWeek: 0,
+                reportProjects: []
             };
             saveFreemiumUsage(fresh);
             return fresh;
@@ -18870,55 +18788,122 @@ RÈGLES:
         // Track a chat message (called from sendMsg)
         function trackChatUsage(panel) {
             const usage = getFreemiumUsage();
-            
-            // Pro users don't need tracking (but we still track for analytics)
+
             if (usage.isPro) return { allowed: true, remaining: 999 };
-            
-            // ═══ OWNER BYPASS ═══
+
             if (currentUserId === 'd5baabf1-147a-4ee5-a07a-8f80212fbc9a') {
                 return { allowed: true, remaining: 999 };
             }
-            
-            const key = panel === 'copilot' ? 'copilotChats' : 'assistantChats';
-            const limit = panel === 'copilot' ? FREEMIUM_CONFIG.freeCopilotChats : FREEMIUM_CONFIG.freeAssistantChats;
-            
-            // Increment usage
-            usage[key] = (usage[key] || 0) + 1;
+
+            // Check temporary buffer (24h access from invite)
+            if (usage.bufferUntil && new Date(usage.bufferUntil) > new Date()) {
+                usage.copilotChats = (usage.copilotChats || 0) + 1;
+                saveFreemiumUsage(usage);
+                return { allowed: true, remaining: 999, buffered: true };
+            }
+
+            // Check buffer queries (+5 from invite)
+            if ((usage.bufferQueries || 0) > 0) {
+                usage.bufferQueries -= 1;
+                usage.copilotChats = (usage.copilotChats || 0) + 1;
+                saveFreemiumUsage(usage);
+                return { allowed: true, remaining: usage.bufferQueries, buffered: true };
+            }
+
+            if (panel === 'copilot') {
+                const limit = FREEMIUM_CONFIG.freeCopilotChats;
+                usage.copilotChats = (usage.copilotChats || 0) + 1;
+                saveFreemiumUsage(usage);
+
+                const remaining = Math.max(0, limit - usage.copilotChats);
+                const percentUsed = usage.copilotChats / limit;
+
+                return {
+                    allowed: usage.copilotChats <= limit,
+                    remaining: remaining,
+                    total: limit,
+                    used: usage.copilotChats,
+                    percentUsed: percentUsed,
+                    showWarning: percentUsed >= FREEMIUM_CONFIG.softLimitWarning && percentUsed < 1,
+                    showUpgrade: percentUsed >= 1
+                };
+            } else {
+                // Assistant messages are free — reports are checked separately
+                usage.assistantChats = (usage.assistantChats || 0) + 1;
+                saveFreemiumUsage(usage);
+                return { allowed: true, remaining: 999 };
+            }
+        }
+
+        // Track report generation (called when report is built/exported)
+        function trackReportGeneration() {
+            const usage = getFreemiumUsage();
+
+            if (usage.isPro) return { allowed: true, remaining: 999 };
+            if (currentUserId === 'd5baabf1-147a-4ee5-a07a-8f80212fbc9a') {
+                return { allowed: true, remaining: 999 };
+            }
+
+            // Check buffer
+            if (usage.bufferUntil && new Date(usage.bufferUntil) > new Date()) {
+                return { allowed: true, remaining: 999, buffered: true };
+            }
+
+            // Only count ONCE per project (avoid double-counting from buildPartialReport)
+            const projectId = currentProjectId;
+            if (!usage.reportProjects) usage.reportProjects = [];
+            if (usage.reportProjects.includes(projectId)) {
+                const limit = FREEMIUM_CONFIG.freeReports;
+                const remaining = Math.max(0, limit - (usage.reportsGenerated || 0));
+                return {
+                    allowed: (usage.reportsGenerated || 0) <= limit,
+                    remaining: remaining,
+                    showUpgrade: (usage.reportsGenerated || 0) > limit
+                };
+            }
+
+            // New project — count it
+            usage.reportProjects.push(projectId);
+
+            const limit = FREEMIUM_CONFIG.freeReports;
+            usage.reportsGenerated = (usage.reportsGenerated || 0) + 1;
             saveFreemiumUsage(usage);
-            
-            const remaining = Math.max(0, limit - usage[key]);
-            const percentUsed = usage[key] / limit;
-            
+
+            const remaining = Math.max(0, limit - usage.reportsGenerated);
+
             return {
-                allowed: usage[key] <= limit,
+                allowed: usage.reportsGenerated <= limit,
                 remaining: remaining,
                 total: limit,
-                used: usage[key],
-                percentUsed: percentUsed,
-                showWarning: percentUsed >= FREEMIUM_CONFIG.softLimitWarning && percentUsed < 1,
-                showUpgrade: percentUsed >= 1
+                used: usage.reportsGenerated,
+                showUpgrade: usage.reportsGenerated > limit
             };
         }
-        
+        window.trackReportGeneration = trackReportGeneration;
+
         // Check if user can send a chat (preview check, doesn't increment)
         function canSendChat(panel) {
             const usage = getFreemiumUsage();
             if (usage.isPro) return { allowed: true, remaining: 999 };
-            // ═══ OWNER BYPASS ═══
             if (currentUserId === 'd5baabf1-147a-4ee5-a07a-8f80212fbc9a') {
                 return { allowed: true, remaining: 999 };
             }
-            
-            const key = panel === 'copilot' ? 'copilotChats' : 'assistantChats';
-            const limit = panel === 'copilot' ? FREEMIUM_CONFIG.freeCopilotChats : FREEMIUM_CONFIG.freeAssistantChats;
-            const remaining = Math.max(0, limit - (usage[key] || 0));
-            
-            return {
-                allowed: remaining > 0,
-                remaining: remaining,
-                total: limit,
-                used: usage[key] || 0
-            };
+
+            // Check buffer
+            if (usage.bufferUntil && new Date(usage.bufferUntil) > new Date()) {
+                return { allowed: true, remaining: 999, buffered: true };
+            }
+            if ((usage.bufferQueries || 0) > 0) {
+                return { allowed: true, remaining: usage.bufferQueries, buffered: true };
+            }
+
+            if (panel === 'copilot') {
+                const limit = FREEMIUM_CONFIG.freeCopilotChats;
+                const remaining = Math.max(0, limit - (usage.copilotChats || 0));
+                return { allowed: remaining > 0, remaining, total: limit, used: usage.copilotChats || 0 };
+            } else {
+                return { allowed: true, remaining: 999 };
+            }
         }
         
         // Check if user can use a Pro feature
@@ -18934,103 +18919,57 @@ RÈGLES:
             const overlay = document.getElementById('upgradeOverlay');
             const title = document.getElementById('upgradeTitle');
             const subtitle = document.getElementById('upgradeSubtitle');
-            const badge = document.getElementById('usageBadge');
-            const usageCount = document.getElementById('usageCount');
-            
-            // Customize based on context
-            switch(context) {
-                case 'copilot_limit':
-                    title.textContent = '🔥 Copilot illimité';
-                    subtitle.textContent = 'Vous avez atteint votre limite hebdomadaire. Passez à Pro pour un diagnostic illimité !';
-                    badge.style.display = 'inline-flex';
-                    const copilotUsage = canSendChat('copilot');
-                    usageCount.textContent = `${copilotUsage.used}/${copilotUsage.total}`;
-                    break;
-                    
-                case 'copilot_warning':
-                    title.textContent = 'Bientôt à la limite';
-                    subtitle.textContent = 'Il vous reste quelques messages Copilot gratuits cette semaine. Passez à Pro pour ne jamais être limité !';
-                    badge.style.display = 'inline-flex';
-                    const copilotWarn = canSendChat('copilot');
-                    usageCount.textContent = `${copilotWarn.used}/${copilotWarn.total}`;
-                    break;
-                    
-                case 'export_pdf':
-                    title.textContent = '📄 Export PDF Pro';
-                    subtitle.textContent = 'Générez des rapports PDF professionnels avec votre logo et mise en page personnalisée.';
-                    badge.style.display = 'none';
-                    break;
-                    
-                case 'export_word':
-                    title.textContent = '📝 Export Word Pro';
-                    subtitle.textContent = 'Exportez vos rapports en Word modifiable pour personnalisation avancée.';
-                    badge.style.display = 'none';
-                    break;
-                    
-                case 'share':
-                    title.textContent = '🔗 Partage Pro';
-                    subtitle.textContent = 'Partagez vos rapports directement avec vos clients par email ou lien.';
-                    badge.style.display = 'none';
-                    break;
-                    
-                default:
-                    title.textContent = 'Passez à FixAIR Pro';
-                    subtitle.textContent = 'Débloquez le plein potentiel de votre assistant HVAC';
-                    badge.style.display = 'none';
-            }
-            
+
+            title.textContent = 'Vous êtes un power user ! 🔥';
+            subtitle.textContent = 'Vous avez atteint votre limite gratuite cette semaine';
+
             overlay.classList.add('show');
-            
-            // Track modal view for analytics
-            console.log('[Freemium] Upgrade modal shown:', context);
+            console.log('[Freemium] Unified modal shown:', context);
         }
         
         function closeUpgradeModal(event) {
-            // If clicking overlay background, close
-            if (event && event.target.id !== 'upgradeOverlay') return;
+            if (event && event.target && event.target.id !== 'upgradeOverlay') return;
             document.getElementById('upgradeOverlay').classList.remove('show');
         }
-        
+
         function handleUpgradeClick() {
-            // For now, show toast and redirect to upgrade page
-            toast('Redirection vers la page d\'abonnement...');
-            
-            // Track upgrade intent
             console.log('[Freemium] Upgrade clicked');
-            
-            // Close modal
             closeUpgradeModal();
-            
-            // Open upgrade page (placeholder - will be Stripe)
-            setTimeout(() => {
-                window.open(FREEMIUM_CONFIG.upgradeUrl, '_blank');
-            }, 500);
+
+            // Build Stripe URL with user identification
+            const stripeBaseUrl = FREEMIUM_CONFIG.upgradeUrl;
+            const params = new URLSearchParams();
+
+            if (currentUserId) {
+                params.set('client_reference_id', currentUserId);
+            }
+            if (currentUser && currentUser.email) {
+                params.set('prefilled_email', currentUser.email);
+            }
+
+            const fullUrl = params.toString() ? `${stripeBaseUrl}?${params.toString()}` : stripeBaseUrl;
+            window.open(fullUrl, '_blank');
+
+            // Poll Supabase to detect when payment completes
+            startPaymentPolling();
         }
         
         // Show soft upgrade banner in chat (non-blocking)
         function showUpgradeBanner(panel, remaining) {
             const chatBody = document.getElementById(panel + 'Body');
             if (!chatBody) return;
-            
-            // Don't show if already showing
             if (chatBody.querySelector('.upgrade-banner')) return;
-            
+
             const banner = document.createElement('div');
             banner.className = 'upgrade-banner';
             banner.innerHTML = `
-                <div class="upgrade-banner-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                        <path d="M2 17l10 5 10-5"/>
-                    </svg>
-                </div>
                 <div class="upgrade-banner-content">
-                    <div class="upgrade-banner-title">Plus que ${remaining} message${remaining > 1 ? 's' : ''} gratuit${remaining > 1 ? 's' : ''}</div>
+                    <div class="upgrade-banner-title">Vous approchez de votre limite hebdomadaire</div>
                     <div class="upgrade-banner-text">Passez à Pro pour un accès illimité</div>
                 </div>
-                <button class="upgrade-banner-btn" onclick="showUpgradeModal('copilot_warning')">Upgrade</button>
+                <button class="upgrade-banner-btn" onclick="showUpgradeModal('banner_click')">Passer à Pro</button>
             `;
-            
+
             chatBody.appendChild(banner);
             chatBody.scrollTop = chatBody.scrollHeight;
         }
@@ -19038,14 +18977,320 @@ RÈGLES:
         // Initialize freemium on page load
         async function initFreemium() {
             console.log('[Freemium] Initializing...');
-            
-            // Check subscription status from database
+
             await checkSubscriptionStatus();
-            
+            await checkWeekFreeStatus();
+
             const usage = getFreemiumUsage();
             console.log('[Freemium] Current usage:', usage);
+
+            // Check if should show pending referral popup
+            setTimeout(() => {
+                showPendingReferralPopup();
+            }, 2000);
+
+            // Check sprint challenge eligibility
+            setTimeout(() => {
+                checkSprintChallenge();
+            }, 3000);
+
+            // Show re-entry prompt on copilot if returning user
+            setTimeout(() => {
+                showReentryPrompt('copilot');
+            }, 1500);
         }
         
+        // ═══ INVITE FLOW HANDLER ═══
+        function handleInviteClick() {
+            closeUpgradeModal();
+            closePendingPopup();
+            shareOnWhatsAppWithVariant();
+            grantInviteBuffer();
+            setTimeout(() => {
+                showInviteConfirmPopup();
+            }, 500);
+        }
+        // WhatsApp message with rotation (avoid same text to 5 people)
+        function shareOnWhatsAppWithVariant() {
+            const link = getReferralLink();
+            const variant = Math.floor(Math.random() * 3);
+
+            let message;
+            switch(variant) {
+                case 0:
+                    message = `Salut ! Je viens de trouver un truc pour les dépannages CVC — diagnostic IA + rapports auto en 30 secondes. C'est trop con de garder ça pour moi.\nTeste avec mon lien, on gagne tous les deux 1 semaine gratuite : ${link}`;
+                    break;
+                case 1:
+                    message = `Hey ! Je te partage un outil que j'utilise sur le terrain (diagnostic + rapports auto). Je t'offre 1 semaine gratuite pour tester :\n${link}\nTeste-le maintenant sur un vrai dépannage.`;
+                    break;
+                case 2:
+                    message = `Salut ! Tu connais FixAIR ? C'est un assistant IA pour les techs CVC — tu lui donnes un code erreur et il te sort le diagnostic + le rapport. Ça m'a changé la vie.\nEssaie gratuit : ${link}`;
+                    break;
+            }
+
+            const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+            trackReferralShare('whatsapp');
+        }
+        // Grant immediate buffer after invite sent
+        function grantInviteBuffer() {
+            const usage = getFreemiumUsage();
+            usage.bufferQueries = (usage.bufferQueries || 0) + FREEMIUM_CONFIG.bufferQueriesOnInvite;
+            const bufferEnd = new Date();
+            bufferEnd.setHours(bufferEnd.getHours() + FREEMIUM_CONFIG.bufferHoursOnInvite);
+            usage.bufferUntil = bufferEnd.toISOString();
+            usage.invitesSentThisWeek = (usage.invitesSentThisWeek || 0) + 1;
+            saveFreemiumUsage(usage);
+            console.log('[Referral] Buffer granted: +5 queries + 24h access');
+        }
+        // Show post-invite confirmation popup
+        function showInviteConfirmPopup() {
+            const popup = document.getElementById('inviteConfirmPopup');
+            if (popup) popup.classList.add('show');
+            setTimeout(() => { closeInviteConfirmPopup(); }, 8000);
+        }
+        function closeInviteConfirmPopup() {
+            const popup = document.getElementById('inviteConfirmPopup');
+            if (popup) popup.classList.remove('show');
+        }
+        // Show pending referral popup (on app re-open if no conversions)
+        function showPendingReferralPopup() {
+            const usage = getFreemiumUsage();
+            if ((usage.invitesSentThisWeek || 0) === 0) return;
+            if (referralState.totalReferrals > 0) return;
+
+            const variants = [
+                'Plus tu partages, plus tu débloques vite ton accès gratuit.',
+                'Un seul collègue qui s\'inscrit = 1 semaine gratuite pour vous deux.',
+                'Les meilleurs retours viennent souvent du 2e ou 3e collègue invité.'
+            ];
+            const microCopy = document.getElementById('pendingMicroCopy');
+            if (microCopy) {
+                microCopy.textContent = variants[Math.floor(Math.random() * variants.length)];
+            }
+
+            const popup = document.getElementById('referralPendingPopup');
+            if (popup) popup.classList.add('show');
+        }
+        function closePendingPopup() {
+            const popup = document.getElementById('referralPendingPopup');
+            if (popup) popup.classList.remove('show');
+        }
+        // ═══ SPRINT CHALLENGE (Day 3+) ═══
+        function checkSprintChallenge() {
+            if (!currentUser || !currentUser.created_at) return;
+
+            const usage = getFreemiumUsage();
+            if (usage.isPro) return;
+
+            const signupDate = new Date(currentUser.created_at);
+            const now = new Date();
+            const daysSinceSignup = Math.floor((now - signupDate) / (1000 * 60 * 60 * 24));
+
+            if (daysSinceSignup < FREEMIUM_CONFIG.sprintShowAfterDays) return;
+            if (referralState.isAmbassador) return;
+
+            const lastDismissed = localStorage.getItem('fixair_sprint_dismissed');
+            if (lastDismissed) {
+                const dismissed = new Date(lastDismissed);
+                const hoursSince = (now - dismissed) / (1000 * 60 * 60);
+                if (hoursSince < 24) return;
+            }
+
+            injectSprintBanner();
+        }
+        function injectSprintBanner() {
+            const homepage = document.getElementById('homepageContent');
+            if (!homepage) return;
+            if (homepage.querySelector('.sprint-banner')) return;
+
+            const completed = referralState.totalReferrals || 0;
+            const target = FREEMIUM_CONFIG.sprintTarget;
+
+            const banner = document.createElement('div');
+            banner.className = 'sprint-banner';
+            banner.onclick = function() { showUpgradeModal('sprint'); };
+            banner.innerHTML = `
+                <div class="sprint-banner-header">
+                    <span class="sprint-banner-emoji">⚡</span>
+                    <span class="sprint-banner-title">Défi 10 jours</span>
+                </div>
+                <div class="sprint-banner-desc">
+                    Invite ${target} techniciens CVC qui s'inscrivent → 2 mois FixAIR offerts (100€ de valeur)<br>
+                    <strong>${completed}/${target} complétés</strong>
+                </div>
+                <button class="sprint-banner-cta" onclick="event.stopPropagation(); handleInviteClick();">
+                    🎯 Inviter maintenant
+                </button>
+            `;
+
+            homepage.insertBefore(banner, homepage.firstChild);
+        }
+        // ═══ RE-ENTRY PROMPT (returning users) ═══
+        function showReentryPrompt(panel) {
+            const chatBody = document.getElementById(panel + 'Body');
+            if (!chatBody) return;
+            if (chatBody.querySelector('.reentry-prompt')) return;
+            if (chatBody.children.length > 1) return;
+
+            const examples = [
+                { code: 'E1', brand: 'Daikin', desc: 'Défaut capteur température extérieure' },
+                { code: 'F3', brand: 'Mitsubishi', desc: 'Erreur débit réfrigérant faible' },
+                { code: 'H6', brand: 'Panasonic', desc: 'Défaut compresseur position locked' },
+                { code: 'L5', brand: 'Toshiba', desc: 'Surcharge instantanée' }
+            ];
+            const ex = examples[Math.floor(Math.random() * examples.length)];
+
+            const prompt = document.createElement('div');
+            prompt.className = 'reentry-prompt';
+            prompt.onclick = function() {
+                const input = document.getElementById(panel + 'Input');
+                if (input) {
+                    input.value = `Code erreur ${ex.code} sur ${ex.brand} — diagnostic ?`;
+                    input.dispatchEvent(new Event('input'));
+                    prompt.remove();
+                }
+            };
+            prompt.innerHTML = `
+                <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px;">
+                    🔧 Un diagnostic rapide ?
+                </div>
+                <div style="font-size: 12px; color: var(--text-dim); line-height: 1.4;">
+                    Exemple : <strong>Code ${ex.code} ${ex.brand}</strong> — ${ex.desc}<br>
+                    <span style="color: var(--copilot); font-weight: 500;">Cliquez pour tester →</span>
+                </div>
+            `;
+
+            chatBody.appendChild(prompt);
+        }
+        // ═══ CHECK WEEK FREE STATUS ═══
+        async function checkWeekFreeStatus() {
+            try {
+                const userId = await getCurrentUserId();
+                if (!userId) return false;
+
+                const { data, error } = await db
+                    .from('users')
+                    .select('week_free_granted_at, completed_referrals, is_ambassador')
+                    .eq('id', userId)
+                    .single();
+
+                if (error || !data || !data.week_free_granted_at) return false;
+
+                const grantedAt = new Date(data.week_free_granted_at);
+                const now = new Date();
+                const freeDays = data.is_ambassador ? 60 : 7;
+                const expiresAt = new Date(grantedAt);
+                expiresAt.setDate(expiresAt.getDate() + freeDays);
+
+                if (now < expiresAt) {
+                    const usage = getFreemiumUsage();
+                    usage.isPro = true;
+                    saveFreemiumUsage(usage);
+                    console.log(`[Referral] Free period active — ${freeDays} days from ${grantedAt.toISOString()}`);
+                    return true;
+                }
+
+                return false;
+            } catch (e) {
+                console.warn('[Referral] Error checking week free status:', e);
+                return false;
+            }
+        }
+        // ═══ PAYMENT POLLING (detect Stripe payment completion) ═══
+        let paymentPollInterval = null;
+        function startPaymentPolling() {
+            if (paymentPollInterval) clearInterval(paymentPollInterval);
+
+            let attempts = 0;
+            const maxAttempts = 60;
+
+            console.log('[Payment] Starting payment polling...');
+
+            paymentPollInterval = setInterval(async () => {
+                attempts++;
+
+                if (attempts > maxAttempts) {
+                    clearInterval(paymentPollInterval);
+                    paymentPollInterval = null;
+                    console.log('[Payment] Polling timeout');
+                    return;
+                }
+
+                try {
+                    const userId = await getCurrentUserId();
+                    if (!userId) return;
+
+                    const { data } = await db
+                        .from('users')
+                        .select('subscription_tier')
+                        .eq('id', userId)
+                        .single();
+
+                    if (data && (data.subscription_tier === 'pro' || data.subscription_tier === 'enterprise')) {
+                        clearInterval(paymentPollInterval);
+                        paymentPollInterval = null;
+
+                        console.log('[Payment] ✅ Payment confirmed! User is now Pro');
+
+                        const usage = getFreemiumUsage();
+                        usage.isPro = true;
+                        saveFreemiumUsage(usage);
+
+                        toast('🎉 Bienvenue chez FixAIR Pro ! Accès illimité activé.');
+
+                        document.querySelectorAll('.upgrade-banner').forEach(b => b.remove());
+                        document.querySelectorAll('.sprint-banner').forEach(b => b.remove());
+                    }
+                } catch (e) {
+                    console.warn('[Payment] Polling error:', e);
+                }
+            }, 5000);
+        }
+        window.addEventListener('beforeunload', () => {
+            if (paymentPollInterval) clearInterval(paymentPollInterval);
+        });
+        document.addEventListener('visibilitychange', async () => {
+            if (document.visibilityState === 'visible' && paymentPollInterval) {
+                try {
+                    const userId = await getCurrentUserId();
+                    if (!userId) return;
+
+                    const { data } = await db
+                        .from('users')
+                        .select('subscription_tier')
+                        .eq('id', userId)
+                        .single();
+
+                    if (data && (data.subscription_tier === 'pro' || data.subscription_tier === 'enterprise')) {
+                        clearInterval(paymentPollInterval);
+                        paymentPollInterval = null;
+
+                        const usage = getFreemiumUsage();
+                        usage.isPro = true;
+                        saveFreemiumUsage(usage);
+
+                        toast('🎉 Bienvenue chez FixAIR Pro ! Accès illimité activé.');
+
+                        document.querySelectorAll('.upgrade-banner').forEach(b => b.remove());
+                        document.querySelectorAll('.sprint-banner').forEach(b => b.remove());
+                    }
+                } catch (e) {}
+            }
+        });
+        // Expose all new functions
+        window.handleInviteClick = handleInviteClick;
+        window.shareOnWhatsAppWithVariant = shareOnWhatsAppWithVariant;
+        window.grantInviteBuffer = grantInviteBuffer;
+        window.showInviteConfirmPopup = showInviteConfirmPopup;
+        window.closeInviteConfirmPopup = closeInviteConfirmPopup;
+        window.showPendingReferralPopup = showPendingReferralPopup;
+        window.closePendingPopup = closePendingPopup;
+        window.checkSprintChallenge = checkSprintChallenge;
+        window.showReentryPrompt = showReentryPrompt;
+        window.checkWeekFreeStatus = checkWeekFreeStatus;
+        window.startPaymentPolling = startPaymentPolling;
+
         // Expose to global scope
         window.showUpgradeModal = showUpgradeModal;
         window.closeUpgradeModal = closeUpgradeModal;
@@ -19079,7 +19324,7 @@ RÈGLES:
         // Get WhatsApp share message
         function getWhatsAppMessage() {
             const link = getReferralLink();
-            const message = `Salut ! J'utilise FixAir pour mes diagnostics CVC — ça m'a fait gagner 30 min aujourd'hui.\nEssaie avec mon lien, on reçoit tous les deux des requêtes IA bonus : ${link}`;
+            const message = `Salut ! Je viens de trouver un truc pour les dépannages CVC — diagnostic IA + rapports auto en 30 secondes. C'est trop con de garder ça pour moi.\nTeste avec mon lien, on gagne tous les deux 1 semaine gratuite : ${link}`;
             return encodeURIComponent(message);
         }
         
@@ -19103,7 +19348,7 @@ RÈGLES:
             if (!referralState.code) return;
             
             navigator.clipboard.writeText(referralState.code).then(() => {
-                showToast('Code copié !', 'success');
+                toast('Code copié !');
             }).catch(() => {
                 // Fallback
                 const input = document.createElement('input');
@@ -19112,7 +19357,7 @@ RÈGLES:
                 input.select();
                 document.execCommand('copy');
                 document.body.removeChild(input);
-                showToast('Code copié !', 'success');
+                toast('Code copié !');
             });
         }
         
@@ -19121,7 +19366,7 @@ RÈGLES:
             const link = getReferralLink();
             
             navigator.clipboard.writeText(link).then(() => {
-                showToast('Lien copié !', 'success');
+                toast('Lien copié !');
             }).catch(() => {
                 // Fallback
                 const input = document.createElement('input');
@@ -19130,7 +19375,7 @@ RÈGLES:
                 input.select();
                 document.execCommand('copy');
                 document.body.removeChild(input);
-                showToast('Lien copié !', 'success');
+                toast('Lien copié !');
             });
             
             // Track share event
@@ -19147,27 +19392,13 @@ RÈGLES:
             }
         }
         
-        // Show referral friction modal (called when user hits limit)
-        function showReferralModal(context = 'limit') {
-            const overlay = document.getElementById('referralModalOverlay');
-            const title = document.getElementById('referralModalTitle');
-            const text = document.getElementById('referralModalText');
-            
-            if (context === 'limit') {
-                title.textContent = 'Vous avez atteint votre limite';
-                text.textContent = 'Vous avez utilisé vos requêtes gratuites cette semaine. Débloquez plus de requêtes en invitant un collègue !';
-            } else if (context === 'onboarding') {
-                title.textContent = 'Envie de plus de requêtes ?';
-                text.textContent = 'Invitez un collègue et recevez tous les deux 30 requêtes IA bonus !';
-            }
-            
-            overlay.classList.add('active');
+        // Legacy wrapper → redirect to unified modal
+        function showReferralModal(context) {
+            showUpgradeModal(context || 'limit');
         }
-        
-        // Close referral modal
+
         function closeReferralModal(event) {
-            if (event && event.target !== event.currentTarget) return;
-            document.getElementById('referralModalOverlay').classList.remove('active');
+            closeUpgradeModal(event);
         }
         
         // Load referral data from user profile
