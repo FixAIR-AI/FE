@@ -12993,6 +12993,15 @@ INSTRUCTIONS:
         // Build partial report from conversation
         // Called when we detect report-relevant info in the chat
         function buildPartialReport() {
+            // Track report generation for freemium
+            if (typeof trackReportGeneration === 'function') {
+                const reportCheck = trackReportGeneration();
+                if (reportCheck.showUpgrade && !reportCheck.allowed) {
+                    showUpgradeModal('report_limit');
+                    return;
+                }
+            }
+
             // Get info from chatHistory — scan BOTH panels for report data
             const history = [...(chatHistory.assistant || []), ...(chatHistory.copilot || [])];
             const userMessages = history.filter(m => m.role === 'user').map(m => m.content);
