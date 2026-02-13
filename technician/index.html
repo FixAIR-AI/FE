@@ -18880,34 +18880,51 @@ RÈGLES:
         // Track a chat message (called from sendMsg)
         function trackChatUsage(panel) {
             const usage = getFreemiumUsage();
-            
-            // Pro users don't need tracking (but we still track for analytics)
+
             if (usage.isPro) return { allowed: true, remaining: 999 };
-            
-            // ═══ OWNER BYPASS ═══
+
             if (currentUserId === 'd5baabf1-147a-4ee5-a07a-8f80212fbc9a') {
                 return { allowed: true, remaining: 999 };
             }
-            
-            const key = panel === 'copilot' ? 'copilotChats' : 'assistantChats';
-            const limit = panel === 'copilot' ? FREEMIUM_CONFIG.freeCopilotChats : FREEMIUM_CONFIG.freeAssistantChats;
-            
-            // Increment usage
-            usage[key] = (usage[key] || 0) + 1;
-            saveFreemiumUsage(usage);
-            
-            const remaining = Math.max(0, limit - usage[key]);
-            const percentUsed = usage[key] / limit;
-            
-            return {
-                allowed: usage[key] <= limit,
-                remaining: remaining,
-                total: limit,
-                used: usage[key],
-                percentUsed: percentUsed,
-                showWarning: percentUsed >= FREEMIUM_CONFIG.softLimitWarning && percentUsed < 1,
-                showUpgrade: percentUsed >= 1
-            };
+
+            // Check temporary buffer (24h access from invite)
+            if (usage.bufferUntil && new Date(usage.bufferUntil) > new Date()) {
+                usage.copilotChats = (usage.copilotChats || 0) + 1;
+                saveFreemiumUsage(usage);
+                return { allowed: true, remaining: 999, buffered: true };
+            }
+
+            // Check buffer queries (+5 from invite)
+            if ((usage.bufferQueries || 0) > 0) {
+                usage.bufferQueries -= 1;
+                usage.copilotChats = (usage.copilotChats || 0) + 1;
+                saveFreemiumUsage(usage);
+                return { allowed: true, remaining: usage.bufferQueries, buffered: true };
+            }
+
+            if (panel === 'copilot') {
+                const limit = FREEMIUM_CONFIG.freeCopilotChats;
+                usage.copilotChats = (usage.copilotChats || 0) + 1;
+                saveFreemiumUsage(usage);
+
+                const remaining = Math.max(0, limit - usage.copilotChats);
+                const percentUsed = usage.copilotChats / limit;
+
+                return {
+                    allowed: usage.copilotChats <= limit,
+                    remaining: remaining,
+                    total: limit,
+                    used: usage.copilotChats,
+                    percentUsed: percentUsed,
+                    showWarning: percentUsed >= FREEMIUM_CONFIG.softLimitWarning && percentUsed < 1,
+                    showUpgrade: percentUsed >= 1
+                };
+            } else {
+                // Assistant messages are free — reports are checked separately
+                usage.assistantChats = (usage.assistantChats || 0) + 1;
+                saveFreemiumUsage(usage);
+                return { allowed: true, remaining: 999 };
+            }
         }
         
         // Check if user can send a chat (preview check, doesn't increment)
