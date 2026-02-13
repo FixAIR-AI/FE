@@ -16364,16 +16364,13 @@ text = text.replace(/\s*\{"type"\s*:\s*"report"[\s\S]*\}\s*$/, '').trim();
             // ═══ FREEMIUM CHECK: Track usage and show upgrade if needed ═══
             if (typeof trackChatUsage === 'function') {
                 const usageResult = trackChatUsage(panel);
-                
-                // If at hard limit, show referral modal (with upgrade option) and don't send
+
                 if (usageResult.showUpgrade && !usageResult.allowed) {
-                    // Show referral modal as primary option (includes upgrade link)
-                    showReferralModal('limit');
-                    return; // Don't send the message
+                    showUpgradeModal('limit');
+                    return;
                 }
-                
-                // If approaching limit, show soft warning banner (but still send)
-                if (usageResult.showWarning && usageResult.remaining <= 3) {
+
+                if (usageResult.showWarning) {
                     showUpgradeBanner(panel, usageResult.remaining);
                 }
             }
