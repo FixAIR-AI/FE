@@ -19069,12 +19069,27 @@ RÈGLES:
         // Initialize freemium on page load
         async function initFreemium() {
             console.log('[Freemium] Initializing...');
-            
-            // Check subscription status from database
+
             await checkSubscriptionStatus();
-            
+            await checkWeekFreeStatus();
+
             const usage = getFreemiumUsage();
             console.log('[Freemium] Current usage:', usage);
+
+            // Check if should show pending referral popup
+            setTimeout(() => {
+                showPendingReferralPopup();
+            }, 2000);
+
+            // Check sprint challenge eligibility
+            setTimeout(() => {
+                checkSprintChallenge();
+            }, 3000);
+
+            // Show re-entry prompt on copilot if returning user
+            setTimeout(() => {
+                showReentryPrompt('copilot');
+            }, 1500);
         }
         
         // Expose to global scope
