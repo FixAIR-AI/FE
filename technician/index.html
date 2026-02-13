@@ -19413,7 +19413,7 @@ RÈGLES:
         // Get WhatsApp share message
         function getWhatsAppMessage() {
             const link = getReferralLink();
-            const message = `Salut ! J'utilise FixAir pour mes diagnostics CVC — ça m'a fait gagner 30 min aujourd'hui.\nEssaie avec mon lien, on reçoit tous les deux des requêtes IA bonus : ${link}`;
+            const message = `Salut ! Je viens de trouver un truc pour les dépannages CVC — diagnostic IA + rapports auto en 30 secondes. C'est trop con de garder ça pour moi.\nTeste avec mon lien, on gagne tous les deux 1 semaine gratuite : ${link}`;
             return encodeURIComponent(message);
         }
         
@@ -19481,27 +19481,13 @@ RÈGLES:
             }
         }
         
-        // Show referral friction modal (called when user hits limit)
-        function showReferralModal(context = 'limit') {
-            const overlay = document.getElementById('referralModalOverlay');
-            const title = document.getElementById('referralModalTitle');
-            const text = document.getElementById('referralModalText');
-            
-            if (context === 'limit') {
-                title.textContent = 'Vous avez atteint votre limite';
-                text.textContent = 'Vous avez utilisé vos requêtes gratuites cette semaine. Débloquez plus de requêtes en invitant un collègue !';
-            } else if (context === 'onboarding') {
-                title.textContent = 'Envie de plus de requêtes ?';
-                text.textContent = 'Invitez un collègue et recevez tous les deux 30 requêtes IA bonus !';
-            }
-            
-            overlay.classList.add('active');
+        // Legacy wrapper → redirect to unified modal
+        function showReferralModal(context) {
+            showUpgradeModal(context || 'limit');
         }
-        
-        // Close referral modal
+
         function closeReferralModal(event) {
-            if (event && event.target !== event.currentTarget) return;
-            document.getElementById('referralModalOverlay').classList.remove('active');
+            closeUpgradeModal(event);
         }
         
         // Load referral data from user profile
