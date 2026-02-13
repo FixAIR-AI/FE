@@ -18926,7 +18926,53 @@ RÈGLES:
                 return { allowed: true, remaining: 999 };
             }
         }
-        
+
+        // Track report generation (called when report is built/exported)
+        function trackReportGeneration() {
+            const usage = getFreemiumUsage();
+
+            if (usage.isPro) return { allowed: true, remaining: 999 };
+            if (currentUserId === 'd5baabf1-147a-4ee5-a07a-8f80212fbc9a') {
+                return { allowed: true, remaining: 999 };
+            }
+
+            // Check buffer
+            if (usage.bufferUntil && new Date(usage.bufferUntil) > new Date()) {
+                return { allowed: true, remaining: 999, buffered: true };
+            }
+
+            // Only count ONCE per project (avoid double-counting from buildPartialReport)
+            const projectId = currentProjectId;
+            if (!usage.reportProjects) usage.reportProjects = [];
+            if (usage.reportProjects.includes(projectId)) {
+                const limit = FREEMIUM_CONFIG.freeReports;
+                const remaining = Math.max(0, limit - (usage.reportsGenerated || 0));
+                return {
+                    allowed: (usage.reportsGenerated || 0) <= limit,
+                    remaining: remaining,
+                    showUpgrade: (usage.reportsGenerated || 0) > limit
+                };
+            }
+
+            // New project — count it
+            usage.reportProjects.push(projectId);
+
+            const limit = FREEMIUM_CONFIG.freeReports;
+            usage.reportsGenerated = (usage.reportsGenerated || 0) + 1;
+            saveFreemiumUsage(usage);
+
+            const remaining = Math.max(0, limit - usage.reportsGenerated);
+
+            return {
+                allowed: usage.reportsGenerated <= limit,
+                remaining: remaining,
+                total: limit,
+                used: usage.reportsGenerated,
+                showUpgrade: usage.reportsGenerated > limit
+            };
+        }
+        window.trackReportGeneration = trackReportGeneration;
+
         // Check if user can send a chat (preview check, doesn't increment)
         function canSendChat(panel) {
             const usage = getFreemiumUsage();
