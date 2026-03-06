@@ -11663,17 +11663,18 @@ INSTRUCTIONS:
                 // ══════════════════════════════════════════
                 const coverChildren = [];
 
-                // 1. Company Logo — LEFT aligned (if available)
+                // 1. Company Logo — LEFT aligned, smaller, tight to top
                 if (companyLogoBytes) {
                     coverChildren.push(new Paragraph({
                         children: [new ImageRun({
                             data: companyLogoBytes,
-                            transformation: { width: 160, height: 64 },
+                            transformation: { width: 120, height: 48 },
                             type: companyLogoType === 'png' ? 'png' : 'jpg'
                         })],
                         alignment: AlignmentType.LEFT,
-                        spacing: { after: 800 }
+                        spacing: { before: 0, after: 400 }
                     }));
+                    coverChildren.push(new Paragraph({ spacing: { after: 600 } }));
                 } else {
                     coverChildren.push(new Paragraph({ spacing: { after: 1200 } }));
                 }
@@ -15609,6 +15610,7 @@ INSTRUCTIONS:
                 window.reportPhotos[index].caption = caption;
                 window.reportPhotos[index].name = caption;
                 drawerAutoSave();
+                savePhotosToSupabase();
             }
         }
         
@@ -18300,6 +18302,25 @@ RÈGLES:
             }
         }
         
+        // Persist all photos to Supabase projects.photos column
+        let _photoSaveTimeout = null;
+        function savePhotosToSupabase() {
+            if (_photoSaveTimeout) clearTimeout(_photoSaveTimeout);
+            _photoSaveTimeout = setTimeout(async () => {
+                if (!currentProjectId || typeof db === 'undefined') return;
+                try {
+                    const { error } = await db
+                        .from('projects')
+                        .update({ photos: window.reportPhotos || [], updated_at: new Date().toISOString() })
+                        .eq('id', currentProjectId);
+                    if (error) console.error('[PhotoSave] Error:', error);
+                    else console.log('[PhotoSave] ✅ Photos saved to Supabase');
+                } catch (e) {
+                    console.error('[PhotoSave] Exception:', e);
+                }
+            }, 1000);
+        }
+
         function addPhotoToReportDirect(photoData, caption = 'Photo') {
             drawerSaveState(); // Save state before adding photo
             if (!window.reportPhotos) window.reportPhotos = [];
@@ -18312,14 +18333,16 @@ RÈGLES:
 
             refreshReportPreview();
             initPhotoDragDrop();
+            savePhotosToSupabase();
             toast('Photo ajoutée');
         }
-        
+
         function removePhoto(index) {
             drawerSaveState(); // Save state before removing photo
             if (!window.reportPhotos) return;
             window.reportPhotos.splice(index, 1);
             refreshReportPreview();
+            savePhotosToSupabase();
             toast('Photo supprimée');
         }
         
