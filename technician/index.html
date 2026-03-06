@@ -11492,8 +11492,6 @@ INSTRUCTIONS:
                     return arr;
                 };
 
-                const logoBytes = b64toU8(FIXAIR_LOGO_BASE64);
-
                 // ═══ COMPANY LOGO ═══
                 let companyLogoBytes = null;
                 let companyLogoType = 'png';
@@ -11527,20 +11525,23 @@ INSTRUCTIONS:
                 // ═══ HELPERS ═══
                 let sectionCounter = 0;
 
-                // Section heading: numbered, 18pt bold black + blue divider line
+                // Section heading: blue divider BEFORE title (except first section), then numbered 18pt bold black
                 const sectionHeading = (text) => {
                     sectionCounter++;
-                    return [
-                        new Paragraph({
-                            children: [new TextRun({ text: `${sectionCounter}. ${text.toUpperCase()}`, bold: true, size: 36, font: 'Arial', color: BLACK })],
-                            spacing: { before: 600, after: 80 }
-                        }),
-                        new Paragraph({
+                    const parts = [];
+                    // Blue divider BEFORE the title (skip for first section)
+                    if (sectionCounter > 1) {
+                        parts.push(new Paragraph({
                             children: [],
-                            border: { bottom: { style: BorderStyle.SINGLE, size: 8, color: ACCENT, space: 4 } },
-                            spacing: { after: 200 }
-                        })
-                    ];
+                            border: { bottom: { style: BorderStyle.SINGLE, size: 8, color: ACCENT, space: 8 } },
+                            spacing: { before: 300, after: 300 }
+                        }));
+                    }
+                    parts.push(new Paragraph({
+                        children: [new TextRun({ text: `${sectionCounter}. ${text.toUpperCase()}`, bold: true, size: 36, font: 'Arial', color: BLACK })],
+                        spacing: { before: sectionCounter === 1 ? 0 : 200, after: 200 }
+                    }));
+                    return parts;
                 };
 
                 // Helper to push section heading (returns array of paragraphs)
@@ -11560,12 +11561,13 @@ INSTRUCTIONS:
                     spacing: { before: 240, after: 80 }
                 });
 
-                // Body text: 11pt, #1A1A1A, 1.3 line spacing
+                // Body text: 11pt, #1A1A1A, 1.3 line spacing, JUSTIFIED
                 const bodyText = (text) => {
                     if (!text) return null;
                     return new Paragraph({
                         children: [new TextRun({ text: String(text), size: 22, font: 'Arial', color: BLACK })],
-                        spacing: { after: 120, line: 312 }
+                        spacing: { after: 120, line: 312 },
+                        alignment: AlignmentType.JUSTIFIED
                     });
                 };
 
@@ -11699,11 +11701,11 @@ INSTRUCTIONS:
                     }));
                 }
 
-                // 5. Blue divider line
+                // 5. Blue divider line (thin)
                 coverChildren.push(new Paragraph({
                     children: [],
-                    border: { bottom: { style: BorderStyle.SINGLE, size: 16, color: ACCENT, space: 8 } },
-                    spacing: { before: 200, after: 200 }
+                    border: { bottom: { style: BorderStyle.SINGLE, size: 8, color: ACCENT, space: 8 } },
+                    spacing: { before: 200, after: 600 }
                 }));
 
                 // 6. Client Info Table (zebra stripe rows)
@@ -11748,45 +11750,40 @@ INSTRUCTIONS:
                 // Spacer before technician
                 coverChildren.push(new Paragraph({ spacing: { before: 2400 } }));
 
-                // 7. "Préparé par" block
+                // 7. "Préparé par" block (3 lines, centered)
                 coverChildren.push(new Paragraph({
                     children: [
-                        new TextRun({ text: 'Préparé par : ', italics: true, size: 22, font: 'Arial', color: GRAY }),
-                        new TextRun({ text: techName, bold: true, size: 22, font: 'Arial', color: BLACK })
+                        new TextRun({ text: 'Préparé par : ', font: 'Arial', size: 22, color: GRAY }),
+                        new TextRun({ text: techName, font: 'Arial', size: 22, bold: true, color: DARK })
                     ],
-                    alignment: AlignmentType.LEFT,
-                    spacing: { after: 200 }
+                    alignment: AlignmentType.CENTER
                 }));
-
-                // 8. Footer text: "Généré par FixAIR Assistant — fixair.ai"
+                if (companyName) {
+                    coverChildren.push(new Paragraph({
+                        children: [new TextRun({ text: companyName, font: 'Arial', size: 22, color: GRAY })],
+                        alignment: AlignmentType.CENTER
+                    }));
+                }
+                const dateLong = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
                 coverChildren.push(new Paragraph({
-                    children: [new TextRun({ text: 'Généré par FixAIR Assistant — fixair.ai', size: 18, font: 'Arial', italics: true, color: GRAY })],
+                    children: [new TextRun({ text: `${dateLong} — Version 1.0`, font: 'Arial', size: 20, color: GRAY })],
                     alignment: AlignmentType.CENTER,
-                    spacing: { before: 400 }
+                    spacing: { after: 400 }
                 }));
 
-                // Cover header: minimal — just FixAIR logo
+                // Cover header: empty (no FixAIR logo on cover)
                 const noTableBorders = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder, insideHorizontal: noBorder, insideVertical: noBorder };
                 const coverHeader = new Header({
-                    children: [new Paragraph({
-                        children: [new ImageRun({
-                            data: logoBytes,
-                            transformation: { width: 85, height: 17 }
-                        })],
-                        alignment: AlignmentType.RIGHT
-                    })]
+                    children: [new Paragraph({ children: [] })]
                 });
 
-                // Cover footer: company info
-                const coverFooterText = [companyName, companyAddr].filter(Boolean).join(', ');
+                // Cover footer: centered FixAIR branding
                 const coverFooter = new Footer({
-                    children: [
-                        new Paragraph({
-                            children: [new TextRun({ text: coverFooterText, size: 16, font: 'Arial', color: GRAY })],
-                            alignment: AlignmentType.LEFT,
-                            border: { top: { style: BorderStyle.SINGLE, size: 4, color: TBL_BORDER_COLOR, space: 4 } }
-                        })
-                    ]
+                    children: [new Paragraph({
+                        children: [new TextRun({ text: 'Généré par FixAIR Assistant — fixair.ai', font: 'Arial', size: 16, italics: true, color: GRAY })],
+                        alignment: AlignmentType.CENTER,
+                        border: { top: { style: BorderStyle.SINGLE, size: 4, color: TBL_BORDER_COLOR, space: 8 } }
+                    })]
                 });
 
                 // ══════════════════════════════════════════
@@ -11804,7 +11801,7 @@ INSTRUCTIONS:
                             new TextRun({ text: `Rapport d'intervention — ${clientName}`, font: 'Arial', size: 16, color: GRAY })
                         ],
                         tabStops: [{ type: 'right', position: 9026 }],
-                        border: { bottom: { style: BorderStyle.SINGLE, size: 16, color: ACCENT, space: 4 } }
+                        border: { bottom: { style: BorderStyle.SINGLE, size: 8, color: ACCENT, space: 4 } }
                     })]
                 });
 
@@ -11956,18 +11953,40 @@ INSTRUCTIONS:
                 const validTravaux = (data.travaux_effectues || []).filter(t => t.texte && t.texte.trim());
                 if (validTravaux.length > 0) {
                     pushSection(contentChildren, 'Travaux Effectués');
-                    validTravaux.forEach(t => {
-                        const statusIcon = t.status === 'done' ? '✓' : (t.status === 'error' ? '✗' : '○');
-                        const statusColor = t.status === 'done' ? '22C55E' : (t.status === 'error' ? 'EF4444' : GRAY);
-                        contentChildren.push(new Paragraph({
-                            children: [
-                                new TextRun({ text: statusIcon + '  ', color: statusColor, size: 22, font: 'Arial' }),
-                                new TextRun({ text: t.texte, size: 22, font: 'Arial', color: BODY })
-                            ],
-                            spacing: { after: 120, line: 312 },
-                            indent: { left: 200 }
-                        }));
-                    });
+                    const travauxSectionNum = sectionCounter;
+                    // Check if items have titles (structured sub-sections)
+                    const hasTitres = validTravaux.some(t => t.titre && t.titre.trim());
+                    if (hasTitres) {
+                        // Render as numbered sub-sections (7.1, 7.2, etc.)
+                        validTravaux.forEach((t, idx) => {
+                            contentChildren.push(new Paragraph({
+                                children: [new TextRun({
+                                    text: `${travauxSectionNum}.${idx + 1} ${t.titre || 'Opération'}`,
+                                    font: 'Arial', size: 28, bold: true, color: DARK
+                                })],
+                                spacing: { before: 280, after: 160 }
+                            }));
+                            contentChildren.push(new Paragraph({
+                                children: [new TextRun({ text: t.texte, font: 'Arial', size: 22, color: BLACK })],
+                                alignment: AlignmentType.JUSTIFIED,
+                                spacing: { after: 200 }
+                            }));
+                        });
+                    } else {
+                        // Render as status bullets (fallback)
+                        validTravaux.forEach(t => {
+                            const statusIcon = t.status === 'done' ? '✓' : (t.status === 'error' ? '✗' : '○');
+                            const statusColor = t.status === 'done' ? '22C55E' : (t.status === 'error' ? 'EF4444' : GRAY);
+                            contentChildren.push(new Paragraph({
+                                children: [
+                                    new TextRun({ text: statusIcon + '  ', color: statusColor, size: 22, font: 'Arial' }),
+                                    new TextRun({ text: t.texte, size: 22, font: 'Arial', color: BLACK })
+                                ],
+                                spacing: { after: 120, line: 312 },
+                                indent: { left: 200 }
+                            }));
+                        });
+                    }
                 }
 
                 // ═══ TRAVAUX À PRÉVOIR ═══
@@ -12085,25 +12104,13 @@ INSTRUCTIONS:
                     ));
                 }
 
-                // ═══ RÉSERVES ═══
-                if (data.reserves && data.reserves.length > 0) {
-                    pushSection(contentChildren, 'Réserves / Alertes');
-                    data.reserves.forEach(r => {
-                        const isWarning = r.type === 'danger';
-                        contentChildren.push(new Paragraph({
-                            children: [
-                                new TextRun({ text: isWarning ? '⚠ ' : '! ', size: 22, color: isWarning ? 'EF4444' : 'F59E0B', font: 'Arial' }),
-                                new TextRun({ text: (r.titre || 'Attention') + ' : ', bold: true, size: 22, font: 'Arial', color: isWarning ? 'EF4444' : 'F59E0B' }),
-                                new TextRun({ text: r.texte, size: 22, font: 'Arial', color: BODY })
-                            ],
-                            spacing: { after: 120, line: 312 }
-                        }));
-                    });
-                }
-
-                // ═══ RÉSULTAT ═══
-                if (data.resultat && (data.resultat.status || data.resultat.label || data.resultat.description)) {
+                // ═══ RÉSULTAT (with sub-sections: Réserves, Prochaine visite, Recommandations) ═══
+                {
                     pushSection(contentChildren, 'Résultat');
+                    const resultatSectionNum = sectionCounter;
+                    let resultatSubNum = 0;
+
+                    // Status badge
                     const resConfig = {
                         resolu: { color: '2E7D32', bg: 'E8F5E9', label: '✓  RÉSOLU' },
                         partiellement: { color: 'E65100', bg: 'FFF3E0', label: '⚠  PARTIELLEMENT' },
@@ -12113,28 +12120,81 @@ INSTRUCTIONS:
                         intervention_requise: { color: 'C62828', bg: 'FFEBEE', label: '🔧  NOUVELLE INTERVENTION' }
                     };
 
-                    // Get status label - use data.resultat.label if available, or map from status
-                    let statusLabel = data.resultat.label || (resConfig[data.resultat.status]?.label) || '⏳  EN ATTENTE';
-                    const rc = resConfig[data.resultat.status] || resConfig.en_attente;
+                    if (data.resultat && (data.resultat.status || data.resultat.label || data.resultat.description)) {
+                        const statusLabel = data.resultat.label || (resConfig[data.resultat.status]?.label) || '⏳  EN ATTENTE';
+                        const rc = resConfig[data.resultat.status] || resConfig.en_attente;
 
-                    contentChildren.push(new Paragraph({
-                        children: [new TextRun({ text: statusLabel, bold: true, size: 26, font: 'Arial', color: rc.color })],
-                        spacing: { after: 120 },
-                        shading: { fill: rc.bg, type: ShadingType.CLEAR }
-                    }));
-
-                    // Clean up description - remove any "Conclusion :" prefix to avoid duplication
-                    let description = data.resultat.description || data.resultat.conclusion || '';
-                    description = description.replace(/^Conclusion\s*:\s*/i, '').trim();
-                    
-                    if (description && description !== 'Description du résultat...') {
                         contentChildren.push(new Paragraph({
-                            children: [
-                                new TextRun({ text: 'Conclusion : ', bold: true, size: 22, font: 'Arial', color: BODY }),
-                                new TextRun({ text: description, size: 22, font: 'Arial', color: BODY })
-                            ],
-                            spacing: { after: 120, line: 312 }
+                            children: [new TextRun({ text: statusLabel, bold: true, size: 26, font: 'Arial', color: rc.color })],
+                            spacing: { after: 120 },
+                            shading: { fill: rc.bg, type: ShadingType.CLEAR }
                         }));
+
+                        let description = data.resultat.description || data.resultat.conclusion || '';
+                        description = description.replace(/^Conclusion\s*:\s*/i, '').trim();
+                        if (description && description !== 'Description du résultat...') {
+                            contentChildren.push(new Paragraph({
+                                children: [
+                                    new TextRun({ text: 'Conclusion : ', bold: true, size: 22, font: 'Arial', color: BLACK }),
+                                    new TextRun({ text: description, size: 22, font: 'Arial', color: BLACK })
+                                ],
+                                spacing: { after: 120, line: 312 },
+                                alignment: AlignmentType.JUSTIFIED
+                            }));
+                        }
+                    }
+
+                    // Sub-section: Réserves
+                    if (data.reserves && data.reserves.length > 0) {
+                        resultatSubNum++;
+                        contentChildren.push(new Paragraph({
+                            children: [new TextRun({ text: `${resultatSectionNum}.${resultatSubNum} Réserves`, font: 'Arial', size: 28, bold: true, color: DARK })],
+                            spacing: { before: 280, after: 160 }
+                        }));
+                        data.reserves.forEach(r => {
+                            const isWarning = r.type === 'danger';
+                            contentChildren.push(new Paragraph({
+                                children: [
+                                    new TextRun({ text: '⚠ ', size: 22, color: isWarning ? 'EF4444' : 'E65100', font: 'Arial' }),
+                                    new TextRun({ text: (r.titre || 'Attention') + ' : ', bold: true, size: 22, font: 'Arial', color: BLACK }),
+                                    new TextRun({ text: r.texte, size: 22, font: 'Arial', color: BLACK })
+                                ],
+                                spacing: { after: 100 }
+                            }));
+                        });
+                    }
+
+                    // Sub-section: Prochaine visite
+                    if (data.prochaine_visite) {
+                        resultatSubNum++;
+                        contentChildren.push(new Paragraph({
+                            children: [new TextRun({ text: `${resultatSectionNum}.${resultatSubNum} Prochaine visite`, font: 'Arial', size: 28, bold: true, color: DARK })],
+                            spacing: { before: 280, after: 160 }
+                        }));
+                        contentChildren.push(new Paragraph({
+                            children: [new TextRun({ text: data.prochaine_visite, font: 'Arial', size: 22, color: BLACK })],
+                            alignment: AlignmentType.JUSTIFIED,
+                            spacing: { after: 200 }
+                        }));
+                    }
+
+                    // Sub-section: Recommandations
+                    if (data.recommandations && data.recommandations.length > 0) {
+                        resultatSubNum++;
+                        contentChildren.push(new Paragraph({
+                            children: [new TextRun({ text: `${resultatSectionNum}.${resultatSubNum} Recommandations`, font: 'Arial', size: 28, bold: true, color: DARK })],
+                            spacing: { before: 280, after: 160 }
+                        }));
+                        data.recommandations.forEach(rec => {
+                            const recText = rec.texte || rec.description || rec.titre || '';
+                            if (recText) {
+                                contentChildren.push(new Paragraph({
+                                    children: [new TextRun({ text: recText, font: 'Arial', size: 22, color: BLACK })],
+                                    bullet: { level: 0 },
+                                    spacing: { after: 100 }
+                                }));
+                            }
+                        });
                     }
                 }
 
@@ -12159,6 +12219,7 @@ INSTRUCTIONS:
                     contentChildren.push(new Paragraph({
                         children: [new TextRun({ text: data.observation_client, size: 22, font: 'Arial', italics: true, color: BODY })],
                         spacing: { after: 200, line: 312 },
+                        alignment: AlignmentType.JUSTIFIED,
                         shading: { fill: 'F0F9FF', type: ShadingType.CLEAR }
                     }));
                 }
