@@ -4219,7 +4219,39 @@
         .form-input::placeholder { color: rgba(255,255,255,0.25); }
         .profile-save { width: 100%; padding: 12px; background: linear-gradient(135deg, var(--copilot), #E55A2B); border: none; border-radius: 12px; color: white; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 8px; }
         .profile-save:hover { box-shadow: 0 4px 14px var(--copilot-glow); }
-        
+
+        /* Logo upload area */
+        .logo-upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .logo-upload-area:hover { border-color: var(--copilot-border); background: rgba(255,255,255,0.03); }
+        .logo-upload-area.drag-over { border-color: var(--copilot); background: rgba(0,212,170,0.06); }
+        .logo-upload-placeholder { color: var(--text-dim); font-size: 13px; line-height: 1.5; }
+        .logo-upload-placeholder small { font-size: 11px; opacity: 0.7; }
+        .logo-preview-img { max-width: 200px; max-height: 100px; border-radius: 8px; object-fit: contain; }
+        .logo-remove-btn {
+            background: transparent;
+            border: 1px solid rgba(239,68,68,0.3);
+            color: #ef4444;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-top: 4px;
+        }
+        .logo-remove-btn:hover { background: rgba(239,68,68,0.1); }
+
         /* Profile badge - positioned ON the profile icon */
         .nav-profile { position: relative; }
         .nav-profile-badge { position: absolute; top: 2px; left: 50%; transform: translateX(4px); color: #3B82F6; }
@@ -6123,6 +6155,27 @@
                     <input type="tel" class="form-input" id="profilePhone" data-placeholder-i18n="profile.phone_placeholder">
                 </div>
                 
+                <!-- Company Section -->
+                <div class="settings-divider"></div>
+                <div class="settings-section-title">Entreprise</div>
+
+                <div class="form-group">
+                    <label class="form-label">Nom de l'entreprise</label>
+                    <input type="text" class="form-input" id="companyNameInput" placeholder="Votre entreprise">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Logo</label>
+                    <div class="logo-upload-area" id="logoUploadArea">
+                        <img id="logoPreview" class="logo-preview-img" src="" style="display:none;">
+                        <div id="logoPlaceholder" class="logo-upload-placeholder">
+                            Cliquer ou glisser pour ajouter un logo<br>
+                            <small>PNG, JPG, SVG - Max 2 Mo - 400x200px max</small>
+                        </div>
+                        <input type="file" id="logoFileInput" accept=".png,.jpg,.jpeg,.svg" hidden>
+                    </div>
+                    <button class="logo-remove-btn" id="removeLogoBtn" style="display:none;" onclick="removeCompanyLogo()">Supprimer le logo</button>
+                </div>
+
                 <!-- Settings Section -->
                 <div class="settings-divider"></div>
                 <div class="settings-section-title" data-i18n="profile.settings">Paramètres</div>
@@ -8299,6 +8352,10 @@
                 if (user.email) document.getElementById('profileEmail').value = user.email;
                 if (user.phone) document.getElementById('profilePhone').value = user.phone;
 
+                // Load company settings
+                loadCompanySettings();
+                initLogoUpload();
+
                 // Load language preference
                 if (user.language && (user.language === 'fr' || user.language === 'en')) {
                     setLanguage(user.language);
@@ -8585,12 +8642,15 @@
             console.log('=== SAVE COMPLETE ===');
             console.log('DB save success:', dbSaveSuccess);
 
+            // Save company settings alongside profile
+            await saveCompanySettings();
+
             if (dbSaveSuccess) {
                 toast('Profil enregistré ✓');
             } else {
                 toast('Profil enregistré localement');
             }
-            
+
             // Handle onboarding step progression
             if (onboardingStep === 1) {
                 completeStep(1);
@@ -8602,6 +8662,130 @@
                 updateOnboardingProgress();
             }
             closeProfile();
+        }
+
+        // ═══ COMPANY LOGO FEATURE ═══
+        let companyLogoData = null;
+
+        const LOGO_CONFIG = {
+            maxFileSize: 2 * 1024 * 1024,
+            maxWidth: 400,
+            maxHeight: 200,
+            minWidth: 50,
+            minHeight: 20,
+            allowedTypes: ['image/png', 'image/jpeg', 'image/svg+xml']
+        };
+
+        function initLogoUpload() {
+            const area = document.getElementById('logoUploadArea');
+            const input = document.getElementById('logoFileInput');
+            if (!area || !input) return;
+
+            area.addEventListener('click', () => input.click());
+
+            input.addEventListener('change', (e) => {
+                if (e.target.files[0]) processLogoFile(e.target.files[0]);
+            });
+
+            area.addEventListener('dragover', (e) => { e.preventDefault(); area.classList.add('drag-over'); });
+            area.addEventListener('dragleave', () => area.classList.remove('drag-over'));
+            area.addEventListener('drop', (e) => {
+                e.preventDefault();
+                area.classList.remove('drag-over');
+                if (e.dataTransfer.files[0]) processLogoFile(e.dataTransfer.files[0]);
+            });
+        }
+
+        function processLogoFile(file) {
+            if (!LOGO_CONFIG.allowedTypes.includes(file.type)) {
+                toast('Format non supporté. Utilisez PNG, JPG ou SVG.');
+                return;
+            }
+            if (file.size > LOGO_CONFIG.maxFileSize) {
+                toast('Fichier trop volumineux. Max 2 Mo.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const dataUrl = e.target.result;
+
+                if (file.type === 'image/svg+xml') {
+                    setLogoPreview(dataUrl);
+                    return;
+                }
+
+                const img = new Image();
+                img.onload = () => {
+                    if (img.width > LOGO_CONFIG.maxWidth || img.height > LOGO_CONFIG.maxHeight) {
+                        toast(`Image trop grande. Max ${LOGO_CONFIG.maxWidth}x${LOGO_CONFIG.maxHeight}px.`);
+                        return;
+                    }
+                    setLogoPreview(dataUrl);
+                };
+                img.src = dataUrl;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function setLogoPreview(dataUrl) {
+            companyLogoData = dataUrl;
+            const preview = document.getElementById('logoPreview');
+            const placeholder = document.getElementById('logoPlaceholder');
+            const removeBtn = document.getElementById('removeLogoBtn');
+            if (preview) { preview.src = dataUrl; preview.style.display = 'block'; }
+            if (placeholder) placeholder.style.display = 'none';
+            if (removeBtn) removeBtn.style.display = 'block';
+        }
+
+        function removeCompanyLogo() {
+            companyLogoData = null;
+            const preview = document.getElementById('logoPreview');
+            const placeholder = document.getElementById('logoPlaceholder');
+            const removeBtn = document.getElementById('removeLogoBtn');
+            const input = document.getElementById('logoFileInput');
+            if (preview) { preview.src = ''; preview.style.display = 'none'; }
+            if (placeholder) placeholder.style.display = 'block';
+            if (removeBtn) removeBtn.style.display = 'none';
+            if (input) input.value = '';
+        }
+
+        async function saveCompanySettings() {
+            const companyName = document.getElementById('companyNameInput')?.value.trim() || '';
+            let userId = currentUser?.id;
+            if (!userId) return;
+
+            const updateData = { company_name: companyName };
+            if (companyLogoData !== null) {
+                updateData.company_logo = companyLogoData;
+            }
+
+            try {
+                const { error } = await db
+                    .from('users')
+                    .update(updateData)
+                    .eq('id', userId);
+
+                if (error) {
+                    console.error('Company settings save error:', error);
+                } else {
+                    currentUser.company_name = companyName;
+                    if (companyLogoData !== null) currentUser.company_logo = companyLogoData;
+                    localStorage.setItem('fixair_user', JSON.stringify(currentUser));
+                }
+            } catch (e) {
+                console.error('Company settings save exception:', e);
+            }
+        }
+
+        function loadCompanySettings() {
+            if (currentUser?.company_name) {
+                const input = document.getElementById('companyNameInput');
+                if (input) input.value = currentUser.company_name;
+            }
+            if (currentUser?.company_logo) {
+                setLogoPreview(currentUser.company_logo);
+            }
         }
 
         // BRAND SELECT (ONBOARDING)
@@ -11306,6 +11490,21 @@ INSTRUCTIONS:
                 };
 
                 const logoBytes = b64toU8(FIXAIR_LOGO_BASE64);
+
+                // ═══ COMPANY LOGO ═══
+                let companyLogoBytes = null;
+                let companyLogoType = 'png';
+                try {
+                    const userLogo = currentUser?.company_logo || companyLogoData;
+                    if (userLogo && userLogo.startsWith('data:image')) {
+                        const base64Part = userLogo.split(',')[1];
+                        if (base64Part) {
+                            companyLogoBytes = b64toU8(base64Part);
+                            companyLogoType = userLogo.includes('image/png') ? 'png' : 'jpg';
+                        }
+                    }
+                } catch (e) { console.warn('Company logo load failed:', e); }
+
                 const noBorder = { style: BorderStyle.NONE };
                 const noBorders = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder };
                 const tblBorder = { style: BorderStyle.SINGLE, size: 1, color: TBL_BORDER_COLOR };
@@ -11319,7 +11518,7 @@ INSTRUCTIONS:
                 const dateStr = data.date || new Date().toLocaleDateString('fr-FR');
                 const rawTechName = data.technicien?.nom || data.nom_technicien || data.technician_name || '';
                 const techName = (rawTechName === 'FixAIR Assistant') ? '' : rawTechName;
-                const companyName = data.technicien?.entreprise || data.entreprise || data.company_name || '';
+                const companyName = data.technicien?.entreprise || data.entreprise || data.company_name || currentUser?.company_name || '';
                 const companyAddr = data.technicien?.adresse || data.adresse || '';
 
                 // ═══ HELPERS ═══
@@ -11445,8 +11644,22 @@ INSTRUCTIONS:
                 // ══════════════════════════════════════════
                 const coverChildren = [];
 
-                // Top spacer
-                coverChildren.push(new Paragraph({ spacing: { before: 2400 } }));
+                // Company logo at top of cover page
+                if (companyLogoBytes) {
+                    coverChildren.push(new Paragraph({ spacing: { before: 800 } }));
+                    coverChildren.push(new Paragraph({
+                        children: [new ImageRun({
+                            data: companyLogoBytes,
+                            transformation: { width: 160, height: 64 },
+                            type: companyLogoType === 'png' ? 'png' : 'jpg'
+                        })],
+                        alignment: AlignmentType.CENTER
+                    }));
+                    coverChildren.push(new Paragraph({ spacing: { before: 800 } }));
+                } else {
+                    // Top spacer when no company logo
+                    coverChildren.push(new Paragraph({ spacing: { before: 2400 } }));
+                }
 
                 // Title: RAPPORT D'INTERVENTION — 28pt bold charcoal centered
                 coverChildren.push(new Paragraph({
