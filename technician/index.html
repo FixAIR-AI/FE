@@ -9787,6 +9787,8 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
         }
         
         function closeReport() {
+            // Flush any pending auto-save before closing
+            flushDrawerAutoSave();
             document.getElementById('reportSheet').classList.remove('open');
             document.getElementById('reportBackdrop').classList.remove('show');
         }
@@ -15114,42 +15116,51 @@ INSTRUCTIONS:
             });
             
             // Init auto-save on all editable elements
-            doc.querySelectorAll('[contenteditable="true"]').forEach(el => {
+            const editableEls = doc.querySelectorAll('[contenteditable="true"]');
+            console.log('[Drawer v12.5] Attaching listeners to', editableEls.length, 'editable elements, currentProjectId:', currentProjectId);
+
+            editableEls.forEach(el => {
                 // Save state when user starts editing
                 el.addEventListener('focus', () => {
                     drawerSaveState();
                 });
-                
+
                 // Handle blur - auto-save and check for empty lines
                 el.addEventListener('blur', (e) => {
                     const block = e.target.closest('.b');
                     const content = e.target.textContent.trim();
-                    
+
                     // Check if this is a deletable block (not h1, h2, or table)
                     const blockType = block?.className || '';
-                    const isDeletable = block && 
-                        !blockType.includes('b-h1') && 
-                        !blockType.includes('b-h2') && 
+                    const isDeletable = block &&
+                        !blockType.includes('b-h1') &&
+                        !blockType.includes('b-h2') &&
                         !blockType.includes('b-table') &&
                         !block.querySelector('.rpt-signature-section');
-                    
+
                     // Remove empty blocks (except headers, tables, signatures)
                     if (isDeletable && !content) {
                         // Check if this is a placeholder field that should remain
                         const dataField = e.target.dataset.field || block.dataset.field || '';
-                        const isPlaceholder = dataField.includes('technicien') || 
+                        const isPlaceholder = dataField.includes('technicien') ||
                                              dataField.includes('observation') ||
                                              dataField.includes('resultat');
-                        
+
                         if (!isPlaceholder) {
                             console.log('[Drawer] Removing empty block:', dataField);
                             block.remove();
                         }
                     }
-                    
+
+                    console.log('[Drawer] Blur → triggering auto-save');
                     drawerAutoSave();
                 });
-                
+
+                // Also trigger auto-save on input (typing) for real-time saving
+                el.addEventListener('input', () => {
+                    drawerAutoSave();
+                });
+
                 el.addEventListener('keydown', drawerHandleBlockKey);
             });
             
@@ -15389,28 +15400,57 @@ INSTRUCTIONS:
         // Auto-save function
         function drawerAutoSave() {
             if (drawerAutoSaveTimeout) clearTimeout(drawerAutoSaveTimeout);
-            
+
             drawerAutoSaveTimeout = setTimeout(async () => {
-                if (!currentProjectId || !lastReportData) return;
-                
+                if (!currentProjectId || !lastReportData) {
+                    console.warn('[AutoSave] Skipped — currentProjectId:', currentProjectId, 'lastReportData:', !!lastReportData);
+                    return;
+                }
+
                 const doc = document.getElementById('rptDoc');
-                if (!doc) return;
-                
+                if (!doc) {
+                    console.warn('[AutoSave] Skipped — rptDoc not found');
+                    return;
+                }
+
                 drawerExtractDataFromDOM(doc, lastReportData);
-                
+
                 const indicator = document.getElementById('autosaveIndicator');
                 if (indicator) {
                     indicator.textContent = 'Enregistrement...';
                     indicator.classList.remove('success');
                     indicator.classList.add('show');
                 }
-                
+
                 try {
                     const completion = calculateReportCompletion(lastReportData);
                     const progressValue = Math.round(completion.percentage);
 
-                    // FIX-4: Use centralized debounced save
-                    debouncedSaveExtractedData(lastReportData, progressValue);
+                    // Save directly to Supabase (bypass double-debounce)
+                    const updatePayload = {
+                        extracted_data: lastReportData,
+                        updated_at: new Date().toISOString(),
+                        progress: progressValue
+                    };
+                    if (progressValue >= 90) {
+                        updatePayload.completion_status = 'completed';
+                        updatePayload.completed_at = new Date().toISOString();
+                    }
+
+                    if (typeof db !== 'undefined') {
+                        const { error } = await db.from('projects')
+                            .update(updatePayload)
+                            .eq('id', currentProjectId);
+
+                        if (error) {
+                            console.error('[AutoSave] ❌ Supabase error:', error);
+                            if (indicator) {
+                                indicator.textContent = 'Erreur sauvegarde';
+                                setTimeout(() => indicator.classList.remove('show'), 2000);
+                            }
+                            return;
+                        }
+                    }
 
                     // Update progress bar
                     const progressFill = document.getElementById('reportProgressFill');
@@ -15424,7 +15464,7 @@ INSTRUCTIONS:
                         setTimeout(() => indicator.classList.remove('show'), 1500);
                     }
 
-                    console.log('[AutoSave] ✅ Saved - Progress:', progressValue + '%');
+                    console.log('[AutoSave] ✅ Saved to Supabase - Progress:', progressValue + '%');
                 } catch (err) {
                     console.error('[AutoSave] ❌ Error:', err);
                     if (indicator) {
@@ -15434,7 +15474,47 @@ INSTRUCTIONS:
                 }
             }, 800);
         }
-        
+
+        // Immediately flush any pending auto-save (called before drawer close)
+        function flushDrawerAutoSave() {
+            if (drawerAutoSaveTimeout) {
+                clearTimeout(drawerAutoSaveTimeout);
+                drawerAutoSaveTimeout = null;
+            }
+            // Also clear debounced Supabase save
+            if (_saveTimeout) {
+                clearTimeout(_saveTimeout);
+                _saveTimeout = null;
+            }
+
+            if (!currentProjectId || !lastReportData) return;
+            const doc = document.getElementById('rptDoc');
+            if (!doc) return;
+
+            console.log('[AutoSave] Flushing pending save before close...');
+            drawerExtractDataFromDOM(doc, lastReportData);
+
+            // Synchronous-ish save — fire and forget but don't debounce
+            const completion = calculateReportCompletion(lastReportData);
+            const progressValue = Math.round(completion.percentage);
+            const updatePayload = {
+                extracted_data: lastReportData,
+                updated_at: new Date().toISOString(),
+                progress: progressValue
+            };
+            if (progressValue >= 90) {
+                updatePayload.completion_status = 'completed';
+                updatePayload.completed_at = new Date().toISOString();
+            }
+            if (typeof db !== 'undefined') {
+                db.from('projects').update(updatePayload).eq('id', currentProjectId)
+                    .then(({ error }) => {
+                        if (error) console.error('[FlushSave] Error:', error);
+                        else console.log('[FlushSave] ✅ Flushed to Supabase');
+                    });
+            }
+        }
+
         function drawerExtractDataFromDOM(doc, data) {
             const getFieldText = (selector) => {
                 const el = doc.querySelector(selector);
@@ -15530,6 +15610,151 @@ INSTRUCTIONS:
                 if (autres) data.technicien.autres = autres;
             }
             
+            // Extract travaux_effectues from contenteditable spans
+            const travauxEffEls = doc.querySelectorAll('[data-field^="travaux_effectues."]');
+            if (travauxEffEls.length > 0) {
+                // Group by index
+                const travauxMap = {};
+                travauxEffEls.forEach(el => {
+                    const match = el.dataset.field.match(/travaux_effectues\.(\d+)\.(\w+)/);
+                    if (match) {
+                        const idx = match[1];
+                        const key = match[2];
+                        if (!travauxMap[idx]) travauxMap[idx] = {};
+                        travauxMap[idx][key] = el.textContent.trim();
+                    }
+                });
+                // Merge back into data (preserve status from existing data)
+                Object.keys(travauxMap).forEach(idx => {
+                    const i = parseInt(idx);
+                    if (data.travaux_effectues && data.travaux_effectues[i]) {
+                        Object.assign(data.travaux_effectues[i], travauxMap[idx]);
+                        // Sync contenu ↔ texte
+                        if (travauxMap[idx].texte) data.travaux_effectues[i].contenu = travauxMap[idx].texte;
+                    }
+                });
+            }
+
+            // Extract travaux_prevoir from contenteditable spans
+            const travauxPrevEls = doc.querySelectorAll('[data-field^="travaux_prevoir."]');
+            if (travauxPrevEls.length > 0) {
+                const prevMap = {};
+                travauxPrevEls.forEach(el => {
+                    const match = el.dataset.field.match(/travaux_prevoir\.(\d+)\.(\w+)/);
+                    if (match) {
+                        const idx = match[1];
+                        const key = match[2];
+                        if (!prevMap[idx]) prevMap[idx] = {};
+                        prevMap[idx][key] = el.textContent.trim();
+                    }
+                });
+                Object.keys(prevMap).forEach(idx => {
+                    const i = parseInt(idx);
+                    if (data.travaux_prevoir && data.travaux_prevoir[i]) {
+                        Object.assign(data.travaux_prevoir[i], prevMap[idx]);
+                    }
+                });
+            }
+
+            // Extract codes_defaut from contenteditable spans
+            const codesEls = doc.querySelectorAll('[data-field^="codes_defaut."]');
+            if (codesEls.length > 0) {
+                const codesMap = {};
+                codesEls.forEach(el => {
+                    const match = el.dataset.field.match(/codes_defaut\.(\d+)\.(\w+)/);
+                    if (match) {
+                        const idx = match[1];
+                        const key = match[2];
+                        if (!codesMap[idx]) codesMap[idx] = {};
+                        codesMap[idx][key] = el.textContent.trim();
+                    }
+                });
+                Object.keys(codesMap).forEach(idx => {
+                    const i = parseInt(idx);
+                    if (data.codes_defaut && data.codes_defaut[i]) {
+                        Object.assign(data.codes_defaut[i], codesMap[idx]);
+                    }
+                });
+            }
+
+            // Extract pieces from contenteditable spans
+            const piecesEls = doc.querySelectorAll('[data-field^="pieces."]');
+            if (piecesEls.length > 0) {
+                const piecesMap = {};
+                piecesEls.forEach(el => {
+                    const match = el.dataset.field.match(/pieces\.(\d+)\.(\w+)/);
+                    if (match) {
+                        const idx = match[1];
+                        const key = match[2];
+                        if (!piecesMap[idx]) piecesMap[idx] = {};
+                        piecesMap[idx][key] = el.textContent.trim();
+                    }
+                });
+                Object.keys(piecesMap).forEach(idx => {
+                    const i = parseInt(idx);
+                    if (data.pieces && data.pieces[i]) {
+                        Object.assign(data.pieces[i], piecesMap[idx]);
+                    }
+                });
+            }
+
+            // Extract reserves from contenteditable spans
+            const reservesEls = doc.querySelectorAll('[data-field^="reserves."]');
+            if (reservesEls.length > 0) {
+                const reservesMap = {};
+                reservesEls.forEach(el => {
+                    const match = el.dataset.field.match(/reserves\.(\d+)\.(\w+)/);
+                    if (match) {
+                        const idx = match[1];
+                        const key = match[2];
+                        if (!reservesMap[idx]) reservesMap[idx] = {};
+                        reservesMap[idx][key] = el.textContent.trim();
+                    }
+                });
+                Object.keys(reservesMap).forEach(idx => {
+                    const i = parseInt(idx);
+                    if (data.reserves && data.reserves[i]) {
+                        Object.assign(data.reserves[i], reservesMap[idx]);
+                    }
+                });
+            }
+
+            // Extract all nested editable fields (client.societe, site.adresse, etc.)
+            doc.querySelectorAll('.editable-field[data-field]').forEach(el => {
+                const field = el.dataset.field;
+                if (!field || field.includes('.') === false) return; // Only nested fields
+
+                // Skip indexed array fields (handled separately above)
+                if (/\.\d+\./.test(field)) return;
+
+                const parts = field.split('.');
+                if (parts.length === 2) {
+                    const [parent, key] = parts;
+                    const val = el.textContent.trim();
+                    const placeholder = el.dataset.placeholder || '';
+                    // Skip if content matches placeholder
+                    if (!val || val === placeholder) return;
+                    if (!data[parent]) data[parent] = {};
+                    if (typeof data[parent] === 'object' && !Array.isArray(data[parent])) {
+                        data[parent][key] = val;
+                    }
+                }
+            });
+
+            // Extract rapport_technicien from contenteditable
+            const rapportTechEl = doc.querySelector('[data-field="rapport_technicien"]');
+            if (rapportTechEl) {
+                const txt = rapportTechEl.textContent.trim();
+                if (txt) data.rapport_technicien = txt;
+            }
+
+            // Extract remarques from contenteditable
+            const remarquesEl = doc.querySelector('[data-field="remarques"]');
+            if (remarquesEl) {
+                const txt = remarquesEl.textContent.trim();
+                if (txt) data.remarques = txt;
+            }
+
             // Extract observation client from contenteditable
             const observationEl = doc.querySelector('[data-field="observation_client"]');
             if (observationEl) {
@@ -15901,8 +16126,14 @@ INSTRUCTIONS:
         
         // Show auto-save indicator
         function showAutoSaveIndicator() {
-            // Could show a small toast or indicator
-            // For now, just log
+            const indicator = document.getElementById('autosaveIndicator');
+            if (indicator) {
+                indicator.textContent = 'Enregistré ✓';
+                indicator.classList.remove('success');
+                indicator.classList.add('show');
+                indicator.classList.add('success');
+                setTimeout(() => indicator.classList.remove('show'), 1500);
+            }
         }
         
         // Initialize editable report when drawer opens
