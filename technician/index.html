@@ -7127,6 +7127,21 @@
         let db;
         let supabaseReady = false;
 
+        // ═══════════════════════════════════════════════════════════════
+        // DEBUG: Auto-Save Investigation
+        // ═══════════════════════════════════════════════════════════════
+        console.log('=== AUTO-SAVE DEBUG LOADED ===');
+        setTimeout(() => {
+            console.log('--- AUTO-SAVE FUNCTION CHECK ---');
+            console.log('drawerAutoSave:', typeof drawerAutoSave);
+            console.log('flushDrawerAutoSave:', typeof flushDrawerAutoSave);
+            console.log('drawerExtractDataFromDOM:', typeof drawerExtractDataFromDOM);
+            console.log('initDrawerV12Features:', typeof initDrawerV12Features);
+            console.log('currentProjectId:', typeof currentProjectId !== 'undefined' ? currentProjectId : 'UNDEFINED');
+            console.log('db:', db ? 'INITIALIZED' : 'NOT INITIALIZED');
+            console.log('lastReportData:', lastReportData ? 'EXISTS' : 'NULL/UNDEFINED');
+        }, 2000);
+
         // ═══ MERMAID INITIALIZATION ═══
         let mermaidReady = false;
         function initMermaid() {
@@ -13033,7 +13048,12 @@ INSTRUCTIONS:
             
             // Initialize v12.5 features (drag-drop, auto-save, etc.)
             initDrawerV12Features();
-            
+
+            // Also attach auto-save listeners with a slight delay to ensure DOM is ready
+            setTimeout(() => {
+                initDrawerAutoSaveListeners();
+            }, 150);
+
             // Save initial state for undo (so user can always undo to starting point)
             setTimeout(() => drawerSaveState(), 100);
             
@@ -14001,7 +14021,7 @@ INSTRUCTIONS:
                 const placeholderAttr = placeholder ? `data-placeholder="${placeholder}"` : '';
                 const emptyClass = hasValue ? '' : 'empty';
                 const tag = isTextarea ? 'div' : 'span';
-                return `<${tag} class="editable-field ${emptyClass}" contenteditable="true" data-field="${key}" ${placeholderAttr}>${displayValue}</${tag}>`;
+                return `<${tag} class="editable-field ${emptyClass}" contenteditable="true" data-field="${key}" ${placeholderAttr} oninput="drawerAutoSave()" onblur="drawerAutoSave()">${displayValue}</${tag}>`;
             };
             
             // Helper for nested fields
@@ -14009,7 +14029,7 @@ INSTRUCTIONS:
                 const hasValue = value && value.trim && value.trim() !== '';
                 const displayValue = hasValue ? value : '';
                 const emptyClass = hasValue ? '' : 'empty';
-                return `<span class="editable-field ${emptyClass}" contenteditable="true" data-field="${parent}.${key}" data-placeholder="${placeholder}">${displayValue}</span>`;
+                return `<span class="editable-field ${emptyClass}" contenteditable="true" data-field="${parent}.${key}" data-placeholder="${placeholder}" oninput="drawerAutoSave()" onblur="drawerAutoSave()">${displayValue}</span>`;
             };
             
             // Helper for styled dropdown that looks like text
@@ -14830,7 +14850,7 @@ INSTRUCTIONS:
                 const dragHandle = '<div class="drag-handle"><span></span><span></span><span></span><span></span><span></span><span></span></div>';
                 const dataField = fieldId ? ` data-field="${fieldId}"` : '';
                 const numAttr = type === 'num' ? ` data-num="${++drawerNumCounter}"` : '';
-                return `<div class="b b-${type}"${dataField}${numAttr} ${dataAttrs}>${dragHandle}<div class="b-content" contenteditable="true">${content}</div></div>`;
+                return `<div class="b b-${type}"${dataField}${numAttr} ${dataAttrs}>${dragHandle}<div class="b-content" contenteditable="true" oninput="drawerAutoSave()" onblur="drawerAutoSave()">${content}</div></div>`;
             };
             
             // 1. TITLE
@@ -15169,7 +15189,44 @@ INSTRUCTIONS:
             
             console.log('[Drawer v12.5] Features initialized');
         }
-        
+
+        // Standalone auto-save listener attachment (can be called independently)
+        function initDrawerAutoSaveListeners() {
+            console.log('[AutoSave] initDrawerAutoSaveListeners called');
+            const doc = document.getElementById('rptDoc');
+            if (!doc) {
+                console.error('[AutoSave] ERROR: rptDoc element not found!');
+                return;
+            }
+
+            const editables = doc.querySelectorAll('[contenteditable="true"]');
+            console.log('[AutoSave] Found', editables.length, 'contenteditable elements');
+            console.log('[AutoSave] db:', db ? 'OK' : 'NOT INITIALIZED');
+            console.log('[AutoSave] currentProjectId:', currentProjectId);
+            console.log('[AutoSave] lastReportData:', !!lastReportData);
+
+            if (editables.length === 0) {
+                console.error('[AutoSave] ERROR: No contenteditable elements found!');
+                return;
+            }
+
+            let attached = 0;
+            editables.forEach(el => {
+                el.addEventListener('input', () => {
+                    console.log('[AutoSave] INPUT event fired on', el.dataset?.field || el.className);
+                    drawerAutoSave();
+                });
+                el.addEventListener('blur', () => {
+                    console.log('[AutoSave] BLUR event fired on', el.dataset?.field || el.className);
+                    drawerAutoSave();
+                });
+                attached++;
+            });
+
+            console.log('[AutoSave] ✓ Attached listeners to', attached, 'elements');
+        }
+
+
         // Floating toolbar initialization
         function initDrawerFloatingToolbar() {
             const fontToolbar = document.getElementById('fontToolbar');
@@ -15437,19 +15494,26 @@ INSTRUCTIONS:
                         updatePayload.completed_at = new Date().toISOString();
                     }
 
-                    if (typeof db !== 'undefined') {
-                        const { error } = await db.from('projects')
-                            .update(updatePayload)
-                            .eq('id', currentProjectId);
-
-                        if (error) {
-                            console.error('[AutoSave] ❌ Supabase error:', error);
-                            if (indicator) {
-                                indicator.textContent = 'Erreur sauvegarde';
-                                setTimeout(() => indicator.classList.remove('show'), 2000);
-                            }
-                            return;
+                    if (!db) {
+                        console.error('[AutoSave] ❌ db (Supabase client) is not initialized!');
+                        if (indicator) {
+                            indicator.textContent = 'Erreur: DB non initialisée';
+                            setTimeout(() => indicator.classList.remove('show'), 2000);
                         }
+                        return;
+                    }
+
+                    const { error } = await db.from('projects')
+                        .update(updatePayload)
+                        .eq('id', currentProjectId);
+
+                    if (error) {
+                        console.error('[AutoSave] ❌ Supabase error:', error);
+                        if (indicator) {
+                            indicator.textContent = 'Erreur sauvegarde';
+                            setTimeout(() => indicator.classList.remove('show'), 2000);
+                        }
+                        return;
                     }
 
                     // Update progress bar
@@ -15506,12 +15570,14 @@ INSTRUCTIONS:
                 updatePayload.completion_status = 'completed';
                 updatePayload.completed_at = new Date().toISOString();
             }
-            if (typeof db !== 'undefined') {
+            if (db) {
                 db.from('projects').update(updatePayload).eq('id', currentProjectId)
                     .then(({ error }) => {
                         if (error) console.error('[FlushSave] Error:', error);
                         else console.log('[FlushSave] ✅ Flushed to Supabase');
                     });
+            } else {
+                console.error('[FlushSave] ❌ db not initialized, cannot flush');
             }
         }
 
