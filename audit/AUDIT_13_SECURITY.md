@@ -166,19 +166,74 @@ fetch('https://cherhabil.app.n8n.cloud/webhook/support-login', {
 
 ---
 
+## Issue #14: Auth Timeout Treated as "User Not Found"
+**Severity:** HIGH
+**Files:** auth/index.html, technician/index.html
+**Description:** When `safeQuery()` times out checking if a user exists, it returns `{data: null, error: {...}}`. The code checks `if (publicUser && publicUser.id)` which is FALSE on timeout, so it falls through and redirects approved users to `/auth` (signup page) instead of showing a retry/error.
+**Risk:** Approved users see a signup form instead of their dashboard on network hiccups.
+**Documented in:** debug/index.html (entire file exists to reproduce this bug)
+**Recommendation:** Check for error FIRST before checking if user exists. Only redirect when genuinely no user found (no error AND no data).
+
+---
+
+## Issue #15: Weak Referral Code Generation
+**Severity:** MEDIUM
+**File:** r/index.html:720
+**Description:** Referral codes are generated client-side:
+```javascript
+firstName.toLowerCase().replace(/[^a-z]/g, '').slice(0, 10) + Math.floor(1000 + Math.random() * 9000);
+```
+Uses only first name + 4-digit random number. High collision probability.
+**Risk:** Two users with same first name could get same code. `Math.random()` is not cryptographically secure.
+**Recommendation:** Use server-side generation via the existing `generate_referral_code()` PostgreSQL function.
+
+---
+
+## Issue #16: Auth Lock Disabled
+**Severity:** MEDIUM
+**Files:** auth/index.html, technician/index.html, docs/index.html
+**Description:** `lock: false` set in Supabase auth config to work around `AbortError`:
+```javascript
+auth: { lock: false }
+```
+**Risk:** Disabling the auth storage lock can allow concurrent auth operations to conflict, potentially causing session corruption.
+**Recommendation:** Investigate the root cause of the AbortError rather than disabling the lock.
+
+---
+
+## Issue #17: No Rate Limiting on Auth Operations
+**Severity:** MEDIUM
+**File:** auth/index.html
+**Description:** No rate limiting on `signUp()`, `signInWithPassword()`, or `resetPasswordForEmail()` calls.
+**Risk:** Brute force login attempts, account creation spam, email flooding via password reset.
+**Recommendation:** Implement rate limiting via Supabase Edge Functions or n8n middleware.
+
+---
+
+## Issue #18: Exposed n8n Webhook URLs
+**Severity:** MEDIUM
+**Files:** All apps using webhooks
+**Description:** n8n webhook URLs are publicly visible in client-side code. Anyone can send requests to these endpoints.
+**Risk:** Unauthorized AI query processing, cost escalation.
+**Recommendation:** Add request signing or auth token validation in n8n webhooks.
+
+---
+
 ## Summary
 
 | Severity | Count |
 |----------|-------|
 | CRITICAL | 0 |
-| HIGH | 3 (#2, #5, #7) |
-| MEDIUM | 5 (#3, #4, #6, #8, #10) |
+| HIGH | 4 (#2, #5, #7, #14) |
+| MEDIUM | 9 (#3, #4, #6, #8, #10, #15, #16, #17, #18) |
 | LOW | 2 (#9, #13) |
 | INFO | 3 (#1, #11, #12) |
 
 ### Top Priority Fixes
-1. **Fix dev webhook URLs** in technician app (#2)
-2. **Server-side freemium enforcement** (#7)
-3. **Whitelist tables** in master app REST API calls (#5)
-4. **Add CSP headers** (#3)
-5. **Audit innerHTML** for XSS vectors (#4)
+1. **Fix auth timeout → signup redirect** (#14) - Users losing access on network issues
+2. **Fix dev webhook URLs** in technician app (#2)
+3. **Server-side freemium enforcement** (#7)
+4. **Whitelist tables** in master app REST API calls (#5)
+5. **Add request validation** on n8n webhooks (#18)
+6. **Add CSP headers** (#3)
+7. **Audit innerHTML** for XSS vectors (#4)
