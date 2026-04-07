@@ -166,7 +166,27 @@ fetch('https://cherhabil.app.n8n.cloud/webhook/support-login', {
 
 ---
 
-## Issue #14: Auth Timeout Treated as "User Not Found"
+## Issue #14: Hardcoded Master Key in Client-Side Code
+**Severity:** CRITICAL
+**File:** master/index.html:2550
+**Description:** A plaintext master access key is hardcoded in the SUPPORT_CONFIG object:
+```javascript
+const SUPPORT_CONFIG = {
+    webhookUrl: 'https://cherhabil.app.n8n.cloud/webhook/support-login',
+    master_key: 'FixAIR_Houssam_2026!'
+};
+```
+This key is sent to the n8n webhook to generate magic links for ANY user account.
+**Risk:** **CRITICAL** - Anyone who views the page source of /master can extract this key and use it to generate login links for any user, gaining full account access. Even though /master requires authentication, the key is in the HTML source which is downloaded before auth checks run.
+**Recommendation:** 
+1. **Immediately rotate this key**
+2. Move to server-side only (Supabase Edge Function or n8n environment variable)
+3. Never send secrets from the frontend - authenticate the master user via their Supabase session token instead
+
+---
+
+## Issue #15: Auth Timeout Treated as "User Not Found"
+(Previously #14)
 **Severity:** HIGH
 **Files:** auth/index.html, technician/index.html
 **Description:** When `safeQuery()` times out checking if a user exists, it returns `{data: null, error: {...}}`. The code checks `if (publicUser && publicUser.id)` which is FALSE on timeout, so it falls through and redirects approved users to `/auth` (signup page) instead of showing a retry/error.
@@ -223,17 +243,17 @@ auth: { lock: false }
 
 | Severity | Count |
 |----------|-------|
-| CRITICAL | 0 |
-| HIGH | 4 (#2, #5, #7, #14) |
-| MEDIUM | 9 (#3, #4, #6, #8, #10, #15, #16, #17, #18) |
+| CRITICAL | 1 (#14) |
+| HIGH | 4 (#2, #5, #7, #15) |
+| MEDIUM | 9 (#3, #4, #6, #8, #10, #16, #17, #18, #19) |
 | LOW | 2 (#9, #13) |
 | INFO | 3 (#1, #11, #12) |
 
 ### Top Priority Fixes
-1. **Fix auth timeout → signup redirect** (#14) - Users losing access on network issues
-2. **Fix dev webhook URLs** in technician app (#2)
-3. **Server-side freemium enforcement** (#7)
-4. **Whitelist tables** in master app REST API calls (#5)
-5. **Add request validation** on n8n webhooks (#18)
-6. **Add CSP headers** (#3)
-7. **Audit innerHTML** for XSS vectors (#4)
+1. **ROTATE MASTER KEY immediately** (#14) - Plaintext secret in client-side code
+2. **Fix auth timeout → signup redirect** (#15) - Users losing access on network issues
+3. **Fix dev webhook URLs** in technician app (#2)
+4. **Server-side freemium enforcement** (#7)
+5. **Whitelist tables** in master app REST API calls (#5)
+6. **Add request validation** on n8n webhooks (#19)
+7. **Add CSP headers** (#3)

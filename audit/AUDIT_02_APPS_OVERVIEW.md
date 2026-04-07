@@ -117,8 +117,14 @@ FixAIR is a **multi-app SaaS platform for HVAC technicians**. It consists of 6 d
 ### External Dependencies
 - Supabase JS @2, Mermaid @10
 
-### Security Note
-This is the most privileged app - has direct REST API access to any table. [SECURITY - HIGH]
+### Security Notes
+- This is the most privileged app - has direct REST API access to any table. [SECURITY - HIGH]
+- **[SECURITY - CRITICAL]** Hardcoded master key `FixAIR_Houssam_2026!` in SUPPORT_CONFIG (line 2550) - used to generate magic links for any user. Must be rotated and moved server-side.
+- No CSRF protection on webhook calls
+
+### Dead Code Found
+- `enterpriseData` object (lines 1288-1294): Mock data defined but never referenced
+- Mermaid sanitization code in `renderMermaidDiagrams`: Complex but possibly never integrated
 
 ---
 
