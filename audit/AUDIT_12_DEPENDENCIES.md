@@ -77,6 +77,23 @@
 - **Realtime:** Used in admin, manager, operations for live updates
 - **Storage:** No storage bucket usage found in frontend code [UNCLEAR - photos may be stored via base64 in jsonb columns]
 
+## Shared Assets (assets/ directory)
+
+### fixair-diagrams.css (530 lines)
+Premium Mermaid diagram styling with dark theme. CSS variables with `fd-` prefix namespace. Supports flowcharts, sequence diagrams, state diagrams, ER diagrams, and Gantt charts.
+
+### fixair-diagrams.js (546 lines)
+Mermaid initialization and rendering engine. Public API via `window.FixAIRDiagrams`:
+- `init()` - Initialize Mermaid with FixAIR theme
+- `render(el, code)` - Render single diagram
+- `renderAll()` - Auto-render all `.mermaid-placeholder` elements
+- `sanitize(code)` - Fix French characters for Mermaid compatibility
+- `applyStyles(el)` - Post-process SVG styling
+- `restyleAll()` - Restyle existing diagrams
+
+### logo-generator.html (219 lines)
+Browser-based PNG export tool for FixAIR email logos. Creates 400x80px canvas (2x retina), renders SVG to PNG.
+
 ## Node.js Dependencies (samples/ only)
 
 From `samples/package.json`:
