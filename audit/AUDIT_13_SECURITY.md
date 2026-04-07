@@ -230,7 +230,16 @@ auth: { lock: false }
 
 ---
 
-## Issue #18: Exposed n8n Webhook URLs
+## Issue #18: Mapbox Token Exposure
+**Severity:** LOW
+**File:** operations/index.html:4635
+**Description:** Mapbox public access token hardcoded in client-side code (token redacted from this document).
+**Risk:** Mapbox public tokens are designed to be client-side, but abuse could generate unexpected billing. Consider restricting the token to specific URLs in the Mapbox dashboard.
+**Recommendation:** Add URL restriction in Mapbox account settings.
+
+---
+
+## Issue #19: Exposed n8n Webhook URLs
 **Severity:** MEDIUM
 **Files:** All apps using webhooks
 **Description:** n8n webhook URLs are publicly visible in client-side code. Anyone can send requests to these endpoints.

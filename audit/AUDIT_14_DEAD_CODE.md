@@ -20,7 +20,30 @@ let realtimeSubscriptions = [];
 **Evidence:** Array is declared and cleanup code exists (line 3133-3141), but NO subscriptions are ever pushed to it. Unlike admin/manager which actively subscribe to channels.
 **Status:** [DEAD CODE] - Cleanup code without active subscriptions
 
-### DC-002: Connect Feature (Placeholder Implementation)
+### DC-002: Operations Placeholder Functions
+**File:** operations/index.html:4880-4881, 5591
+**Functions:**
+- `openTechChat()` → `alert('Chat avec technicien')`
+- `callTechnician()` → `alert('Appel technicien')`
+- `showCalendar()` → `alert('Calendrier')`
+**Status:** [DEAD CODE] - Completely non-functional placeholders wired to UI buttons
+
+### DC-002b: Operations Unused Stats Fields
+**File:** operations/index.html:3245
+**Description:** Stats object fields `completed`, `avgTime`, `rate` are hardcoded to defaults (`0`, `'-'`, `'-'`) and never computed.
+**Status:** [DEAD CODE] - Misleading UI data
+
+### DC-002c: Operations Unfinished New Project Creation
+**File:** operations/index.html:5427-5493
+**Description:** `openNewProject()` opens a drawer with a form but the "Créer" button has no actual implementation.
+**Status:** [PARTIAL IMPLEMENTATION]
+
+### DC-002d: Master App Mock Enterprise Data
+**File:** master/index.html:1288-1294
+**Description:** `enterpriseData` object with mock data (ClimaFroid Services, ThermoFlex, etc.) defined but never referenced anywhere.
+**Status:** [DEAD CODE] - Should be removed
+
+### DC-003: Connect Feature (Placeholder Implementation)
 **File:** technician/index.html:20696-20778
 **Functions:** `openConnect()`, `closeConnect()`, `activateConnect()`, `openConnectDrawer()`, `closeConnectDrawer()`, `acceptConnectJob()`
 **Evidence:** Functions exist with basic UI toggling but the feature appears to be a placeholder - no real data loading, no Supabase calls, mock data only.
@@ -95,7 +118,7 @@ CSS custom properties (`:root` variables) are **completely redefined** in every 
 
 | Status | Count | Lines (est.) |
 |--------|-------|-------------|
-| Confirmed Dead Code | 3 | ~200 |
+| Confirmed Dead Code | 6 | ~350 |
 | Partial Implementation | 1 | ~100 |
 | Development Only | 2 | ~1,500 |
 | Unclear (needs runtime testing) | 4 | ~400 |
