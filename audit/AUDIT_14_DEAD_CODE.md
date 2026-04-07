@@ -43,6 +43,26 @@ let realtimeSubscriptions = [];
 **Description:** `enterpriseData` object with mock data (ClimaFroid Services, ThermoFlex, etc.) defined but never referenced anywhere.
 **Status:** [DEAD CODE] - Should be removed
 
+### DC-002e: Manager/Admin Demo Data Objects
+**Files:** manager/index.html:2661-2674, admin/index.html:2626-2645
+**Description:** Both apps have hardcoded demo `techData` and `projectData` objects with fake technician names (Jean Dupont, Marie Leblanc, Pierre Bernard) and project titles used as fallback when live data is empty.
+**Status:** [DEAD CODE in production] - Useful for demo but should be removed or clearly flagged
+
+### DC-002f: Manager/Admin Simulated Voice Transcription
+**Files:** manager/index.html:3570, admin/index.html:3510-3524
+**Description:** When microphone access is denied or ElevenLabs API fails, the apps return random fake transcriptions like "Le compresseur fait un bruit anormal" instead of showing an error.
+**Status:** [DEAD CODE / MISLEADING] - Users think transcription worked when it didn't
+
+### DC-002g: Manager/Admin `extractFromPhoto()` Placeholder
+**Files:** manager/index.html:3504, admin/index.html:3376
+**Description:** Function shows a mock toast "Extraction en cours..." then "Texte extrait avec succès" but performs no actual OCR.
+**Status:** [DEAD CODE] - Button exists in UI but does nothing real
+
+### DC-002h: Manager/Admin `navHomeCal(dir)` Unused Parameter
+**Files:** manager/index.html:2702, admin/index.html:2631
+**Description:** Calendar navigation function accepts a `dir` parameter but ignores it - just calls `renderHomeCalendar()` without changing dates.
+**Status:** [DEAD CODE] - Navigation buttons don't advance the calendar
+
 ### DC-003: Connect Feature (Placeholder Implementation)
 **File:** technician/index.html:20696-20778
 **Functions:** `openConnect()`, `closeConnect()`, `activateConnect()`, `openConnectDrawer()`, `closeConnectDrawer()`, `acceptConnectJob()`
@@ -118,7 +138,7 @@ CSS custom properties (`:root` variables) are **completely redefined** in every 
 
 | Status | Count | Lines (est.) |
 |--------|-------|-------------|
-| Confirmed Dead Code | 6 | ~350 |
+| Confirmed Dead Code | 10 | ~550 |
 | Partial Implementation | 1 | ~100 |
 | Development Only | 2 | ~1,500 |
 | Unclear (needs runtime testing) | 4 | ~400 |
