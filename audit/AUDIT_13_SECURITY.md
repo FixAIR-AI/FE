@@ -185,8 +185,24 @@ This key is sent to the n8n webhook to generate magic links for ANY user account
 
 ---
 
-## Issue #15: Auth Timeout Treated as "User Not Found"
-(Previously #14)
+## Issue #15: ElevenLabs API Key Hardcoded in Manager &amp; Admin Apps
+**Severity:** CRITICAL
+**Files:** manager/index.html:2675, admin/index.html:2604
+**Description:** The ElevenLabs secret API key is hardcoded in plaintext in both the manager and admin apps:
+```javascript
+const ELEVENLABS_API_KEY = 'sk_22d5...cd35c8b71';
+```
+This key is used for speech-to-text API calls. Meanwhile, the technician, docs, and root apps correctly fetch this key from Supabase `app_settings` table at runtime via `getApiKey('elevenlabs_api_key')`.
+**Risk:** **CRITICAL** - Anyone viewing the page source can extract this key and use it to make unlimited API calls to ElevenLabs, incurring billing charges. The key is a secret API key (prefix `sk_`), not a public key.
+**Recommendation:**
+1. **Immediately rotate the ElevenLabs API key**
+2. Remove the hardcoded key from manager and admin apps
+3. Use the same `getApiKey('elevenlabs_api_key')` pattern already used in technician/docs apps
+4. Consider proxying ElevenLabs calls through a Supabase Edge Function
+
+---
+
+## Issue #16: Auth Timeout Treated as "User Not Found"
 **Severity:** HIGH
 **Files:** auth/index.html, technician/index.html
 **Description:** When `safeQuery()` times out checking if a user exists, it returns `{data: null, error: {...}}`. The code checks `if (publicUser && publicUser.id)` which is FALSE on timeout, so it falls through and redirects approved users to `/auth` (signup page) instead of showing a retry/error.
@@ -252,15 +268,16 @@ auth: { lock: false }
 
 | Severity | Count |
 |----------|-------|
-| CRITICAL | 1 (#14) |
-| HIGH | 4 (#2, #5, #7, #15) |
-| MEDIUM | 9 (#3, #4, #6, #8, #10, #16, #17, #18, #19) |
+| CRITICAL | 2 (#14, #15) |
+| HIGH | 4 (#2, #5, #7, #16) |
+| MEDIUM | 9 (#3, #4, #6, #8, #10, #17, #18, #19, #20) |
 | LOW | 2 (#9, #13) |
 | INFO | 3 (#1, #11, #12) |
 
 ### Top Priority Fixes
 1. **ROTATE MASTER KEY immediately** (#14) - Plaintext secret in client-side code
-2. **Fix auth timeout → signup redirect** (#15) - Users losing access on network issues
+2. **ROTATE ELEVENLABS API KEY immediately** (#15) - Secret key `sk_*` in manager &amp; admin source
+3. **Fix auth timeout → signup redirect** (#16) - Users losing access on network issues
 3. **Fix dev webhook URLs** in technician app (#2)
 4. **Server-side freemium enforcement** (#7)
 5. **Whitelist tables** in master app REST API calls (#5)
