@@ -6015,30 +6015,14 @@
 
                 <!-- TOGGLE CARDS -->
                 <div class="modules-toggle">
-                    <div class="toggle-card diagnostic" onclick="openChat('assistant')">
-                        <div class="toggle-card-icon"><span class="star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span></div>
-                        <div class="toggle-card-content">
-                            <div class="toggle-card-title">Diagnostic</div>
-                            <div class="toggle-card-desc">avec <span class="highlight-diagnostic">Assistant</span></div>
-                        </div>
-                        <svg class="toggle-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-                    </div>
                     <div class="toggle-card assistant" onclick="openChat('assistant')">
                         <div class="toggle-card-icon"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>
                         <div class="toggle-card-content">
-                            <div class="toggle-card-title">Rapport</div>
-                            <div class="toggle-card-desc">avec <span class="highlight-assistant">Assistant</span></div>
+                            <div class="toggle-card-title">Nouveau rapport</div>
+                            <div class="toggle-card-desc">Créer un rapport d'intervention</div>
                         </div>
                         <svg class="toggle-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
                     </div>
-                </div>
-
-                <!-- BRAND BAR -->
-                <div class="brand-select-row">
-                    <span class="brand-label">Marque:</span>
-                    <div class="brand-chip" data-b="carrier" onclick="setBrand('carrier')">Carrier</div>
-                    <div class="brand-chip" data-b="daikin" onclick="setBrand('daikin')">Daikin</div>
-                    <div class="brand-chip active" data-b="mitsubishi" onclick="setBrand('mitsubishi')">Mitsubishi</div>
                 </div>
 
                 <!-- RECENT PROJECTS -->
@@ -6098,7 +6082,6 @@
             <div class="nav-inner">
                 <div class="nav-item active" id="navHome" onclick="goToHome()"><span class="icon nav-icon"><svg><use href="#icon-home"/></svg></span><span class="nav-label">Accueil</span></div>
                 <div class="nav-item" id="navProjects" onclick="Router.navigate({page:'projects'})"><span class="icon nav-icon"><svg><use href="#icon-folder"/></svg></span><span class="nav-label">Projets</span></div>
-                <div class="nav-item" id="navConnect" onclick="openConnect()"><span class="icon nav-icon"><svg><use href="#icon-connect"/></svg></span><span class="nav-label">Connect</span></div>
                 <div class="nav-item nav-hotline" onclick="openHotline()">
                     <div class="nav-hotline-waves">
                         <div class="wave-bar"></div>
@@ -7820,7 +7803,6 @@
                 closeChat();
                 closeProfile();
                 document.getElementById('hotlineView')?.classList.remove('active');
-                document.getElementById('connectView')?.classList.remove('active');
 
                 switch(page) {
                     case 'home':
@@ -7870,10 +7852,6 @@
                         if (typeof showTechCalendar === 'function') {
                             showTechCalendar();
                         }
-                        break;
-
-                    case 'connect':
-                        showPage('connect');
                         break;
 
                     default:
@@ -9097,8 +9075,6 @@
             document.getElementById('projectsPage').classList.toggle('active', page === 'projects');
             document.getElementById('navHome').classList.toggle('active', page === 'home');
             document.getElementById('navProjects').classList.toggle('active', page === 'projects');
-            document.getElementById('navConnect').classList.toggle('active', page === 'connect');
-            document.getElementById('connectView').classList.toggle('active', page === 'connect');
         }
 
         function toggleBrandDropdown() {
@@ -9606,6 +9582,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
 
       function addMsg(panel, type, content) {
             const body = document.getElementById(panel + 'Body');
+            if (!body) return;
             const msg = document.createElement('div');
 
             // FIX-C: Strip any remaining [REPORT_DATA] blocks from AI messages
@@ -10456,8 +10433,10 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                 
                 // Step 3: Load messages for each chat
                 for (const chat of chats || []) {
-                    
-                    currentChatId[chat.chat_type] = chat.id;
+                    // Treat legacy copilot chats as assistant chats
+                    const chatType = (chat.chat_type === 'copilot') ? 'assistant' : (chat.chat_type || 'assistant');
+
+                    currentChatId[chatType] = chat.id;
                     
                     // Load messages for this chat
                     const { data: messages, error: msgError } = await db
@@ -10471,9 +10450,9 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                     }
                     
                     // Clear existing chat UI (preserve TP containers)
-                    chatHistory[chat.chat_type] = [];
-                    clearChatBody(chat.chat_type);
-                    
+                    chatHistory[chatType] = [];
+                    clearChatBody(chatType);
+
                     // Add messages to UI
                     for (const msg of messages || []) {
                         const role = msg.role === 'assistant' ? 'ai' : msg.role;
@@ -10485,19 +10464,19 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                                 const msgDiv = document.createElement('div');
                                 msgDiv.className = 'msg user';
                                 msgDiv.id = msgId;
-                                
+
                                 // Check if this photo was already added to report
                                 const isInReport = window.reportPhotos?.some(p => p.url === msg.content || p.data === msg.content);
-                                msgDiv.innerHTML = createPhotoMessageHTML(msgId, chat.chat_type, msg.content, isInReport);
+                                msgDiv.innerHTML = createPhotoMessageHTML(msgId, chatType, msg.content, isInReport);
                                 msgDiv.dataset.imageData = msg.content;
-                                
+
                                 body.appendChild(msgDiv);
                             } else if (msg.content_type === 'ocr') {
                                 // Render OCR result message
                                 try {
                                     const ocrData = JSON.parse(msg.content);
                                     const sourceImg = findSourceImage(messages, ocrData.sourcePhotoId);
-                                    renderOCRMessage(chat.chat_type, ocrData, sourceImg);
+                                    renderOCRMessage(chatType, ocrData, sourceImg);
                                 } catch (e) {
                                     // Error parsing OCR message
                                 }
@@ -10508,13 +10487,13 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                                     try {
                                         const steps = JSON.parse(msg.thought_process);
                                         if (steps && steps.length > 0) {
-                                            renderPersistedThoughtProcess(chat.chat_type, steps, msg.thought_summary);
+                                            renderPersistedThoughtProcess(chatType, steps, msg.thought_summary);
                                         }
                                     } catch (e) { /* ignore parse errors */ }
                                 }
                                 const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
-                                addMsg(chat.chat_type, role, content);
-                                
+                                addMsg(chatType, role, content);
+
                                 // ═══ FIX: Extract REPORT_DATA from loaded AI messages to update drawer ═══
                                 if (role === 'ai' && msg.content.includes('[REPORT_DATA]')) {
                                     try {
@@ -10533,7 +10512,7 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                                     }
                                 }
                             }
-                            chatHistory[chat.chat_type].push({ role: msg.role, content: msg.content });
+                            chatHistory[chatType].push({ role: msg.role, content: msg.content });
                             projectMessageCount++;
                         }
                     }
@@ -18630,8 +18609,7 @@ RÈGLES:
         // ═══════════════════════════════════════════════════════════════
 
         function openHotline() {
-            Router.navigate({ page: 'hotline' });
-            resetHotline();
+            toast('Hotline FixAIR - Bientôt disponible en version Pro');
         }
 
         function closeHotline() {
