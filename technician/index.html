@@ -1227,117 +1227,7 @@
         .rename-modal-btn.cancel { background: var(--bg); color: var(--text-dim); }
         .rename-modal-btn.save { background: var(--assistant); color: white; }
 
-        /* ═══════════════════════════════════════════════════════════════════════════
-           CONNECT VIEW STYLES
-           ═══════════════════════════════════════════════════════════════════════════ */
-        .connect-view {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: var(--bg);
-            z-index: 200;
-            display: none;
-            flex-direction: row;
-        }
-        .connect-view.active { display: flex; }
-        .connect-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            transition: all 0.3s;
-        }
-        .connect-view.drawer-open .connect-content { flex: 0 0 50%; max-width: 50%; }
-        @media (max-width: 700px) { .connect-view.drawer-open .connect-content { flex: 0 0 100%; max-width: 100%; opacity: 0.3; pointer-events: none; } }
-        .connect-content-inner { max-width: 520px; margin: 0 auto; padding: 0 16px; }
-        .connect-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; padding-top: max(14px, calc(env(safe-area-inset-top) + 6px)); flex-shrink: 0; border-bottom: 1px solid var(--border); background: var(--bg-secondary); }
-        .connect-header-back { width: 32px; height: 32px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-dim); }
-        .connect-header-back svg { width: 16px; height: 16px; }
-        .connect-header-info { flex: 1; }
-        .connect-header-title { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-        .connect-header-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
-        .connect-online-dot { width: 8px; height: 8px; background: var(--assistant); border-radius: 50%; animation: pulse 2s infinite; }
-        .connect-body { flex: 1; overflow-y: auto; padding: 16px 0; }
-
-        /* Connect Drawer */
-        .connect-drawer { position: fixed; top: 0; right: 0; width: 50%; height: 100%; background: var(--bg-secondary); border-left: 1px solid var(--border); display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 210; }
-        .connect-view.drawer-open .connect-drawer { transform: translateX(0); }
-        @media (max-width: 700px) { .connect-drawer { width: 100%; } }
-        .connect-drawer-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; padding-top: max(14px, calc(env(safe-area-inset-top) + 6px)); border-bottom: 1px solid var(--border); flex-shrink: 0; }
-        .connect-drawer-close { width: 32px; height: 32px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-dim); transition: all 0.2s; }
-        .connect-drawer-close:hover { background: rgba(255,255,255,0.05); color: var(--text); }
-        .connect-drawer-close svg { width: 16px; height: 16px; }
-        .connect-drawer-info { flex: 1; }
-        .connect-drawer-title { font-size: 14px; font-weight: 600; }
-        .connect-drawer-subtitle { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
-        .connect-drawer-body { flex: 1; overflow-y: auto; padding: 16px; }
-        .connect-drawer-footer { display: flex; gap: 10px; padding: 16px; border-top: 1px solid var(--border); }
-        .connect-drawer-btn { flex: 1; padding: 12px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; }
-        .connect-drawer-btn.secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
-        .connect-drawer-btn.primary { background: var(--connect); color: white; }
-        .connect-drawer-btn.danger { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
-
-        /* Connect Promo */
-        .connect-promo { max-width: 380px; margin: 40px auto 0; text-align: center; }
-        .connect-promo-icon { width: 64px; height: 64px; margin: 0 auto 16px; background: var(--connect-bg); border: 1px solid var(--connect-border); border-radius: 16px; display: flex; align-items: center; justify-content: center; }
-        .connect-promo-icon svg { width: 32px; height: 32px; color: var(--connect); }
-        .connect-promo-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
-        .connect-promo-desc { font-size: 12px; color: var(--text-dim); line-height: 1.5; margin-bottom: 20px; }
-        .connect-promo-features { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; text-align: left; margin-bottom: 20px; }
-        .connect-promo-feat { display: flex; align-items: center; gap: 8px; padding: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; font-size: 11px; }
-        .connect-promo-feat svg { width: 14px; height: 14px; color: var(--connect); flex-shrink: 0; }
-        .connect-btn-activate { width: 100%; padding: 12px 20px; background: var(--connect); color: white; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .connect-btn-activate:hover { filter: brightness(1.1); }
-        .connect-btn-badge { font-size: 9px; padding: 2px 6px; background: rgba(255,255,255,0.2); border-radius: 3px; }
-        .connect-promo-note { font-size: 10px; color: var(--text-dim); margin-top: 10px; }
-
-        /* Connect Stats Bar */
-        .connect-stats-bar { display: flex; gap: 8px; margin-bottom: 16px; }
-        .connect-stat-pill { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 14px 8px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
-        .connect-stat-pill.highlight { background: var(--connect-bg); border-color: var(--connect-border); }
-        .connect-stat-val { font-size: 15px; font-weight: 700; }
-        .connect-stat-pill.highlight .connect-stat-val { color: var(--connect); }
-        .connect-stat-lbl { font-size: 9px; color: var(--text-dim); }
-
-        /* Connect Section Headers */
-        .connect-sec { margin-bottom: 16px; }
-        .connect-sec-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-        .connect-sec-title { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
-        .connect-sec-line { flex: 1; height: 1px; background: var(--border); }
-        .connect-sec-badge { font-size: 9px; padding: 3px 8px; background: var(--connect-bg); color: var(--connect); border-radius: 8px; font-weight: 500; }
-
-        /* Job Cards */
-        .connect-jobs-list { display: flex; flex-direction: column; gap: 10px; }
-        .connect-job-card { display: flex; align-items: center; gap: 12px; padding: 14px 14px 14px 18px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; min-height: 64px; }
-        .connect-job-card::before { content: ''; position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px; border-radius: 0 2px 2px 0; }
-        .connect-job-card.urgent::before { background: #ef4444; }
-        .connect-job-card.new::before { background: var(--connect); }
-        .connect-job-card.scheduled::before { background: var(--assistant); }
-        .connect-job-card.progress::before { background: var(--accent); }
-        .connect-job-card:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.15); }
-        .connect-job-tag { font-size: 9px; font-weight: 600; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.3px; flex-shrink: 0; }
-        .connect-job-tag.urgent { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
-        .connect-job-tag.new { background: var(--connect-bg); color: var(--connect); }
-        .connect-job-tag.scheduled { background: var(--assistant-bg); color: var(--assistant); }
-        .connect-job-tag.progress { background: var(--accent-bg); color: var(--accent); }
-        .connect-job-body { flex: 1; min-width: 0; }
-        .connect-job-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
-        .connect-job-detail { font-size: 11px; color: var(--text-dim); display: flex; align-items: center; gap: 8px; }
-        .connect-job-price { font-size: 13px; font-weight: 600; color: var(--assistant); flex-shrink: 0; }
-        .connect-job-arrow { color: var(--text-dim); flex-shrink: 0; }
-        .connect-job-arrow svg { width: 14px; height: 14px; }
-
-        /* Connect Drawer Detail Sections */
-        .connect-detail-section { margin-bottom: 20px; }
-        .connect-detail-label { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-        .connect-detail-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
-        .connect-detail-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
-        .connect-detail-row:not(:last-child) { border-bottom: 1px solid var(--border); }
-        .connect-detail-row svg { width: 16px; height: 16px; color: var(--text-dim); flex-shrink: 0; }
-        .connect-detail-text { flex: 1; font-size: 13px; }
-        .connect-detail-text small { display: block; font-size: 11px; color: var(--text-dim); margin-top: 2px; }
-        .connect-detail-desc { font-size: 13px; line-height: 1.5; color: var(--text-dim); }
-        .connect-price-big { font-size: 24px; font-weight: 700; color: var(--assistant); }
-        .connect-price-note { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+        /* Connect view styles removed */
 
         /* ═══════════════════════════════════════════════════════════════════════════
            CALENDAR STYLES
@@ -1363,7 +1253,7 @@
         .calendar-day.today { background: var(--accent-bg); color: var(--accent); font-weight: 600; }
         .calendar-day.other-month { opacity: 0.3; }
         .calendar-day.has-events::after { content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: var(--accent); border-radius: 50%; }
-        .calendar-day.connect-avail { border: 1px dashed var(--connect); }
+        /* .calendar-day.connect-avail removed */
 
         /* Calendar Daily View */
         .calendar-daily { display: flex; flex-direction: column; gap: 2px; min-height: 280px; max-height: 280px; overflow-y: auto; }
@@ -1373,7 +1263,7 @@
         .daily-content:hover { background: rgba(255,255,255,0.04); }
         .daily-content.has-event { border-left: 3px solid var(--accent); background: var(--accent-bg); border-radius: 0 6px 6px 0; }
         .daily-content.has-event.assistant { border-left-color: var(--assistant); background: var(--assistant-bg); }
-        .daily-content.has-event.connect { border-left-color: var(--connect); background: var(--connect-bg); }
+        /* .daily-content.has-event.connect removed */
         .daily-content.has-event.personal { border-left-color: #8b5cf6; background: rgba(139,92,246,0.08); }
         .daily-content.has-event.pending { border-left-color: var(--text-dim); background: rgba(255,255,255,0.04); }
         .daily-event-title { font-size: 11px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1394,7 +1284,7 @@
         .week-slot-event { font-size: 9px; padding: 3px 5px; border-radius: 0 3px 3px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
         .week-slot-event.diagnostic { background: var(--accent-bg); color: var(--accent); border-left: 2px solid var(--accent); }
         .week-slot-event.assistant { background: var(--assistant-bg); color: var(--assistant); border-left: 2px solid var(--assistant); }
-        .week-slot-event.connect { background: var(--connect-bg); color: var(--connect); border-left: 2px solid var(--connect); }
+        /* .week-slot-event.connect removed */
         .week-slot-event.pending { background: rgba(255,255,255,0.04); color: var(--text-dim); border-left: 2px solid var(--text-dim); }
         .week-slot-event.personal { background: rgba(139,92,246,0.1); color: #8b5cf6; border-left: 2px solid #8b5cf6; }
 
@@ -1592,7 +1482,7 @@
         .event-type-pill:hover { border-color: rgba(255,255,255,0.2); }
         .event-type-pill.active.diagnostic { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
         .event-type-pill.active.assistant { background: var(--assistant-bg); border-color: var(--assistant); color: var(--assistant); }
-        .event-type-pill.active.connect { background: var(--connect-bg); border-color: var(--connect); color: var(--connect); }
+        /* .event-type-pill.active.connect removed */
         .event-type-pill.active.personal { background: rgba(139,92,246,0.1); border-color: #8b5cf6; color: #8b5cf6; }
         
         /* More Options */
@@ -6454,42 +6344,7 @@
         <img id="imageViewerImg" src="" alt="Full size">
     </div>
 
-    <!-- HOTLINE VIEW -->
-    <div class="hotline-view" id="hotlineView">
-        <button class="hotline-close" onclick="closeHotline(); goToHome()"><span class="icon"><svg><use href="#icon-x"/></svg></span></button>
-        <div class="hotline-widget" id="hotlineWidget">
-            <div class="pulse-sphere" id="pulseSphere" onclick="toggleHotline()">
-                <div class="pulse-atmosphere"></div>
-                <div class="pulse-ring"></div>
-                <div class="pulse-ring"></div>
-                <div class="pulse-ring"></div>
-                <div class="pulse-core"></div>
-                <div class="pulse-icon">
-                    <div class="voice-bar"></div>
-                    <div class="voice-bar"></div>
-                    <div class="voice-bar"></div>
-                    <div class="voice-bar"></div>
-                    <div class="voice-bar"></div>
-                </div>
-            </div>
-            <div class="widget-label" id="widgetLabel">Hotline</div>
-            <div class="widget-sublabel" id="widgetSublabel">Appuyez pour parler</div>
-        </div>
-        <div class="hotline-chat" id="hotlineChat">
-            <div class="chat-spacer"></div>
-            <div class="chat-messages-outer">
-                <div class="chat-messages" id="hotlineChatMessages">
-                    <div class="messages-wrapper" id="messagesWrapper">
-                        <div class="chat-empty" id="chatEmpty">Commencez à parler pour voir la conversation...</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <button class="toggle-chat" id="toggleChat" onclick="toggleChatView()">
-            <span class="toggle-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></span>
-            <span id="toggleText">Afficher</span>
-        </button>
-    </div>
+    <!-- Hotline view removed - now shows toast only -->
 
     <div class="toast" id="toast"></div>
 
@@ -6650,8 +6505,8 @@
                 'home.greeting': 'Bonjour',
                 'home.progress': 'Progression du jour',
                 'home.choose_assistant': 'Choisissez votre assistant',
-                'home.diagnostic_desc': 'Questions techniques et conseils',
-                'home.assistant_desc': 'Diagnostic et résolution',
+                'home.new_report': 'Nouveau rapport',
+                'home.assistant_desc': "Créer un rapport d'intervention",
                 // Onboarding
                 'onboarding.step1_title': 'Choisissez votre marque',
                 'onboarding.step1_desc': 'Sélectionnez la marque principale sur laquelle vous travaillez',
@@ -6733,8 +6588,8 @@
                 'home.greeting': 'Hello',
                 'home.progress': 'Daily Progress',
                 'home.choose_assistant': 'Choose your assistant',
-                'home.diagnostic_desc': 'Technical questions and advice',
-                'home.assistant_desc': 'Diagnosis and resolution',
+                'home.new_report': 'New report',
+                'home.assistant_desc': 'Create an intervention report',
                 // Onboarding
                 'onboarding.step1_title': 'Choose your brand',
                 'onboarding.step1_desc': 'Select the main brand you work with',
@@ -7742,7 +7597,7 @@
         // /technician/?user=[userId]&page=projects       → Projects list
         // /technician/?user=[userId]&page=project&id=[projectId] → Project detail
         // /technician/?user=[userId]&page=calendar       → Calendar
-        // /technician/?user=[userId]&page=connect        → Connect jobs
+        // Connect page removed
 
         const Router = {
             // Parse current URL and return route object
@@ -7802,7 +7657,7 @@
                 // Close all overlays first
                 closeChat();
                 closeProfile();
-                document.getElementById('hotlineView')?.classList.remove('active');
+                // hotlineView removed
 
                 switch(page) {
                     case 'home':
@@ -7832,7 +7687,7 @@
 
                     case 'hotline':
                         showPage('home');
-                        document.getElementById('hotlineView')?.classList.add('active');
+                        openHotline();
                         break;
 
                     case 'profile':
@@ -18612,249 +18467,17 @@ RÈGLES:
             toast('Hotline FixAIR - Bientôt disponible en version Pro');
         }
 
-        function closeHotline() {
-            document.getElementById('hotlineView').classList.remove('active');
-            if(isConnected) disconnectHotline();
-            resetHotline();
-        }
-
-        function resetHotline() {
-            isConnected = false;
-            isConnecting = false;
-            isDisconnecting = false;
-            chatOpen = false;
-            document.getElementById('pulseSphere').classList.remove('connected','connecting','disconnecting');
-            document.getElementById('hotlineWidget').classList.remove('chat-mode');
-            document.getElementById('hotlineChat').classList.remove('visible');
-            document.getElementById('toggleChat').classList.remove('visible','open');
-            document.getElementById('widgetLabel').textContent = 'Hotline';
-            document.getElementById('widgetSublabel').textContent = 'Appuyez pour parler';
-            document.getElementById('toggleText').textContent = 'Afficher';
-        }
-
-        function toggleHotline() {
-            if(isConnecting || isDisconnecting) return;
-            if(isConnected) disconnectHotline();
-            else connectHotline();
-        }
-        
-        // ═══════════════════════════════════════════════════════════════
-        // ELEVENLABS CONVERSATIONAL AI - AGENT MAPPING
-        // ═══════════════════════════════════════════════════════════════
-        
-        const ELEVENLABS_AGENT_IDS = {
-            'mitsubishi': 'agent_2801k5chk9qgf9hbh0hnjrsyckq7',
-            'carrier': 'agent_8901k87w3fpyf6vaj9500df173t8',
-            'daikin': 'agent_9301k9f06f14f6t8ctfnp5vgq952',
-            // Fallback for other brands - use Mitsubishi as default
-            'lg': 'agent_2801k5chk9qgf9hbh0hnjrsyckq7',
-            'samsung': 'agent_2801k5chk9qgf9hbh0hnjrsyckq7',
-            'panasonic': 'agent_2801k5chk9qgf9hbh0hnjrsyckq7',
-            'toshiba': 'agent_2801k5chk9qgf9hbh0hnjrsyckq7',
-            'fujitsu': 'agent_2801k5chk9qgf9hbh0hnjrsyckq7',
-            'hitachi': 'agent_2801k5chk9qgf9hbh0hnjrsyckq7',
-            'general': 'agent_2801k5chk9qgf9hbh0hnjrsyckq7'
-        };
-        
-        let elevenLabsConversation = null;
-        let elevenLabsSDKReady = false;
-        
-        // Listen for SDK ready event
-        window.addEventListener('elevenlabs-ready', () => {
-            elevenLabsSDKReady = true;
-        });
-
-        async function connectHotline() {
-            if(isConnecting || isConnected) return;
-
-            // Check if SDK is ready
-            if (!elevenLabsSDKReady || !window.ElevenLabsConversation) {
-                toast('Chargement en cours...');
-                // Wait a bit and try again
-                setTimeout(() => {
-                    if (elevenLabsSDKReady) {
-                        connectHotline();
-                    } else {
-                        toast('Erreur: SDK non chargé');
-                    }
-                }, 1000);
-                return;
-            }
-            
-            isConnecting = true;
-            document.getElementById('pulseSphere').classList.add('connecting');
-            document.getElementById('widgetSublabel').textContent = 'Connexion...';
-            if(navigator.vibrate) navigator.vibrate(200);
-            
-            // Get the correct agent ID for the selected brand
-            const agentId = ELEVENLABS_AGENT_IDS[brand] || ELEVENLABS_AGENT_IDS['general'];
-            
-            try {
-                elevenLabsConversation = await window.ElevenLabsConversation.startSession({
-                    agentId: agentId,
-                    
-                    onMessage: ({ message, source }) => {
-                        if (source === 'user') {
-                            addHotlineMessage(message, 'user');
-                        } else {
-                            addHotlineMessage(message, 'ai');
-                        }
-                    },
-                    
-                    onModeChange: ({ mode }) => {
-                        if (mode === 'speaking') {
-                            document.getElementById('pulseSphere').classList.add('ai-speaking');
-                            showAISpeakingIndicator();
-                        } else {
-                            document.getElementById('pulseSphere').classList.remove('ai-speaking');
-                            hideAISpeakingIndicator();
-                        }
-                    },
-                    
-                    onConnect: ({ conversationId }) => {
-                        isConnecting = false;
-                        isConnected = true;
-                        document.getElementById('pulseSphere').classList.remove('connecting');
-                        document.getElementById('pulseSphere').classList.add('connected');
-                        document.getElementById('widgetSublabel').textContent = 'Appuyez pour terminer';
-                        document.getElementById('toggleChat').classList.add('visible');
-                        
-                        // Open chat view
-                        setTimeout(() => {
-                            if(!chatOpen) toggleChatView();
-                        }, 800);
-                    },
-                    
-                    onDisconnect: () => {
-                        handleHotlineDisconnect();
-                    },
-
-                    onError: (error) => {
-                        toast('Erreur connexion');
-                        handleHotlineDisconnect();
-                    }
-                });
-
-            } catch (error) {
-                isConnecting = false;
-                document.getElementById('pulseSphere').classList.remove('connecting');
-                document.getElementById('widgetSublabel').textContent = 'Appuyez pour parler';
-                
-                if (error.name === 'NotAllowedError') {
-                    toast('Microphone non autorisé');
-                    alert('Veuillez autoriser l\'accès au microphone pour utiliser l\'assistant vocal.');
-                } else {
-                    toast('Erreur: ' + (error.message || 'Connexion échouée'));
-                }
-            }
-        }
-        
-        // Show AI speaking waveform indicator
-        function showAISpeakingIndicator() {
-            const existing = document.getElementById('messagesWrapper').querySelector('.ai-speaking-indicator');
-            if (existing) return;
-            
-            const indicator = document.createElement('div');
-            indicator.className = 'hotline-msg ai ai-speaking-indicator';
-            indicator.innerHTML = `
-                <span class="msg-label">${names[brand]}</span>
-                <div class="msg-bubble" style="display:flex;align-items:center;gap:10px;">
-                    <div style="display:flex;align-items:center;gap:3px;height:20px;">
-                        <div class="speaking-bar" style="width:3px;height:8px;background:#34a853;border-radius:2px;animation:speakPulse 0.8s ease-in-out infinite;animation-delay:0s;"></div>
-                        <div class="speaking-bar" style="width:3px;height:14px;background:#34a853;border-radius:2px;animation:speakPulse 0.8s ease-in-out infinite;animation-delay:0.1s;"></div>
-                        <div class="speaking-bar" style="width:3px;height:10px;background:#34a853;border-radius:2px;animation:speakPulse 0.8s ease-in-out infinite;animation-delay:0.2s;"></div>
-                        <div class="speaking-bar" style="width:3px;height:16px;background:#34a853;border-radius:2px;animation:speakPulse 0.8s ease-in-out infinite;animation-delay:0.3s;"></div>
-                        <div class="speaking-bar" style="width:3px;height:12px;background:#34a853;border-radius:2px;animation:speakPulse 0.8s ease-in-out infinite;animation-delay:0.4s;"></div>
-                    </div>
-                    <span style="color:#34a853;font-size:12px;">Parle...</span>
-                </div>
-            `;
-            document.getElementById('messagesWrapper').appendChild(indicator);
-            document.getElementById('hotlineChatMessages').scrollTop = document.getElementById('hotlineChatMessages').scrollHeight;
-        }
-        
-        function hideAISpeakingIndicator() {
-            const indicator = document.getElementById('messagesWrapper').querySelector('.ai-speaking-indicator');
-            if (indicator) indicator.remove();
-        }
-        
-        function handleHotlineDisconnect() {
-            isConnecting = false;
-            isConnected = false;
-            isDisconnecting = false;
-            elevenLabsConversation = null;
-            document.getElementById('pulseSphere').classList.remove('connected', 'connecting', 'disconnecting', 'ai-speaking');
-            document.getElementById('widgetSublabel').textContent = 'Appuyez pour parler';
-            hideAISpeakingIndicator();
-        }
-
-        async function disconnectHotline() {
-            if(!isConnected || isDisconnecting) return;
-            isDisconnecting = true;
-            isConnected = false;
-            document.getElementById('pulseSphere').classList.remove('connected');
-            document.getElementById('pulseSphere').classList.add('disconnecting');
-            document.getElementById('widgetSublabel').textContent = 'Fin...';
-            
-            // End ElevenLabs conversation
-            if (elevenLabsConversation) {
-                try {
-                    await elevenLabsConversation.endSession();
-                } catch (e) {
-                    // End session error
-                }
-                elevenLabsConversation = null;
-            }
-
-            setTimeout(() => {
-                isDisconnecting = false;
-                document.getElementById('pulseSphere').classList.remove('disconnecting');
-                document.getElementById('widgetSublabel').textContent = 'Appuyez pour parler';
-                if(chatOpen) {
-                    document.getElementById('hotlineChat').classList.remove('visible');
-                    document.getElementById('toggleChat').classList.remove('open');
-                    document.getElementById('toggleText').textContent = 'Afficher';
-                    chatOpen = false;
-                }
-                document.getElementById('hotlineWidget').classList.remove('chat-mode');
-                hideAISpeakingIndicator();
-            }, 2500);
-        }
-
-        function toggleChatView() {
-            chatOpen = !chatOpen;
-            if(chatOpen) {
-                document.getElementById('hotlineChat').classList.add('visible');
-                document.getElementById('toggleChat').classList.add('open');
-                document.getElementById('toggleText').textContent = 'Masquer';
-                document.getElementById('hotlineWidget').classList.add('chat-mode');
-            } else {
-                document.getElementById('hotlineChat').classList.remove('visible');
-                document.getElementById('toggleChat').classList.remove('open');
-                document.getElementById('toggleText').textContent = 'Afficher';
-                document.getElementById('hotlineWidget').classList.remove('chat-mode');
-            }
-        }
-
-        function addHotlineMessage(text, sender) {
-            const empty = document.getElementById('chatEmpty');
-            if(empty) empty.style.display = 'none';
-            
-            // Hide speaking indicator when we get the actual message
-            if (sender === 'ai') {
-                hideAISpeakingIndicator();
-            }
-            
-            const wrapper = document.getElementById('messagesWrapper');
-            const msg = document.createElement('div');
-            msg.className = 'hotline-msg ' + sender;
-            const now = new Date();
-            const time = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-            const label = sender === 'user' ? 'Vous' : names[brand];
-            msg.innerHTML = `<span class="msg-label">${label}</span><div class="msg-bubble">${text}</div><span class="msg-time">${time}</span>`;
-            wrapper.appendChild(msg);
-            document.getElementById('hotlineChatMessages').scrollTop = document.getElementById('hotlineChatMessages').scrollHeight;
-        }
+        // Hotline functions removed - openHotline() shows toast only
+        function closeHotline() {}
+        function resetHotline() {}
+        function toggleHotline() {}
+        function connectHotline() {}
+        function disconnectHotline() {}
+        function toggleChatView() {}
+        function addHotlineMessage() {}
+        function showAISpeakingIndicator() {}
+        function hideAISpeakingIndicator() {}
+        function handleHotlineDisconnect() {}
 
         const divider = document.getElementById('divider');
         const pA = document.getElementById('panelAssistant');
@@ -20675,14 +20298,7 @@ RÈGLES:
             const ev = calendarEvents.find(e => e.id === eventId);
             if (!ev) return;
             
-            if (ev.type === 'connect') {
-                showPage('connect');
-                if (ev.jobId) {
-                    setTimeout(() => openConnectDrawer('job', ev.jobId), 300);
-                } else {
-                    setTimeout(() => openConnectDrawer('job', 'job1'), 300);
-                }
-            } else if (ev.type === 'diagnostic' || ev.type === 'assistant') {
+            if (ev.type === 'diagnostic' || ev.type === 'assistant') {
                 if (ev.projectId) {
                     loadProject(ev.projectId);
                     return;
@@ -20714,7 +20330,7 @@ RÈGLES:
         }
 
         // ═══ EVENT DRAWER FUNCTIONS ═══
-        let selectedEventType = 'diagnostic';
+        let selectedEventType = 'assistant';
 
         function openEventDrawer(dateKey, startTime) {
             editingEventId = null;
@@ -20723,11 +20339,11 @@ RÈGLES:
             document.getElementById('eventName').value = '';
             document.getElementById('eventDate').value = dateKey;
             document.getElementById('eventStartTime').value = startTime || '09:00';
-            
+
             const [h, m] = (startTime || '09:00').split(':');
             const endHour = (parseInt(h) + 1).toString().padStart(2, '0');
             document.getElementById('eventEndTime').value = `${endHour}:${m}`;
-            
+
             document.getElementById('eventLocation').value = '';
             document.getElementById('eventClient').value = '';
             document.getElementById('eventRepeat').value = 'none';
@@ -20736,14 +20352,14 @@ RÈGLES:
             document.getElementById('eventNotes').value = '';
             document.getElementById('eventAllDay').classList.remove('active');
             document.getElementById('eventTimeRow').style.display = 'flex';
-            
+
             document.getElementById('eventMoreOptions').classList.remove('show');
             document.getElementById('moreOptionsToggle').classList.remove('expanded');
-            
-            selectedEventType = 'diagnostic';
+
+            selectedEventType = 'assistant';
             document.querySelectorAll('.event-type-pill').forEach(p => {
                 p.classList.remove('active');
-                if (p.dataset.type === 'diagnostic') p.classList.add('active');
+                if (p.dataset.type === 'assistant') p.classList.add('active');
             });
             
             document.getElementById('eventDrawerOverlay').classList.add('show');
@@ -20975,110 +20591,7 @@ RÈGLES:
             hideEventContextMenu();
         }
 
-        // ═══════════════════════════════════════════════════════════════════════════
-        // CONNECT FUNCTIONS
-        // ═══════════════════════════════════════════════════════════════════════════
-        let connectActivated = false;
-        let connectOnline = true;
-
-        const connectJobsData = {
-            job1: { title: 'AC ne refroidit plus', type: 'Climatisation', status: 'urgent', price: '€85-120', distance: '2.3 km', time: 'ASAP', client: 'Pierre Martin', address: '45 Rue du Commerce, 75015 Paris', phone: '+33 6 12 34 56 78', desc: 'Split mural Samsung qui ne produit plus de froid. Le client indique que l\'unité extérieure fait du bruit.' },
-            job2: { title: 'Bruit anormal PAC', type: 'Pompe à chaleur', status: 'new', price: '€120-180', distance: '4.1 km', time: 'Aujourd\'hui 14h', client: 'Sophie Durand', address: '12 Avenue des Lilas, 75020 Paris', phone: '+33 6 98 76 54 32', desc: 'PAC Daikin Altherma avec bruit de claquement au démarrage. Installation de 2019.' },
-            job3: { title: 'Entretien annuel clim', type: 'Maintenance', status: 'scheduled', price: '€65-90', distance: '5.8 km', time: 'Demain 9h', client: 'Marc Leroy', address: '8 Rue de la Paix, 75002 Paris', phone: '+33 6 55 44 33 22', desc: 'Entretien préventif sur 2 splits Mitsubishi. Accès facile, client présent.' },
-            myjob1: { title: 'Réparation compresseur', type: 'Réparation', status: 'progress', price: '€180', distance: '0 km', time: 'En cours', client: 'Marie Dupont', address: '15 Rue de Paris, 75001 Paris', phone: '+33 6 11 22 33 44', desc: 'Remplacement compresseur sur groupe froid. Pièces commandées et reçues.', started: '10:45' },
-            myjob2: { title: 'Diagnostic VRV', type: 'Diagnostic', status: 'scheduled', price: '€95', distance: '3.2 km', time: 'Demain 10h', client: 'Jean Martin', address: '22 Bd Haussmann, 75009 Paris', phone: '+33 6 77 88 99 00', desc: 'Système VRV Daikin avec code erreur U4. Prévoir multimètre et manomètres.' }
-        };
-
-        function openConnect() {
-            // DISABLED - Coming soon
-            toast('FixAIR Connect — Disponible prochainement');
-        }
-
-        function closeConnect() {
-            closeConnectDrawer();
-            document.getElementById('connectView').classList.remove('active', 'drawer-open');
-            document.getElementById('navConnect').classList.remove('active');
-            goToHome();
-        }
-
-        function activateConnect() {
-            connectActivated = true;
-            document.getElementById('connectPromo').style.display = 'none';
-            document.getElementById('connectActive').style.display = 'block';
-            document.getElementById('connectEarnings').textContent = '€0';
-            document.getElementById('connectMissions').textContent = '0';
-            document.getElementById('connectRating').textContent = '-';
-            toast('Connect activé !');
-        }
-
-        function openConnectDrawer(type, jobId) {
-            const job = connectJobsData[jobId];
-            if (!job) return;
-            
-            document.getElementById('connectView').classList.add('drawer-open');
-            document.getElementById('connectDrawerTitle').textContent = job.title;
-            document.getElementById('connectDrawerSubtitle').textContent = job.type;
-            
-            let bodyHTML = `
-                <div class="connect-detail-section">
-                    <div class="connect-detail-label">Client</div>
-                    <div class="connect-detail-card">
-                        <div class="connect-detail-row">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            <div class="connect-detail-text">${job.client}</div>
-                        </div>
-                        <div class="connect-detail-row">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                            <div class="connect-detail-text">${job.address}<small>${job.distance}</small></div>
-                        </div>
-                        <div class="connect-detail-row">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                            <div class="connect-detail-text">${job.phone}</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="connect-detail-section">
-                    <div class="connect-detail-label">Description</div>
-                    <div class="connect-detail-card">
-                        <div class="connect-detail-desc">${job.desc}</div>
-                    </div>
-                </div>
-                <div class="connect-detail-section">
-                    <div class="connect-detail-label">Rémunération</div>
-                    <div class="connect-detail-card" style="text-align:center;">
-                        <div class="connect-price-big">${job.price}</div>
-                        <div class="connect-price-note">Estimation selon durée</div>
-                    </div>
-                </div>
-            `;
-            document.getElementById('connectDrawerBody').innerHTML = bodyHTML;
-            
-            const footer = document.getElementById('connectDrawerFooter');
-            if (type === 'myjob') {
-                footer.innerHTML = `
-                    <button class="connect-drawer-btn danger" onclick="closeConnectDrawer()">Annuler mission</button>
-                    <button class="connect-drawer-btn primary" onclick="closeConnectDrawer();toast('Mission terminée!')">Terminer</button>
-                `;
-            } else {
-                footer.innerHTML = `
-                    <button class="connect-drawer-btn secondary" onclick="closeConnectDrawer()">Fermer</button>
-                    <button class="connect-drawer-btn primary" onclick="acceptConnectJob('${jobId}')">Accepter</button>
-                `;
-            }
-        }
-
-        function closeConnectDrawer() {
-            document.getElementById('connectView').classList.remove('drawer-open');
-        }
-
-        function acceptConnectJob(jobId) {
-            closeConnectDrawer();
-            toast('Mission acceptée !');
-            
-            // Update stats
-            const missions = parseInt(document.getElementById('connectMissions').textContent) + 1;
-            document.getElementById('connectMissions').textContent = missions;
-        }
+        // Connect functions removed
 
         // Initialize calendar when page loads
         document.addEventListener('DOMContentLoaded', function() {
@@ -21116,150 +20629,7 @@ RÈGLES:
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════════
-         CONNECT VIEW
-         ═══════════════════════════════════════════════════════════════════════════ -->
-    <div class="connect-view" id="connectView">
-        <div class="connect-content">
-            <div class="connect-header">
-                <button class="connect-header-back" onclick="closeConnect()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-                </button>
-                <div class="connect-header-info">
-                    <div class="connect-header-title">
-                        FixAIR Connect
-                        <span class="connect-online-dot" id="connectOnlineDot"></span>
-                    </div>
-                    <div class="connect-header-sub" id="connectHeaderSub">Missions disponibles</div>
-                </div>
-            </div>
-            <div class="connect-body">
-                <div class="connect-content-inner">
-                    <!-- Promo (when not activated) -->
-                    <div class="connect-promo" id="connectPromo">
-                        <div class="connect-promo-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></svg>
-                        </div>
-                        <div class="connect-promo-title">Gagnez plus avec Connect</div>
-                        <div class="connect-promo-desc">Recevez des missions de dépannage dans votre zone et augmentez vos revenus.</div>
-                        <div class="connect-promo-features">
-                            <div class="connect-promo-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Missions urgentes</div>
-                            <div class="connect-promo-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Paiement garanti</div>
-                            <div class="connect-promo-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Choisissez vos horaires</div>
-                            <div class="connect-promo-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Support 24/7</div>
-                        </div>
-                        <button class="connect-btn-activate" onclick="activateConnect()">
-                            Activer Connect
-                            <span class="connect-btn-badge">GRATUIT</span>
-                        </button>
-                        <div class="connect-promo-note">Aucun engagement • Désactivable à tout moment</div>
-                    </div>
-                    
-                    <!-- Active content (when activated) -->
-                    <div id="connectActive" style="display:none;">
-                        <div class="connect-stats-bar">
-                            <div class="connect-stat-pill highlight">
-                                <div class="connect-stat-val" id="connectEarnings">€0</div>
-                                <div class="connect-stat-lbl">Ce mois</div>
-                            </div>
-                            <div class="connect-stat-pill">
-                                <div class="connect-stat-val" id="connectMissions">0</div>
-                                <div class="connect-stat-lbl">Missions</div>
-                            </div>
-                            <div class="connect-stat-pill">
-                                <div class="connect-stat-val" id="connectRating">-</div>
-                                <div class="connect-stat-lbl">Note</div>
-                            </div>
-                        </div>
-                        
-                        <div class="connect-sec">
-                            <div class="connect-sec-head">
-                                <span class="connect-sec-title">Missions disponibles</span>
-                                <div class="connect-sec-line"></div>
-                                <span class="connect-sec-badge" id="connectAvailCount">3</span>
-                            </div>
-                            <div class="connect-jobs-list" id="connectAvailJobs">
-                                <div class="connect-job-card urgent" onclick="openConnectDrawer('job', 'job1')">
-                                    <span class="connect-job-tag urgent">URGENT</span>
-                                    <div class="connect-job-body">
-                                        <div class="connect-job-name">AC ne refroidit plus</div>
-                                        <div class="connect-job-detail">Climatisation • 2.3 km • ASAP</div>
-                                    </div>
-                                    <div class="connect-job-price">€85-120</div>
-                                    <div class="connect-job-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
-                                </div>
-                                <div class="connect-job-card new" onclick="openConnectDrawer('job', 'job2')">
-                                    <span class="connect-job-tag new">NOUVEAU</span>
-                                    <div class="connect-job-body">
-                                        <div class="connect-job-name">Bruit anormal PAC</div>
-                                        <div class="connect-job-detail">Pompe à chaleur • 4.1 km • Aujourd'hui 14h</div>
-                                    </div>
-                                    <div class="connect-job-price">€120-180</div>
-                                    <div class="connect-job-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
-                                </div>
-                                <div class="connect-job-card scheduled" onclick="openConnectDrawer('job', 'job3')">
-                                    <span class="connect-job-tag scheduled">PLANIFIÉ</span>
-                                    <div class="connect-job-body">
-                                        <div class="connect-job-name">Entretien annuel clim</div>
-                                        <div class="connect-job-detail">Maintenance • 5.8 km • Demain 9h</div>
-                                    </div>
-                                    <div class="connect-job-price">€65-90</div>
-                                    <div class="connect-job-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="connect-sec">
-                            <div class="connect-sec-head">
-                                <span class="connect-sec-title">Mes missions</span>
-                                <div class="connect-sec-line"></div>
-                            </div>
-                            <div class="connect-jobs-list" id="connectMyJobs">
-                                <div class="connect-job-card progress" onclick="openConnectDrawer('myjob', 'myjob1')">
-                                    <span class="connect-job-tag progress">EN COURS</span>
-                                    <div class="connect-job-body">
-                                        <div class="connect-job-name">Réparation compresseur</div>
-                                        <div class="connect-job-detail">Réparation • Démarré 10:45</div>
-                                    </div>
-                                    <div class="connect-job-price">€180</div>
-                                    <div class="connect-job-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
-                                </div>
-                                <div class="connect-job-card scheduled" onclick="openConnectDrawer('myjob', 'myjob2')">
-                                    <span class="connect-job-tag scheduled">PLANIFIÉ</span>
-                                    <div class="connect-job-body">
-                                        <div class="connect-job-name">Diagnostic VRV</div>
-                                        <div class="connect-job-detail">Diagnostic • Demain 10h</div>
-                                    </div>
-                                    <div class="connect-job-price">€95</div>
-                                    <div class="connect-job-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Connect Drawer -->
-        <div class="connect-drawer" id="connectDrawer">
-            <div class="connect-drawer-header">
-                <button class="connect-drawer-close" onclick="closeConnectDrawer()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                </button>
-                <div class="connect-drawer-info">
-                    <div class="connect-drawer-title" id="connectDrawerTitle">Mission</div>
-                    <div class="connect-drawer-subtitle" id="connectDrawerSubtitle">Détails</div>
-                </div>
-            </div>
-            <div class="connect-drawer-body" id="connectDrawerBody">
-                <!-- Dynamic content -->
-            </div>
-            <div class="connect-drawer-footer" id="connectDrawerFooter">
-                <button class="connect-drawer-btn secondary" onclick="closeConnectDrawer()">Fermer</button>
-                <button class="connect-drawer-btn primary" id="connectDrawerAction">Accepter</button>
-            </div>
-        </div>
-    </div>
+    <!-- Connect view removed -->
 
     <!-- EVENT CONTEXT MENU (Right-click on events) -->
     <div class="event-context-menu" id="eventContextMenu">
@@ -21296,18 +20666,15 @@ RÈGLES:
                 <div class="event-field">
                     <div class="event-field-label">Type</div>
                     <div class="event-type-pills">
-                        <div class="event-type-pill active diagnostic" data-type="diagnostic" onclick="selectEventType(this)">
+                        <div class="event-type-pill diagnostic" data-type="diagnostic" onclick="selectEventType(this)">
                             <span class="pill-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span>
                             Diagnostic
                         </div>
-                        <div class="event-type-pill assistant" data-type="assistant" onclick="selectEventType(this)">
+                        <div class="event-type-pill active assistant" data-type="assistant" onclick="selectEventType(this)">
                             <span class="pill-icon"><svg viewBox="0 0 24 24"><use href="#icon-clipboard"/></svg></span>
                             Rapport
                         </div>
-                        <div class="event-type-pill connect" data-type="connect" onclick="selectEventType(this)">
-                            <span class="pill-icon"><svg viewBox="0 0 24 24"><use href="#icon-connect"/></svg></span>
-                            Connect
-                        </div>
+                        <!-- Connect event type removed -->
                         <div class="event-type-pill personal" data-type="personal" onclick="selectEventType(this)">
                             <span class="pill-icon"><svg viewBox="0 0 24 24"><use href="#icon-user"/></svg></span>
                             Personnel
@@ -21388,7 +20755,6 @@ RÈGLES:
                         <select class="event-field-select" id="eventVisibility">
                             <option value="private">Privé (moi uniquement)</option>
                             <option value="company">Entreprise (managers)</option>
-                                             <option value="connect">FixAIR Connect</option>
                         </select>
                     </div>
                 </div>
