@@ -1079,11 +1079,11 @@
             transition: color 0.3s;
             color: rgba(255, 255, 255, 0.9);
         }
-        .toggle-card.copilot:hover .toggle-card-title { color: white; }
+        .toggle-card.diagnostic:hover .toggle-card-title { color: white; }
         .toggle-card.assistant:hover .toggle-card-title { color: white; }
         
         .toggle-card-desc { font-size: 11px; color: var(--text-dim); white-space: nowrap; }
-        .toggle-card-desc .highlight-copilot { color: rgba(255, 107, 53, 0.7); }
+        .toggle-card-desc .highlight-diagnostic { color: rgba(255, 107, 53, 0.7); }
         .toggle-card-desc .highlight-assistant { color: rgba(34, 197, 94, 0.7); }
 
         .toggle-card-arrow { 
@@ -1125,14 +1125,14 @@
         .projects { display: flex; flex-direction: column; gap: 10px; }
         .proj { display: flex; align-items: center; gap: 12px; padding: 14px 14px 14px 18px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; position: relative; overflow: hidden; min-height: 64px; }
         .proj::before { content: ''; position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px; border-radius: 0 2px 2px 0; }
-        .proj.copilot-bar::before { background: var(--accent); }
+        .proj.assistant-bar::before { background: var(--accent); }
         .proj.assistant-bar::before { background: var(--assistant); }
         .proj.both-bar::before { background: linear-gradient(180deg, var(--accent) 0%, var(--assistant) 100%); }
         .proj:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.15); }
         .proj-icons { display: flex; align-items: center; position: relative; width: 36px; height: 36px; flex-shrink: 0; }
         .proj-icons.dual { width: 44px; height: 40px; }
         .proj-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .proj-icon.copilot { background: var(--accent-bg); color: var(--accent); }
+        .proj-icon.diagnostic { background: var(--accent-bg); color: var(--accent); }
         .proj-icon.assistant { background: var(--assistant-bg); color: var(--assistant); }
         .proj-icon .icon { width: 16px; height: 16px; }
         .proj-icon .star-icon { width: 18px; height: 18px; }
@@ -1392,7 +1392,7 @@
         .week-slot { min-height: 115px; background: rgba(255,255,255,0.02); border-radius: 4px; padding: 3px; display: flex; flex-direction: column; gap: 2px; cursor: pointer; }
         .week-slot:hover { background: rgba(255,255,255,0.04); }
         .week-slot-event { font-size: 9px; padding: 3px 5px; border-radius: 0 3px 3px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
-        .week-slot-event.copilot { background: var(--accent-bg); color: var(--accent); border-left: 2px solid var(--accent); }
+        .week-slot-event.diagnostic { background: var(--accent-bg); color: var(--accent); border-left: 2px solid var(--accent); }
         .week-slot-event.assistant { background: var(--assistant-bg); color: var(--assistant); border-left: 2px solid var(--assistant); }
         .week-slot-event.connect { background: var(--connect-bg); color: var(--connect); border-left: 2px solid var(--connect); }
         .week-slot-event.pending { background: rgba(255,255,255,0.04); color: var(--text-dim); border-left: 2px solid var(--text-dim); }
@@ -1590,7 +1590,7 @@
         .event-type-pill .pill-icon { width: 14px; height: 14px; display: flex; align-items: center; justify-content: center; }
         .event-type-pill .pill-icon svg { width: 12px; height: 12px; }
         .event-type-pill:hover { border-color: rgba(255,255,255,0.2); }
-        .event-type-pill.active.copilot { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
+        .event-type-pill.active.diagnostic { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
         .event-type-pill.active.assistant { background: var(--assistant-bg); border-color: var(--assistant); color: var(--assistant); }
         .event-type-pill.active.connect { background: var(--connect-bg); border-color: var(--connect); color: var(--connect); }
         .event-type-pill.active.personal { background: rgba(139,92,246,0.1); border-color: #8b5cf6; color: #8b5cf6; }
@@ -1759,7 +1759,7 @@
             overflow: hidden;
             position: relative;
         }
-        .panel.copilot { --mode-color: var(--accent); --mode-glow: var(--accent-glow); --mode-bg: var(--accent-bg); --mode-border: var(--accent-border); }
+        /* diagnostic panel style removed */
         .panel.assistant { --mode-color: var(--assistant); --mode-glow: var(--assistant-glow); --mode-bg: var(--assistant-bg); --mode-border: var(--assistant-border); }
 
         .panel-header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; padding-top: max(10px, env(safe-area-inset-top)); flex-shrink: 0; border-bottom: 1px solid var(--border); background: var(--bg-secondary); }
@@ -1871,8 +1871,7 @@
         .mode-btn .mode-icon.star-icon svg { fill: currentColor; stroke: none; }
         .mode-btn .mode-icon.clip-icon svg { fill: none; stroke: currentColor; stroke-width: 1.5; }
         
-        .mode-btn.copilot.active { background: var(--accent-bg); color: var(--accent); }
-        .mode-btn.copilot.active .mode-icon { opacity: 1; color: var(--accent); }
+        /* mode toggle button removed */
         .mode-btn.assistant.active { background: var(--assistant-bg); color: var(--assistant); }
         .mode-btn.assistant.active .mode-icon { opacity: 1; color: var(--assistant); }
 
@@ -1884,7 +1883,7 @@
         .h-btn .icon svg { width: 100%; height: 100%; stroke: currentColor; }
         
         /* Report button in header - same style as other buttons */
-        .header-actions .h-btn.report-btn { display: none; } /* Hidden by default (Copilot) */
+        .header-actions .h-btn.report-btn { display: none; }
         .panel.assistant .header-actions .h-btn.report-btn { display: flex; } /* Visible in Assistant */
 
         .chat-body { 
@@ -2387,7 +2386,7 @@
         .plus-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
         .plus-btn .icon { width: 16px; height: 16px; }
         /* Plus icon color matches mode */
-        .panel.copilot .plus-btn .icon { color: var(--accent); }
+        /* panel plus-btn style removed */
         .panel.assistant .plus-btn .icon { color: var(--assistant); }
         
         /* Attach menu - positioned above input row */
@@ -2411,13 +2410,13 @@
         .input-row.recording .voice-waveform { opacity: 1; }
         .wave-bars { flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 2px; height: 100%; padding: 0; overflow: hidden; }
         .wave-bar { width: 3px; min-width: 3px; height: 3px; border-radius: 2px; flex-shrink: 0; }
-        .voice-waveform.copilot .wave-bar { background: var(--accent); }
+        /* voice-waveform style removed */
         .voice-waveform.assistant .wave-bar { background: var(--assistant); }
         .voice-timer { font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text); min-width: 36px; text-align: right; opacity: 0.7; padding-right: 4px; background: linear-gradient(to right, transparent, var(--card) 20%); padding-left: 12px; }
         
         /* Dynamic action button (mic/send/stop) */
         .action-btn { width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; flex-shrink: 0; z-index: 2; position: relative; }
-        .action-btn.copilot { background: linear-gradient(135deg, var(--accent), #E55A2B); color: white; }
+        /* action-btn style removed */
         .action-btn.assistant { background: linear-gradient(135deg, var(--assistant), #16a34a); color: white; }
         .action-btn:hover { transform: scale(1.05); }
         .action-btn:active { transform: scale(0.95); }
@@ -4146,10 +4145,10 @@
         .step-divider { width: 1px; height: 16px; background: rgba(255,255,255,0.1); }
         .step-tool { display: flex; align-items: center; gap: 6px; }
         .step-tool-icon { width: 16px; height: 16px; }
-        .step-tool-icon.copilot { color: var(--accent); }
+        .step-tool-icon.diagnostic { color: var(--accent); }
         .step-tool-icon.assistant { color: var(--assistant); }
         .step-tool-name { font-size: 11px; font-weight: 600; }
-        .step-tool-name.copilot { color: var(--accent); }
+        .step-tool-name.diagnostic { color: var(--accent); }
         .step-tool-name.assistant { color: var(--assistant); }
         .step-arrow { width: 16px; height: 16px; color: rgba(255,255,255,0.3); flex-shrink: 0; }
         .brand-select-inline { display: none; flex-direction: column; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
@@ -5927,11 +5926,11 @@
                             <div class="onboarding-step locked" id="step3" onclick="handleStep3Click()">
                                 <div class="step-check pending" id="step3Check"></div>
                                 <div class="step-content">
-                                    <span class="step-title">Essayer le Copilot</span>
+                                    <span class="step-title">Essayer l'Assistant</span>
                                     <div class="step-divider"></div>
                                     <div class="step-tool">
-                                        <svg class="step-tool-icon copilot" viewBox="0 0 200 200" fill="currentColor"><use href="#icon-star"/></svg>
-                                        <span class="step-tool-name copilot">Copilot</span>
+                                        <svg class="step-tool-icon diagnostic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#icon-clipboard"/></svg>
+                                        <span class="step-tool-name diagnostic">Assistant</span>
                                     </div>
                                 </div>
                                 <svg class="step-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
@@ -6016,11 +6015,11 @@
 
                 <!-- TOGGLE CARDS -->
                 <div class="modules-toggle">
-                    <div class="toggle-card copilot" onclick="openChat('copilot')">
+                    <div class="toggle-card diagnostic" onclick="openChat('assistant')">
                         <div class="toggle-card-icon"><span class="star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span></div>
                         <div class="toggle-card-content">
                             <div class="toggle-card-title">Diagnostic</div>
-                            <div class="toggle-card-desc">avec <span class="highlight-copilot">Copilot</span></div>
+                            <div class="toggle-card-desc">avec <span class="highlight-diagnostic">Assistant</span></div>
                         </div>
                         <svg class="toggle-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
                     </div>
@@ -6254,118 +6253,10 @@
 
     <!-- CHAT VIEW (FULL WIDTH) -->
     <div class="chat-view single" id="chatView">
-        <div class="panel copilot" id="panelCopilot" style="flex-basis:50%;">
-            <header class="panel-header">
-                <button class="panel-back" onclick="closeChat(); goToHome()"><span class="icon"><svg><use href="#icon-arrow-left"/></svg></span></button>
-                <div class="panel-info">
-                    <div class="panel-title">FixAIR Copilot</div>
-                    <div class="panel-separator"></div>
-                    <div class="panel-brand-wrapper" id="copilotBrandWrapper">
-                        <div class="panel-brand-btn" onclick="toggleChatBrandDropdown('copilot')">
-                            <span class="panel-brand-text" id="copilotSub">Mitsubishi</span>
-                            <svg class="brand-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                        </div>
-                        <div class="panel-brand-dropdown" id="copilotBrandDropdown">
-                            <div class="panel-brand-option" data-brand="mitsubishi" onclick="changeChatBrand('mitsubishi', 'copilot')">
-                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                                <span>Mitsubishi</span>
-                            </div>
-                            <div class="panel-brand-option" data-brand="daikin" onclick="changeChatBrand('daikin', 'copilot')">
-                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                                <span>Daikin</span>
-                            </div>
-                            <div class="panel-brand-option" data-brand="carrier" onclick="changeChatBrand('carrier', 'copilot')">
-                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                                <span>Carrier</span>
-                            </div>
-                            <div class="panel-brand-option" data-brand="lg" onclick="changeChatBrand('lg', 'copilot')">
-                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                                <span>LG</span>
-                            </div>
-                            <div class="panel-brand-option" data-brand="samsung" onclick="changeChatBrand('samsung', 'copilot')">
-                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                                <span>Samsung</span>
-                            </div>
-                            <div class="panel-brand-option" data-brand="panasonic" onclick="changeChatBrand('panasonic', 'copilot')">
-                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                                <span>Panasonic</span>
-                            </div>
-                            <div class="panel-brand-option" data-brand="toshiba" onclick="changeChatBrand('toshiba', 'copilot')">
-                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                                <span>Toshiba</span>
-                            </div>
-                            <div class="panel-brand-option" data-brand="fujitsu" onclick="changeChatBrand('fujitsu', 'copilot')">
-                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                                <span>Fujitsu</span>
-                            </div>
-                            <div class="panel-brand-option" data-brand="hitachi" onclick="changeChatBrand('hitachi', 'copilot')">
-                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                                <span>Hitachi</span>
-                            </div>
-                            <div class="panel-brand-option" data-brand="general" onclick="changeChatBrand('general', 'copilot')">
-                                <svg class="brand-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                                <span>Multi-marques</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="panel-separator panel-project-sep" id="copilotProjectSep" style="display:none;"></div>
-                    <div class="panel-project" id="copilotProjectName" style="display:none;"></div>
-                </div>
-                <div class="mode-toggle">
-                    <div class="mode-btn copilot active" onclick="switchMode('copilot')">
-                        <span class="mode-icon star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span>
-                        <span>Copilot</span>
-                    </div>
-                    <div class="mode-btn assistant" onclick="switchMode('assistant')">
-                        <span class="mode-icon clip-icon"><svg><use href="#icon-clipboard"/></svg></span>
-                        <span>Assistant</span>
-                    </div>
-                </div>
-                <div class="header-actions">
-                    <button class="h-btn new-chat-btn" onclick="startNewProject()" title="Nouveau chat"><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button>
-                    <button class="h-btn" onclick="toggleSplit()" title="Mode split"><span class="icon"><svg><use href="#icon-columns"/></svg></span></button>
-                </div>
-            </header>
-            <div class="chat-body" id="copilotBody"></div>
-            <button class="scroll-bottom-btn" id="scrollBtnCopilot" onclick="scrollToBottom('copilot')">
-                <span class="icon"><svg><use href="#icon-arrow-left"/></svg></span>
-            </button>
-            <div class="chat-input">
-                <div class="attach-menu" id="attachCopilot">
-                    <div class="attach-opt" onclick="attachAction('camera','copilot')"><span class="icon"><svg><use href="#icon-camera"/></svg></span>Photo / Scan</div>
-                    <div class="attach-opt" onclick="attachAction('file','copilot')"><span class="icon"><svg><use href="#icon-paperclip"/></svg></span>Importer</div>
-                </div>
-                <div class="input-row" id="copilotInputRow">
-                    <button class="plus-btn" onclick="toggleAttach('copilot')"><span class="icon"><svg><use href="#icon-plus"/></svg></span></button>
-                    <div class="input-area">
-                        <textarea class="input-text" id="copilotInput" placeholder="Posez votre question..." rows="1" oninput="handleChatInput('copilot')" onkeydown="handleKeydown(event,'copilot')"></textarea>
-                        <div class="voice-waveform copilot" id="copilotWaveform">
-                            <div class="wave-bars" id="copilotBars"></div>
-                            <div class="voice-timer" id="copilotTimer">0:00</div>
-                        </div>
-                    </div>
-                    <button class="action-btn copilot" id="copilotActionBtn" onclick="handleAction('copilot')">
-                        <div class="icon-wrap">
-                            <span class="btn-icon mic-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></span>
-                            <span class="btn-icon send-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></span>
-                            <span class="btn-icon stop-icon"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></span>
-                        </div>
-                    </button>
-                    <!-- Transcription Sphere -->
-                    <div class="transcription-sphere" id="copilotTranscriptionSphere">
-                        <div class="sphere-fog-wrap">
-                            <div class="sphere-fog-transcribe"></div>
-                            <div class="sphere-fog-transcribe-2"></div>
-                        </div>
-                        <div class="sphere-highlight"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <div class="divider" id="divider" style="display:none;"><div class="divider-grip"><span></span><span></span><span></span></div></div>
 
-        <div class="panel assistant" id="panelAssistant" style="display:none;flex-basis:50%;">
+        <div class="panel assistant" id="panelAssistant" style="flex-basis:50%;">
             <header class="panel-header">
                 <button class="panel-back" onclick="closeChat(); goToHome()"><span class="icon"><svg><use href="#icon-arrow-left"/></svg></span></button>
                 <div class="panel-info">
@@ -6422,16 +6313,7 @@
                     <div class="panel-separator panel-project-sep" id="assistantProjectSep" style="display:none;"></div>
                     <div class="panel-project" id="assistantProjectName" style="display:none;"></div>
                 </div>
-                <div class="mode-toggle">
-                    <div class="mode-btn copilot" onclick="switchMode('copilot')">
-                        <span class="mode-icon star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span>
-                        <span>Copilot</span>
-                    </div>
-                    <div class="mode-btn assistant active" onclick="switchMode('assistant')">
-                        <span class="mode-icon clip-icon"><svg><use href="#icon-clipboard"/></svg></span>
-                        <span>Assistant</span>
-                    </div>
-                </div>
+                <!-- Mode toggle removed - only assistant panel remains -->
                 <div class="header-actions">
                     <button class="h-btn new-chat-btn" onclick="startNewProject()" title="Nouveau chat"><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button>
                     <button class="h-btn report-btn" onclick="openReport()" title="Voir rapport"><span class="icon"><svg><use href="#icon-checklist"/></svg></span></button>
@@ -6730,13 +6612,13 @@
         });
         
         let brand = 'mitsubishi';
-        let mode = 'copilot';
+        let mode = 'assistant';
         let isSplit = false;
         let isConnected = false;
         let isConnecting = false;
         let isDisconnecting = false;
         let chatOpen = false;
-        let currentPhotoPanel = 'copilot';
+        let currentPhotoPanel = 'assistant';
         let currentPage = 'home';
         
         // Theme and Language
@@ -6785,7 +6667,7 @@
                 'home.greeting': 'Bonjour',
                 'home.progress': 'Progression du jour',
                 'home.choose_assistant': 'Choisissez votre assistant',
-                'home.copilot_desc': 'Questions techniques et conseils',
+                'home.diagnostic_desc': 'Questions techniques et conseils',
                 'home.assistant_desc': 'Diagnostic et résolution',
                 // Onboarding
                 'onboarding.step1_title': 'Choisissez votre marque',
@@ -6793,14 +6675,13 @@
                 'onboarding.step2_title': 'Bienvenue sur FixAIR !',
                 'onboarding.step2_desc': 'Votre assistant IA pour techniciens HVAC',
                 'onboarding.step3_title': 'Posez votre première question',
-                'onboarding.step3_desc': 'Essayez le Copilot avec une question technique',
+                'onboarding.step3_desc': 'Essayez l\'Assistant avec une question technique',
                 'onboarding.step4_title': 'Découvrez l\'Assistant',
                 'onboarding.step4_desc': 'Pour un diagnostic approfondi',
                 'onboarding.complete': 'Terminé',
                 'onboarding.continue': 'Continuer',
                 // Chat
                 'chat.input_placeholder': 'Posez votre question...',
-                'chat.copilot_title': 'FixAIR Copilot',
                 'chat.assistant_title': 'FixAIR Assistant',
                 // Auth - Errors
                 'errors.invalidEmail': 'Veuillez entrer un email valide',
@@ -6869,7 +6750,7 @@
                 'home.greeting': 'Hello',
                 'home.progress': 'Daily Progress',
                 'home.choose_assistant': 'Choose your assistant',
-                'home.copilot_desc': 'Technical questions and advice',
+                'home.diagnostic_desc': 'Technical questions and advice',
                 'home.assistant_desc': 'Diagnosis and resolution',
                 // Onboarding
                 'onboarding.step1_title': 'Choose your brand',
@@ -6877,14 +6758,13 @@
                 'onboarding.step2_title': 'Welcome to FixAIR!',
                 'onboarding.step2_desc': 'Your AI assistant for HVAC technicians',
                 'onboarding.step3_title': 'Ask your first question',
-                'onboarding.step3_desc': 'Try the Copilot with a technical question',
+                'onboarding.step3_desc': 'Try the Assistant with a technical question',
                 'onboarding.step4_title': 'Discover the Assistant',
                 'onboarding.step4_desc': 'For in-depth diagnostics',
                 'onboarding.complete': 'Complete',
                 'onboarding.continue': 'Continue',
                 // Chat
                 'chat.input_placeholder': 'Ask your question...',
-                'chat.copilot_title': 'FixAIR Copilot',
                 'chat.assistant_title': 'FixAIR Assistant',
                 // Auth - Errors
                 'errors.invalidEmail': 'Please enter a valid email',
@@ -7066,7 +6946,7 @@
 
         // Track when user types their own question
         function setupChatInputTracking() {
-            const chatInput = document.getElementById('copilotInput');
+            const chatInput = document.getElementById('assistantInput');
             if (chatInput) {
                 chatInput.addEventListener('input', function(e) {
                     if (e.inputType) {
@@ -7089,7 +6969,7 @@
 
         // Update example when brand changes (if user hasn't typed)
         function onBrandChangeUpdateExample(newBrand) {
-            const chatInput = document.getElementById('copilotInput');
+            const chatInput = document.getElementById('assistantInput');
             if (!chatInput) return;
 
             const userHasTyped = chatInput.dataset.userTyped === 'true';
@@ -7872,7 +7752,6 @@
         // URL Structure:
         // /technician                                    → Login prompt
         // /technician/?user=[userId]                     → Dashboard (home)
-        // /technician/?user=[userId]&page=copilot        → Copilot AI
         // /technician/?user=[userId]&page=assistant      → Assistant/Reports
         // /technician/?user=[userId]&page=hotline        → Hotline voice
         // /technician/?user=[userId]&page=profile        → User profile
@@ -7891,7 +7770,7 @@
                     page: params.get('page') || 'home',
                     projectId: params.get('project') || params.get('id'),
                     chatId: params.get('chat'),
-                    mode: params.get('mode') // copilot or assistant
+                    mode: params.get('mode') // assistant
                 };
             },
 
@@ -7959,14 +7838,6 @@
                             loadProject(options.projectId);
                         } else {
                             showPage('projects');
-                        }
-                        break;
-
-                    case 'copilot':
-                        showPage('home');
-                        // Start fresh copilot chat
-                        if (typeof switchMode === 'function') {
-                            switchMode('copilot');
                         }
                         break;
 
@@ -8810,9 +8681,8 @@
             // Update header pill with green dot only
             document.getElementById('brandText').textContent = names[b];
             document.getElementById('brandPill').classList.add('has-brand');
-            document.getElementById('copilotSub').textContent = names[b];
             document.getElementById('assistantSub').textContent = names[b];
-            
+
             // Update dropdown - only selected shows green dot
             document.querySelectorAll('.brand-dropdown-item[data-b]').forEach(o => {
                 o.classList.remove('selected', 'onboard-selected');
@@ -8826,7 +8696,7 @@
             }
             // ═══ END FIX ═══
 
-            // ═══ Update Copilot example when brand changes ═══
+            // ═══ Update example when brand changes ═══
             onBrandChangeUpdateExample(b);
 
             setTimeout(() => completeBrandStep(), 300);
@@ -8877,10 +8747,10 @@
             // Accessible after brand selection (step 2) or if step4 already done
             if (onboardingStep < 3 && !step4Done) return;
 
-            console.log('Onboarding: Starting Copilot experience');
+            console.log('Onboarding: Starting Assistant experience');
 
-            // Open Copilot with prefilled example question
-            openChat('copilot');
+            // Open Assistant with prefilled example question
+            openChat('assistant');
 
             // Get user's selected brand
             const selectedBrand = onboardingBrand || brand || 'mitsubishi';
@@ -8888,7 +8758,7 @@
 
             // Prefill with brand-specific visual-requesting question
             setTimeout(() => {
-                const input = document.getElementById('copilotInput');
+                const input = document.getElementById('assistantInput');
                 if (input) {
                     input.value = example.input;
                     input.placeholder = example.placeholder;
@@ -9170,7 +9040,7 @@
         }
 
         function updateOnboardingProgress() {
-            // Count completed steps: step1 (profile), step2 (brand), step3 (copilot), step4 (assistant)
+            // Count completed steps: step1 (profile), step2 (brand), step3 (diagnostic), step4 (assistant)
             let completed = 0;
             if (onboardingStep >= 2) completed = 1; // Profile done
             if (onboardingStep >= 3) completed = 2; // Brand done
@@ -9248,7 +9118,6 @@
         function setBrand(b) {
             brand = b;
             document.getElementById('brandText').textContent = names[b];
-            document.getElementById('copilotSub').textContent = names[b];
             document.getElementById('assistantSub').textContent = names[b];
             document.querySelectorAll('.brand-dropdown-item[data-b]').forEach(o => o.classList.toggle('selected', o.dataset.b === b));
             document.querySelectorAll('.brand-chip').forEach(c => c.classList.toggle('active', c.dataset.b === b));
@@ -9277,20 +9146,16 @@
             };
             const brandName = brandNames[brand] || brand;
             
-            // Update context for both panels
-            ['assistant', 'copilot'].forEach(panel => {
-                const brandContext = panel === 'assistant' 
-                    ? `[CONTEXTE MARQUE] Cette intervention concerne un système ${brandName}. Tu connais déjà la marque = ${brandName}. NE DEMANDE JAMAIS la marque. Premier message: "Salut ! Tu travailles sur un système ${brandName}. C'est quoi aujourd'hui ? 1. Dépannage 2. Mise en service 3. Maintenance 4. Installation"`
-                    : `[CONTEXTE MARQUE] Ce diagnostic concerne un système ${brandName}. Tu connais déjà la marque = ${brandName}. NE DEMANDE JAMAIS la marque. Utilise la base de connaissances ${brandName}. Premier message: "Salut ! Tu travailles sur un système ${brandName}. Comment puis-je t'aider ?"`;
-                
-                // Find and update or add system message
-                const systemMsgIndex = chatHistory[panel].findIndex(m => m.role === 'system');
-                if (systemMsgIndex >= 0) {
-                    chatHistory[panel][systemMsgIndex].content = brandContext;
-                } else if (chatHistory[panel].length === 0) {
-                    chatHistory[panel].push({ role: 'system', content: brandContext });
-                }
-            });
+            // Update context for assistant panel
+            const brandContext = `[CONTEXTE MARQUE] Cette intervention concerne un système ${brandName}. Tu connais déjà la marque = ${brandName}. NE DEMANDE JAMAIS la marque. Premier message: "Salut ! Tu travailles sur un système ${brandName}. C'est quoi aujourd'hui ? 1. Dépannage 2. Mise en service 3. Maintenance 4. Installation"`;
+
+            // Find and update or add system message
+            const systemMsgIndex = chatHistory.assistant.findIndex(m => m.role === 'system');
+            if (systemMsgIndex >= 0) {
+                chatHistory.assistant[systemMsgIndex].content = brandContext;
+            } else if (chatHistory.assistant.length === 0) {
+                chatHistory.assistant.push({ role: 'system', content: brandContext });
+            }
         }
 
         // ═══════════════════════════════════════════════════════════════
@@ -9318,7 +9183,6 @@
         
         // Close all chat brand dropdowns
         function closeChatBrandDropdowns() {
-            document.getElementById('copilotBrandWrapper')?.classList.remove('open');
             document.getElementById('assistantBrandWrapper')?.classList.remove('open');
             document.removeEventListener('click', closeChatBrandDropdownsOnClick);
         }
@@ -9369,7 +9233,6 @@
             brand = newBrand;
             
             // Update UI everywhere
-            document.getElementById('copilotSub').textContent = newBrandName;
             document.getElementById('assistantSub').textContent = newBrandName;
             document.getElementById('brandText').textContent = newBrandName;
             
@@ -9384,8 +9247,8 @@
             // Update chat history with new brand context
             updateBrandContextInHistory();
 
-            // Update Copilot example if on copilot panel
-            if (panel === 'copilot') {
+            // Update example on brand change
+            if (panel === 'assistant') {
                 onBrandChangeUpdateExample(newBrand);
             }
 
@@ -9444,12 +9307,9 @@
             cv.classList.remove('split');
             cv.classList.add('single');
             isSplit = false;
-            document.getElementById('panelCopilot').style.flexBasis = '';
             document.getElementById('panelAssistant').style.flexBasis = '';
-            document.getElementById('panelCopilot').style.display = m === 'copilot' ? 'flex' : 'none';
-            document.getElementById('panelAssistant').style.display = m === 'assistant' ? 'flex' : 'none';
+            document.getElementById('panelAssistant').style.display = 'flex';
             document.getElementById('divider').style.display = 'none';
-            updateModeToggle(m);
             
             // ═══ FIX: Handle project state based on whether we're opening from an existing project ═══
             const isFromProject = openingFromProject;
@@ -9461,7 +9321,7 @@
             } else {
                 // Starting fresh chat - reset everything
                 currentProjectId = null;
-                currentChatId = { assistant: null, copilot: null };
+                currentChatId = { assistant: null };
                 currentProjectTitle = null;
                 projectMessageCount = 0;
                 lastReportData = null;  // FIX-D: Reset report data for new project
@@ -9483,48 +9343,33 @@
                 const brandName = brandNames[brand] || brand;
                 
                 // Create brand context message for the AI
-                const brandContext = m === 'assistant' 
-                    ? `[CONTEXTE - NOUVELLE CONVERSATION]
+                const brandContext = `[CONTEXTE - NOUVELLE CONVERSATION]
 MARQUE: ${brandName}
-MODE: Assistant Rapport
+MODE: Assistant
 INSTRUCTIONS STRICTES:
 - Tu connais DÉJÀ la marque = ${brandName}
 - NE DEMANDE JAMAIS la marque, elle est confirmée
 - Demande le type d'intervention: Dépannage, Mise en service, Maintenance, ou Installation
 - Ensuite pose les questions nécessaires pour générer un rapport professionnel
-Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. C'est quoi aujourd'hui ? 1. Dépannage 2. Mise en service 3. Maintenance 4. Installation"`
-                    : `[CONTEXTE - NOUVELLE CONVERSATION]
-MARQUE: ${brandName}
-MODE: Copilot Diagnostic
-INSTRUCTIONS STRICTES:
-- Tu connais DÉJÀ la marque = ${brandName}
-- NE DEMANDE JAMAIS la marque, elle est confirmée
-- Utilise la base de connaissances ${brandName} pour les codes erreur
-- Aide au diagnostic avec des questions ciblées
-Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. Quel est le problème ou code erreur ?"`;
-                
+Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. C'est quoi aujourd'hui ? 1. Dépannage 2. Mise en service 3. Maintenance 4. Installation"`;
+
                 chatHistory.assistant = [];
-                chatHistory.copilot = [];
-                
+
                 // Add brand context as first system message
-                chatHistory[m].push({ 
+                chatHistory[m].push({
                     role: 'system',
                     content: brandContext
                 });
                 // ═══ END FIX ═══
-                
+
                 updateChatHeader();
-                
+
                 // Clear body for fresh start (preserve TP containers)
-                clearChatBody('copilot');
                 clearChatBody('assistant');
-                
+
                 // Show welcome message
-                const wel = {
-                    copilot: `Bonjour ! <strong style="color:var(--accent)">FixAIR Copilot</strong> prêt pour <strong>${brandName}</strong>. Comment puis-je vous aider ?`,
-                    assistant: `<strong style="color:var(--assistant)">FixAIR Assistant</strong> prêt pour <strong>${brandName}</strong>. Décrivez l'intervention et je génère le rapport.`
-                };
-                addMsg(m, 'ai', wel[m]);
+                const wel = `<strong style="color:var(--assistant)">FixAIR Assistant</strong> prêt pour <strong>${brandName}</strong>. Décrivez l'intervention et je génère le rapport.`;
+                addMsg(m, 'ai', wel);
             }
             // ═══ END FIX ═══
             
@@ -9547,11 +9392,10 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             
             // Check onboarding completion - works regardless of order
             if (!onboardingComplete) {
-                const copilotHasUserMsg = document.querySelectorAll('#copilotBody .msg.user').length > 0;
                 const assistantHasUserMsg = document.querySelectorAll('#assistantBody .msg.user').length > 0;
-                
-                // Check Copilot step (step 3) if user sent message in Copilot
-                if (copilotHasUserMsg && !step3Done) {
+
+                // Check step 3 if user sent message in Assistant
+                if (assistantHasUserMsg && !step3Done) {
                     step3Done = true;
                     completeStep(3);
                     // If step 4 not done, make it active
@@ -9563,7 +9407,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                     }
                     updateOnboardingProgress();
                 }
-                
+
                 // Check Assistant step (step 4) if user sent message in Assistant
                 if (assistantHasUserMsg && !step4Done) {
                     step4Done = true;
@@ -9577,7 +9421,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
                     }
                     updateOnboardingProgress();
                 }
-                
+
                 // If both done, show congrats
                 if (step3Done && step4Done && !onboardingComplete) {
                     onboardingStep = 5;
@@ -9588,24 +9432,14 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
         }
 
         function updateModeToggle(activeMode) {
-            const copilotPanel = document.getElementById('panelCopilot');
-            copilotPanel.querySelectorAll('.mode-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.classList.contains(activeMode)) btn.classList.add('active');
-            });
-            const assistantPanel = document.getElementById('panelAssistant');
-            assistantPanel.querySelectorAll('.mode-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.classList.contains(activeMode)) btn.classList.add('active');
-            });
+            // Mode toggle removed - only assistant panel remains
         }
 
         async function switchMode(m) {
             if(isSplit) return;
-            mode = m;
-            document.getElementById('panelCopilot').style.display = m === 'copilot' ? 'flex' : 'none';
-            document.getElementById('panelAssistant').style.display = m === 'assistant' ? 'flex' : 'none';
-            updateModeToggle(m);
+            mode = 'assistant';
+            m = 'assistant';
+            document.getElementById('panelAssistant').style.display = 'flex';
             
             // ═══ SUPABASE: Load or create chat for this mode ═══
             if (currentProjectId && !currentChatId[m]) {
@@ -9727,57 +9561,19 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             
             const body = document.getElementById(m + 'Body');
             if(!body.innerHTML) {
-                const wel = m === 'copilot' 
-                    ? `Bonjour ! <strong style="color:var(--accent)">FixAIR Copilot</strong> prêt pour <strong>${names[brand]}</strong>.`
-                    : `<strong style="color:var(--assistant)">FixAIR Assistant</strong> prêt.`;
+                const wel = `<strong style="color:var(--assistant)">FixAIR Assistant</strong> prêt.`;
                 addMsg(m, 'ai', wel);
             }
         }
 
         function toggleSplit() {
+            // Split view removed - only assistant panel
             const cv = document.getElementById('chatView');
-            const div = document.getElementById('divider');
-            isSplit = !isSplit;
-            
-            // Update viewport and use full visible height
-            if (typeof setViewportHeight === 'function') setViewportHeight();
-            const visibleHeight = typeof getVisibleHeight === 'function' ? getVisibleHeight() : window.innerHeight;
-            cv.style.height = `${visibleHeight}px`;
-            
-            if(isSplit) {
-                cv.classList.remove('single');
-                cv.classList.add('split');
-                document.getElementById('panelCopilot').style.flexBasis = '50%';
-                document.getElementById('panelAssistant').style.flexBasis = '50%';
-                document.getElementById('panelCopilot').style.display = 'flex';
-                document.getElementById('panelAssistant').style.display = 'flex';
-                div.style.display = 'flex';
-                document.querySelectorAll('.h-btn[title="Mode split"]').forEach(b => b.classList.add('active'));
-                
-                const copilotPanel = document.getElementById('panelCopilot');
-                copilotPanel.querySelectorAll('.mode-btn').forEach(btn => {
-                    btn.classList.toggle('active', btn.classList.contains('copilot'));
-                });
-                const assistantPanel = document.getElementById('panelAssistant');
-                assistantPanel.querySelectorAll('.mode-btn').forEach(btn => {
-                    btn.classList.toggle('active', btn.classList.contains('assistant'));
-                });
-                
-                if(!document.getElementById('assistantBody').innerHTML) 
-                    addMsg('assistant', 'ai', `<strong style="color:var(--assistant)">FixAIR Assistant</strong> prêt.`);
-                if(!document.getElementById('copilotBody').innerHTML) 
-                    addMsg('copilot', 'ai', `<strong style="color:var(--accent)">FixAIR Copilot</strong> prêt.`);
-            } else {
-                cv.classList.remove('split');
-                cv.classList.add('single');
-                document.getElementById('panelCopilot').style.flexBasis = '';
-                document.getElementById('panelAssistant').style.flexBasis = '';
-                document.getElementById('panelCopilot').style.display = mode === 'copilot' ? 'flex' : 'none';
-                document.getElementById('panelAssistant').style.display = mode === 'assistant' ? 'flex' : 'none';
-                div.style.display = 'none';
-                document.querySelectorAll('.h-btn[title="Mode split"]').forEach(b => b.classList.remove('active'));
-                updateModeToggle(mode);
-            }
+            cv.classList.remove('split');
+            cv.classList.add('single');
+            isSplit = false;
+            document.getElementById('panelAssistant').style.display = 'flex';
+            document.getElementById('divider').style.display = 'none';
         }
 
         function openReport() {
@@ -9825,8 +9621,8 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             );
             
             msg.className = 'msg ' + type + (isReport ? ' report' : '');
-            const modeName = panel === 'copilot' ? 'Copilot' : 'Assistant';
-            const modeIcon = panel === 'copilot' ? '#icon-star' : '#icon-clipboard';
+            const modeName = 'Assistant';
+            const modeIcon = '#icon-clipboard';
             
             if(type === 'user') {
                 msg.innerHTML = `<div class="msg-bubble">${content}</div>`;
@@ -9947,7 +9743,6 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
         // n8n Webhook URL
         // n8n Webhook URL - DEV VERSION
         const WEBHOOKS = {
-            'copilot': 'https://cherhabil.app.n8n.cloud/webhook/fixair-copilot',
             'assistant': 'https://cherhabil.app.n8n.cloud/webhook/fixair-assistant-dev'  // DEV
         };
         const EXTRACTION_WEBHOOK = 'https://cherhabil.app.n8n.cloud/webhook/fixair-extraction-dev';  // DEV
@@ -9959,19 +9754,16 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
         // Session IDs will be set based on project when a project is opened
         // This ensures memory persists across page reloads for the same project
         let sessionIds = {
-            copilot: null,
             assistant: null
         };
-        
+
         // Function to update session IDs when project changes
         function updateSessionIds(projectId) {
             if (projectId) {
-                sessionIds.copilot = 'copilot-' + projectId;
                 sessionIds.assistant = 'assistant-' + projectId;
             } else {
                 // Fallback for no project (should not happen normally)
                 const tempId = Date.now().toString();
-                sessionIds.copilot = 'copilot-temp-' + tempId;
                 sessionIds.assistant = 'assistant-temp-' + tempId;
             }
         }
@@ -9984,8 +9776,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
         let currentUserId = null;
         let currentProjectId = null;
         let currentChatId = {
-            assistant: null,
-            copilot: null
+            assistant: null
         };
         let projectMessageCount = 0;
         
@@ -10123,7 +9914,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
             const { data: messages } = await db
                 .from('messages')
                 .select('content, role')
-                .eq('chat_id', currentChatId.assistant || currentChatId.copilot)
+                .eq('chat_id', currentChatId.assistant)
                 .order('created_at', { ascending: true })
                 .limit(3);
             
@@ -10231,26 +10022,26 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
         // Generate project card HTML
         function generateProjectCardHtml(project, includeContextMenu = true) {
             const hasAssistant = project.chats?.some(c => c.chat_type === 'assistant');
-            const hasCopilot = project.chats?.some(c => c.chat_type === 'copilot');
-            const hasBoth = hasAssistant && hasCopilot;
-            
+            const hasDiagnostic = project.chats?.some(c => c.chat_type === 'diagnostic');
+            const hasBoth = hasAssistant && hasDiagnostic;
+
             const timeAgo = formatTimeAgo(new Date(project.updated_at));
-            
+
             // Status bar class
-            let barClass = 'copilot-bar';
+            let barClass = 'assistant-bar';
             if (hasBoth) barClass = 'both-bar';
             else if (hasAssistant) barClass = 'assistant-bar';
-            
+
             let iconHtml = '';
             if (hasBoth) {
                 iconHtml = `<div class="proj-icons dual">
-                    <div class="proj-icon copilot back"><span class="star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span></div>
+                    <div class="proj-icon diagnostic back"><span class="star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span></div>
                     <div class="proj-icon assistant front"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>
                 </div>`;
             } else if (hasAssistant) {
                 iconHtml = `<div class="proj-icon assistant"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>`;
             } else {
-                iconHtml = `<div class="proj-icon copilot"><span class="star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span></div>`;
+                iconHtml = `<div class="proj-icon assistant"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>`;
             }
             
             const brandLabel = project.brand ? project.brand.charAt(0).toUpperCase() + project.brand.slice(1) : '';
@@ -10513,7 +10304,7 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
             openingFromProject = true;
             currentProjectId = projectId;
             updateSessionIds(projectId); // Update session IDs for n8n memory
-            currentChatId = { assistant: null, copilot: null };
+            currentChatId = { assistant: null };
             projectMessageCount = 0;
 
             // Update URL with project ID (only if not already on this project URL)
@@ -10527,7 +10318,7 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
             }
             
             // First, check what chats exist for this project to determine mode
-            let initialMode = mode || 'copilot';
+            let initialMode = mode || 'assistant';
             try {
                 const { data: projectChats } = await db
                     .from('chats')
@@ -10538,14 +10329,8 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                     const chatTypes = projectChats.map(c => c.chat_type);
 
                     // If project only has assistant, switch to assistant
-                    if (chatTypes.includes('assistant') && !chatTypes.includes('copilot')) {
-                        initialMode = 'assistant';
-                    }
-                    // If project only has copilot, switch to copilot
-                    else if (chatTypes.includes('copilot') && !chatTypes.includes('assistant')) {
-                        initialMode = 'copilot';
-                    }
-                    // If both, use current mode
+                    // Always use assistant mode
+                    initialMode = 'assistant';
                 }
             } catch (e) {
                 // Could not pre-check chat types
@@ -10774,7 +10559,7 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                 const projectBrandName = brandNames[brand] || brand;
                 
                 // Build conversation summary from loaded messages
-                ['assistant', 'copilot'].forEach(panel => {
+                ['assistant'].forEach(panel => {
                     const history = chatHistory[panel];
                     const userMessages = history.filter(m => m.role === 'user');
                     const aiMessages = history.filter(m => m.role === 'assistant');
@@ -10819,7 +10604,7 @@ INSTRUCTIONS:
                 
                 // Open chat with the appropriate mode
                 const hasAssistant = currentChatId.assistant;
-                const defaultMode = hasAssistant ? 'assistant' : 'copilot';
+                const defaultMode = 'assistant';
                 
                 // ═══ FIX: Set flag so openChat knows we're opening an existing project ═══
                 openingFromProject = true;
@@ -10846,7 +10631,7 @@ INSTRUCTIONS:
         
         // Update chat header to show project name
         function updateChatHeader() {
-            const panels = ['copilot', 'assistant'];
+            const panels = ['assistant'];
             
             for (const panel of panels) {
                 const projectNameEl = document.getElementById(panel + 'ProjectName');
@@ -10870,16 +10655,15 @@ INSTRUCTIONS:
         // Start new project (clear current)
         function startNewProject() {
             currentProjectId = null;
-            currentChatId = { assistant: null, copilot: null };
+            currentChatId = { assistant: null };
             currentProjectTitle = null;
             projectMessageCount = 0;
-            
+
             // Reset session IDs (will be set when project is created)
-            sessionIds = { copilot: null, assistant: null };
-            
+            sessionIds = { assistant: null };
+
             // Clear chats
             chatHistory.assistant = [];
-            chatHistory.copilot = [];
             
             // ═══ RESET REPORT DATA ═══
             lastReportData = null;
@@ -10898,18 +10682,16 @@ INSTRUCTIONS:
             // ═══ END RESET ═══
             
             const assistantBody = document.getElementById('assistantBody');
-            const copilotBody = document.getElementById('copilotBody');
-            
+
             // Clear bodies (preserve TP containers)
             clearChatBody('assistant');
-            clearChatBody('copilot');
 
             // Reset TP state for new project
             TP.cardCounter = 0;
-            TP.currentCardId = { copilot: null, assistant: null };
+            TP.currentCardId = { assistant: null };
             TP.expandedState = {};
-            TP.s = { copilot: [], assistant: [] };
-            TP.isSimpleMode = { copilot: false, assistant: false };
+            TP.s = { assistant: [] };
+            TP.isSimpleMode = { assistant: false };
 
             // Clear project name from header
             updateChatHeader();
@@ -13161,7 +12943,7 @@ INSTRUCTIONS:
             }
 
             // Get info from chatHistory — scan BOTH panels for report data
-            const history = [...(chatHistory.assistant || []), ...(chatHistory.copilot || [])];
+            const history = [...(chatHistory.assistant || [])];
             const userMessages = history.filter(m => m.role === 'user').map(m => m.content);
             const aiMessages = history.filter(m => m.role === 'assistant').map(m => m.content);
             const allText = userMessages.join(' ').toLowerCase();
@@ -16503,8 +16285,8 @@ text = text.replace(/\s*\{"type"\s*:\s*"report"[\s\S]*\}\s*$/, '').trim();
             const msg = document.createElement('div');
             msg.className = 'msg ai';
             msg.id = 'loading-' + panel;
-            const modeName = panel === 'copilot' ? 'Copilot' : 'Assistant';
-            const modeIcon = panel === 'copilot' ? '#icon-star' : '#icon-clipboard';
+            const modeName = 'Assistant';
+            const modeIcon = '#icon-clipboard';
             msg.innerHTML = `<div class="msg-bubble"><div class="msg-head"><div class="msg-avatar"><span class="icon"><svg><use href="${modeIcon}"/></svg></span></div><span class="msg-name">FixAIR ${modeName}</span></div><div class="msg-loading"><span></span><span></span><span></span></div></div>`;
             body.appendChild(msg);
             body.scrollTop = body.scrollHeight;
@@ -16519,7 +16301,6 @@ text = text.replace(/\s*\{"type"\s*:\s*"report"[\s\S]*\}\s*$/, '').trim();
         
         // Conversation history per panel
         const chatHistory = {
-            copilot: [],
             assistant: []
         };
         window.chatHistory = chatHistory;
@@ -16996,7 +16777,7 @@ RÈGLES:
 ` : ''
                 };
                 
-                // Get the right webhook based on panel (copilot vs assistant)
+                // Get the right webhook based on panel
                 const webhookUrl = getWebhookUrl(panel);
 
                 // ═══ PARALLEL EXTRACTION: Fire extraction workflow (non-blocking) ═══
@@ -19098,7 +18879,6 @@ RÈGLES:
         }
 
         const divider = document.getElementById('divider');
-        const pC = document.getElementById('panelCopilot');
         const pA = document.getElementById('panelAssistant');
         let isDrag = false;
 
@@ -19139,8 +18919,8 @@ RÈGLES:
             }
             
             pct = Math.max(25, Math.min(75, (offset / size) * 100));
-            pC.style.flexBasis = pct + '%';
-            pA.style.flexBasis = (100 - pct) + '%';
+            // Split view removed - only assistant panel
+            pA.style.flexBasis = '100%';
         }
 
         document.addEventListener('mouseup', stopDrag);
@@ -19160,8 +18940,7 @@ RÈGLES:
             if(!document.getElementById('chatView').classList.contains('active') || isSplit || isDrag) return;
             const diff = e.changedTouches[0].clientX - touchX;
             if(Math.abs(diff) > 80) {
-                if(diff > 0 && mode === 'assistant') switchMode('copilot');
-                else if(diff < 0 && mode === 'copilot') switchMode('assistant');
+                // Mode switching removed - only assistant panel
             }
         });
 
@@ -19177,8 +18956,7 @@ RÈGLES:
         // Reset split view on resize to prevent layout issues
         window.addEventListener('resize', () => {
             if (isSplit) {
-                document.getElementById('panelCopilot').style.flexBasis = '50%';
-                document.getElementById('panelAssistant').style.flexBasis = '50%';
+                document.getElementById('panelAssistant').style.flexBasis = '100%';
             }
         });
 
@@ -19211,14 +18989,14 @@ RÈGLES:
         // ═══════════════════════════════════════════════════════════════
         // FREEMIUM PAYWALL SYSTEM
         // ═══════════════════════════════════════════════════════════════
-        // Soft paywall: X free Copilot chats → upgrade prompt
+        // Soft paywall: X free chats → upgrade prompt
         // Export PDF/Word → subscription required for non-standard
         // UX: Never block abruptly, always give value first
         // ═══════════════════════════════════════════════════════════════
         
         const FREEMIUM_CONFIG = {
             // Free tier limits
-            freeCopilotChats: 20,
+            freeAssistantChats: 20,
             freeReports: 3,
             softLimitWarning: 0.8,
 
@@ -19265,7 +19043,7 @@ RÈGLES:
         function createFreshUsage() {
             const fresh = {
                 weekStart: getFreemiumWeekStart().toISOString(),
-                copilotChats: 0,
+                assistantChatsTracked: 0,
                 assistantChats: 0,
                 reportsGenerated: 0,
                 bufferQueries: 0,
@@ -19350,7 +19128,7 @@ RÈGLES:
 
             // Check temporary buffer (24h access from invite)
             if (usage.bufferUntil && new Date(usage.bufferUntil) > new Date()) {
-                usage.copilotChats = (usage.copilotChats || 0) + 1;
+                usage.assistantChatsTracked = (usage.assistantChatsTracked || 0) + 1;
                 saveFreemiumUsage(usage);
                 return { allowed: true, remaining: 999, buffered: true };
             }
@@ -19358,34 +19136,28 @@ RÈGLES:
             // Check buffer queries (+5 from invite)
             if ((usage.bufferQueries || 0) > 0) {
                 usage.bufferQueries -= 1;
-                usage.copilotChats = (usage.copilotChats || 0) + 1;
+                usage.assistantChatsTracked = (usage.assistantChatsTracked || 0) + 1;
                 saveFreemiumUsage(usage);
                 return { allowed: true, remaining: usage.bufferQueries, buffered: true };
             }
 
-            if (panel === 'copilot') {
-                const limit = FREEMIUM_CONFIG.freeCopilotChats;
-                usage.copilotChats = (usage.copilotChats || 0) + 1;
-                saveFreemiumUsage(usage);
+            // Track assistant chat usage
+            const limit = FREEMIUM_CONFIG.freeAssistantChats;
+            usage.assistantChatsTracked = (usage.assistantChatsTracked || 0) + 1;
+            saveFreemiumUsage(usage);
 
-                const remaining = Math.max(0, limit - usage.copilotChats);
-                const percentUsed = usage.copilotChats / limit;
+            const remaining = Math.max(0, limit - usage.assistantChatsTracked);
+            const percentUsed = usage.assistantChatsTracked / limit;
 
-                return {
-                    allowed: usage.copilotChats <= limit,
-                    remaining: remaining,
-                    total: limit,
-                    used: usage.copilotChats,
-                    percentUsed: percentUsed,
-                    showWarning: percentUsed >= FREEMIUM_CONFIG.softLimitWarning && percentUsed < 1,
-                    showUpgrade: percentUsed >= 1
-                };
-            } else {
-                // Assistant messages are free — reports are checked separately
-                usage.assistantChats = (usage.assistantChats || 0) + 1;
-                saveFreemiumUsage(usage);
-                return { allowed: true, remaining: 999 };
-            }
+            return {
+                allowed: usage.assistantChatsTracked <= limit,
+                remaining: remaining,
+                total: limit,
+                used: usage.assistantChatsTracked,
+                percentUsed: percentUsed,
+                showWarning: percentUsed >= FREEMIUM_CONFIG.softLimitWarning && percentUsed < 1,
+                showUpgrade: percentUsed >= 1
+            };
         }
 
         // Track report generation (called when report is built/exported)
@@ -19450,13 +19222,9 @@ RÈGLES:
                 return { allowed: true, remaining: usage.bufferQueries, buffered: true };
             }
 
-            if (panel === 'copilot') {
-                const limit = FREEMIUM_CONFIG.freeCopilotChats;
-                const remaining = Math.max(0, limit - (usage.copilotChats || 0));
-                return { allowed: remaining > 0, remaining, total: limit, used: usage.copilotChats || 0 };
-            } else {
-                return { allowed: true, remaining: 999 };
-            }
+            const limit = FREEMIUM_CONFIG.freeAssistantChats;
+            const remaining = Math.max(0, limit - (usage.assistantChatsTracked || 0));
+            return { allowed: remaining > 0, remaining, total: limit, used: usage.assistantChatsTracked || 0 };
         }
         
         // Check if user can use a Pro feature
@@ -19547,9 +19315,9 @@ RÈGLES:
                 checkSprintChallenge();
             }, 3000);
 
-            // Show re-entry prompt on copilot if returning user
+            // Show re-entry prompt on assistant if returning user
             setTimeout(() => {
-                showReentryPrompt('copilot');
+                showReentryPrompt('assistant');
             }, 1500);
         }
         
@@ -20097,8 +19865,8 @@ RÈGLES:
                 photo: { minutes: 5, euros: 8.00, description: "Photo documentée" },
                 // Voice note: Saves typing time
                 voice: { minutes: 4, euros: 6.00, description: "Note vocale transcrite" },
-                // Copilot active usage (per 10 min session)
-                copilot_session: { minutes: 15, euros: 25.00, description: "Session diagnostic Copilot" }
+                // Diagnostic active usage (per 10 min session)
+                diagnostic_session: { minutes: 15, euros: 25.00, description: "Session diagnostic Assistant" }
                 // NOTE: Messages are NOT tracked - only real value actions
             },
             messages: [
@@ -20696,12 +20464,12 @@ RÈGLES:
         }
 
         async function createProjectForEvent(eventData) {
-            // Create a project when event type is copilot or assistant
+            // Create a project when event type is diagnostic or assistant
             const userId = await getCurrentUserId();
             if (!db || !userId || userId.startsWith('demo-')) {
                 return null;
             }
-            if (eventData.type !== 'copilot' && eventData.type !== 'assistant') {
+            if (eventData.type !== 'diagnostic' && eventData.type !== 'assistant') {
                 return null;
             }
             
@@ -20719,13 +20487,13 @@ RÈGLES:
                 
                 if (projectError) throw projectError;
 
-                // Create a chat with the correct type (copilot or assistant)
+                // Create a chat with the correct type (diagnostic or assistant)
                 const { data: chat, error: chatError } = await db
                     .from('chats')
                     .insert({
                         project_id: project.id,
                         user_id: userId,
-                        chat_type: eventData.type // 'copilot' or 'assistant'
+                        chat_type: eventData.type === 'diagnostic' ? 'assistant' : eventData.type
                     })
                     .select()
                     .single();
@@ -20936,7 +20704,7 @@ RÈGLES:
                 } else {
                     setTimeout(() => openConnectDrawer('job', 'job1'), 300);
                 }
-            } else if (ev.type === 'copilot' || ev.type === 'assistant') {
+            } else if (ev.type === 'diagnostic' || ev.type === 'assistant') {
                 if (ev.projectId) {
                     loadProject(ev.projectId);
                     return;
@@ -20945,17 +20713,14 @@ RÈGLES:
                 if (projects.length > 0) {
                     const matchingProject = projects.find(p => {
                         const hasAssistant = p.chats?.some(c => c.chat_type === 'assistant');
-                        const hasCopilot = p.chats?.some(c => c.chat_type === 'copilot');
-                        if (ev.type === 'assistant') return hasAssistant;
-                        if (ev.type === 'copilot') return hasCopilot;
-                        return false;
+                        return hasAssistant;
                     });
                     if (matchingProject) {
                         loadProject(matchingProject.id);
                         return;
                     }
                 }
-                switchMode(ev.type);
+                switchMode('assistant');
             } else {
                 // Personal event - show edit drawer
                 openEventDrawerForEdit(eventId);
@@ -20971,7 +20736,7 @@ RÈGLES:
         }
 
         // ═══ EVENT DRAWER FUNCTIONS ═══
-        let selectedEventType = 'copilot';
+        let selectedEventType = 'diagnostic';
 
         function openEventDrawer(dateKey, startTime) {
             editingEventId = null;
@@ -20997,10 +20762,10 @@ RÈGLES:
             document.getElementById('eventMoreOptions').classList.remove('show');
             document.getElementById('moreOptionsToggle').classList.remove('expanded');
             
-            selectedEventType = 'copilot';
+            selectedEventType = 'diagnostic';
             document.querySelectorAll('.event-type-pill').forEach(p => {
                 p.classList.remove('active');
-                if (p.dataset.type === 'copilot') p.classList.add('active');
+                if (p.dataset.type === 'diagnostic') p.classList.add('active');
             });
             
             document.getElementById('eventDrawerOverlay').classList.add('show');
@@ -21104,8 +20869,8 @@ RÈGLES:
                 jobId: existingEvent?.jobId || null
             };
 
-            // Create project for copilot/assistant events (only for new events without projectId)
-            if (!eventData.projectId && (selectedEventType === 'copilot' || selectedEventType === 'assistant')) {
+            // Create project for diagnostic/assistant events (only for new events without projectId)
+            if (!eventData.projectId && (selectedEventType === 'diagnostic' || selectedEventType === 'assistant')) {
                 const projectId = await createProjectForEvent(eventData);
                 if (projectId) {
                     eventData.projectId = projectId;
@@ -21553,7 +21318,7 @@ RÈGLES:
                 <div class="event-field">
                     <div class="event-field-label">Type</div>
                     <div class="event-type-pills">
-                        <div class="event-type-pill active copilot" data-type="copilot" onclick="selectEventType(this)">
+                        <div class="event-type-pill active diagnostic" data-type="diagnostic" onclick="selectEventType(this)">
                             <span class="pill-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span>
                             Diagnostic
                         </div>
@@ -21667,13 +21432,13 @@ RÈGLES:
 /* Logic from v4 + Original styling restored */
 
 const TP = {
-    t: { copilot: null, assistant: null },
-    i: { copilot: 0, assistant: 0 },
-    s: { copilot: [], assistant: [] },
+    t: { assistant: null },
+    i: { assistant: 0 },
+    s: { assistant: [] },
     expandedState: {},
     cardCounter: 0,
-    currentCardId: { copilot: null, assistant: null },
-    isSimpleMode: { copilot: false, assistant: false },
+    currentCardId: { assistant: null },
+    isSimpleMode: { assistant: false },
     
     // SVG Icons - ORIGINAL globe style
     icons: {
@@ -21689,7 +21454,6 @@ const TP = {
     
     // Mode colors
     modeColors: {
-        copilot: '#FF6B35',
         assistant: '#22c55e'
     },
 
@@ -21732,7 +21496,8 @@ const TP = {
         const ql = q.toLowerCase();
         b = b || 'équipement';
         
-        if (m === 'copilot') {
+        {
+            // Analyze query for thought process steps
             if (/\b([EPFUepfu]?\d{2,5})\b/i.test(q) || /error|code|fault|panne|erreur|défaut/i.test(ql)) {
                 s.push({ icon: 'globe', text: 'Recherche code erreur ' + b + '...' });
                 s.push({ icon: 'doc', text: 'Consultation documentation' });
@@ -21749,21 +21514,17 @@ const TP = {
             if (/graph|diagramme|visuel|courbe/i.test(ql)) {
                 s.push({ icon: 'chart', text: 'Préparation visuel...' });
             }
-            if (s.length === 0) {
-                s.push({ icon: 'globe', text: 'Recherche base ' + b + '...' });
-            }
-            s.push({ icon: 'bullet', text: 'Formulation réponse...' });
-        } else {
             if (/rapport|report|compte.?rendu|cerfa|document/i.test(ql)) {
                 s.push({ icon: 'doc', text: 'Extraction données' });
                 s.push({ icon: 'bullet', text: 'Génération rapport...' });
             } else if (/image|photo|scan|plaque|ocr/i.test(ql)) {
                 s.push({ icon: 'globe', text: 'Analyse image...' });
                 s.push({ icon: 'bullet', text: 'Extraction...' });
-            } else {
-                s.push({ icon: 'brain', text: 'Analyse...' });
-                s.push({ icon: 'bullet', text: 'Préparation...' });
             }
+            if (s.length === 0) {
+                s.push({ icon: 'globe', text: 'Recherche base ' + b + '...' });
+            }
+            s.push({ icon: 'bullet', text: 'Formulation réponse...' });
         }
         return s;
     },
@@ -21854,7 +21615,7 @@ const TP = {
             body.insertAdjacentHTML('beforeend', this.createSimpleCard(cardId, this.getSimplePhrase(), m));
             this.s[m] = [];
         } else {
-            const b = (document.getElementById('copilotSub') || {}).textContent || 'équipement';
+            const b = (document.getElementById('assistantSub') || {}).textContent || 'équipement';
             const st = this.analyze(q, m, b);
             this.s[m] = st;
             this.i[m] = 0;
