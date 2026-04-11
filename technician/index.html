@@ -5918,21 +5918,21 @@
             </div>
         </div>
         <!-- Bottom nav with curved notch -->
-        <nav class="nav" id="bottomNav" style="background:none !important;border:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;border-radius:0 !important;padding:0 !important;width:100% !important;max-width:100% !important;left:0 !important;transform:none !important;height:90px;pointer-events:none;">
-            <svg style="position:absolute;bottom:0;left:0;width:100%;height:90px;" viewBox="0 0 400 90" preserveAspectRatio="none" fill="#1a1d24"><path d="M0,30 L148,30 Q158,30 163,22 Q173,0 200,0 Q227,0 237,22 Q242,30 252,30 L400,30 L400,90 L0,90 Z"/></svg>
-            <div style="position:relative;height:100%;display:flex;align-items:flex-end;justify-content:space-between;padding:0 36px calc(env(safe-area-inset-bottom, 8px) + 12px);pointer-events:auto;">
-                <button onclick="goToHome()" id="navHome" style="background:transparent;border:none;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:8px;color:var(--accent);">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-                    <span style="font-size:11px;">Accueil</span>
+        <nav class="nav" id="bottomNav" style="background:none !important;border:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;border-radius:0 !important;padding:0 !important;width:100% !important;max-width:100% !important;left:0 !important;transform:none !important;height:80px;pointer-events:none;">
+            <svg style="position:absolute;bottom:0;left:0;width:100%;height:80px;" viewBox="0 0 400 80" preserveAspectRatio="none"><path d="M0,20 L145,20 C155,20 160,20 165,10 C170,0 180,-5 200,-5 C220,-5 230,0 235,10 C240,20 245,20 255,20 L400,20 L400,80 L0,80 Z" fill="#1a1d24"/></svg>
+            <div style="position:absolute;bottom:0;left:0;right:0;height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 40px;pointer-events:auto;">
+                <button onclick="goToHome()" id="navHome" style="background:transparent;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:4px 8px;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="#4ade80"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                    <span style="font-size:10px;color:#4ade80;">Accueil</span>
                 </button>
-                <button onclick="startNewProject(); openChat('assistant');" style="position:absolute;bottom:42px;left:50%;transform:translateX(-50%);width:60px;height:60px;border-radius:50%;background:#4ade80;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;pointer-events:auto;" title="Nouveau rapport">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
-                </button>
-                <button onclick="Router.navigate({page:'projects'})" id="navProjects" style="background:transparent;border:none;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:8px;color:rgba(255,255,255,0.35);">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-                    <span style="font-size:11px;">Projets</span>
+                <button onclick="Router.navigate({page:'projects'})" id="navProjects" style="background:transparent;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:4px 8px;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                    <span style="font-size:10px;color:#666;">Projets</span>
                 </button>
             </div>
+            <button onclick="startNewProject(); openChat('assistant');" style="position:absolute;bottom:35px;left:50%;transform:translateX(-50%);width:56px;height:56px;border-radius:50%;background:#4ade80;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 15px rgba(74,222,128,0.4);z-index:10;pointer-events:auto;" title="Nouveau rapport">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
         </nav>
     </div>
 
