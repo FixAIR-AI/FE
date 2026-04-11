@@ -5920,15 +5920,15 @@
         <nav class="nav" id="bottomNav" style="background:#1a1d24;">
             <!-- Notch cutout background -->
             <div style="position:absolute;bottom:0;left:0;right:0;height:60px;background:#1a1d24;"></div>
-            <div style="position:absolute;bottom:32px;left:50%;transform:translateX(-50%);width:76px;height:76px;background:#0d0f14;border-radius:50%;"></div>
+            <!-- notch removed for clean look -->
             <!-- Nav content -->
             <div style="position:relative;display:flex;align-items:flex-end;justify-content:space-between;padding:12px 36px calc(env(safe-area-inset-bottom, 8px) + 12px) 36px;width:100%;box-sizing:border-box;">
                 <button onclick="goToHome()" id="navHome" class="nav-item active" style="background:transparent;border:none;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:8px;color:var(--accent);">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
                     <span style="font-size:11px;">Accueil</span>
                 </button>
-                <button onclick="startNewProject(); openChat('assistant');" style="position:absolute;bottom:36px;left:50%;transform:translateX(-50%);width:60px;height:60px;border-radius:50%;background:#4ade80;border:4px solid #0d0f14;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 15px rgba(74,222,128,0.4);z-index:10;" title="Nouveau rapport">
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                <button onclick="startNewProject(); openChat('assistant');" style="position:absolute;bottom:44px;left:50%;transform:translateX(-50%);width:64px;height:64px;border-radius:50%;background:#4ade80;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;" title="Nouveau rapport">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
                 </button>
                 <button onclick="Router.navigate({page:'projects'})" id="navProjects" class="nav-item" style="background:transparent;border:none;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:8px;color:rgba(255,255,255,0.35);">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
