@@ -768,7 +768,7 @@
         .brand-dropdown-item.selected .brand-dropdown-check { opacity: 1; }
         .brand-dropdown-divider { height: 1px; background: var(--border); margin: 4px 0; position: sticky; top: 0; z-index: 1; }
 
-        .app-content { height: 100%; padding-top: calc(56px + env(safe-area-inset-top)); padding-bottom: calc(70px + env(safe-area-inset-bottom)); overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; align-items: center; }
+        .app-content { height: 100%; padding-top: calc(56px + env(safe-area-inset-top)); padding-bottom: calc(90px + env(safe-area-inset-bottom)); overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; align-items: center; }
         
         /* CENTERED CONTENT CONTAINER */
         .home, .projects-page { 
@@ -5740,46 +5740,9 @@
                 <div class="header-left">
                     <div class="header-logo-svg" onclick="goToHome()" style="cursor:pointer;"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
                 </div>
-                <div class="brand-pill" id="brandPill" onclick="toggleBrandDropdown()">
-                    <div class="brand-pill-dot" id="brandDot"></div>
-                    <span class="brand-pill-text" id="brandText">Mitsubishi</span>
-                    <svg class="brand-pill-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                    <div class="brand-dropdown" id="brandDropdown">
-                        <div class="brand-dropdown-item active" data-b="carrier" onclick="event.stopPropagation(); setBrand('carrier')">
-                            <div class="brand-dropdown-dot" style="background:#3B82F6;"></div>
-                            <span class="brand-dropdown-name">Carrier</span>
-                            <svg class="brand-dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                        </div>
-                        <div class="brand-dropdown-item active" data-b="daikin" onclick="event.stopPropagation(); setBrand('daikin')">
-                            <div class="brand-dropdown-dot" style="background:#10B981;"></div>
-                            <span class="brand-dropdown-name">Daikin</span>
-                            <svg class="brand-dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                        </div>
-                        <div class="brand-dropdown-item active selected" data-b="mitsubishi" onclick="event.stopPropagation(); setBrand('mitsubishi')">
-                            <div class="brand-dropdown-dot" style="background:#E60012;"></div>
-                            <span class="brand-dropdown-name">Mitsubishi</span>
-                            <svg class="brand-dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                        </div>
-                        <div class="brand-dropdown-divider"></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">AAON</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">American Standard</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Amana</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Armstrong Air</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Bosch</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Bryant</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Fujitsu</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Gree</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Haier</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Hitachi</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Lennox</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">LG</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Panasonic</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Rheem</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Samsung</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Trane</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">York</span></div>
-                    </div>
-                </div>
+                <button onclick="openProfile()" title="Profil" style="background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:7px 10px;color:rgba(255,255,255,0.6);cursor:pointer;display:flex;align-items:center;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
+                </button>
             </div>
         </header>
         <div class="app-content">
@@ -5903,17 +5866,7 @@
                     <div class="stats-message" id="statsMessage">Lance-toi ! 🚀</div>
                 </div>
 
-                <!-- TOGGLE CARDS -->
-                <div class="modules-toggle">
-                    <div class="toggle-card assistant" onclick="openChat('assistant')">
-                        <div class="toggle-card-icon"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>
-                        <div class="toggle-card-content">
-                            <div class="toggle-card-title">Nouveau rapport</div>
-                            <div class="toggle-card-desc">Créer un rapport d'intervention</div>
-                        </div>
-                        <svg class="toggle-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-                    </div>
-                </div>
+                <!-- TOGGLE CARDS removed - new report via floating + button -->
 
                 <!-- RECENT PROJECTS -->
                 <!-- CALENDAR CARD -->
@@ -5968,21 +5921,14 @@
                 </div>
             </div>
         </div>
-        <nav class="nav">
-            <div class="nav-inner">
+        <nav class="nav" id="bottomNav" style="background:#1a1d24;padding-top:15px;">
+            <div style="position:absolute;top:-15px;left:50%;transform:translateX(-50%);width:90px;height:45px;background:#1a1d24;border-radius:45px 45px 0 0;"></div>
+            <div style="display:flex;align-items:center;justify-content:space-around;padding:8px 20px calc(env(safe-area-inset-bottom, 8px) + 8px);position:relative;">
                 <div class="nav-item active" id="navHome" onclick="goToHome()"><span class="icon nav-icon"><svg><use href="#icon-home"/></svg></span><span class="nav-label">Accueil</span></div>
+                <button onclick="startNewProject(); openChat('assistant');" style="position:absolute;top:-30px;left:50%;transform:translateX(-50%);width:56px;height:56px;border-radius:50%;background:#4ade80;border:4px solid #0d0f14;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 15px rgba(74,222,128,0.4);z-index:10;" title="Nouveau rapport">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg>
+                </button>
                 <div class="nav-item" id="navProjects" onclick="Router.navigate({page:'projects'})"><span class="icon nav-icon"><svg><use href="#icon-folder"/></svg></span><span class="nav-label">Projets</span></div>
-                <div class="nav-item nav-hotline" onclick="openHotline()">
-                    <div class="nav-hotline-waves">
-                        <div class="wave-bar"></div>
-                        <div class="wave-bar"></div>
-                        <div class="wave-bar"></div>
-                        <div class="wave-bar"></div>
-                        <div class="wave-bar"></div>
-                    </div>
-                    <span class="nav-label">Hotline</span>
-                </div>
-                <div class="nav-item nav-profile" onclick="openProfile()"><span class="icon nav-icon"><svg><use href="#icon-user"/></svg></span><div class="nav-profile-badge"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div><span class="nav-label">Profil</span></div>
             </div>
         </nav>
     </div>
@@ -6135,7 +6081,7 @@
                 <div class="panel-info">
                     <div class="panel-title">FixAIR Assistant</div>
                     <div class="panel-separator"></div>
-                    <div class="panel-brand-wrapper" id="assistantBrandWrapper">
+                    <div class="panel-brand-wrapper" id="assistantBrandWrapper" style="display:none;">
                         <div class="panel-brand-btn" onclick="toggleChatBrandDropdown('assistant')">
                             <span class="panel-brand-text" id="assistantSub">Mitsubishi</span>
                             <svg class="brand-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
@@ -6189,8 +6135,7 @@
                 <!-- Mode toggle removed - only assistant panel remains -->
                 <div class="header-actions">
                     <button class="h-btn new-chat-btn" onclick="startNewProject()" title="Nouveau chat"><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button>
-                    <button class="h-btn report-btn" onclick="openReport()" title="Voir rapport"><span class="icon"><svg><use href="#icon-checklist"/></svg></span></button>
-                    <button class="h-btn" onclick="toggleSplit()" title="Mode split"><span class="icon"><svg><use href="#icon-columns"/></svg></span></button>
+                    <button class="h-btn" onclick="openReport()" title="Voir rapport"><span class="icon"><svg><use href="#icon-columns"/></svg></span></button>
                 </div>
             </header>
             <div class="chat-body" id="assistantBody"></div>
