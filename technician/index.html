@@ -4566,15 +4566,11 @@
             .brand-label { flex-shrink: 0; }
             .brand-chip { flex-shrink: 0; white-space: nowrap; }
             
-            /* Chat header - hide title and brand name on mobile */
+            /* Chat header - hide title and separator on mobile, keep project name */
             .panel-title { display: none !important; }
             .panel-separator { display: none !important; }
             .panel-brand { display: none !important; }
-            
-            /* Adjust panel-info when its contents are hidden */
-            .panel-info { 
-                display: none !important;
-            }
+            .desktop-only { display: none !important; }
             
             /* Panel header layout - centered toggle */
             .panel-header {
@@ -5921,14 +5917,23 @@
                 </div>
             </div>
         </div>
-        <nav class="nav" id="bottomNav" style="background:#1a1d24;padding-top:15px;">
-            <div style="position:absolute;top:-15px;left:50%;transform:translateX(-50%);width:90px;height:45px;background:#1a1d24;border-radius:45px 45px 0 0;"></div>
-            <div style="display:flex;align-items:center;justify-content:space-around;padding:8px 20px calc(env(safe-area-inset-bottom, 8px) + 8px);position:relative;">
-                <div class="nav-item active" id="navHome" onclick="goToHome()"><span class="icon nav-icon"><svg><use href="#icon-home"/></svg></span><span class="nav-label">Accueil</span></div>
-                <button onclick="startNewProject(); openChat('assistant');" style="position:absolute;top:-30px;left:50%;transform:translateX(-50%);width:56px;height:56px;border-radius:50%;background:#4ade80;border:4px solid #0d0f14;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 15px rgba(74,222,128,0.4);z-index:10;" title="Nouveau rapport">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg>
+        <nav class="nav" id="bottomNav" style="background:#1a1d24;">
+            <!-- Notch cutout background -->
+            <div style="position:absolute;bottom:0;left:0;right:0;height:60px;background:#1a1d24;"></div>
+            <div style="position:absolute;bottom:32px;left:50%;transform:translateX(-50%);width:76px;height:76px;background:#0d0f14;border-radius:50%;"></div>
+            <!-- Nav content -->
+            <div style="position:relative;display:flex;align-items:flex-end;justify-content:space-between;padding:12px 36px calc(env(safe-area-inset-bottom, 8px) + 12px) 36px;width:100%;box-sizing:border-box;">
+                <button onclick="goToHome()" id="navHome" class="nav-item active" style="background:transparent;border:none;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:8px;color:var(--accent);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                    <span style="font-size:11px;">Accueil</span>
                 </button>
-                <div class="nav-item" id="navProjects" onclick="Router.navigate({page:'projects'})"><span class="icon nav-icon"><svg><use href="#icon-folder"/></svg></span><span class="nav-label">Projets</span></div>
+                <button onclick="startNewProject(); openChat('assistant');" style="position:absolute;bottom:36px;left:50%;transform:translateX(-50%);width:60px;height:60px;border-radius:50%;background:#4ade80;border:4px solid #0d0f14;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 15px rgba(74,222,128,0.4);z-index:10;" title="Nouveau rapport">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                </button>
+                <button onclick="Router.navigate({page:'projects'})" id="navProjects" class="nav-item" style="background:transparent;border:none;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:8px;color:rgba(255,255,255,0.35);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                    <span style="font-size:11px;">Projets</span>
+                </button>
             </div>
         </nav>
     </div>
@@ -6079,8 +6084,7 @@
             <header class="panel-header">
                 <button class="panel-back" onclick="closeChat(); goToHome()"><span class="icon"><svg><use href="#icon-arrow-left"/></svg></span></button>
                 <div class="panel-info">
-                    <div class="panel-title">FixAIR Assistant</div>
-                    <div class="panel-separator"></div>
+                    <div class="panel-title desktop-only">FixAIR Assistant</div>
                     <div class="panel-brand-wrapper" id="assistantBrandWrapper" style="display:none;">
                         <div class="panel-brand-btn" onclick="toggleChatBrandDropdown('assistant')">
                             <span class="panel-brand-text" id="assistantSub">Mitsubishi</span>
