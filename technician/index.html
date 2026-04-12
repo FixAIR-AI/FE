@@ -6465,7 +6465,7 @@
                 'onboarding.step3_title': 'Posez votre première question',
                 'onboarding.step3_desc': 'Essayez l\'Assistant avec une question technique',
                 'onboarding.step4_title': 'Découvrez l\'Assistant',
-                'onboarding.step4_desc': 'Pour un diagnostic approfondi',
+                'onboarding.step4_desc': 'Pour documenter votre intervention',
                 'onboarding.complete': 'Terminé',
                 'onboarding.continue': 'Continuer',
                 // Chat
@@ -16527,7 +16527,7 @@ Tu reprends une conversation avec ${previousUserMessages} messages du technicien
                         : `MARQUE CONFIRMÉE: ${currentBrandName}. NE DEMANDE JAMAIS LA MARQUE. NOUVELLE CONVERSATION.`,
                     system_context: isExistingConversation 
                         ? `${conversationSummary}`
-                        : `NOUVELLE CONVERSATION. MARQUE: ${currentBrandName}. ${panel === 'assistant' ? 'Mode Rapport - pose les questions pour générer un rapport d\'intervention.' : 'Mode Diagnostic - aide au dépannage.'}`,
+                        : `NOUVELLE CONVERSATION. MARQUE: ${currentBrandName}. Mode Rapport - pose les questions pour générer un rapport d'intervention.`,
                     
                     // ═══ REPORT EXTRACTION INSTRUCTIONS ═══
                     // These instructions tell the AI to extract and return structured data
@@ -18866,10 +18866,6 @@ RÈGLES:
                 checkSprintChallenge();
             }, 3000);
 
-            // Show re-entry prompt on assistant if returning user
-            setTimeout(() => {
-                showReentryPrompt('assistant');
-            }, 1500);
         }
         
         // ═══ INVITE FLOW HANDLER ═══
@@ -18998,43 +18994,6 @@ RÈGLES:
 
             homepage.insertBefore(banner, homepage.firstChild);
         }
-        // ═══ RE-ENTRY PROMPT (returning users) ═══
-        function showReentryPrompt(panel) {
-            const chatBody = document.getElementById(panel + 'Body');
-            if (!chatBody) return;
-            if (chatBody.querySelector('.reentry-prompt')) return;
-            if (chatBody.children.length > 1) return;
-
-            const examples = [
-                { code: 'E1', brand: 'Daikin', desc: 'Défaut capteur température extérieure' },
-                { code: 'F3', brand: 'Mitsubishi', desc: 'Erreur débit réfrigérant faible' },
-                { code: 'H6', brand: 'Panasonic', desc: 'Défaut compresseur position locked' },
-                { code: 'L5', brand: 'Toshiba', desc: 'Surcharge instantanée' }
-            ];
-            const ex = examples[Math.floor(Math.random() * examples.length)];
-
-            const prompt = document.createElement('div');
-            prompt.className = 'reentry-prompt';
-            prompt.onclick = function() {
-                const input = document.getElementById(panel + 'Input');
-                if (input) {
-                    input.value = `Code erreur ${ex.code} sur ${ex.brand} — diagnostic ?`;
-                    input.dispatchEvent(new Event('input'));
-                    prompt.remove();
-                }
-            };
-            prompt.innerHTML = `
-                <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px;">
-                    🔧 Un diagnostic rapide ?
-                </div>
-                <div style="font-size: 12px; color: var(--text-dim); line-height: 1.4;">
-                    Exemple : <strong>Code ${ex.code} ${ex.brand}</strong> — ${ex.desc}<br>
-                    <span style="color: var(--accent); font-weight: 500;">Cliquez pour tester →</span>
-                </div>
-            `;
-
-            chatBody.appendChild(prompt);
-        }
         // ═══ CHECK WEEK FREE STATUS ═══
         async function checkWeekFreeStatus() {
             try {
@@ -19159,7 +19118,6 @@ RÈGLES:
         window.showPendingReferralPopup = showPendingReferralPopup;
         window.closePendingPopup = closePendingPopup;
         window.checkSprintChallenge = checkSprintChallenge;
-        window.showReentryPrompt = showReentryPrompt;
         window.checkWeekFreeStatus = checkWeekFreeStatus;
         window.startPaymentPolling = startPaymentPolling;
 
