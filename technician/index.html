@@ -368,10 +368,6 @@
             color: #64748B;
         }
         /* Icon backgrounds matching proj-icon style */
-        [data-theme="light"] .toggle-card.diagnostic .toggle-card-icon {
-            background: var(--accent-bg);
-            color: var(--accent);
-        }
         [data-theme="light"] .toggle-card.assistant .toggle-card-icon {
             background: var(--assistant-bg);
             color: var(--assistant);
@@ -1032,22 +1028,12 @@
             text-decoration: none;
         }
         
-        .toggle-card.diagnostic {
+        .toggle-card.assistant {
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        .toggle-card.assistant { 
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .toggle-card.diagnostic:hover {
-            background: rgba(255, 255, 255, 0.12);
-            border-color: rgba(255, 255, 255, 0.15);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-            transform: translateY(-2px);
-        }
-        .toggle-card.assistant:hover { 
+
+        .toggle-card.assistant:hover {
             background: rgba(255, 255, 255, 0.12);
             border-color: rgba(255, 255, 255, 0.15);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
@@ -1064,7 +1050,6 @@
             transition: all 0.3s;
             flex-shrink: 0;
         }
-        .toggle-card.diagnostic .toggle-card-icon { background: rgba(255, 255, 255, 0.1); color: var(--accent); }
         .toggle-card.assistant .toggle-card-icon { background: rgba(255, 255, 255, 0.1); color: var(--assistant); }
         
         .toggle-card-icon .icon { width: 22px; height: 22px; }
@@ -1079,11 +1064,9 @@
             transition: color 0.3s;
             color: rgba(255, 255, 255, 0.9);
         }
-        .toggle-card.diagnostic:hover .toggle-card-title { color: white; }
         .toggle-card.assistant:hover .toggle-card-title { color: white; }
-        
+
         .toggle-card-desc { font-size: 11px; color: var(--text-dim); white-space: nowrap; }
-        .toggle-card-desc .highlight-diagnostic { color: rgba(252, 68, 1, 0.7); }
         .toggle-card-desc .highlight-assistant { color: rgba(34, 197, 94, 0.7); }
 
         .toggle-card-arrow { 
@@ -1132,7 +1115,6 @@
         .proj-icons { display: flex; align-items: center; position: relative; width: 36px; height: 36px; flex-shrink: 0; }
         .proj-icons.dual { width: 44px; height: 40px; }
         .proj-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .proj-icon.diagnostic { background: var(--accent-bg); color: var(--accent); }
         .proj-icon.assistant { background: var(--assistant-bg); color: var(--assistant); }
         .proj-icon .icon { width: 16px; height: 16px; }
         .proj-icon .star-icon { width: 18px; height: 18px; }
@@ -1282,7 +1264,6 @@
         .week-slot { min-height: 115px; background: rgba(255,255,255,0.02); border-radius: 4px; padding: 3px; display: flex; flex-direction: column; gap: 2px; cursor: pointer; }
         .week-slot:hover { background: rgba(255,255,255,0.04); }
         .week-slot-event { font-size: 9px; padding: 3px 5px; border-radius: 0 3px 3px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
-        .week-slot-event.diagnostic { background: var(--accent-bg); color: var(--accent); border-left: 2px solid var(--accent); }
         .week-slot-event.assistant { background: var(--assistant-bg); color: var(--assistant); border-left: 2px solid var(--assistant); }
         /* .week-slot-event.connect removed */
         .week-slot-event.pending { background: rgba(255,255,255,0.04); color: var(--text-dim); border-left: 2px solid var(--text-dim); }
@@ -1480,7 +1461,6 @@
         .event-type-pill .pill-icon { width: 14px; height: 14px; display: flex; align-items: center; justify-content: center; }
         .event-type-pill .pill-icon svg { width: 12px; height: 12px; }
         .event-type-pill:hover { border-color: rgba(255,255,255,0.2); }
-        .event-type-pill.active.diagnostic { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
         .event-type-pill.active.assistant { background: var(--assistant-bg); border-color: var(--assistant); color: var(--assistant); }
         /* .event-type-pill.active.connect removed */
         .event-type-pill.active.personal { background: rgba(139,92,246,0.1); border-color: #8b5cf6; color: #8b5cf6; }
@@ -4038,10 +4018,8 @@
         .step-divider { width: 1px; height: 16px; background: rgba(255,255,255,0.1); }
         .step-tool { display: flex; align-items: center; gap: 6px; }
         .step-tool-icon { width: 16px; height: 16px; }
-        .step-tool-icon.diagnostic { color: var(--accent); }
         .step-tool-icon.assistant { color: var(--assistant); }
         .step-tool-name { font-size: 11px; font-weight: 600; }
-        .step-tool-name.diagnostic { color: var(--accent); }
         .step-tool-name.assistant { color: var(--assistant); }
         .step-arrow { width: 16px; height: 16px; color: rgba(255,255,255,0.3); flex-shrink: 0; }
         .brand-select-inline { display: none; flex-direction: column; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
@@ -4379,7 +4357,7 @@
         .chat-body { padding: 16px; gap: 12px; }
         .chat-input { padding: 14px 16px; }
         
-        /* Diagnostic/Assistant specific cards */
+        /* Assistant (reporting) specific cards */
         .diag-card { 
             padding: 18px; 
             border-radius: 16px;
@@ -5361,20 +5339,6 @@
     transform: translateX(-50%) translateY(0);
     opacity: 1; visibility: visible;
 }
-/* Re-entry prompt */
-.reentry-prompt {
-    background: rgba(252, 68, 1, 0.06);
-    border: 1px solid rgba(252, 68, 1, 0.12);
-    border-radius: 14px;
-    padding: 16px 18px;
-    margin: 12px 0;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-.reentry-prompt:hover {
-    background: rgba(252, 68, 1, 0.1);
-    border-color: rgba(252, 68, 1, 0.2);
-}
 /* Light theme overrides */
 [data-theme="light"] .upgrade-modal { background: #FFFFFF; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15); }
 [data-theme="light"] .upgrade-modal-title { color: #1E293B; }
@@ -5781,8 +5745,8 @@
                                     <span class="step-title">Essayer l'Assistant</span>
                                     <div class="step-divider"></div>
                                     <div class="step-tool">
-                                        <svg class="step-tool-icon diagnostic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#icon-clipboard"/></svg>
-                                        <span class="step-tool-name diagnostic">Assistant</span>
+                                        <svg class="step-tool-icon assistant" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#icon-clipboard"/></svg>
+                                        <span class="step-tool-name assistant">Assistant</span>
                                     </div>
                                 </div>
                                 <svg class="step-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
@@ -6548,7 +6512,7 @@
                 'onboarding.step3_title': 'Ask your first question',
                 'onboarding.step3_desc': 'Try the Assistant with a technical question',
                 'onboarding.step4_title': 'Discover the Assistant',
-                'onboarding.step4_desc': 'For in-depth diagnostics',
+                'onboarding.step4_desc': 'To document your intervention',
                 'onboarding.complete': 'Complete',
                 'onboarding.continue': 'Continue',
                 // Chat
@@ -6688,38 +6652,38 @@
         const BRAND_ERROR_EXAMPLES = {
             'mitsubishi': {
                 fr: {
-                    code: '1302',
-                    input: 'J\'ai une erreur 1302 sur un PURY-P200YNW-A1. Donne-moi :\n1. Le tableau de diagnostic complet avec les étapes, actions, outils et résultats attendus\n2. Un flowchart de la procédure de test capteur HP et câblage\n3. Les valeurs de résistance/tension à mesurer sur le capteur 63HS1',
-                    placeholder: 'Ex: Erreur 1302 Mitsubishi - diagnostic capteur HP'
+                    code: 'PAC',
+                    input: 'Rapport d\'intervention sur PAC Mitsubishi PUHZ-SW100 - j\'ai remplacé le capteur HP, tiré au vide et rechargé en R32 (2,5kg). Génère le rapport d\'intervention complet avec mesures et travaux effectués.',
+                    placeholder: 'Ex: Rapport intervention PAC Mitsubishi - remplacement capteur'
                 },
                 en: {
-                    code: '1302',
-                    input: 'I have error 1302 on a PURY-P200YNW-A1. Give me:\n1. Complete diagnostic table with steps, actions, tools and expected results\n2. A flowchart for HP sensor and wiring test procedure\n3. Resistance/voltage values to measure on sensor 63HS1',
-                    placeholder: 'Ex: Error 1302 Mitsubishi - HP sensor diagnostic'
+                    code: 'PAC',
+                    input: 'Intervention report on Mitsubishi PUHZ-SW100 heat pump - I replaced the HP sensor, vacuum pulled and recharged with R32 (2.5kg). Generate the complete intervention report with measurements and work performed.',
+                    placeholder: 'Ex: Mitsubishi heat pump intervention report - sensor replacement'
                 }
             },
             'carrier': {
                 fr: {
                     code: 'XCT7',
-                    input: 'Je suis en mise en service sur un VRF Carrier XCT7. Donne-moi :\n1. La procédure complète avec tous les switchs (SW1, SW2, SW3) dans un tableau\n2. Un flowchart des étapes de mise en service\n3. Les codes switchs pour forcer le mode chaud et froid',
-                    placeholder: 'Ex: Mise en service VRF Carrier XCT7'
+                    input: 'Rapport de mise en service VRF Carrier XCT7 - configuration SW1/SW2/SW3, test des modes chaud/froid, relevé des pressions et températures. Génère le rapport d\'intervention complet.',
+                    placeholder: 'Ex: Rapport mise en service VRF Carrier XCT7'
                 },
                 en: {
                     code: 'XCT7',
-                    input: 'I\'m commissioning a Carrier XCT7 VRF system. Give me:\n1. The complete procedure with all switches (SW1, SW2, SW3) in a table\n2. A flowchart of commissioning steps\n3. Switch codes to force heating and cooling modes',
-                    placeholder: 'Ex: Carrier XCT7 VRF commissioning'
+                    input: 'Carrier XCT7 VRF commissioning report - SW1/SW2/SW3 configuration, heating/cooling mode tests, pressure and temperature readings. Generate the complete intervention report.',
+                    placeholder: 'Ex: Carrier XCT7 VRF commissioning report'
                 }
             },
             'daikin': {
                 fr: {
-                    code: 'Altherma',
-                    input: 'Je dois faire un diagnostic complet sur une PAC Daikin Altherma. Donne-moi :\n1. Le tableau des codes erreur les plus fréquents avec causes et solutions\n2. La procédure de lecture des pressions HP/BP via le menu technicien\n3. Un flowchart de diagnostic pour un défaut de chauffage',
-                    placeholder: 'Ex: Diagnostic PAC Daikin Altherma'
+                    code: 'VRV',
+                    input: 'Intervention maintenance préventive Daikin VRV IV - nettoyage des filtres, contrôle des pressions HP/BP, remplacement d\'un joint défectueux sur l\'unité extérieure. Génère le rapport d\'intervention.',
+                    placeholder: 'Ex: Rapport maintenance Daikin VRV IV'
                 },
                 en: {
-                    code: 'Altherma',
-                    input: 'I need to do a complete diagnostic on a Daikin Altherma heat pump. Give me:\n1. A table of the most common error codes with causes and solutions\n2. The procedure to read HP/LP pressures via the technician menu\n3. A diagnostic flowchart for a heating fault',
-                    placeholder: 'Ex: Daikin Altherma heat pump diagnostic'
+                    code: 'VRV',
+                    input: 'Daikin VRV IV preventive maintenance intervention - filter cleaning, HP/LP pressure check, faulty seal replacement on the outdoor unit. Generate the intervention report.',
+                    placeholder: 'Ex: Daikin VRV IV maintenance report'
                 }
             }
         };
@@ -8771,7 +8735,7 @@
                             <div><strong style="color: var(--text);">Client:</strong> Jean Dupont</div>
                             <div><strong style="color: var(--text);">Date:</strong> ${today}</div>
                             <div><strong style="color: var(--text);">Équipement:</strong> ${brandName} - Split System</div>
-                            <div><strong style="color: var(--text);">Diagnostic:</strong> Code erreur résolu</div>
+                            <div><strong style="color: var(--text);">Intervention:</strong> Opération réalisée</div>
                             <div><strong style="color: var(--text);">Actions:</strong> Vérification câblage, réinitialisation</div>
                             ${hasPhotos ? `<div><strong style="color: var(--text);">Photos:</strong> ${photos.length} photo(s) jointe(s)</div>` : ''}
                         </div>
@@ -8823,7 +8787,7 @@
         }
 
         function updateOnboardingProgress() {
-            // Count completed steps: step1 (profile), step2 (brand), step3 (diagnostic), step4 (assistant)
+            // Count completed steps: step1 (profile), step2 (brand), step3 (try assistant), step4 (assistant)
             let completed = 0;
             if (onboardingStep >= 2) completed = 1; // Profile done
             if (onboardingStep >= 3) completed = 2; // Brand done
@@ -9803,39 +9767,23 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
         
         // Generate project card HTML
         function generateProjectCardHtml(project, includeContextMenu = true) {
-            const hasAssistant = project.chats?.some(c => c.chat_type === 'assistant');
-            const hasDiagnostic = project.chats?.some(c => c.chat_type === 'diagnostic');
-            const hasBoth = hasAssistant && hasDiagnostic;
-
             const timeAgo = formatTimeAgo(new Date(project.updated_at));
 
-            // Status bar class
-            let barClass = 'assistant-bar';
-            if (hasBoth) barClass = 'both-bar';
-            else if (hasAssistant) barClass = 'assistant-bar';
+            // Status bar class (only reporting mode remains)
+            const barClass = 'assistant-bar';
 
-            let iconHtml = '';
-            if (hasBoth) {
-                iconHtml = `<div class="proj-icons dual">
-                    <div class="proj-icon diagnostic back"><span class="star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span></div>
-                    <div class="proj-icon assistant front"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>
-                </div>`;
-            } else if (hasAssistant) {
-                iconHtml = `<div class="proj-icon assistant"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>`;
-            } else {
-                iconHtml = `<div class="proj-icon assistant"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>`;
-            }
-            
+            const iconHtml = `<div class="proj-icon assistant"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>`;
+
             const brandLabel = project.brand ? project.brand.charAt(0).toUpperCase() + project.brand.slice(1) : '';
-            
+
             // Show brand history if changed (Original → Current)
             let brandDisplay = brandLabel;
             if (project.original_brand && project.original_brand !== project.brand) {
                 const originalBrandLabel = project.original_brand.charAt(0).toUpperCase() + project.original_brand.slice(1);
                 brandDisplay = `${originalBrandLabel} → ${brandLabel}`;
             }
-            
-            const modeLabel = hasBoth ? 'Diagnostic + Rapport' : (hasAssistant ? 'Rapport' : 'Diagnostic');
+
+            const modeLabel = 'Rapport';
             
             const safeTitle = escapeForJs(project.title || 'Sans titre');
 const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextMenu(event, '${project.id}', '${safeTitle}')" ontouchstart="startLongPress(event, '${project.id}', '${safeTitle}')" ontouchend="cancelLongPress()" ontouchmove="cancelLongPress()"` : '';            
@@ -10629,7 +10577,7 @@ INSTRUCTIONS:
                         const statClass = data.intervention.statut.toLowerCase().includes('refus') ? 'error' : '';
                         html += `<div class="rpt-row"><span class="rpt-row-label">Statut</span><span class="rpt-row-value ${statClass}">${esc(data.intervention.statut)}</span></div>`;
                     }
-                    if (data.intervention.diagnostic) html += `<div class="rpt-row"><span class="rpt-row-label">Diagnostic</span><span class="rpt-row-value">${esc(data.intervention.diagnostic)}</span></div>`;
+                    if (data.intervention.diagnostic) html += `<div class="rpt-row"><span class="rpt-row-label">Observations</span><span class="rpt-row-value">${esc(data.intervention.diagnostic)}</span></div>`;
                     if (data.intervention.probleme) html += `<div class="rpt-row"><span class="rpt-row-label">Problème</span><span class="rpt-row-value">${esc(data.intervention.probleme)}</span></div>`;
                     html += `</div>`;
                 }
@@ -11084,7 +11032,7 @@ INSTRUCTIONS:
                 const tblBorder = { style: BorderStyle.SINGLE, size: 1, color: TBL_BORDER_COLOR };
 
                 // ═══ DATA MAPPING ═══
-                const subtitle = (data.type_intervention || 'DIAGNOSTIC').toUpperCase();
+                const subtitle = (data.type_intervention || 'RAPPORT').toUpperCase();
                 const brand = (data.marque || data.equipement?.marque || data.brand || '').toUpperCase();
                 const customerName = data.client?.nom || data.nom_client || data.client?.societe || '';
                 const customerAddress = data.client?.adresse || data.adresse || [data.site?.adresse, data.site?.ville].filter(Boolean).join(', ') || '';
@@ -12279,7 +12227,7 @@ INSTRUCTIONS:
                     if (data.intervention.type) intItems.push({ label: 'Type', value: data.intervention.type });
                     if (data.intervention.statut) intItems.push({ label: 'Statut', value: data.intervention.statut });
                     if (data.intervention.probleme) intItems.push({ label: 'Problème', value: data.intervention.probleme });
-                    if (data.intervention.diagnostic) intItems.push({ label: 'Diagnostic', value: data.intervention.diagnostic });
+                    if (data.intervention.diagnostic) intItems.push({ label: 'Observations', value: data.intervention.diagnostic });
                     
                     if (intItems.length > 0) {
                         doc.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
@@ -12800,7 +12748,7 @@ INSTRUCTIONS:
             // Detect type intervention (R5: correction-priority, compound types first)
             {
                 let detected = null;
-                const corrMatch = allText.match(/(?:en fait|correction|plutôt|non c'?est)[^.]{0,50}?(maintenance préventive avec dépannage|maintenance préventive|dépannage|mise en service|installation|diagnostic)/i);
+                const corrMatch = allText.match(/(?:en fait|correction|plutôt|non c'?est)[^.]{0,50}?(maintenance préventive avec dépannage|maintenance préventive|dépannage|mise en service|installation)/i);
                 if (corrMatch) {
                     detected = corrMatch[1].charAt(0).toUpperCase() + corrMatch[1].slice(1);
                 } else if (allText.includes('maintenance préventive') && (allText.includes('dépannage') || allText.includes('panne'))) {
@@ -13790,7 +13738,7 @@ INSTRUCTIONS:
             </div>`;
             
             // ═══════════════════════════════════════════════════════════════
-            // SECTION 4: DIAGNOSTIC & CODES DÉFAUT
+            // SECTION 4: OBSERVATIONS & CODES DÉFAUT
             // ═══════════════════════════════════════════════════════════════
             
             html += `<div class="rpt-section-divider"></div>`;
@@ -18886,13 +18834,13 @@ RÈGLES:
             let message;
             switch(variant) {
                 case 0:
-                    message = `Salut ! Je viens de trouver un truc pour les dépannages CVC — diagnostic IA + rapports auto en 30 secondes. C'est trop con de garder ça pour moi.\nTeste avec mon lien, on gagne tous les deux 1 semaine gratuite : ${link}`;
+                    message = `Salut ! Je viens de trouver un truc pour les interventions CVC — rapports d'intervention auto en 30 secondes. C'est trop con de garder ça pour moi.\nTeste avec mon lien, on gagne tous les deux 1 semaine gratuite : ${link}`;
                     break;
                 case 1:
-                    message = `Hey ! Je te partage un outil que j'utilise sur le terrain (diagnostic + rapports auto). Je t'offre 1 semaine gratuite pour tester :\n${link}\nTeste-le maintenant sur un vrai dépannage.`;
+                    message = `Hey ! Je te partage un outil que j'utilise sur le terrain (rapports d'intervention auto). Je t'offre 1 semaine gratuite pour tester :\n${link}\nTeste-le maintenant sur une vraie intervention.`;
                     break;
                 case 2:
-                    message = `Salut ! Tu connais FixAIR ? C'est un assistant IA pour les techs CVC — tu lui donnes un code erreur et il te sort le diagnostic + le rapport. Ça m'a changé la vie.\nEssaie gratuit : ${link}`;
+                    message = `Salut ! Tu connais FixAIR ? C'est un assistant IA pour les techs CVC — tu lui racontes ton intervention et il te génère le rapport en 30 secondes. Ça m'a changé la vie.\nEssaie gratuit : ${link}`;
                     break;
             }
 
@@ -19154,7 +19102,7 @@ RÈGLES:
         // Get WhatsApp share message
         function getWhatsAppMessage() {
             const link = getReferralLink();
-            const message = `Salut ! Je viens de trouver un truc pour les dépannages CVC — diagnostic IA + rapports auto en 30 secondes. C'est trop con de garder ça pour moi.\nTeste avec mon lien, on gagne tous les deux 1 semaine gratuite : ${link}`;
+            const message = `Salut ! Je viens de trouver un truc pour les interventions CVC — rapports d'intervention auto en 30 secondes. C'est trop con de garder ça pour moi.\nTeste avec mon lien, on gagne tous les deux 1 semaine gratuite : ${link}`;
             return encodeURIComponent(message);
         }
         
@@ -19373,9 +19321,7 @@ RÈGLES:
                 // Photo: Quick capture vs manual notes
                 photo: { minutes: 5, euros: 8.00, description: "Photo documentée" },
                 // Voice note: Saves typing time
-                voice: { minutes: 4, euros: 6.00, description: "Note vocale transcrite" },
-                // Diagnostic active usage (per 10 min session)
-                diagnostic_session: { minutes: 15, euros: 25.00, description: "Session diagnostic Assistant" }
+                voice: { minutes: 4, euros: 6.00, description: "Note vocale transcrite" }
                 // NOTE: Messages are NOT tracked - only real value actions
             },
             messages: [
@@ -19973,12 +19919,12 @@ RÈGLES:
         }
 
         async function createProjectForEvent(eventData) {
-            // Create a project when event type is diagnostic or assistant
+            // Create a project when event type is assistant (reporting)
             const userId = await getCurrentUserId();
             if (!db || !userId || userId.startsWith('demo-')) {
                 return null;
             }
-            if (eventData.type !== 'diagnostic' && eventData.type !== 'assistant') {
+            if (eventData.type !== 'assistant') {
                 return null;
             }
             
@@ -19996,13 +19942,13 @@ RÈGLES:
                 
                 if (projectError) throw projectError;
 
-                // Create a chat with the correct type (diagnostic or assistant)
+                // Create a chat (reporting type only)
                 const { data: chat, error: chatError } = await db
                     .from('chats')
                     .insert({
                         project_id: project.id,
                         user_id: userId,
-                        chat_type: eventData.type === 'diagnostic' ? 'assistant' : eventData.type
+                        chat_type: 'assistant'
                     })
                     .select()
                     .single();
@@ -20206,7 +20152,7 @@ RÈGLES:
             const ev = calendarEvents.find(e => e.id === eventId);
             if (!ev) return;
             
-            if (ev.type === 'diagnostic' || ev.type === 'assistant') {
+            if (ev.type === 'assistant') {
                 if (ev.projectId) {
                     loadProject(ev.projectId);
                     return;
@@ -20371,8 +20317,8 @@ RÈGLES:
                 jobId: existingEvent?.jobId || null
             };
 
-            // Create project for diagnostic/assistant events (only for new events without projectId)
-            if (!eventData.projectId && (selectedEventType === 'diagnostic' || selectedEventType === 'assistant')) {
+            // Create project for assistant (reporting) events (only for new events without projectId)
+            if (!eventData.projectId && selectedEventType === 'assistant') {
                 const projectId = await createProjectForEvent(eventData);
                 if (projectId) {
                     eventData.projectId = projectId;
@@ -20569,15 +20515,11 @@ RÈGLES:
                 <div class="event-section-title"><span>Informations</span><div class="event-section-line"></div></div>
                 <div class="event-field">
                     <div class="event-field-label">Nom de l'événement</div>
-                    <input type="text" class="event-field-input" id="eventName" placeholder="Diagnostic, Maintenance, Réunion...">
+                    <input type="text" class="event-field-input" id="eventName" placeholder="Maintenance, Réunion, Intervention...">
                 </div>
                 <div class="event-field">
                     <div class="event-field-label">Type</div>
                     <div class="event-type-pills">
-                        <div class="event-type-pill diagnostic" data-type="diagnostic" onclick="selectEventType(this)">
-                            <span class="pill-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span>
-                            Diagnostic
-                        </div>
                         <div class="event-type-pill active assistant" data-type="assistant" onclick="selectEventType(this)">
                             <span class="pill-icon"><svg viewBox="0 0 24 24"><use href="#icon-clipboard"/></svg></span>
                             Rapport
@@ -20732,9 +20674,9 @@ const TP = {
         return simple.test(q.trim()) || q.trim().length < 20;
     },
 
-    // Check if technical
+    // Check if technical (report-oriented terms)
     isTechnicalQuery(q) {
-        const tech = /error|code|fault|panne|erreur|défaut|schéma|schema|diagram|wiring|câblage|pression|bar|température|gaz|r32|r410|frigorigène|install|mise en service|réparer|fix|dépannage|diagnostic|problème|cn\d+|pinout|\b[EPFUepfu]?\d{3,5}\b/i;
+        const tech = /rapport|intervention|maintenance|installation|mise en service|dépannage|remplacement|nettoyage|contrôle|relevé|mesure|pression|bar|température|gaz|r32|r410|frigorigène|charge|câblage|mitsubishi|daikin|carrier|lg|samsung|panasonic|toshiba|fujitsu|hitachi|vrv|vrf|pac|split|pu[hrz]\w*|\b[EPFUepfu]?\d{3,5}\b/i;
         return tech.test(q);
     },
 
@@ -20749,24 +20691,21 @@ const TP = {
         b = b || 'équipement';
         
         {
-            // Analyze query for thought process steps
-            if (/\b([EPFUepfu]?\d{2,5})\b/i.test(q) || /error|code|fault|panne|erreur|défaut/i.test(ql)) {
-                s.push({ icon: 'globe', text: 'Recherche code erreur ' + b + '...' });
-                s.push({ icon: 'doc', text: 'Consultation documentation' });
+            // Analyze query for thought process steps (reporting-focused)
+            if (/mitsubishi|daikin|carrier|lg|samsung|panasonic|toshiba|fujitsu|hitachi|vrv|vrf|pac|split|pu[hrz]\w*/i.test(ql)) {
+                s.push({ icon: 'doc', text: 'Identification équipement ' + b + '...' });
             }
-            if (/wiring|diagram|schema|schéma|pinout|câblage|connecteur|cn\d+/i.test(ql)) {
-                s.push({ icon: 'doc', text: 'Chargement schémas électriques' });
+            if (/maintenance|nettoyage|contrôle|préventive/i.test(ql)) {
+                s.push({ icon: 'tool', text: 'Analyse opérations de maintenance...' });
             }
-            if (/pression|bar|température|gaz|r32|r410|frigorigène|charge/i.test(ql)) {
-                s.push({ icon: 'tool', text: 'Analyse paramètres frigorifiques' });
+            if (/remplacement|changer|changé|remplacé|installé|installation|mise en service/i.test(ql)) {
+                s.push({ icon: 'tool', text: 'Analyse travaux effectués...' });
             }
-            if (/réparer|fix|dépannage|diagnostic|problème|marche pas/i.test(ql)) {
-                s.push({ icon: 'brain', text: 'Analyse diagnostic...' });
+            if (/pression|bar|température|gaz|r32|r410|frigorigène|charge|mesure|relevé/i.test(ql)) {
+                s.push({ icon: 'tool', text: 'Extraction paramètres frigorifiques' });
             }
-            if (/graph|diagramme|visuel|courbe/i.test(ql)) {
-                s.push({ icon: 'chart', text: 'Préparation visuel...' });
-            }
-            if (/rapport|report|compte.?rendu|cerfa|document/i.test(ql)) {
+            if (/intervention|rapport|report|compte.?rendu|cerfa|document/i.test(ql)) {
+                s.push({ icon: 'brain', text: 'Extraction des informations...' });
                 s.push({ icon: 'doc', text: 'Extraction données' });
                 s.push({ icon: 'bullet', text: 'Génération rapport...' });
             } else if (/image|photo|scan|plaque|ocr/i.test(ql)) {
@@ -20774,7 +20713,7 @@ const TP = {
                 s.push({ icon: 'bullet', text: 'Extraction...' });
             }
             if (s.length === 0) {
-                s.push({ icon: 'globe', text: 'Recherche base ' + b + '...' });
+                s.push({ icon: 'brain', text: 'Extraction des informations...' });
             }
             s.push({ icon: 'bullet', text: 'Formulation réponse...' });
         }
