@@ -2,7 +2,15 @@
 
 The shapes that flow through FixAIR at runtime. Each shape gets: purpose, storage location, field table, known issues. Line references are against `technician/index.html` at commit `fbbf8dd` unless noted.
 
-This file is split across two commits because of size. Part A (this commit) covers only `projects.extracted_data` — the single largest and most important shape in the system. Part B covers everything else (chats, messages, webhook shapes, settings, users, calendar, signatures, localStorage).
+**Purpose.** A reimplementation of FixAIR for a neighbouring vertical (Qbe / electricians) must re-emit these shapes byte-for-byte at every boundary — chat persistence, webhook IO, settings, storage, localStorage — or the existing frontend logic breaks. This doc is the contract.
+
+**How to read.** Each section = one persistent shape. "Produced by" tells you whether the assistant, technician, or system owns a field; "Req" is true if the UI/export explodes without it. Tables omit fields that are internal caches only (prefixed `_`).
+
+**Legend — Produced by:**
+- **A** = assistant (n8n extraction webhook or chat stream)
+- **T** = technician (drawer DOM edits or explicit UI input)
+- **S** = system (defaults injected on create, or computed by client code)
+- **M** = mixed / reconciled (multiple writers, merged by `normalizeReportData` or equivalent)
 
 ---
 
@@ -286,4 +294,232 @@ Produced-by legend: **A** = assistant (n8n extraction webhook or chat stream), *
 7. **FR-locale coupling.** Dates (`toLocaleDateString('fr-FR')`), status slugs (`resolu`/`non_resolu`/`en_cours`/`en_attente`), and prefix-strip regexes (`Conclusion:`, `Statut:`, `Description:`) are hard-coded. i18n requires touching `normalizeReportData`.
 8. **HVAC-specific top-level keys** that a non-HVAC vertical (Qbe/electricians) must drop or remodel: `equipements[].role='ue|ui'`, `systeme`, `fluide`, `fluide_global`, `adressage[]`, `tests` (pressure/vacuum), `tuyauteries`, `releves_ue`. See `08_vertical_specific_vs_agnostic.md` for the full fork map.
 
-<!-- PART A ENDS HERE — remaining shapes added in next commit -->
+---
+
+## `projects.drawer_state` (does not exist)
+
+**Verdict: no such column, no such field.** A grep for `drawer_state`, `drawerState`, `drawer_data`, `ui_state`, `editor_state` against `technician/index.html` returns zero hits. The drawer's open/closed state, active tab, scroll position, and "which section is being edited" are **in-memory only** and lost on every reload.
+
+What does persist per project:
+
+| Column | Writer | Site |
+|---|---|---|
+| `extracted_data` (jsonb) | `debouncedSaveExtractedData` | `technician/index.html:13449` |
+| `updated_at` | same | `:13450` |
+| `progress` | same | `:13450` |
+| `completion_status` (conditional) | same | `:13450` |
+| `completed_at` (conditional) | same | `:13450` |
+| same five fields | `flushSaveToSupabase` (sync flush on close/blur) | `:15070–15076` |
+
+**Implication for Qbe.** A faithful port keeps the drawer state ephemeral — there is no contract to honor. If the Qbe UI wants persistent drawer state (e.g. "resume on the same tab"), that's a *new* column, not a migration of existing behaviour.
+
+---
+
+## `chats` row
+
+One row per conversation, scoped to one user and (usually) one project. Read in the chat history loader (`:9196–9210`, `:10184–10210`); written by `createChat` (`:9290–9295`), the project-creation flow (`:9607–9612`), and the legacy assistant shim (`:9950–9955`).
+
+| Column | Type | Producer | Notes / known issues |
+|---|---|---|---|
+| `id` | uuid | S | Server default. |
+| `project_id` | uuid (FK → `projects.id`) | S | Filter for "chats on this project" (`:10056`). Nullable for legacy global-assistant chats. |
+| `user_id` | uuid (FK → `auth.users`) | S | Set on insert (`:9291`). |
+| `chat_type` | text | S | Read at `:9196`, `:10055`, `:10059`, `:10190`. **Legacy value `'copilot'` still present** — `:10190` reads `chat.chat_type === 'copilot'` and remaps to the modern `'assistant'` mode for display. New writes use `'assistant'` (`:9292`, `:9609`, `:9951`). |
+| `is_active` | bool | S | Set true on insert (`:9293`, `:9610`). No code path flips it back to false — old chats stay "active" forever. |
+| `started_at` | timestamptz | S | Used as the order-by for chat list (`:10184`). |
+| `created_at` | timestamptz | S | Server default; not read directly anywhere except via Supabase auto-ordering. |
+
+**Legacy `copilot` rows** are the residue of the pre-pivot "Copilot" branding. They are not migrated — they're remapped on read. A clean Qbe rebuild can drop the `'copilot'` enum value and remap-on-read code entirely.
+
+---
+
+## `messages` row
+
+One row per chat turn (user input or assistant reply). Read in `loadMessages` (`:9206–9210`, `:10199–10260`); written by `saveMessage` (`:9632–9638`).
+
+| Column | Type | Producer | Notes |
+|---|---|---|---|
+| `id` | uuid | S | Server default. |
+| `chat_id` | uuid (FK → `chats.id`) | S | `:9206`, `:9632`. |
+| `role` | text | M | `'user' \| 'assistant'`. Read at `:9214`, `:10243`; written at `:9633`. No `'system'` or `'tool'` rows observed. |
+| `content` | text | M | Plain text or markdown. Read at `:9247`, `:10251`; written at `:9634`. For OCR/image messages this holds the OCR'd text body. |
+| `content_type` | text | M | Enum: `'text' \| 'image' \| 'ocr'`. Read at `:9217`, `:9230`, `:10214`, `:10227`; written at `:9635`. Drives whether the bubble renders as text, image preview, or OCR result block. |
+| `thought_process` | jsonb | A | **Array of `{ title, body }` reasoning steps.** Parsed at `:10241` and iterated at `:10242` (variable `steps`). Written at `:9636`. Empty array for user messages. |
+| `thought_summary` | text | A | One-liner summary of the thought steps, displayed collapsed above the bubble. Read at `:10243`, written at `:9637`. |
+| `created_at` | timestamptz | S | Order-by (`:9207`, `:10199`). |
+
+**Streaming state is not persisted.** There is no `is_streaming`, `status`, or `stream_id` column. While a reply streams, the UI maintains an in-memory placeholder; only the final, complete message is inserted via `saveMessage`. A reload mid-stream loses the in-flight reply with no recovery path.
+
+---
+
+## Webhook payload shapes (brief)
+
+The brief asked for 8 webhooks; the codebase contains **6 distinct n8n endpoints**. Three live in `technician/index.html` (the field app) and three in `master/index.html` (the admin dashboard). Detailed flow descriptions are in `audit-v2/03_n8n_flows.md`; this section is just the wire shape for each.
+
+### 1. `ASSISTANT_WEBHOOK` — `/webhook/fixair-assistant-dev`
+- **Declared:** `technician/index.html:9492` · **Called:** `:16521`
+- **Request:** `{ user_id, chat_id, session_id, panel, message, message_count, conversation_summary, brand_instruction, system_context, report_extraction_mode, extraction_instructions }`
+- **Response:** `{ response | message | output }` — the renderer tries all three keys in that order (`:16545`); body may contain a `[REPORT_DATA]…[/REPORT_DATA]` JSON island parsed at `:16549`.
+
+### 2. `EXTRACTION_WEBHOOK` — `/webhook/fixair-extraction-dev`
+- **Declared:** `technician/index.html:9494` · **Called:** `:16211`
+- **Request:** `{ brand_name, message, message_count, panel, full_conversation, current_report_data, timestamp }`
+- **Response:** `{ extracted_data: {…full report shape…}, completion_percentage: number }` (`:16221`). The `extracted_data` payload follows the §`projects.extracted_data` contract above and is fed straight into `unifiedMerge`.
+
+### 3. `OCR_WEBHOOK_URL` — `/webhook/fixair-ocr`
+- **Declared:** `technician/index.html:17265` · **Called:** `:17298`
+- **Request:** `{ image: "<base64>", brand: "<brand_key>" }`
+- **Response:** `{ output | response | text }` — same three-key fallback as the assistant webhook (`:17309`). Output is dropped into the chat as a `content_type='ocr'` message.
+
+### 4. `N8N_WEBHOOK_URL` (approval) — `/webhook/fixair-approval`
+- **Declared:** `master/index.html:1281` · **Called:** in the admin approval flow.
+- **Request / response:** admin-only operations (approve user, approve project) — payload is `{ action, target_id, master_id }`-shaped, response is `{ success, error? }`. Not exercised by the technician app.
+
+### 5. `EMAIL_SEND_WEBHOOK` — `/webhook/email-send`
+- **Declared:** `master/index.html:3508` · **Called:** `:3712`
+- **Request:** `{ recipient_email, recipient_user_id, subject, content_html, company_name, role, project_count, chat_count, signature_html? }`
+- **Response:** `{ success: bool, error?: string }` (`:3720`).
+
+### 6. `SUPPORT_LOGIN_WEBHOOK` — `/webhook/support-login`
+- **Declared:** `master/index.html:2512` (`SUPPORT_CONFIG.webhookUrl`) · **Called:** `:4038`
+- **Request:** `{ email, master_key: 'FixAIR_Houssam_2026!' }`
+- **Response:** magic-link URL.
+- **Severe security issue:** the master key is a hard-coded string literal shipped to every browser that loads the master dashboard (`master/index.html:3511`). Any visitor can mint a support magic-link for any email. Flag for the Qbe rebuild — must move to a server-side secret.
+
+---
+
+## `app_settings` and `api_keys` rows
+
+### `app_settings`
+A flat key/value bag, one row per setting. Read at `technician/index.html:7481–7498`.
+
+| Column | Type | Notes |
+|---|---|---|
+| `key` | text (PK or unique) | The setting name. Filtered with `.eq('key', …)`. |
+| `value` | text / jsonb | The setting value. Stringly-typed; callers cast as needed. |
+
+**Known keys in production:** `elevenlabs_api_key` (read at `:7498` and cached in the in-memory `cachedApiKeys` map at `:7475–7495`).
+
+### `api_keys`
+**Does not exist as a table.** No `.from('api_keys')` calls anywhere in the codebase. All "API keys" are stored as rows in `app_settings` (above) and a few are also referenced by name in `users.*` (e.g. `subscription_tier` for paywall gating, but no third-party key columns).
+
+### Security note (severe)
+Both the ElevenLabs key and any future keys added to `app_settings` are **fetched client-side** via the public Supabase URL using the `anon` key (`technician/index.html:7481–7498`). RLS does not protect them — `audit-v2/01b_supabase_rls.sql` shows `app_settings` has a permissive `SELECT` policy. Any logged-in user (and possibly any anon visitor, depending on policy) can read every key. The Qbe rebuild must move third-party API keys to a server-side proxy (n8n credential, edge function, or a Supabase RPC that gates by role).
+
+---
+
+## `users` row (no separate `profiles` table)
+
+The `public.users` table is the single source of profile, billing, freemium, and gamification state — there is **no `profiles` table** (every `.from('profiles')` grep returned zero hits). This row is a god-object: 6+ functional concerns piled into one table, all read client-side.
+
+### Auth / identity
+| Column | Type | Producer | Read | Notes |
+|---|---|---|---|---|
+| `id` | uuid (PK = `auth.users.id`) | S | `:7766`, `:1120` | FK target for every other table. |
+| `email` | text | S | `:7766`, `:1120` | Mirrored from `auth.users.email`. |
+| `first_name`, `last_name` | text | T | `:7767`, `:8227` | Edited in profile settings. |
+| `phone` | text | T | `:8228` | Optional. |
+| `language` | text | T | `:8229` | `'fr' \| 'en' \| …` UI locale. |
+| `role` | text | S | `:1121` | `'technician' \| 'admin' \| 'master'`. Drives which dashboard loads. |
+| `status` | text | S | `:1122` | `'active' \| 'pending' \| 'suspended'` — gates login. |
+| `live_status` | text | S | `:8053–8057` | `'online' \| 'idle' \| 'offline'` — heartbeat write every N seconds. |
+| `onboarding_done` | bool | T | `:6438`, `:8388` | Set true after first-run wizard completes. |
+
+### Company metadata
+| Column | Type | Producer | Read | Notes |
+|---|---|---|---|---|
+| `company_name` | text | T | `:8381–8396` | Free text; appears on report header. |
+| `company_logo` | text (base64 data URL) | T | `:8355` (FileReader → `dataUrl`), written `:8383` | **Severe:** stored inline as a base64 PNG/JPEG inside the row. Logos routinely 50–200 KB; pushes the row past efficient REST limits and re-downloads on every profile fetch. Must move to Supabase Storage in any rebuild. |
+
+**Missing fields the brief asked about** (grep returned nothing): `company_address`, `siret`, `vat`. Companies are name+logo only.
+
+### Freemium / subscription
+| Column | Type | Notes |
+|---|---|---|
+| `subscription_tier` | text | `'free' \| 'pro' \| …`. Read at `:18596`, `:19005`, `:19040`. Drives paywall gates and freemium counters. |
+
+**Trial dates** (`trial_start`, `trial_end`, `trial_expires_at`) are **not present** — the freemium model is tier-based, not time-bounded. **Stripe / billing IDs** (`stripe_customer_id`, `subscription_id`) are also absent — billing integration is not in this codebase.
+
+### Referral / ambassador
+| Column | Type | Notes |
+|---|---|---|
+| `referral_code` | text | Unique per user. Read `:19190`. |
+| `total_referrals` | int | Counter of users who signed up with this code. |
+| `completed_referrals` | int | Subset that converted (paid / verified). `:19263`. |
+| `bonus_queries` | int | Extra assistant calls earned via referrals. `:19241`. |
+| `is_ambassador` | bool | Unlocks the ambassador UI (`:19263`). |
+| `week_free_granted_at` | timestamptz | Timestamp of last "free week" reward — used to throttle re-grants. |
+
+### Gamification
+**None present.** Grep for `xp`, `level`, `points`, `achievements`, `badges`, `streak` against the users-table calls returned zero hits. The brief mentioned XP/level — not in the schema. If Qbe wants gamification, it's a new build, not a port.
+
+---
+
+## `calendar_events` row
+
+One row per scheduled item (intervention, follow-up, internal task). Read at `technician/index.html:14445`, `:14524`, `:14537`, `:14558`; written via the calendar create/edit modal.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Server default. |
+| `user_id` | uuid (FK → `users.id`) | Owner. |
+| `title` | text | Display label. |
+| `type` | text | Enum — observed values include `'copilot'` (legacy) and `'assistant'` alongside generic event types. Same legacy-rename pattern as `chats.chat_type`. |
+| `date` | text (`YYYY-MM-DD`) | ISO date string. `:14448`, `:14613`. Stored as `date` (not timestamp) so that `start_time`/`end_time` can be optional. |
+| `start_time` | text (`HH:MM`) | Nullable. `:14456`, `:14512`. |
+| `end_time` | text (`HH:MM`) | Nullable. `:14457`, `:14513`. |
+| `all_day` | bool | Default false. `:14458`, `:14514`. When true, time fields are ignored. |
+| `location` | text | Free text — address or site name. |
+| `client` | text | Free text — duplicates `projects.client_name` when `project_id` is set. |
+| `notes` | text | Free text. |
+| `project_id` | uuid (FK → `projects.id`) | Nullable. `:14465`, `:14518`. Links the calendar entry to the intervention being scheduled. |
+| `repeat_type` | text | Recurrence — `'none' \| 'daily' \| 'weekly' \| 'monthly'`. In-memory key is `repeat`, mapped from the `repeat_type` column at `:14461`. |
+| `reminder` | text/int | `:14462`. Column present in select; not exercised by any UI in the technician app. |
+| `visibility` | text | `:14463`. `'private' \| 'team'` — scaffolded but unused. |
+| `job_id` | uuid | `:14466`. Reserved for an unimplemented "job dispatch" feature. |
+
+**Date/time gotcha.** Because `date` is a text `YYYY-MM-DD` and `start_time` is a separate text `HH:MM`, there is **no timezone information stored** anywhere. The render and the n8n flows both assume Europe/Paris. A multi-region rollout will need a real `timestamptz` column.
+
+**No color coding** is stored — colors are derived client-side from `type`.
+
+---
+
+## Signature shape
+
+**Capture.** Custom HTML5 canvas (`#signatureCanvas`, `300×150`px, `technician/index.html:5652`) with hand-rolled mouse/touch handlers (`:13216–13224`). No third-party library — no `signature_pad`, no `SignaturePad` class.
+
+**Format.** Base64 PNG via `canvas.toDataURL('image/png')` (`:13288`). Output is a `data:image/png;base64,…` URL string, not a file upload.
+
+**Storage.** Inline inside `projects.extracted_data.signatures` (see §`projects.extracted_data` example above) under two keys:
+- `signatures.client.image` — captured into `lastReportData.signature_client` at `:13294`
+- `signatures.technicien.image` — captured into `lastReportData.signature_technicien` at `:13296`
+
+Both are persisted by the same debounced `extracted_data` save as the rest of the report — there is no separate signatures table, no Supabase Storage upload, no compression step.
+
+**Size.** A 300×150 PNG of a typical scribble lands between **2 and 8 KB** raw (~3–11 KB once base64-encoded). With both signatures present, the row carries 6–22 KB of signature data on every fetch and write. Combined with logos (`users.company_logo`, also inline base64) and any pending photo uploads (`extracted_data.photos[].data`), it is straightforward to push a single project row past 200 KB. The Supabase REST 1 MB row cap is the hard ceiling.
+
+**Two distinct signatures.** Client and technician are captured separately by the same canvas component, swapped in/out on the modal. The `nom_client` and `nom_technicien` strings are stored alongside the images at the `signatures.*` level for the export header.
+
+**Recommendation for Qbe.** Move both signatures and the company logo to Supabase Storage, store URLs only in the row. The current inline-base64 design is the single biggest contributor to row bloat.
+
+---
+
+## `localStorage` keys that matter
+
+Every `localStorage.setItem` / `getItem` call in the technician app, with shape, owner, and blast-radius if cleared. `sessionStorage` is **not** used by production code — only by `debug/index.html`.
+
+| Key | Shape | Writer | Reader | Purpose | Breaks if cleared |
+|---|---|---|---|---|---|
+| `fixair_theme` | string `'dark' \| 'light'` | `:5933` | `:5820` | UI theme preference. | Theme silently reverts to `'dark'`. No data loss. |
+| `fixair_lang` | string `'fr' \| 'en' \| …` | `:5951` | `:5821` | UI locale. | Locale reverts to `'fr'`; FR-locale strings still hard-coded so impact is small. |
+| `fixair_onboarding_done` | string `'true'` | `:6438`, `:8368` | `:6763` | First-run wizard completion flag. | Onboarding modal re-appears on next load; survivable, mildly annoying. |
+| `fixair_user` | JSON `{ id, email, first_name, role, status, … }` | `:6960`, `:7010` | `:6940`, `:6953`, `:14111` | **The cached session.** Used to bypass an auth round-trip on cold load. | Re-auth required on next load. Mid-session, code reads `fixair_user` for `user_id` in many writes — clearing it during use will break the next save (writes will fail with null FK or get silently misattributed). |
+| `fixair_demo_user_id` | string (uuid) | `:8229` | `:8226` | Stable ID for the offline/demo path. | Demo mode regenerates a new ID; demo-mode rows previously written under the old ID become orphaned (not migrated). |
+| `fixair_calendar_events` | JSON array of event objects (same shape as `calendar_events` rows) | `:14495` | `:14481` | Fallback storage for the calendar in offline/demo mode (deprecated for authenticated users). | Demo calendar empties. Authenticated users unaffected — they read from Supabase. |
+| `fixair_lastStats` | JSON `{ totalMinutes, totalEuros, reports }` | `:14236` | `:14230` | Cached stats counters for the dashboard tile (avoids a round-trip to render the tile on cold load). | Counters render as `0` until the next stats refresh repopulates them. |
+| `fixair-tech-auth` | (legacy) | — | removed at `:6804` | Legacy auth token from a pre-Supabase build. Code only ever **deletes** it, never sets it. | N/A — kept only for cleanup of old installs. |
+
+### Cross-cutting risks
+1. **`fixair_user` is treated as authoritative for `user_id`** in several write paths (chats, messages, projects). A user who clears localStorage mid-session and then writes a row will miss the auth refresh and produce orphaned data. The Qbe rebuild should derive `user_id` from `supabase.auth.getUser()` on every write, not from the cached blob.
+2. **No write-version stamping.** None of these keys carry a schema version. A future shape change to `fixair_user` (new required field) will silently misread old payloads.
+3. **No quota awareness.** `fixair_calendar_events` can grow unbounded in demo mode. localStorage's 5–10 MB cap would silently truncate writes — code does not catch `QuotaExceededError`.
