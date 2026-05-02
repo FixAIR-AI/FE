@@ -8,10 +8,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --accent: #FF6B35;
-            --accent-glow: rgba(255, 107, 53, 0.4);
-            --accent-bg: rgba(255, 107, 53, 0.08);
-            --accent-border: rgba(255, 107, 53, 0.2);
+            --accent: #FC4401;
+            --accent-glow: rgba(252, 68, 1, 0.4);
+            --accent-bg: rgba(252, 68, 1, 0.08);
+            --accent-border: rgba(252, 68, 1, 0.2);
             --assistant: #22c55e;
             --assistant-glow: rgba(34, 197, 94, 0.4);
             --assistant-bg: rgba(34, 197, 94, 0.08);
@@ -60,8 +60,8 @@
             --msg-user-bg: rgba(0,0,0,0.04);
             --msg-ai-bg: transparent;
             --shadow-color: rgba(0,0,0,0.08);
-            --accent-bg: rgba(255, 107, 53, 0.1);
-            --accent-border: rgba(255, 107, 53, 0.25);
+            --accent-bg: rgba(252, 68, 1, 0.1);
+            --accent-border: rgba(252, 68, 1, 0.25);
             --assistant-bg: rgba(34, 197, 94, 0.1);
             --assistant-border: rgba(34, 197, 94, 0.25);
             --assistant: #16a34a;
@@ -180,7 +180,7 @@
         }
         [data-theme="light"] .input-row:focus-within {
             border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(255,107,53,0.1);
+            box-shadow: 0 0 0 3px rgba(252,68,1,0.1);
         }
         [data-theme="light"] .report-sheet {
             background: rgba(255,255,255,0.98) !important;
@@ -275,7 +275,7 @@
         }
         [data-theme="light"] .form-input:focus {
             border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(255,107,53,0.1);
+            box-shadow: 0 0 0 3px rgba(252,68,1,0.1);
         }
         [data-theme="light"] .login-bar {
             background: var(--card);
@@ -368,10 +368,6 @@
             color: #64748B;
         }
         /* Icon backgrounds matching proj-icon style */
-        [data-theme="light"] .toggle-card.diagnostic .toggle-card-icon {
-            background: var(--accent-bg);
-            color: var(--accent);
-        }
         [data-theme="light"] .toggle-card.assistant .toggle-card-icon {
             background: var(--assistant-bg);
             color: var(--assistant);
@@ -673,7 +669,7 @@
         .login-mini { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; position: relative; }
         .glass-sphere { width: 26px; height: 26px; border-radius: 50%; position: relative; overflow: hidden; animation: glowPulse 8s ease-in-out infinite; }
         @keyframes glowPulse { 
-            0%, 100% { box-shadow: 0 0 14px rgba(255,107,53,0.7), 0 0 28px rgba(255,107,53,0.3); } 
+            0%, 100% { box-shadow: 0 0 14px rgba(252,68,1,0.7), 0 0 28px rgba(252,68,1,0.3); } 
             25% { box-shadow: 0 0 14px rgba(239,68,68,0.7), 0 0 28px rgba(239,68,68,0.3); } 
             50% { box-shadow: 0 0 14px rgba(59,130,246,0.7), 0 0 28px rgba(59,130,246,0.3); } 
             75% { box-shadow: 0 0 14px rgba(234,179,8,0.7), 0 0 28px rgba(234,179,8,0.3); } 
@@ -682,10 +678,10 @@
         .sphere-fog-container { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; background: rgba(20,24,32,0.3); }
         .sphere-fog { position: absolute; inset: -50%; border-radius: 50%; background: radial-gradient(circle at 30% 40%, currentColor, transparent 50%), radial-gradient(circle at 70% 60%, currentColor, transparent 40%); filter: blur(2px); animation: fogSwirl 6s ease-in-out infinite, fogColor 8s ease-in-out infinite; opacity: 0.9; }
         @keyframes fogSwirl { 0% { transform: rotate(0deg) translate(0, 0); } 25% { transform: rotate(90deg) translate(2px, -2px); } 50% { transform: rotate(180deg) translate(0, 0); } 75% { transform: rotate(270deg) translate(-2px, 2px); } 100% { transform: rotate(360deg) translate(0, 0); } }
-        @keyframes fogColor { 0%, 100% { color: #FF6B35; } 25% { color: #ef4444; } 50% { color: #3B82F6; } 75% { color: #eab308; } }
+        @keyframes fogColor { 0%, 100% { color: #FC4401; } 25% { color: #ef4444; } 50% { color: #3B82F6; } 75% { color: #eab308; } }
         .sphere-fog-2 { position: absolute; inset: -30%; border-radius: 50%; background: radial-gradient(circle at 60% 30%, currentColor, transparent 45%); filter: blur(2px); animation: fogSwirl2 5s ease-in-out infinite reverse, fogColor2 8s ease-in-out infinite; opacity: 0.7; }
         @keyframes fogSwirl2 { 0% { transform: rotate(0deg) scale(0.9); } 50% { transform: rotate(180deg) scale(1.1); } 100% { transform: rotate(360deg) scale(0.9); } }
-        @keyframes fogColor2 { 0%, 100% { color: #3B82F6; } 25% { color: #eab308; } 50% { color: #FF6B35; } 75% { color: #ef4444; } }
+        @keyframes fogColor2 { 0%, 100% { color: #3B82F6; } 25% { color: #eab308; } 50% { color: #FC4401; } 75% { color: #ef4444; } }
         .login-input { flex: 1; padding: 8px; background: transparent; border: none; color: white; font-size: 13px; outline: none; caret-color: white; }
         .login-input::placeholder { color: rgba(255,255,255,0.25); }
         .login-input:-webkit-autofill,
@@ -699,7 +695,7 @@
             transition: background-color 9999s ease-out 9999s !important;
             caret-color: white !important;
         }
-        .login-btn { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #FF6B35, #E55A2B); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .login-btn { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #FC4401, #C93601); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .login-btn .icon { width: 12px; height: 12px; }
 
         /* ==================== LOGIN STATUS MESSAGES ==================== */
@@ -729,12 +725,12 @@
         .pending-container { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 40px; text-align: center; }
         .pending-logo { margin-bottom: 8px; }
         .pending-logo svg { height: 40px; width: auto; }
-        .pending-icon { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, rgba(255,107,53,0.2), rgba(255,107,53,0.05)); display: flex; align-items: center; justify-content: center; animation: pendingPulse 2s ease-in-out infinite; }
+        .pending-icon { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, rgba(252,68,1,0.2), rgba(252,68,1,0.05)); display: flex; align-items: center; justify-content: center; animation: pendingPulse 2s ease-in-out infinite; }
         .pending-icon svg { width: 40px; height: 40px; color: var(--accent); }
         @keyframes pendingPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } }
         .pending-title { font-size: 24px; font-weight: 700; color: var(--text); }
         .pending-subtitle { font-size: 14px; color: var(--text-dim); max-width: 300px; line-height: 1.5; }
-        .pending-email { font-size: 13px; color: var(--accent); font-weight: 500; padding: 8px 16px; background: rgba(255,107,53,0.1); border-radius: 8px; }
+        .pending-email { font-size: 13px; color: var(--accent); font-weight: 500; padding: 8px 16px; background: rgba(252,68,1,0.1); border-radius: 8px; }
         .pending-logout { margin-top: 16px; padding: 10px 24px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--text-dim); font-size: 13px; cursor: pointer; transition: all 0.2s; }
         .pending-logout:hover { background: rgba(255,255,255,0.05); color: var(--text); }
 
@@ -768,7 +764,7 @@
         .brand-dropdown-item.selected .brand-dropdown-check { opacity: 1; }
         .brand-dropdown-divider { height: 1px; background: var(--border); margin: 4px 0; position: sticky; top: 0; z-index: 1; }
 
-        .app-content { height: 100%; padding-top: calc(56px + env(safe-area-inset-top)); padding-bottom: calc(70px + env(safe-area-inset-bottom)); overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; align-items: center; }
+        .app-content { height: 100%; padding-top: calc(56px + env(safe-area-inset-top)); padding-bottom: calc(90px + env(safe-area-inset-bottom)); overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; align-items: center; }
         
         /* CENTERED CONTENT CONTAINER */
         .home, .projects-page { 
@@ -787,7 +783,7 @@
         .ring-bg { fill: none; stroke: rgba(255,255,255,0.04); stroke-width: 11; }
         .ring-progress { fill: none; stroke-width: 11; stroke-linecap: round; stroke-dasharray: 440; stroke-dashoffset: 119; filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.5)); transition: stroke-dashoffset 1s ease, stroke 0.5s ease; }
         .ring-progress.cold { stroke: url(#coldGradient); filter: drop-shadow(0 0 8px rgba(125, 64, 255, 0.5)); }
-        .ring-progress.warm { stroke: url(#warmGradient); filter: drop-shadow(0 0 8px rgba(255, 107, 53, 0.5)); }
+        .ring-progress.warm { stroke: url(#warmGradient); filter: drop-shadow(0 0 8px rgba(252, 68, 1, 0.5)); }
         .ring-progress.hot { stroke: url(#hotGradient); filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.5)); }
         .activity-ring-inner { position: absolute; inset: 28px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, rgba(34,197,94,0.08), transparent 60%); display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .activity-value { font-size: 32px; font-weight: 800; background: linear-gradient(135deg, #22c55e, #4ade80); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
@@ -1032,22 +1028,12 @@
             text-decoration: none;
         }
         
-        .toggle-card.diagnostic {
+        .toggle-card.assistant {
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        .toggle-card.assistant { 
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .toggle-card.diagnostic:hover {
-            background: rgba(255, 255, 255, 0.12);
-            border-color: rgba(255, 255, 255, 0.15);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-            transform: translateY(-2px);
-        }
-        .toggle-card.assistant:hover { 
+
+        .toggle-card.assistant:hover {
             background: rgba(255, 255, 255, 0.12);
             border-color: rgba(255, 255, 255, 0.15);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
@@ -1064,7 +1050,6 @@
             transition: all 0.3s;
             flex-shrink: 0;
         }
-        .toggle-card.diagnostic .toggle-card-icon { background: rgba(255, 255, 255, 0.1); color: var(--accent); }
         .toggle-card.assistant .toggle-card-icon { background: rgba(255, 255, 255, 0.1); color: var(--assistant); }
         
         .toggle-card-icon .icon { width: 22px; height: 22px; }
@@ -1079,11 +1064,9 @@
             transition: color 0.3s;
             color: rgba(255, 255, 255, 0.9);
         }
-        .toggle-card.diagnostic:hover .toggle-card-title { color: white; }
         .toggle-card.assistant:hover .toggle-card-title { color: white; }
-        
+
         .toggle-card-desc { font-size: 11px; color: var(--text-dim); white-space: nowrap; }
-        .toggle-card-desc .highlight-diagnostic { color: rgba(255, 107, 53, 0.7); }
         .toggle-card-desc .highlight-assistant { color: rgba(34, 197, 94, 0.7); }
 
         .toggle-card-arrow { 
@@ -1132,7 +1115,6 @@
         .proj-icons { display: flex; align-items: center; position: relative; width: 36px; height: 36px; flex-shrink: 0; }
         .proj-icons.dual { width: 44px; height: 40px; }
         .proj-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .proj-icon.diagnostic { background: var(--accent-bg); color: var(--accent); }
         .proj-icon.assistant { background: var(--assistant-bg); color: var(--assistant); }
         .proj-icon .icon { width: 16px; height: 16px; }
         .proj-icon .star-icon { width: 18px; height: 18px; }
@@ -1227,117 +1209,7 @@
         .rename-modal-btn.cancel { background: var(--bg); color: var(--text-dim); }
         .rename-modal-btn.save { background: var(--assistant); color: white; }
 
-        /* ═══════════════════════════════════════════════════════════════════════════
-           CONNECT VIEW STYLES
-           ═══════════════════════════════════════════════════════════════════════════ */
-        .connect-view {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: var(--bg);
-            z-index: 200;
-            display: none;
-            flex-direction: row;
-        }
-        .connect-view.active { display: flex; }
-        .connect-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            transition: all 0.3s;
-        }
-        .connect-view.drawer-open .connect-content { flex: 0 0 50%; max-width: 50%; }
-        @media (max-width: 700px) { .connect-view.drawer-open .connect-content { flex: 0 0 100%; max-width: 100%; opacity: 0.3; pointer-events: none; } }
-        .connect-content-inner { max-width: 520px; margin: 0 auto; padding: 0 16px; }
-        .connect-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; padding-top: max(14px, calc(env(safe-area-inset-top) + 6px)); flex-shrink: 0; border-bottom: 1px solid var(--border); background: var(--bg-secondary); }
-        .connect-header-back { width: 32px; height: 32px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-dim); }
-        .connect-header-back svg { width: 16px; height: 16px; }
-        .connect-header-info { flex: 1; }
-        .connect-header-title { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-        .connect-header-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
-        .connect-online-dot { width: 8px; height: 8px; background: var(--assistant); border-radius: 50%; animation: pulse 2s infinite; }
-        .connect-body { flex: 1; overflow-y: auto; padding: 16px 0; }
-
-        /* Connect Drawer */
-        .connect-drawer { position: fixed; top: 0; right: 0; width: 50%; height: 100%; background: var(--bg-secondary); border-left: 1px solid var(--border); display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 210; }
-        .connect-view.drawer-open .connect-drawer { transform: translateX(0); }
-        @media (max-width: 700px) { .connect-drawer { width: 100%; } }
-        .connect-drawer-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; padding-top: max(14px, calc(env(safe-area-inset-top) + 6px)); border-bottom: 1px solid var(--border); flex-shrink: 0; }
-        .connect-drawer-close { width: 32px; height: 32px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-dim); transition: all 0.2s; }
-        .connect-drawer-close:hover { background: rgba(255,255,255,0.05); color: var(--text); }
-        .connect-drawer-close svg { width: 16px; height: 16px; }
-        .connect-drawer-info { flex: 1; }
-        .connect-drawer-title { font-size: 14px; font-weight: 600; }
-        .connect-drawer-subtitle { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
-        .connect-drawer-body { flex: 1; overflow-y: auto; padding: 16px; }
-        .connect-drawer-footer { display: flex; gap: 10px; padding: 16px; border-top: 1px solid var(--border); }
-        .connect-drawer-btn { flex: 1; padding: 12px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; }
-        .connect-drawer-btn.secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
-        .connect-drawer-btn.primary { background: var(--connect); color: white; }
-        .connect-drawer-btn.danger { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
-
-        /* Connect Promo */
-        .connect-promo { max-width: 380px; margin: 40px auto 0; text-align: center; }
-        .connect-promo-icon { width: 64px; height: 64px; margin: 0 auto 16px; background: var(--connect-bg); border: 1px solid var(--connect-border); border-radius: 16px; display: flex; align-items: center; justify-content: center; }
-        .connect-promo-icon svg { width: 32px; height: 32px; color: var(--connect); }
-        .connect-promo-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
-        .connect-promo-desc { font-size: 12px; color: var(--text-dim); line-height: 1.5; margin-bottom: 20px; }
-        .connect-promo-features { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; text-align: left; margin-bottom: 20px; }
-        .connect-promo-feat { display: flex; align-items: center; gap: 8px; padding: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; font-size: 11px; }
-        .connect-promo-feat svg { width: 14px; height: 14px; color: var(--connect); flex-shrink: 0; }
-        .connect-btn-activate { width: 100%; padding: 12px 20px; background: var(--connect); color: white; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .connect-btn-activate:hover { filter: brightness(1.1); }
-        .connect-btn-badge { font-size: 9px; padding: 2px 6px; background: rgba(255,255,255,0.2); border-radius: 3px; }
-        .connect-promo-note { font-size: 10px; color: var(--text-dim); margin-top: 10px; }
-
-        /* Connect Stats Bar */
-        .connect-stats-bar { display: flex; gap: 8px; margin-bottom: 16px; }
-        .connect-stat-pill { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 14px 8px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
-        .connect-stat-pill.highlight { background: var(--connect-bg); border-color: var(--connect-border); }
-        .connect-stat-val { font-size: 15px; font-weight: 700; }
-        .connect-stat-pill.highlight .connect-stat-val { color: var(--connect); }
-        .connect-stat-lbl { font-size: 9px; color: var(--text-dim); }
-
-        /* Connect Section Headers */
-        .connect-sec { margin-bottom: 16px; }
-        .connect-sec-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-        .connect-sec-title { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
-        .connect-sec-line { flex: 1; height: 1px; background: var(--border); }
-        .connect-sec-badge { font-size: 9px; padding: 3px 8px; background: var(--connect-bg); color: var(--connect); border-radius: 8px; font-weight: 500; }
-
-        /* Job Cards */
-        .connect-jobs-list { display: flex; flex-direction: column; gap: 10px; }
-        .connect-job-card { display: flex; align-items: center; gap: 12px; padding: 14px 14px 14px 18px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; min-height: 64px; }
-        .connect-job-card::before { content: ''; position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px; border-radius: 0 2px 2px 0; }
-        .connect-job-card.urgent::before { background: #ef4444; }
-        .connect-job-card.new::before { background: var(--connect); }
-        .connect-job-card.scheduled::before { background: var(--assistant); }
-        .connect-job-card.progress::before { background: var(--accent); }
-        .connect-job-card:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.15); }
-        .connect-job-tag { font-size: 9px; font-weight: 600; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.3px; flex-shrink: 0; }
-        .connect-job-tag.urgent { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
-        .connect-job-tag.new { background: var(--connect-bg); color: var(--connect); }
-        .connect-job-tag.scheduled { background: var(--assistant-bg); color: var(--assistant); }
-        .connect-job-tag.progress { background: var(--accent-bg); color: var(--accent); }
-        .connect-job-body { flex: 1; min-width: 0; }
-        .connect-job-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
-        .connect-job-detail { font-size: 11px; color: var(--text-dim); display: flex; align-items: center; gap: 8px; }
-        .connect-job-price { font-size: 13px; font-weight: 600; color: var(--assistant); flex-shrink: 0; }
-        .connect-job-arrow { color: var(--text-dim); flex-shrink: 0; }
-        .connect-job-arrow svg { width: 14px; height: 14px; }
-
-        /* Connect Drawer Detail Sections */
-        .connect-detail-section { margin-bottom: 20px; }
-        .connect-detail-label { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-        .connect-detail-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
-        .connect-detail-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
-        .connect-detail-row:not(:last-child) { border-bottom: 1px solid var(--border); }
-        .connect-detail-row svg { width: 16px; height: 16px; color: var(--text-dim); flex-shrink: 0; }
-        .connect-detail-text { flex: 1; font-size: 13px; }
-        .connect-detail-text small { display: block; font-size: 11px; color: var(--text-dim); margin-top: 2px; }
-        .connect-detail-desc { font-size: 13px; line-height: 1.5; color: var(--text-dim); }
-        .connect-price-big { font-size: 24px; font-weight: 700; color: var(--assistant); }
-        .connect-price-note { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+        /* Connect view styles removed */
 
         /* ═══════════════════════════════════════════════════════════════════════════
            CALENDAR STYLES
@@ -1363,7 +1235,7 @@
         .calendar-day.today { background: var(--accent-bg); color: var(--accent); font-weight: 600; }
         .calendar-day.other-month { opacity: 0.3; }
         .calendar-day.has-events::after { content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: var(--accent); border-radius: 50%; }
-        .calendar-day.connect-avail { border: 1px dashed var(--connect); }
+        /* .calendar-day.connect-avail removed */
 
         /* Calendar Daily View */
         .calendar-daily { display: flex; flex-direction: column; gap: 2px; min-height: 280px; max-height: 280px; overflow-y: auto; }
@@ -1373,7 +1245,7 @@
         .daily-content:hover { background: rgba(255,255,255,0.04); }
         .daily-content.has-event { border-left: 3px solid var(--accent); background: var(--accent-bg); border-radius: 0 6px 6px 0; }
         .daily-content.has-event.assistant { border-left-color: var(--assistant); background: var(--assistant-bg); }
-        .daily-content.has-event.connect { border-left-color: var(--connect); background: var(--connect-bg); }
+        /* .daily-content.has-event.connect removed */
         .daily-content.has-event.personal { border-left-color: #8b5cf6; background: rgba(139,92,246,0.08); }
         .daily-content.has-event.pending { border-left-color: var(--text-dim); background: rgba(255,255,255,0.04); }
         .daily-event-title { font-size: 11px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1392,9 +1264,8 @@
         .week-slot { min-height: 115px; background: rgba(255,255,255,0.02); border-radius: 4px; padding: 3px; display: flex; flex-direction: column; gap: 2px; cursor: pointer; }
         .week-slot:hover { background: rgba(255,255,255,0.04); }
         .week-slot-event { font-size: 9px; padding: 3px 5px; border-radius: 0 3px 3px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
-        .week-slot-event.diagnostic { background: var(--accent-bg); color: var(--accent); border-left: 2px solid var(--accent); }
         .week-slot-event.assistant { background: var(--assistant-bg); color: var(--assistant); border-left: 2px solid var(--assistant); }
-        .week-slot-event.connect { background: var(--connect-bg); color: var(--connect); border-left: 2px solid var(--connect); }
+        /* .week-slot-event.connect removed */
         .week-slot-event.pending { background: rgba(255,255,255,0.04); color: var(--text-dim); border-left: 2px solid var(--text-dim); }
         .week-slot-event.personal { background: rgba(139,92,246,0.1); color: #8b5cf6; border-left: 2px solid #8b5cf6; }
 
@@ -1590,9 +1461,8 @@
         .event-type-pill .pill-icon { width: 14px; height: 14px; display: flex; align-items: center; justify-content: center; }
         .event-type-pill .pill-icon svg { width: 12px; height: 12px; }
         .event-type-pill:hover { border-color: rgba(255,255,255,0.2); }
-        .event-type-pill.active.diagnostic { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
         .event-type-pill.active.assistant { background: var(--assistant-bg); border-color: var(--assistant); color: var(--assistant); }
-        .event-type-pill.active.connect { background: var(--connect-bg); border-color: var(--connect); color: var(--connect); }
+        /* .event-type-pill.active.connect removed */
         .event-type-pill.active.personal { background: rgba(139,92,246,0.1); border-color: #8b5cf6; color: #8b5cf6; }
         
         /* More Options */
@@ -1672,6 +1542,9 @@
         .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 5px 16px; color: rgba(255,255,255,0.3); cursor: pointer; transition: color 0.2s; }
         .nav-item:hover { color: rgba(255,255,255,0.5); }
         .nav-item.active { color: var(--accent); }
+        /* Bottom nav button active/inactive states */
+        .nav-btn { color: #666; transition: color 0.2s; }
+        .nav-btn.active { color: #4ade80; }
         .nav-icon { width: 20px; height: 20px; }
         .nav-label { font-size: 10px; font-weight: 500; }
 
@@ -2448,7 +2321,7 @@
         }
         .transcription-sphere.active { display: block; }
         @keyframes sphereGlow {
-            0%, 100% { box-shadow: 0 0 14px rgba(255,107,53,0.7), 0 0 28px rgba(255,107,53,0.3); }
+            0%, 100% { box-shadow: 0 0 14px rgba(252,68,1,0.7), 0 0 28px rgba(252,68,1,0.3); }
             25% { box-shadow: 0 0 14px rgba(239,68,68,0.7), 0 0 28px rgba(239,68,68,0.3); }
             50% { box-shadow: 0 0 14px rgba(59,130,246,0.7), 0 0 28px rgba(59,130,246,0.3); }
             75% { box-shadow: 0 0 14px rgba(234,179,8,0.7), 0 0 28px rgba(234,179,8,0.3); }
@@ -2496,7 +2369,7 @@
             100% { transform: rotate(360deg) translate(0, 0); }
         }
         @keyframes fogColorT {
-            0%, 100% { color: #FF6B35; }
+            0%, 100% { color: #FC4401; }
             25% { color: #ef4444; }
             50% { color: #3B82F6; }
             75% { color: #eab308; }
@@ -2509,7 +2382,7 @@
         @keyframes fogColorT2 {
             0%, 100% { color: #3B82F6; }
             25% { color: #eab308; }
-            50% { color: #FF6B35; }
+            50% { color: #FC4401; }
             75% { color: #ef4444; }
         }
         /* ═══ END TRANSCRIPTION SPHERE ═══ */
@@ -2655,7 +2528,7 @@
             align-items: center;
             gap: 10px;
             padding: 8px 10px;
-            background: rgba(255,107,53,0.08);
+            background: rgba(252,68,1,0.08);
             border-left: 3px solid var(--accent);
             border-radius: 0 8px 8px 0;
             margin-bottom: 12px;
@@ -2663,7 +2536,7 @@
             transition: background 0.2s;
         }
         .ocr-quote:hover {
-            background: rgba(255,107,53,0.15);
+            background: rgba(252,68,1,0.15);
         }
         .ocr-quote-thumb {
             width: 40px;
@@ -4131,24 +4004,22 @@
         .onboarding-step:hover { background: rgba(255,255,255,0.05); border-color: var(--border); }
         .onboarding-step.completed { opacity: 0.6; }
         .onboarding-step.completed:hover { opacity: 0.8; }
-        .onboarding-step.active { background: rgba(255,107,53,0.08); border-color: rgba(255,107,53,0.2); }
+        .onboarding-step.active { background: rgba(252,68,1,0.08); border-color: rgba(252,68,1,0.2); }
         .onboarding-step.locked { opacity: 0.4; cursor: default; }
         .onboarding-step.locked:hover { background: rgba(255,255,255,0.02); border-color: transparent; }
         .step-check { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .step-check.done { background: var(--assistant); }
         .step-check.done svg { stroke: white; }
         .step-check.pending { background: rgba(255,255,255,0.05); border: 2px solid var(--border); }
-        .step-check.current { background: rgba(255,107,53,0.15); border: 2px solid var(--accent); }
+        .step-check.current { background: rgba(252,68,1,0.15); border: 2px solid var(--accent); }
         .step-check svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2.5; }
         .step-content { flex: 1; display: flex; align-items: center; gap: 10px; }
         .step-title { font-size: 13px; font-weight: 500; }
         .step-divider { width: 1px; height: 16px; background: rgba(255,255,255,0.1); }
         .step-tool { display: flex; align-items: center; gap: 6px; }
         .step-tool-icon { width: 16px; height: 16px; }
-        .step-tool-icon.diagnostic { color: var(--accent); }
         .step-tool-icon.assistant { color: var(--assistant); }
         .step-tool-name { font-size: 11px; font-weight: 600; }
-        .step-tool-name.diagnostic { color: var(--accent); }
         .step-tool-name.assistant { color: var(--assistant); }
         .step-arrow { width: 16px; height: 16px; color: rgba(255,255,255,0.3); flex-shrink: 0; }
         .brand-select-inline { display: none; flex-direction: column; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
@@ -4176,12 +4047,12 @@
         }
         @keyframes pulse-input {
             0%, 100% {
-                box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.4);
-                border-color: rgba(255, 107, 53, 0.5);
+                box-shadow: 0 0 0 0 rgba(252, 68, 1, 0.4);
+                border-color: rgba(252, 68, 1, 0.5);
             }
             50% {
-                box-shadow: 0 0 0 6px rgba(255, 107, 53, 0);
-                border-color: #FF6B35;
+                box-shadow: 0 0 0 6px rgba(252, 68, 1, 0);
+                border-color: #FC4401;
             }
         }
 
@@ -4206,7 +4077,7 @@
         .form-input { padding: 12px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-size: 13px; outline: none; }
         .form-input:focus { border-color: var(--accent-border); }
         .form-input::placeholder { color: rgba(255,255,255,0.25); }
-        .profile-save { width: 100%; padding: 12px; background: linear-gradient(135deg, var(--accent), #E55A2B); border: none; border-radius: 12px; color: white; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+        .profile-save { width: 100%; padding: 12px; background: linear-gradient(135deg, var(--accent), #C93601); border: none; border-radius: 12px; color: white; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 8px; }
         .profile-save:hover { box-shadow: 0 4px 14px var(--accent-glow); }
 
         /* Logo upload area */
@@ -4486,7 +4357,7 @@
         .chat-body { padding: 16px; gap: 12px; }
         .chat-input { padding: 14px 16px; }
         
-        /* Diagnostic/Assistant specific cards */
+        /* Assistant (reporting) specific cards */
         .diag-card { 
             padding: 18px; 
             border-radius: 16px;
@@ -4676,15 +4547,11 @@
             .brand-label { flex-shrink: 0; }
             .brand-chip { flex-shrink: 0; white-space: nowrap; }
             
-            /* Chat header - hide title and brand name on mobile */
+            /* Chat header - hide title and separator on mobile, keep project name */
             .panel-title { display: none !important; }
             .panel-separator { display: none !important; }
             .panel-brand { display: none !important; }
-            
-            /* Adjust panel-info when its contents are hidden */
-            .panel-info { 
-                display: none !important;
-            }
+            .desktop-only { display: none !important; }
             
             /* Panel header layout - centered toggle */
             .panel-header {
@@ -5472,20 +5339,6 @@
     transform: translateX(-50%) translateY(0);
     opacity: 1; visibility: visible;
 }
-/* Re-entry prompt */
-.reentry-prompt {
-    background: rgba(255, 107, 53, 0.06);
-    border: 1px solid rgba(255, 107, 53, 0.12);
-    border-radius: 14px;
-    padding: 16px 18px;
-    margin: 12px 0;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-.reentry-prompt:hover {
-    background: rgba(255, 107, 53, 0.1);
-    border-color: rgba(255, 107, 53, 0.2);
-}
 /* Light theme overrides */
 [data-theme="light"] .upgrade-modal { background: #FFFFFF; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15); }
 [data-theme="light"] .upgrade-modal-title { color: #1E293B; }
@@ -5505,7 +5358,7 @@
         
         .referral-section {
             width: 100%;
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(255, 107, 53, 0.08));
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(252, 68, 1, 0.08));
             border: 1px solid rgba(139, 92, 246, 0.2);
             border-radius: 16px;
             padding: 20px;
@@ -5523,7 +5376,7 @@
             width: 48px;
             height: 48px;
             border-radius: 12px;
-            background: linear-gradient(135deg, #8b5cf6, #FF6B35);
+            background: linear-gradient(135deg, #8b5cf6, #FC4401);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -5643,7 +5496,7 @@
         
         /* Light theme */
         [data-theme="light"] .referral-section {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.06), rgba(255, 107, 53, 0.06));
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.06), rgba(252, 68, 1, 0.06));
         }
 
         [data-theme="light"] .referral-stat {
@@ -5773,7 +5626,7 @@
             </linearGradient>
             <linearGradient id="warmGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stop-color="#FF9966"/>
-                <stop offset="100%" stop-color="#FF6B35"/>
+                <stop offset="100%" stop-color="#FC4401"/>
             </linearGradient>
             <linearGradient id="hotGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stop-color="#4ade80"/>
@@ -5850,46 +5703,9 @@
                 <div class="header-left">
                     <div class="header-logo-svg" onclick="goToHome()" style="cursor:pointer;"><svg viewBox="0 0 235 48"><use href="#icon-fixair-logo"/></svg></div>
                 </div>
-                <div class="brand-pill" id="brandPill" onclick="toggleBrandDropdown()">
-                    <div class="brand-pill-dot" id="brandDot"></div>
-                    <span class="brand-pill-text" id="brandText">Mitsubishi</span>
-                    <svg class="brand-pill-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                    <div class="brand-dropdown" id="brandDropdown">
-                        <div class="brand-dropdown-item active" data-b="carrier" onclick="event.stopPropagation(); setBrand('carrier')">
-                            <div class="brand-dropdown-dot" style="background:#3B82F6;"></div>
-                            <span class="brand-dropdown-name">Carrier</span>
-                            <svg class="brand-dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                        </div>
-                        <div class="brand-dropdown-item active" data-b="daikin" onclick="event.stopPropagation(); setBrand('daikin')">
-                            <div class="brand-dropdown-dot" style="background:#10B981;"></div>
-                            <span class="brand-dropdown-name">Daikin</span>
-                            <svg class="brand-dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                        </div>
-                        <div class="brand-dropdown-item active selected" data-b="mitsubishi" onclick="event.stopPropagation(); setBrand('mitsubishi')">
-                            <div class="brand-dropdown-dot" style="background:#E60012;"></div>
-                            <span class="brand-dropdown-name">Mitsubishi</span>
-                            <svg class="brand-dropdown-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                        </div>
-                        <div class="brand-dropdown-divider"></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">AAON</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">American Standard</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Amana</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Armstrong Air</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Bosch</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Bryant</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Fujitsu</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Gree</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Haier</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Hitachi</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Lennox</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">LG</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Panasonic</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Rheem</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Samsung</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">Trane</span></div>
-                        <div class="brand-dropdown-item disabled"><span class="brand-dropdown-name">York</span></div>
-                    </div>
-                </div>
+                <button onclick="openProfile()" title="Profil" style="background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:7px 10px;color:rgba(255,255,255,0.6);cursor:pointer;display:flex;align-items:center;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
+                </button>
             </div>
         </header>
         <div class="app-content">
@@ -5929,8 +5745,8 @@
                                     <span class="step-title">Essayer l'Assistant</span>
                                     <div class="step-divider"></div>
                                     <div class="step-tool">
-                                        <svg class="step-tool-icon diagnostic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#icon-clipboard"/></svg>
-                                        <span class="step-tool-name diagnostic">Assistant</span>
+                                        <svg class="step-tool-icon assistant" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#icon-clipboard"/></svg>
+                                        <span class="step-tool-name assistant">Assistant</span>
                                     </div>
                                 </div>
                                 <svg class="step-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
@@ -6013,33 +5829,7 @@
                     <div class="stats-message" id="statsMessage">Lance-toi ! 🚀</div>
                 </div>
 
-                <!-- TOGGLE CARDS -->
-                <div class="modules-toggle">
-                    <div class="toggle-card diagnostic" onclick="openChat('assistant')">
-                        <div class="toggle-card-icon"><span class="star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span></div>
-                        <div class="toggle-card-content">
-                            <div class="toggle-card-title">Diagnostic</div>
-                            <div class="toggle-card-desc">avec <span class="highlight-diagnostic">Assistant</span></div>
-                        </div>
-                        <svg class="toggle-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-                    </div>
-                    <div class="toggle-card assistant" onclick="openChat('assistant')">
-                        <div class="toggle-card-icon"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>
-                        <div class="toggle-card-content">
-                            <div class="toggle-card-title">Rapport</div>
-                            <div class="toggle-card-desc">avec <span class="highlight-assistant">Assistant</span></div>
-                        </div>
-                        <svg class="toggle-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-                    </div>
-                </div>
-
-                <!-- BRAND BAR -->
-                <div class="brand-select-row">
-                    <span class="brand-label">Marque:</span>
-                    <div class="brand-chip" data-b="carrier" onclick="setBrand('carrier')">Carrier</div>
-                    <div class="brand-chip" data-b="daikin" onclick="setBrand('daikin')">Daikin</div>
-                    <div class="brand-chip active" data-b="mitsubishi" onclick="setBrand('mitsubishi')">Mitsubishi</div>
-                </div>
+                <!-- TOGGLE CARDS removed - new report via floating + button -->
 
                 <!-- RECENT PROJECTS -->
                 <!-- CALENDAR CARD -->
@@ -6094,23 +5884,22 @@
                 </div>
             </div>
         </div>
-        <nav class="nav">
-            <div class="nav-inner">
-                <div class="nav-item active" id="navHome" onclick="goToHome()"><span class="icon nav-icon"><svg><use href="#icon-home"/></svg></span><span class="nav-label">Accueil</span></div>
-                <div class="nav-item" id="navProjects" onclick="Router.navigate({page:'projects'})"><span class="icon nav-icon"><svg><use href="#icon-folder"/></svg></span><span class="nav-label">Projets</span></div>
-                <div class="nav-item" id="navConnect" onclick="openConnect()"><span class="icon nav-icon"><svg><use href="#icon-connect"/></svg></span><span class="nav-label">Connect</span></div>
-                <div class="nav-item nav-hotline" onclick="openHotline()">
-                    <div class="nav-hotline-waves">
-                        <div class="wave-bar"></div>
-                        <div class="wave-bar"></div>
-                        <div class="wave-bar"></div>
-                        <div class="wave-bar"></div>
-                        <div class="wave-bar"></div>
-                    </div>
-                    <span class="nav-label">Hotline</span>
-                </div>
-                <div class="nav-item nav-profile" onclick="openProfile()"><span class="icon nav-icon"><svg><use href="#icon-user"/></svg></span><div class="nav-profile-badge"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div><span class="nav-label">Profil</span></div>
+        <!-- Bottom nav with curved notch -->
+        <nav class="nav" id="bottomNav" style="background:none !important;border:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;border-radius:0 !important;padding:0 !important;width:100% !important;max-width:100% !important;left:0 !important;transform:none !important;height:80px;pointer-events:none;">
+            <svg style="position:absolute;bottom:0;left:0;width:100%;height:80px;" viewBox="0 0 400 80" preserveAspectRatio="none"><path d="M0,20 L145,20 C155,20 160,20 165,10 C170,0 180,-5 200,-5 C220,-5 230,0 235,10 C240,20 245,20 255,20 L400,20 L400,80 L0,80 Z" fill="#1a1d24"/></svg>
+            <div style="position:absolute;bottom:0;left:0;right:0;height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 40px;pointer-events:auto;">
+                <button onclick="goToHome()" id="navHome" class="nav-btn active" style="background:transparent;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:4px 8px;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                    <span style="font-size:10px;">Accueil</span>
+                </button>
+                <button onclick="Router.navigate({page:'projects'})" id="navProjects" class="nav-btn" style="background:transparent;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:4px 8px;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                    <span style="font-size:10px;">Projets</span>
+                </button>
             </div>
+            <button onclick="startNewProject(); openChat('assistant');" style="position:absolute;bottom:35px;left:50%;transform:translateX(-50%);width:56px;height:56px;border-radius:50%;background:#4ade80;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 15px rgba(74,222,128,0.4);z-index:10;pointer-events:auto;" title="Nouveau rapport">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
         </nav>
     </div>
 
@@ -6260,9 +6049,8 @@
             <header class="panel-header">
                 <button class="panel-back" onclick="closeChat(); goToHome()"><span class="icon"><svg><use href="#icon-arrow-left"/></svg></span></button>
                 <div class="panel-info">
-                    <div class="panel-title">FixAIR Assistant</div>
-                    <div class="panel-separator"></div>
-                    <div class="panel-brand-wrapper" id="assistantBrandWrapper">
+                    <div class="panel-title desktop-only">FixAIR Assistant</div>
+                    <div class="panel-brand-wrapper" id="assistantBrandWrapper" style="display:none;">
                         <div class="panel-brand-btn" onclick="toggleChatBrandDropdown('assistant')">
                             <span class="panel-brand-text" id="assistantSub">Mitsubishi</span>
                             <svg class="brand-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
@@ -6316,8 +6104,7 @@
                 <!-- Mode toggle removed - only assistant panel remains -->
                 <div class="header-actions">
                     <button class="h-btn new-chat-btn" onclick="startNewProject()" title="Nouveau chat"><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></button>
-                    <button class="h-btn report-btn" onclick="openReport()" title="Voir rapport"><span class="icon"><svg><use href="#icon-checklist"/></svg></span></button>
-                    <button class="h-btn" onclick="toggleSplit()" title="Mode split"><span class="icon"><svg><use href="#icon-columns"/></svg></span></button>
+                    <button class="h-btn" onclick="openReport()" title="Voir rapport"><span class="icon"><svg><use href="#icon-columns"/></svg></span></button>
                 </div>
             </header>
             <div class="chat-body" id="assistantBody"></div>
@@ -6471,42 +6258,7 @@
         <img id="imageViewerImg" src="" alt="Full size">
     </div>
 
-    <!-- HOTLINE VIEW -->
-    <div class="hotline-view" id="hotlineView">
-        <button class="hotline-close" onclick="closeHotline(); goToHome()"><span class="icon"><svg><use href="#icon-x"/></svg></span></button>
-        <div class="hotline-widget" id="hotlineWidget">
-            <div class="pulse-sphere" id="pulseSphere" onclick="toggleHotline()">
-                <div class="pulse-atmosphere"></div>
-                <div class="pulse-ring"></div>
-                <div class="pulse-ring"></div>
-                <div class="pulse-ring"></div>
-                <div class="pulse-core"></div>
-                <div class="pulse-icon">
-                    <div class="voice-bar"></div>
-                    <div class="voice-bar"></div>
-                    <div class="voice-bar"></div>
-                    <div class="voice-bar"></div>
-                    <div class="voice-bar"></div>
-                </div>
-            </div>
-            <div class="widget-label" id="widgetLabel">Hotline</div>
-            <div class="widget-sublabel" id="widgetSublabel">Appuyez pour parler</div>
-        </div>
-        <div class="hotline-chat" id="hotlineChat">
-            <div class="chat-spacer"></div>
-            <div class="chat-messages-outer">
-                <div class="chat-messages" id="hotlineChatMessages">
-                    <div class="messages-wrapper" id="messagesWrapper">
-                        <div class="chat-empty" id="chatEmpty">Commencez à parler pour voir la conversation...</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <button class="toggle-chat" id="toggleChat" onclick="toggleChatView()">
-            <span class="toggle-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></span>
-            <span id="toggleText">Afficher</span>
-        </button>
-    </div>
+    <!-- Hotline view removed - now shows toast only -->
 
     <div class="toast" id="toast"></div>
 
@@ -6667,8 +6419,8 @@
                 'home.greeting': 'Bonjour',
                 'home.progress': 'Progression du jour',
                 'home.choose_assistant': 'Choisissez votre assistant',
-                'home.diagnostic_desc': 'Questions techniques et conseils',
-                'home.assistant_desc': 'Diagnostic et résolution',
+                'home.new_report': 'Nouveau rapport',
+                'home.assistant_desc': "Créer un rapport d'intervention",
                 // Onboarding
                 'onboarding.step1_title': 'Choisissez votre marque',
                 'onboarding.step1_desc': 'Sélectionnez la marque principale sur laquelle vous travaillez',
@@ -6677,7 +6429,7 @@
                 'onboarding.step3_title': 'Posez votre première question',
                 'onboarding.step3_desc': 'Essayez l\'Assistant avec une question technique',
                 'onboarding.step4_title': 'Découvrez l\'Assistant',
-                'onboarding.step4_desc': 'Pour un diagnostic approfondi',
+                'onboarding.step4_desc': 'Pour documenter votre intervention',
                 'onboarding.complete': 'Terminé',
                 'onboarding.continue': 'Continuer',
                 // Chat
@@ -6750,8 +6502,8 @@
                 'home.greeting': 'Hello',
                 'home.progress': 'Daily Progress',
                 'home.choose_assistant': 'Choose your assistant',
-                'home.diagnostic_desc': 'Technical questions and advice',
-                'home.assistant_desc': 'Diagnosis and resolution',
+                'home.new_report': 'New report',
+                'home.assistant_desc': 'Create an intervention report',
                 // Onboarding
                 'onboarding.step1_title': 'Choose your brand',
                 'onboarding.step1_desc': 'Select the main brand you work with',
@@ -6760,7 +6512,7 @@
                 'onboarding.step3_title': 'Ask your first question',
                 'onboarding.step3_desc': 'Try the Assistant with a technical question',
                 'onboarding.step4_title': 'Discover the Assistant',
-                'onboarding.step4_desc': 'For in-depth diagnostics',
+                'onboarding.step4_desc': 'To document your intervention',
                 'onboarding.complete': 'Complete',
                 'onboarding.continue': 'Continue',
                 // Chat
@@ -6900,38 +6652,38 @@
         const BRAND_ERROR_EXAMPLES = {
             'mitsubishi': {
                 fr: {
-                    code: '1302',
-                    input: 'J\'ai une erreur 1302 sur un PURY-P200YNW-A1. Donne-moi :\n1. Le tableau de diagnostic complet avec les étapes, actions, outils et résultats attendus\n2. Un flowchart de la procédure de test capteur HP et câblage\n3. Les valeurs de résistance/tension à mesurer sur le capteur 63HS1',
-                    placeholder: 'Ex: Erreur 1302 Mitsubishi - diagnostic capteur HP'
+                    code: 'PAC',
+                    input: 'Rapport d\'intervention sur PAC Mitsubishi PUHZ-SW100 - j\'ai remplacé le capteur HP, tiré au vide et rechargé en R32 (2,5kg). Génère le rapport d\'intervention complet avec mesures et travaux effectués.',
+                    placeholder: 'Ex: Rapport intervention PAC Mitsubishi - remplacement capteur'
                 },
                 en: {
-                    code: '1302',
-                    input: 'I have error 1302 on a PURY-P200YNW-A1. Give me:\n1. Complete diagnostic table with steps, actions, tools and expected results\n2. A flowchart for HP sensor and wiring test procedure\n3. Resistance/voltage values to measure on sensor 63HS1',
-                    placeholder: 'Ex: Error 1302 Mitsubishi - HP sensor diagnostic'
+                    code: 'PAC',
+                    input: 'Intervention report on Mitsubishi PUHZ-SW100 heat pump - I replaced the HP sensor, vacuum pulled and recharged with R32 (2.5kg). Generate the complete intervention report with measurements and work performed.',
+                    placeholder: 'Ex: Mitsubishi heat pump intervention report - sensor replacement'
                 }
             },
             'carrier': {
                 fr: {
                     code: 'XCT7',
-                    input: 'Je suis en mise en service sur un VRF Carrier XCT7. Donne-moi :\n1. La procédure complète avec tous les switchs (SW1, SW2, SW3) dans un tableau\n2. Un flowchart des étapes de mise en service\n3. Les codes switchs pour forcer le mode chaud et froid',
-                    placeholder: 'Ex: Mise en service VRF Carrier XCT7'
+                    input: 'Rapport de mise en service VRF Carrier XCT7 - configuration SW1/SW2/SW3, test des modes chaud/froid, relevé des pressions et températures. Génère le rapport d\'intervention complet.',
+                    placeholder: 'Ex: Rapport mise en service VRF Carrier XCT7'
                 },
                 en: {
                     code: 'XCT7',
-                    input: 'I\'m commissioning a Carrier XCT7 VRF system. Give me:\n1. The complete procedure with all switches (SW1, SW2, SW3) in a table\n2. A flowchart of commissioning steps\n3. Switch codes to force heating and cooling modes',
-                    placeholder: 'Ex: Carrier XCT7 VRF commissioning'
+                    input: 'Carrier XCT7 VRF commissioning report - SW1/SW2/SW3 configuration, heating/cooling mode tests, pressure and temperature readings. Generate the complete intervention report.',
+                    placeholder: 'Ex: Carrier XCT7 VRF commissioning report'
                 }
             },
             'daikin': {
                 fr: {
-                    code: 'Altherma',
-                    input: 'Je dois faire un diagnostic complet sur une PAC Daikin Altherma. Donne-moi :\n1. Le tableau des codes erreur les plus fréquents avec causes et solutions\n2. La procédure de lecture des pressions HP/BP via le menu technicien\n3. Un flowchart de diagnostic pour un défaut de chauffage',
-                    placeholder: 'Ex: Diagnostic PAC Daikin Altherma'
+                    code: 'VRV',
+                    input: 'Intervention maintenance préventive Daikin VRV IV - nettoyage des filtres, contrôle des pressions HP/BP, remplacement d\'un joint défectueux sur l\'unité extérieure. Génère le rapport d\'intervention.',
+                    placeholder: 'Ex: Rapport maintenance Daikin VRV IV'
                 },
                 en: {
-                    code: 'Altherma',
-                    input: 'I need to do a complete diagnostic on a Daikin Altherma heat pump. Give me:\n1. A table of the most common error codes with causes and solutions\n2. The procedure to read HP/LP pressures via the technician menu\n3. A diagnostic flowchart for a heating fault',
-                    placeholder: 'Ex: Daikin Altherma heat pump diagnostic'
+                    code: 'VRV',
+                    input: 'Daikin VRV IV preventive maintenance intervention - filter cleaning, HP/LP pressure check, faulty seal replacement on the outdoor unit. Generate the intervention report.',
+                    placeholder: 'Ex: Daikin VRV IV maintenance report'
                 }
             }
         };
@@ -6983,7 +6735,7 @@
 
                 // Visual feedback
                 chatInput.style.transition = 'background 0.3s';
-                chatInput.style.background = 'rgba(255, 107, 53, 0.1)';
+                chatInput.style.background = 'rgba(252, 68, 1, 0.1)';
                 setTimeout(() => {
                     chatInput.style.background = '';
                 }, 500);
@@ -7759,7 +7511,7 @@
         // /technician/?user=[userId]&page=projects       → Projects list
         // /technician/?user=[userId]&page=project&id=[projectId] → Project detail
         // /technician/?user=[userId]&page=calendar       → Calendar
-        // /technician/?user=[userId]&page=connect        → Connect jobs
+        // Connect page removed
 
         const Router = {
             // Parse current URL and return route object
@@ -7819,8 +7571,7 @@
                 // Close all overlays first
                 closeChat();
                 closeProfile();
-                document.getElementById('hotlineView')?.classList.remove('active');
-                document.getElementById('connectView')?.classList.remove('active');
+                // hotlineView removed
 
                 switch(page) {
                     case 'home':
@@ -7850,7 +7601,7 @@
 
                     case 'hotline':
                         showPage('home');
-                        document.getElementById('hotlineView')?.classList.add('active');
+                        openHotline();
                         break;
 
                     case 'profile':
@@ -7870,10 +7621,6 @@
                         if (typeof showTechCalendar === 'function') {
                             showTechCalendar();
                         }
-                        break;
-
-                    case 'connect':
-                        showPage('connect');
                         break;
 
                     default:
@@ -8207,9 +7954,9 @@
                     console.error('User not found:', error);
                     document.body.innerHTML = `
                         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#0a0a0a;color:white;font-family:system-ui;">
-                            <h1 style="color:#FF6B35;">Utilisateur non trouvé</h1>
+                            <h1 style="color:#FC4401;">Utilisateur non trouvé</h1>
                             <p style="color:#888;margin:20px 0;">L'ID utilisateur n'existe pas.</p>
-                            <a href="/technician" style="color:#FF6B35;margin-top:20px;">← Retour à la connexion</a>
+                            <a href="/technician" style="color:#FC4401;margin-top:20px;">← Retour à la connexion</a>
                         </div>
                     `;
                     return;
@@ -8253,9 +8000,9 @@
                 console.error('Dashboard load error:', err);
                 document.body.innerHTML = `
                     <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#0a0a0a;color:white;font-family:system-ui;">
-                        <h1 style="color:#FF6B35;">Erreur</h1>
+                        <h1 style="color:#FC4401;">Erreur</h1>
                         <p style="color:#888;margin:20px 0;">${err.message}</p>
-                        <button onclick="location.reload()" style="margin-top:20px;padding:10px 20px;background:#FF6B35;color:white;border:none;border-radius:5px;cursor:pointer;">Réessayer</button>
+                        <button onclick="location.reload()" style="margin-top:20px;padding:10px 20px;background:#FC4401;color:white;border:none;border-radius:5px;cursor:pointer;">Réessayer</button>
                     </div>
                 `;
             }
@@ -8988,7 +8735,7 @@
                             <div><strong style="color: var(--text);">Client:</strong> Jean Dupont</div>
                             <div><strong style="color: var(--text);">Date:</strong> ${today}</div>
                             <div><strong style="color: var(--text);">Équipement:</strong> ${brandName} - Split System</div>
-                            <div><strong style="color: var(--text);">Diagnostic:</strong> Code erreur résolu</div>
+                            <div><strong style="color: var(--text);">Intervention:</strong> Opération réalisée</div>
                             <div><strong style="color: var(--text);">Actions:</strong> Vérification câblage, réinitialisation</div>
                             ${hasPhotos ? `<div><strong style="color: var(--text);">Photos:</strong> ${photos.length} photo(s) jointe(s)</div>` : ''}
                         </div>
@@ -9040,7 +8787,7 @@
         }
 
         function updateOnboardingProgress() {
-            // Count completed steps: step1 (profile), step2 (brand), step3 (diagnostic), step4 (assistant)
+            // Count completed steps: step1 (profile), step2 (brand), step3 (try assistant), step4 (assistant)
             let completed = 0;
             if (onboardingStep >= 2) completed = 1; // Profile done
             if (onboardingStep >= 3) completed = 2; // Brand done
@@ -9097,8 +8844,6 @@
             document.getElementById('projectsPage').classList.toggle('active', page === 'projects');
             document.getElementById('navHome').classList.toggle('active', page === 'home');
             document.getElementById('navProjects').classList.toggle('active', page === 'projects');
-            document.getElementById('navConnect').classList.toggle('active', page === 'connect');
-            document.getElementById('connectView').classList.toggle('active', page === 'connect');
         }
 
         function toggleBrandDropdown() {
@@ -9606,6 +9351,7 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
 
       function addMsg(panel, type, content) {
             const body = document.getElementById(panel + 'Body');
+            if (!body) return;
             const msg = document.createElement('div');
 
             // FIX-C: Strip any remaining [REPORT_DATA] blocks from AI messages
@@ -10021,39 +9767,23 @@ Premier message suggéré: "Salut ! Tu travailles sur un système ${brandName}. 
         
         // Generate project card HTML
         function generateProjectCardHtml(project, includeContextMenu = true) {
-            const hasAssistant = project.chats?.some(c => c.chat_type === 'assistant');
-            const hasDiagnostic = project.chats?.some(c => c.chat_type === 'diagnostic');
-            const hasBoth = hasAssistant && hasDiagnostic;
-
             const timeAgo = formatTimeAgo(new Date(project.updated_at));
 
-            // Status bar class
-            let barClass = 'assistant-bar';
-            if (hasBoth) barClass = 'both-bar';
-            else if (hasAssistant) barClass = 'assistant-bar';
+            // Status bar class (only reporting mode remains)
+            const barClass = 'assistant-bar';
 
-            let iconHtml = '';
-            if (hasBoth) {
-                iconHtml = `<div class="proj-icons dual">
-                    <div class="proj-icon diagnostic back"><span class="star-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span></div>
-                    <div class="proj-icon assistant front"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>
-                </div>`;
-            } else if (hasAssistant) {
-                iconHtml = `<div class="proj-icon assistant"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>`;
-            } else {
-                iconHtml = `<div class="proj-icon assistant"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>`;
-            }
-            
+            const iconHtml = `<div class="proj-icon assistant"><span class="icon"><svg><use href="#icon-clipboard"/></svg></span></div>`;
+
             const brandLabel = project.brand ? project.brand.charAt(0).toUpperCase() + project.brand.slice(1) : '';
-            
+
             // Show brand history if changed (Original → Current)
             let brandDisplay = brandLabel;
             if (project.original_brand && project.original_brand !== project.brand) {
                 const originalBrandLabel = project.original_brand.charAt(0).toUpperCase() + project.original_brand.slice(1);
                 brandDisplay = `${originalBrandLabel} → ${brandLabel}`;
             }
-            
-            const modeLabel = hasBoth ? 'Diagnostic + Rapport' : (hasAssistant ? 'Rapport' : 'Diagnostic');
+
+            const modeLabel = 'Rapport';
             
             const safeTitle = escapeForJs(project.title || 'Sans titre');
 const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextMenu(event, '${project.id}', '${safeTitle}')" ontouchstart="startLongPress(event, '${project.id}', '${safeTitle}')" ontouchend="cancelLongPress()" ontouchmove="cancelLongPress()"` : '';            
@@ -10456,8 +10186,10 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                 
                 // Step 3: Load messages for each chat
                 for (const chat of chats || []) {
-                    
-                    currentChatId[chat.chat_type] = chat.id;
+                    // Treat legacy copilot chats as assistant chats
+                    const chatType = (chat.chat_type === 'copilot') ? 'assistant' : (chat.chat_type || 'assistant');
+
+                    currentChatId[chatType] = chat.id;
                     
                     // Load messages for this chat
                     const { data: messages, error: msgError } = await db
@@ -10471,9 +10203,9 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                     }
                     
                     // Clear existing chat UI (preserve TP containers)
-                    chatHistory[chat.chat_type] = [];
-                    clearChatBody(chat.chat_type);
-                    
+                    chatHistory[chatType] = [];
+                    clearChatBody(chatType);
+
                     // Add messages to UI
                     for (const msg of messages || []) {
                         const role = msg.role === 'assistant' ? 'ai' : msg.role;
@@ -10485,19 +10217,19 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                                 const msgDiv = document.createElement('div');
                                 msgDiv.className = 'msg user';
                                 msgDiv.id = msgId;
-                                
+
                                 // Check if this photo was already added to report
                                 const isInReport = window.reportPhotos?.some(p => p.url === msg.content || p.data === msg.content);
-                                msgDiv.innerHTML = createPhotoMessageHTML(msgId, chat.chat_type, msg.content, isInReport);
+                                msgDiv.innerHTML = createPhotoMessageHTML(msgId, chatType, msg.content, isInReport);
                                 msgDiv.dataset.imageData = msg.content;
-                                
+
                                 body.appendChild(msgDiv);
                             } else if (msg.content_type === 'ocr') {
                                 // Render OCR result message
                                 try {
                                     const ocrData = JSON.parse(msg.content);
                                     const sourceImg = findSourceImage(messages, ocrData.sourcePhotoId);
-                                    renderOCRMessage(chat.chat_type, ocrData, sourceImg);
+                                    renderOCRMessage(chatType, ocrData, sourceImg);
                                 } catch (e) {
                                     // Error parsing OCR message
                                 }
@@ -10508,13 +10240,13 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                                     try {
                                         const steps = JSON.parse(msg.thought_process);
                                         if (steps && steps.length > 0) {
-                                            renderPersistedThoughtProcess(chat.chat_type, steps, msg.thought_summary);
+                                            renderPersistedThoughtProcess(chatType, steps, msg.thought_summary);
                                         }
                                     } catch (e) { /* ignore parse errors */ }
                                 }
                                 const content = role === 'ai' ? parseMarkdown(msg.content) : msg.content;
-                                addMsg(chat.chat_type, role, content);
-                                
+                                addMsg(chatType, role, content);
+
                                 // ═══ FIX: Extract REPORT_DATA from loaded AI messages to update drawer ═══
                                 if (role === 'ai' && msg.content.includes('[REPORT_DATA]')) {
                                     try {
@@ -10533,7 +10265,7 @@ const contextMenuAttr = includeContextMenu ? `oncontextmenu="showProjectContextM
                                     }
                                 }
                             }
-                            chatHistory[chat.chat_type].push({ role: msg.role, content: msg.content });
+                            chatHistory[chatType].push({ role: msg.role, content: msg.content });
                             projectMessageCount++;
                         }
                     }
@@ -10845,7 +10577,7 @@ INSTRUCTIONS:
                         const statClass = data.intervention.statut.toLowerCase().includes('refus') ? 'error' : '';
                         html += `<div class="rpt-row"><span class="rpt-row-label">Statut</span><span class="rpt-row-value ${statClass}">${esc(data.intervention.statut)}</span></div>`;
                     }
-                    if (data.intervention.diagnostic) html += `<div class="rpt-row"><span class="rpt-row-label">Diagnostic</span><span class="rpt-row-value">${esc(data.intervention.diagnostic)}</span></div>`;
+                    if (data.intervention.diagnostic) html += `<div class="rpt-row"><span class="rpt-row-label">Observations</span><span class="rpt-row-value">${esc(data.intervention.diagnostic)}</span></div>`;
                     if (data.intervention.probleme) html += `<div class="rpt-row"><span class="rpt-row-label">Problème</span><span class="rpt-row-value">${esc(data.intervention.probleme)}</span></div>`;
                     html += `</div>`;
                 }
@@ -11300,7 +11032,7 @@ INSTRUCTIONS:
                 const tblBorder = { style: BorderStyle.SINGLE, size: 1, color: TBL_BORDER_COLOR };
 
                 // ═══ DATA MAPPING ═══
-                const subtitle = (data.type_intervention || 'DIAGNOSTIC').toUpperCase();
+                const subtitle = (data.type_intervention || 'RAPPORT').toUpperCase();
                 const brand = (data.marque || data.equipement?.marque || data.brand || '').toUpperCase();
                 const customerName = data.client?.nom || data.nom_client || data.client?.societe || '';
                 const customerAddress = data.client?.adresse || data.adresse || [data.site?.adresse, data.site?.ville].filter(Boolean).join(', ') || '';
@@ -12495,7 +12227,7 @@ INSTRUCTIONS:
                     if (data.intervention.type) intItems.push({ label: 'Type', value: data.intervention.type });
                     if (data.intervention.statut) intItems.push({ label: 'Statut', value: data.intervention.statut });
                     if (data.intervention.probleme) intItems.push({ label: 'Problème', value: data.intervention.probleme });
-                    if (data.intervention.diagnostic) intItems.push({ label: 'Diagnostic', value: data.intervention.diagnostic });
+                    if (data.intervention.diagnostic) intItems.push({ label: 'Observations', value: data.intervention.diagnostic });
                     
                     if (intItems.length > 0) {
                         doc.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
@@ -13016,7 +12748,7 @@ INSTRUCTIONS:
             // Detect type intervention (R5: correction-priority, compound types first)
             {
                 let detected = null;
-                const corrMatch = allText.match(/(?:en fait|correction|plutôt|non c'?est)[^.]{0,50}?(maintenance préventive avec dépannage|maintenance préventive|dépannage|mise en service|installation|diagnostic)/i);
+                const corrMatch = allText.match(/(?:en fait|correction|plutôt|non c'?est)[^.]{0,50}?(maintenance préventive avec dépannage|maintenance préventive|dépannage|mise en service|installation)/i);
                 if (corrMatch) {
                     detected = corrMatch[1].charAt(0).toUpperCase() + corrMatch[1].slice(1);
                 } else if (allText.includes('maintenance préventive') && (allText.includes('dépannage') || allText.includes('panne'))) {
@@ -14006,7 +13738,7 @@ INSTRUCTIONS:
             </div>`;
             
             // ═══════════════════════════════════════════════════════════════
-            // SECTION 4: DIAGNOSTIC & CODES DÉFAUT
+            // SECTION 4: OBSERVATIONS & CODES DÉFAUT
             // ═══════════════════════════════════════════════════════════════
             
             html += `<div class="rpt-section-divider"></div>`;
@@ -16743,7 +16475,7 @@ Tu reprends une conversation avec ${previousUserMessages} messages du technicien
                         : `MARQUE CONFIRMÉE: ${currentBrandName}. NE DEMANDE JAMAIS LA MARQUE. NOUVELLE CONVERSATION.`,
                     system_context: isExistingConversation 
                         ? `${conversationSummary}`
-                        : `NOUVELLE CONVERSATION. MARQUE: ${currentBrandName}. ${panel === 'assistant' ? 'Mode Rapport - pose les questions pour générer un rapport d\'intervention.' : 'Mode Diagnostic - aide au dépannage.'}`,
+                        : `NOUVELLE CONVERSATION. MARQUE: ${currentBrandName}. Mode Rapport - pose les questions pour générer un rapport d'intervention.`,
                     
                     // ═══ REPORT EXTRACTION INSTRUCTIONS ═══
                     // These instructions tell the AI to extract and return structured data
@@ -18135,7 +17867,7 @@ RÈGLES:
                 msg.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 // Highlight briefly
                 msg.style.transition = 'background 0.3s';
-                msg.style.background = 'rgba(255,107,53,0.15)';
+                msg.style.background = 'rgba(252,68,1,0.15)';
                 setTimeout(() => {
                     msg.style.background = '';
                 }, 1500);
@@ -18630,253 +18362,20 @@ RÈGLES:
         // ═══════════════════════════════════════════════════════════════
 
         function openHotline() {
-            Router.navigate({ page: 'hotline' });
-            resetHotline();
+            toast('Hotline FixAIR - Bientôt disponible en version Pro');
         }
 
-        function closeHotline() {
-            document.getElementById('hotlineView').classList.remove('active');
-            if(isConnected) disconnectHotline();
-            resetHotline();
-        }
-
-        function resetHotline() {
-            isConnected = false;
-            isConnecting = false;
-            isDisconnecting = false;
-            chatOpen = false;
-            document.getElementById('pulseSphere').classList.remove('connected','connecting','disconnecting');
-            document.getElementById('hotlineWidget').classList.remove('chat-mode');
-            document.getElementById('hotlineChat').classList.remove('visible');
-            document.getElementById('toggleChat').classList.remove('visible','open');
-            document.getElementById('widgetLabel').textContent = 'Hotline';
-            document.getElementById('widgetSublabel').textContent = 'Appuyez pour parler';
-            document.getElementById('toggleText').textContent = 'Afficher';
-        }
-
-        function toggleHotline() {
-            if(isConnecting || isDisconnecting) return;
-            if(isConnected) disconnectHotline();
-            else connectHotline();
-        }
-        
-        // ═══════════════════════════════════════════════════════════════
-        // ELEVENLABS CONVERSATIONAL AI - AGENT MAPPING
-        // ═══════════════════════════════════════════════════════════════
-        
-        const ELEVENLABS_AGENT_IDS = {
-            'mitsubishi': 'agent_2801k5chk9qgf9hbh0hnjrsyckq7',
-            'carrier': 'agent_8901k87w3fpyf6vaj9500df173t8',
-            'daikin': 'agent_9301k9f06f14f6t8ctfnp5vgq952',
-            // Fallback for other brands - use Mitsubishi as default
-            'lg': 'agent_2801k5chk9qgf9hbh0hnjrsyckq7',
-            'samsung': 'agent_2801k5chk9qgf9hbh0hnjrsyckq7',
-            'panasonic': 'agent_2801k5chk9qgf9hbh0hnjrsyckq7',
-            'toshiba': 'agent_2801k5chk9qgf9hbh0hnjrsyckq7',
-            'fujitsu': 'agent_2801k5chk9qgf9hbh0hnjrsyckq7',
-            'hitachi': 'agent_2801k5chk9qgf9hbh0hnjrsyckq7',
-            'general': 'agent_2801k5chk9qgf9hbh0hnjrsyckq7'
-        };
-        
-        let elevenLabsConversation = null;
-        let elevenLabsSDKReady = false;
-        
-        // Listen for SDK ready event
-        window.addEventListener('elevenlabs-ready', () => {
-            elevenLabsSDKReady = true;
-        });
-
-        async function connectHotline() {
-            if(isConnecting || isConnected) return;
-
-            // Check if SDK is ready
-            if (!elevenLabsSDKReady || !window.ElevenLabsConversation) {
-                toast('Chargement en cours...');
-                // Wait a bit and try again
-                setTimeout(() => {
-                    if (elevenLabsSDKReady) {
-                        connectHotline();
-                    } else {
-                        toast('Erreur: SDK non chargé');
-                    }
-                }, 1000);
-                return;
-            }
-            
-            isConnecting = true;
-            document.getElementById('pulseSphere').classList.add('connecting');
-            document.getElementById('widgetSublabel').textContent = 'Connexion...';
-            if(navigator.vibrate) navigator.vibrate(200);
-            
-            // Get the correct agent ID for the selected brand
-            const agentId = ELEVENLABS_AGENT_IDS[brand] || ELEVENLABS_AGENT_IDS['general'];
-            
-            try {
-                elevenLabsConversation = await window.ElevenLabsConversation.startSession({
-                    agentId: agentId,
-                    
-                    onMessage: ({ message, source }) => {
-                        if (source === 'user') {
-                            addHotlineMessage(message, 'user');
-                        } else {
-                            addHotlineMessage(message, 'ai');
-                        }
-                    },
-                    
-                    onModeChange: ({ mode }) => {
-                        if (mode === 'speaking') {
-                            document.getElementById('pulseSphere').classList.add('ai-speaking');
-                            showAISpeakingIndicator();
-                        } else {
-                            document.getElementById('pulseSphere').classList.remove('ai-speaking');
-                            hideAISpeakingIndicator();
-                        }
-                    },
-                    
-                    onConnect: ({ conversationId }) => {
-                        isConnecting = false;
-                        isConnected = true;
-                        document.getElementById('pulseSphere').classList.remove('connecting');
-                        document.getElementById('pulseSphere').classList.add('connected');
-                        document.getElementById('widgetSublabel').textContent = 'Appuyez pour terminer';
-                        document.getElementById('toggleChat').classList.add('visible');
-                        
-                        // Open chat view
-                        setTimeout(() => {
-                            if(!chatOpen) toggleChatView();
-                        }, 800);
-                    },
-                    
-                    onDisconnect: () => {
-                        handleHotlineDisconnect();
-                    },
-
-                    onError: (error) => {
-                        toast('Erreur connexion');
-                        handleHotlineDisconnect();
-                    }
-                });
-
-            } catch (error) {
-                isConnecting = false;
-                document.getElementById('pulseSphere').classList.remove('connecting');
-                document.getElementById('widgetSublabel').textContent = 'Appuyez pour parler';
-                
-                if (error.name === 'NotAllowedError') {
-                    toast('Microphone non autorisé');
-                    alert('Veuillez autoriser l\'accès au microphone pour utiliser l\'assistant vocal.');
-                } else {
-                    toast('Erreur: ' + (error.message || 'Connexion échouée'));
-                }
-            }
-        }
-        
-        // Show AI speaking waveform indicator
-        function showAISpeakingIndicator() {
-            const existing = document.getElementById('messagesWrapper').querySelector('.ai-speaking-indicator');
-            if (existing) return;
-            
-            const indicator = document.createElement('div');
-            indicator.className = 'hotline-msg ai ai-speaking-indicator';
-            indicator.innerHTML = `
-                <span class="msg-label">${names[brand]}</span>
-                <div class="msg-bubble" style="display:flex;align-items:center;gap:10px;">
-                    <div style="display:flex;align-items:center;gap:3px;height:20px;">
-                        <div class="speaking-bar" style="width:3px;height:8px;background:#34a853;border-radius:2px;animation:speakPulse 0.8s ease-in-out infinite;animation-delay:0s;"></div>
-                        <div class="speaking-bar" style="width:3px;height:14px;background:#34a853;border-radius:2px;animation:speakPulse 0.8s ease-in-out infinite;animation-delay:0.1s;"></div>
-                        <div class="speaking-bar" style="width:3px;height:10px;background:#34a853;border-radius:2px;animation:speakPulse 0.8s ease-in-out infinite;animation-delay:0.2s;"></div>
-                        <div class="speaking-bar" style="width:3px;height:16px;background:#34a853;border-radius:2px;animation:speakPulse 0.8s ease-in-out infinite;animation-delay:0.3s;"></div>
-                        <div class="speaking-bar" style="width:3px;height:12px;background:#34a853;border-radius:2px;animation:speakPulse 0.8s ease-in-out infinite;animation-delay:0.4s;"></div>
-                    </div>
-                    <span style="color:#34a853;font-size:12px;">Parle...</span>
-                </div>
-            `;
-            document.getElementById('messagesWrapper').appendChild(indicator);
-            document.getElementById('hotlineChatMessages').scrollTop = document.getElementById('hotlineChatMessages').scrollHeight;
-        }
-        
-        function hideAISpeakingIndicator() {
-            const indicator = document.getElementById('messagesWrapper').querySelector('.ai-speaking-indicator');
-            if (indicator) indicator.remove();
-        }
-        
-        function handleHotlineDisconnect() {
-            isConnecting = false;
-            isConnected = false;
-            isDisconnecting = false;
-            elevenLabsConversation = null;
-            document.getElementById('pulseSphere').classList.remove('connected', 'connecting', 'disconnecting', 'ai-speaking');
-            document.getElementById('widgetSublabel').textContent = 'Appuyez pour parler';
-            hideAISpeakingIndicator();
-        }
-
-        async function disconnectHotline() {
-            if(!isConnected || isDisconnecting) return;
-            isDisconnecting = true;
-            isConnected = false;
-            document.getElementById('pulseSphere').classList.remove('connected');
-            document.getElementById('pulseSphere').classList.add('disconnecting');
-            document.getElementById('widgetSublabel').textContent = 'Fin...';
-            
-            // End ElevenLabs conversation
-            if (elevenLabsConversation) {
-                try {
-                    await elevenLabsConversation.endSession();
-                } catch (e) {
-                    // End session error
-                }
-                elevenLabsConversation = null;
-            }
-
-            setTimeout(() => {
-                isDisconnecting = false;
-                document.getElementById('pulseSphere').classList.remove('disconnecting');
-                document.getElementById('widgetSublabel').textContent = 'Appuyez pour parler';
-                if(chatOpen) {
-                    document.getElementById('hotlineChat').classList.remove('visible');
-                    document.getElementById('toggleChat').classList.remove('open');
-                    document.getElementById('toggleText').textContent = 'Afficher';
-                    chatOpen = false;
-                }
-                document.getElementById('hotlineWidget').classList.remove('chat-mode');
-                hideAISpeakingIndicator();
-            }, 2500);
-        }
-
-        function toggleChatView() {
-            chatOpen = !chatOpen;
-            if(chatOpen) {
-                document.getElementById('hotlineChat').classList.add('visible');
-                document.getElementById('toggleChat').classList.add('open');
-                document.getElementById('toggleText').textContent = 'Masquer';
-                document.getElementById('hotlineWidget').classList.add('chat-mode');
-            } else {
-                document.getElementById('hotlineChat').classList.remove('visible');
-                document.getElementById('toggleChat').classList.remove('open');
-                document.getElementById('toggleText').textContent = 'Afficher';
-                document.getElementById('hotlineWidget').classList.remove('chat-mode');
-            }
-        }
-
-        function addHotlineMessage(text, sender) {
-            const empty = document.getElementById('chatEmpty');
-            if(empty) empty.style.display = 'none';
-            
-            // Hide speaking indicator when we get the actual message
-            if (sender === 'ai') {
-                hideAISpeakingIndicator();
-            }
-            
-            const wrapper = document.getElementById('messagesWrapper');
-            const msg = document.createElement('div');
-            msg.className = 'hotline-msg ' + sender;
-            const now = new Date();
-            const time = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-            const label = sender === 'user' ? 'Vous' : names[brand];
-            msg.innerHTML = `<span class="msg-label">${label}</span><div class="msg-bubble">${text}</div><span class="msg-time">${time}</span>`;
-            wrapper.appendChild(msg);
-            document.getElementById('hotlineChatMessages').scrollTop = document.getElementById('hotlineChatMessages').scrollHeight;
-        }
+        // Hotline functions removed - openHotline() shows toast only
+        function closeHotline() {}
+        function resetHotline() {}
+        function toggleHotline() {}
+        function connectHotline() {}
+        function disconnectHotline() {}
+        function toggleChatView() {}
+        function addHotlineMessage() {}
+        function showAISpeakingIndicator() {}
+        function hideAISpeakingIndicator() {}
+        function handleHotlineDisconnect() {}
 
         const divider = document.getElementById('divider');
         const pA = document.getElementById('panelAssistant');
@@ -19315,10 +18814,6 @@ RÈGLES:
                 checkSprintChallenge();
             }, 3000);
 
-            // Show re-entry prompt on assistant if returning user
-            setTimeout(() => {
-                showReentryPrompt('assistant');
-            }, 1500);
         }
         
         // ═══ INVITE FLOW HANDLER ═══
@@ -19339,13 +18834,13 @@ RÈGLES:
             let message;
             switch(variant) {
                 case 0:
-                    message = `Salut ! Je viens de trouver un truc pour les dépannages CVC — diagnostic IA + rapports auto en 30 secondes. C'est trop con de garder ça pour moi.\nTeste avec mon lien, on gagne tous les deux 1 semaine gratuite : ${link}`;
+                    message = `Salut ! Je viens de trouver un truc pour les interventions CVC — rapports d'intervention auto en 30 secondes. C'est trop con de garder ça pour moi.\nTeste avec mon lien, on gagne tous les deux 1 semaine gratuite : ${link}`;
                     break;
                 case 1:
-                    message = `Hey ! Je te partage un outil que j'utilise sur le terrain (diagnostic + rapports auto). Je t'offre 1 semaine gratuite pour tester :\n${link}\nTeste-le maintenant sur un vrai dépannage.`;
+                    message = `Hey ! Je te partage un outil que j'utilise sur le terrain (rapports d'intervention auto). Je t'offre 1 semaine gratuite pour tester :\n${link}\nTeste-le maintenant sur une vraie intervention.`;
                     break;
                 case 2:
-                    message = `Salut ! Tu connais FixAIR ? C'est un assistant IA pour les techs CVC — tu lui donnes un code erreur et il te sort le diagnostic + le rapport. Ça m'a changé la vie.\nEssaie gratuit : ${link}`;
+                    message = `Salut ! Tu connais FixAIR ? C'est un assistant IA pour les techs CVC — tu lui racontes ton intervention et il te génère le rapport en 30 secondes. Ça m'a changé la vie.\nEssaie gratuit : ${link}`;
                     break;
             }
 
@@ -19446,43 +18941,6 @@ RÈGLES:
             `;
 
             homepage.insertBefore(banner, homepage.firstChild);
-        }
-        // ═══ RE-ENTRY PROMPT (returning users) ═══
-        function showReentryPrompt(panel) {
-            const chatBody = document.getElementById(panel + 'Body');
-            if (!chatBody) return;
-            if (chatBody.querySelector('.reentry-prompt')) return;
-            if (chatBody.children.length > 1) return;
-
-            const examples = [
-                { code: 'E1', brand: 'Daikin', desc: 'Défaut capteur température extérieure' },
-                { code: 'F3', brand: 'Mitsubishi', desc: 'Erreur débit réfrigérant faible' },
-                { code: 'H6', brand: 'Panasonic', desc: 'Défaut compresseur position locked' },
-                { code: 'L5', brand: 'Toshiba', desc: 'Surcharge instantanée' }
-            ];
-            const ex = examples[Math.floor(Math.random() * examples.length)];
-
-            const prompt = document.createElement('div');
-            prompt.className = 'reentry-prompt';
-            prompt.onclick = function() {
-                const input = document.getElementById(panel + 'Input');
-                if (input) {
-                    input.value = `Code erreur ${ex.code} sur ${ex.brand} — diagnostic ?`;
-                    input.dispatchEvent(new Event('input'));
-                    prompt.remove();
-                }
-            };
-            prompt.innerHTML = `
-                <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px;">
-                    🔧 Un diagnostic rapide ?
-                </div>
-                <div style="font-size: 12px; color: var(--text-dim); line-height: 1.4;">
-                    Exemple : <strong>Code ${ex.code} ${ex.brand}</strong> — ${ex.desc}<br>
-                    <span style="color: var(--accent); font-weight: 500;">Cliquez pour tester →</span>
-                </div>
-            `;
-
-            chatBody.appendChild(prompt);
         }
         // ═══ CHECK WEEK FREE STATUS ═══
         async function checkWeekFreeStatus() {
@@ -19608,7 +19066,6 @@ RÈGLES:
         window.showPendingReferralPopup = showPendingReferralPopup;
         window.closePendingPopup = closePendingPopup;
         window.checkSprintChallenge = checkSprintChallenge;
-        window.showReentryPrompt = showReentryPrompt;
         window.checkWeekFreeStatus = checkWeekFreeStatus;
         window.startPaymentPolling = startPaymentPolling;
 
@@ -19645,7 +19102,7 @@ RÈGLES:
         // Get WhatsApp share message
         function getWhatsAppMessage() {
             const link = getReferralLink();
-            const message = `Salut ! Je viens de trouver un truc pour les dépannages CVC — diagnostic IA + rapports auto en 30 secondes. C'est trop con de garder ça pour moi.\nTeste avec mon lien, on gagne tous les deux 1 semaine gratuite : ${link}`;
+            const message = `Salut ! Je viens de trouver un truc pour les interventions CVC — rapports d'intervention auto en 30 secondes. C'est trop con de garder ça pour moi.\nTeste avec mon lien, on gagne tous les deux 1 semaine gratuite : ${link}`;
             return encodeURIComponent(message);
         }
         
@@ -19864,9 +19321,7 @@ RÈGLES:
                 // Photo: Quick capture vs manual notes
                 photo: { minutes: 5, euros: 8.00, description: "Photo documentée" },
                 // Voice note: Saves typing time
-                voice: { minutes: 4, euros: 6.00, description: "Note vocale transcrite" },
-                // Diagnostic active usage (per 10 min session)
-                diagnostic_session: { minutes: 15, euros: 25.00, description: "Session diagnostic Assistant" }
+                voice: { minutes: 4, euros: 6.00, description: "Note vocale transcrite" }
                 // NOTE: Messages are NOT tracked - only real value actions
             },
             messages: [
@@ -20140,7 +19595,7 @@ RÈGLES:
             overlay.id = 'celebrationOverlay';
             document.body.appendChild(overlay);
             
-            const colors = ['#FFD700', '#FF6B35', '#22C55E', '#3B82F6', '#A78BFA', '#F472B6', '#FCD34D', '#EF4444'];
+            const colors = ['#FFD700', '#FC4401', '#22C55E', '#3B82F6', '#A78BFA', '#F472B6', '#FCD34D', '#EF4444'];
             
             for (let i = 0; i < 80; i++) {
                 const particle = document.createElement('div');
@@ -20464,12 +19919,12 @@ RÈGLES:
         }
 
         async function createProjectForEvent(eventData) {
-            // Create a project when event type is diagnostic or assistant
+            // Create a project when event type is assistant (reporting)
             const userId = await getCurrentUserId();
             if (!db || !userId || userId.startsWith('demo-')) {
                 return null;
             }
-            if (eventData.type !== 'diagnostic' && eventData.type !== 'assistant') {
+            if (eventData.type !== 'assistant') {
                 return null;
             }
             
@@ -20487,13 +19942,13 @@ RÈGLES:
                 
                 if (projectError) throw projectError;
 
-                // Create a chat with the correct type (diagnostic or assistant)
+                // Create a chat (reporting type only)
                 const { data: chat, error: chatError } = await db
                     .from('chats')
                     .insert({
                         project_id: project.id,
                         user_id: userId,
-                        chat_type: eventData.type === 'diagnostic' ? 'assistant' : eventData.type
+                        chat_type: 'assistant'
                     })
                     .select()
                     .single();
@@ -20697,14 +20152,7 @@ RÈGLES:
             const ev = calendarEvents.find(e => e.id === eventId);
             if (!ev) return;
             
-            if (ev.type === 'connect') {
-                showPage('connect');
-                if (ev.jobId) {
-                    setTimeout(() => openConnectDrawer('job', ev.jobId), 300);
-                } else {
-                    setTimeout(() => openConnectDrawer('job', 'job1'), 300);
-                }
-            } else if (ev.type === 'diagnostic' || ev.type === 'assistant') {
+            if (ev.type === 'assistant') {
                 if (ev.projectId) {
                     loadProject(ev.projectId);
                     return;
@@ -20736,7 +20184,7 @@ RÈGLES:
         }
 
         // ═══ EVENT DRAWER FUNCTIONS ═══
-        let selectedEventType = 'diagnostic';
+        let selectedEventType = 'assistant';
 
         function openEventDrawer(dateKey, startTime) {
             editingEventId = null;
@@ -20745,11 +20193,11 @@ RÈGLES:
             document.getElementById('eventName').value = '';
             document.getElementById('eventDate').value = dateKey;
             document.getElementById('eventStartTime').value = startTime || '09:00';
-            
+
             const [h, m] = (startTime || '09:00').split(':');
             const endHour = (parseInt(h) + 1).toString().padStart(2, '0');
             document.getElementById('eventEndTime').value = `${endHour}:${m}`;
-            
+
             document.getElementById('eventLocation').value = '';
             document.getElementById('eventClient').value = '';
             document.getElementById('eventRepeat').value = 'none';
@@ -20758,14 +20206,14 @@ RÈGLES:
             document.getElementById('eventNotes').value = '';
             document.getElementById('eventAllDay').classList.remove('active');
             document.getElementById('eventTimeRow').style.display = 'flex';
-            
+
             document.getElementById('eventMoreOptions').classList.remove('show');
             document.getElementById('moreOptionsToggle').classList.remove('expanded');
-            
-            selectedEventType = 'diagnostic';
+
+            selectedEventType = 'assistant';
             document.querySelectorAll('.event-type-pill').forEach(p => {
                 p.classList.remove('active');
-                if (p.dataset.type === 'diagnostic') p.classList.add('active');
+                if (p.dataset.type === 'assistant') p.classList.add('active');
             });
             
             document.getElementById('eventDrawerOverlay').classList.add('show');
@@ -20869,8 +20317,8 @@ RÈGLES:
                 jobId: existingEvent?.jobId || null
             };
 
-            // Create project for diagnostic/assistant events (only for new events without projectId)
-            if (!eventData.projectId && (selectedEventType === 'diagnostic' || selectedEventType === 'assistant')) {
+            // Create project for assistant (reporting) events (only for new events without projectId)
+            if (!eventData.projectId && selectedEventType === 'assistant') {
                 const projectId = await createProjectForEvent(eventData);
                 if (projectId) {
                     eventData.projectId = projectId;
@@ -20997,110 +20445,7 @@ RÈGLES:
             hideEventContextMenu();
         }
 
-        // ═══════════════════════════════════════════════════════════════════════════
-        // CONNECT FUNCTIONS
-        // ═══════════════════════════════════════════════════════════════════════════
-        let connectActivated = false;
-        let connectOnline = true;
-
-        const connectJobsData = {
-            job1: { title: 'AC ne refroidit plus', type: 'Climatisation', status: 'urgent', price: '€85-120', distance: '2.3 km', time: 'ASAP', client: 'Pierre Martin', address: '45 Rue du Commerce, 75015 Paris', phone: '+33 6 12 34 56 78', desc: 'Split mural Samsung qui ne produit plus de froid. Le client indique que l\'unité extérieure fait du bruit.' },
-            job2: { title: 'Bruit anormal PAC', type: 'Pompe à chaleur', status: 'new', price: '€120-180', distance: '4.1 km', time: 'Aujourd\'hui 14h', client: 'Sophie Durand', address: '12 Avenue des Lilas, 75020 Paris', phone: '+33 6 98 76 54 32', desc: 'PAC Daikin Altherma avec bruit de claquement au démarrage. Installation de 2019.' },
-            job3: { title: 'Entretien annuel clim', type: 'Maintenance', status: 'scheduled', price: '€65-90', distance: '5.8 km', time: 'Demain 9h', client: 'Marc Leroy', address: '8 Rue de la Paix, 75002 Paris', phone: '+33 6 55 44 33 22', desc: 'Entretien préventif sur 2 splits Mitsubishi. Accès facile, client présent.' },
-            myjob1: { title: 'Réparation compresseur', type: 'Réparation', status: 'progress', price: '€180', distance: '0 km', time: 'En cours', client: 'Marie Dupont', address: '15 Rue de Paris, 75001 Paris', phone: '+33 6 11 22 33 44', desc: 'Remplacement compresseur sur groupe froid. Pièces commandées et reçues.', started: '10:45' },
-            myjob2: { title: 'Diagnostic VRV', type: 'Diagnostic', status: 'scheduled', price: '€95', distance: '3.2 km', time: 'Demain 10h', client: 'Jean Martin', address: '22 Bd Haussmann, 75009 Paris', phone: '+33 6 77 88 99 00', desc: 'Système VRV Daikin avec code erreur U4. Prévoir multimètre et manomètres.' }
-        };
-
-        function openConnect() {
-            // DISABLED - Coming soon
-            toast('FixAIR Connect — Disponible prochainement');
-        }
-
-        function closeConnect() {
-            closeConnectDrawer();
-            document.getElementById('connectView').classList.remove('active', 'drawer-open');
-            document.getElementById('navConnect').classList.remove('active');
-            goToHome();
-        }
-
-        function activateConnect() {
-            connectActivated = true;
-            document.getElementById('connectPromo').style.display = 'none';
-            document.getElementById('connectActive').style.display = 'block';
-            document.getElementById('connectEarnings').textContent = '€0';
-            document.getElementById('connectMissions').textContent = '0';
-            document.getElementById('connectRating').textContent = '-';
-            toast('Connect activé !');
-        }
-
-        function openConnectDrawer(type, jobId) {
-            const job = connectJobsData[jobId];
-            if (!job) return;
-            
-            document.getElementById('connectView').classList.add('drawer-open');
-            document.getElementById('connectDrawerTitle').textContent = job.title;
-            document.getElementById('connectDrawerSubtitle').textContent = job.type;
-            
-            let bodyHTML = `
-                <div class="connect-detail-section">
-                    <div class="connect-detail-label">Client</div>
-                    <div class="connect-detail-card">
-                        <div class="connect-detail-row">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            <div class="connect-detail-text">${job.client}</div>
-                        </div>
-                        <div class="connect-detail-row">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                            <div class="connect-detail-text">${job.address}<small>${job.distance}</small></div>
-                        </div>
-                        <div class="connect-detail-row">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                            <div class="connect-detail-text">${job.phone}</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="connect-detail-section">
-                    <div class="connect-detail-label">Description</div>
-                    <div class="connect-detail-card">
-                        <div class="connect-detail-desc">${job.desc}</div>
-                    </div>
-                </div>
-                <div class="connect-detail-section">
-                    <div class="connect-detail-label">Rémunération</div>
-                    <div class="connect-detail-card" style="text-align:center;">
-                        <div class="connect-price-big">${job.price}</div>
-                        <div class="connect-price-note">Estimation selon durée</div>
-                    </div>
-                </div>
-            `;
-            document.getElementById('connectDrawerBody').innerHTML = bodyHTML;
-            
-            const footer = document.getElementById('connectDrawerFooter');
-            if (type === 'myjob') {
-                footer.innerHTML = `
-                    <button class="connect-drawer-btn danger" onclick="closeConnectDrawer()">Annuler mission</button>
-                    <button class="connect-drawer-btn primary" onclick="closeConnectDrawer();toast('Mission terminée!')">Terminer</button>
-                `;
-            } else {
-                footer.innerHTML = `
-                    <button class="connect-drawer-btn secondary" onclick="closeConnectDrawer()">Fermer</button>
-                    <button class="connect-drawer-btn primary" onclick="acceptConnectJob('${jobId}')">Accepter</button>
-                `;
-            }
-        }
-
-        function closeConnectDrawer() {
-            document.getElementById('connectView').classList.remove('drawer-open');
-        }
-
-        function acceptConnectJob(jobId) {
-            closeConnectDrawer();
-            toast('Mission acceptée !');
-            
-            // Update stats
-            const missions = parseInt(document.getElementById('connectMissions').textContent) + 1;
-            document.getElementById('connectMissions').textContent = missions;
-        }
+        // Connect functions removed
 
         // Initialize calendar when page loads
         document.addEventListener('DOMContentLoaded', function() {
@@ -21138,150 +20483,7 @@ RÈGLES:
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════════
-         CONNECT VIEW
-         ═══════════════════════════════════════════════════════════════════════════ -->
-    <div class="connect-view" id="connectView">
-        <div class="connect-content">
-            <div class="connect-header">
-                <button class="connect-header-back" onclick="closeConnect()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-                </button>
-                <div class="connect-header-info">
-                    <div class="connect-header-title">
-                        FixAIR Connect
-                        <span class="connect-online-dot" id="connectOnlineDot"></span>
-                    </div>
-                    <div class="connect-header-sub" id="connectHeaderSub">Missions disponibles</div>
-                </div>
-            </div>
-            <div class="connect-body">
-                <div class="connect-content-inner">
-                    <!-- Promo (when not activated) -->
-                    <div class="connect-promo" id="connectPromo">
-                        <div class="connect-promo-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></svg>
-                        </div>
-                        <div class="connect-promo-title">Gagnez plus avec Connect</div>
-                        <div class="connect-promo-desc">Recevez des missions de dépannage dans votre zone et augmentez vos revenus.</div>
-                        <div class="connect-promo-features">
-                            <div class="connect-promo-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Missions urgentes</div>
-                            <div class="connect-promo-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Paiement garanti</div>
-                            <div class="connect-promo-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Choisissez vos horaires</div>
-                            <div class="connect-promo-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Support 24/7</div>
-                        </div>
-                        <button class="connect-btn-activate" onclick="activateConnect()">
-                            Activer Connect
-                            <span class="connect-btn-badge">GRATUIT</span>
-                        </button>
-                        <div class="connect-promo-note">Aucun engagement • Désactivable à tout moment</div>
-                    </div>
-                    
-                    <!-- Active content (when activated) -->
-                    <div id="connectActive" style="display:none;">
-                        <div class="connect-stats-bar">
-                            <div class="connect-stat-pill highlight">
-                                <div class="connect-stat-val" id="connectEarnings">€0</div>
-                                <div class="connect-stat-lbl">Ce mois</div>
-                            </div>
-                            <div class="connect-stat-pill">
-                                <div class="connect-stat-val" id="connectMissions">0</div>
-                                <div class="connect-stat-lbl">Missions</div>
-                            </div>
-                            <div class="connect-stat-pill">
-                                <div class="connect-stat-val" id="connectRating">-</div>
-                                <div class="connect-stat-lbl">Note</div>
-                            </div>
-                        </div>
-                        
-                        <div class="connect-sec">
-                            <div class="connect-sec-head">
-                                <span class="connect-sec-title">Missions disponibles</span>
-                                <div class="connect-sec-line"></div>
-                                <span class="connect-sec-badge" id="connectAvailCount">3</span>
-                            </div>
-                            <div class="connect-jobs-list" id="connectAvailJobs">
-                                <div class="connect-job-card urgent" onclick="openConnectDrawer('job', 'job1')">
-                                    <span class="connect-job-tag urgent">URGENT</span>
-                                    <div class="connect-job-body">
-                                        <div class="connect-job-name">AC ne refroidit plus</div>
-                                        <div class="connect-job-detail">Climatisation • 2.3 km • ASAP</div>
-                                    </div>
-                                    <div class="connect-job-price">€85-120</div>
-                                    <div class="connect-job-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
-                                </div>
-                                <div class="connect-job-card new" onclick="openConnectDrawer('job', 'job2')">
-                                    <span class="connect-job-tag new">NOUVEAU</span>
-                                    <div class="connect-job-body">
-                                        <div class="connect-job-name">Bruit anormal PAC</div>
-                                        <div class="connect-job-detail">Pompe à chaleur • 4.1 km • Aujourd'hui 14h</div>
-                                    </div>
-                                    <div class="connect-job-price">€120-180</div>
-                                    <div class="connect-job-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
-                                </div>
-                                <div class="connect-job-card scheduled" onclick="openConnectDrawer('job', 'job3')">
-                                    <span class="connect-job-tag scheduled">PLANIFIÉ</span>
-                                    <div class="connect-job-body">
-                                        <div class="connect-job-name">Entretien annuel clim</div>
-                                        <div class="connect-job-detail">Maintenance • 5.8 km • Demain 9h</div>
-                                    </div>
-                                    <div class="connect-job-price">€65-90</div>
-                                    <div class="connect-job-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="connect-sec">
-                            <div class="connect-sec-head">
-                                <span class="connect-sec-title">Mes missions</span>
-                                <div class="connect-sec-line"></div>
-                            </div>
-                            <div class="connect-jobs-list" id="connectMyJobs">
-                                <div class="connect-job-card progress" onclick="openConnectDrawer('myjob', 'myjob1')">
-                                    <span class="connect-job-tag progress">EN COURS</span>
-                                    <div class="connect-job-body">
-                                        <div class="connect-job-name">Réparation compresseur</div>
-                                        <div class="connect-job-detail">Réparation • Démarré 10:45</div>
-                                    </div>
-                                    <div class="connect-job-price">€180</div>
-                                    <div class="connect-job-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
-                                </div>
-                                <div class="connect-job-card scheduled" onclick="openConnectDrawer('myjob', 'myjob2')">
-                                    <span class="connect-job-tag scheduled">PLANIFIÉ</span>
-                                    <div class="connect-job-body">
-                                        <div class="connect-job-name">Diagnostic VRV</div>
-                                        <div class="connect-job-detail">Diagnostic • Demain 10h</div>
-                                    </div>
-                                    <div class="connect-job-price">€95</div>
-                                    <div class="connect-job-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Connect Drawer -->
-        <div class="connect-drawer" id="connectDrawer">
-            <div class="connect-drawer-header">
-                <button class="connect-drawer-close" onclick="closeConnectDrawer()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                </button>
-                <div class="connect-drawer-info">
-                    <div class="connect-drawer-title" id="connectDrawerTitle">Mission</div>
-                    <div class="connect-drawer-subtitle" id="connectDrawerSubtitle">Détails</div>
-                </div>
-            </div>
-            <div class="connect-drawer-body" id="connectDrawerBody">
-                <!-- Dynamic content -->
-            </div>
-            <div class="connect-drawer-footer" id="connectDrawerFooter">
-                <button class="connect-drawer-btn secondary" onclick="closeConnectDrawer()">Fermer</button>
-                <button class="connect-drawer-btn primary" id="connectDrawerAction">Accepter</button>
-            </div>
-        </div>
-    </div>
+    <!-- Connect view removed -->
 
     <!-- EVENT CONTEXT MENU (Right-click on events) -->
     <div class="event-context-menu" id="eventContextMenu">
@@ -21313,23 +20515,16 @@ RÈGLES:
                 <div class="event-section-title"><span>Informations</span><div class="event-section-line"></div></div>
                 <div class="event-field">
                     <div class="event-field-label">Nom de l'événement</div>
-                    <input type="text" class="event-field-input" id="eventName" placeholder="Diagnostic, Maintenance, Réunion...">
+                    <input type="text" class="event-field-input" id="eventName" placeholder="Maintenance, Réunion, Intervention...">
                 </div>
                 <div class="event-field">
                     <div class="event-field-label">Type</div>
                     <div class="event-type-pills">
-                        <div class="event-type-pill active diagnostic" data-type="diagnostic" onclick="selectEventType(this)">
-                            <span class="pill-icon"><svg viewBox="0 0 200 200"><use href="#icon-star"/></svg></span>
-                            Diagnostic
-                        </div>
-                        <div class="event-type-pill assistant" data-type="assistant" onclick="selectEventType(this)">
+                        <div class="event-type-pill active assistant" data-type="assistant" onclick="selectEventType(this)">
                             <span class="pill-icon"><svg viewBox="0 0 24 24"><use href="#icon-clipboard"/></svg></span>
                             Rapport
                         </div>
-                        <div class="event-type-pill connect" data-type="connect" onclick="selectEventType(this)">
-                            <span class="pill-icon"><svg viewBox="0 0 24 24"><use href="#icon-connect"/></svg></span>
-                            Connect
-                        </div>
+                        <!-- Connect event type removed -->
                         <div class="event-type-pill personal" data-type="personal" onclick="selectEventType(this)">
                             <span class="pill-icon"><svg viewBox="0 0 24 24"><use href="#icon-user"/></svg></span>
                             Personnel
@@ -21410,7 +20605,6 @@ RÈGLES:
                         <select class="event-field-select" id="eventVisibility">
                             <option value="private">Privé (moi uniquement)</option>
                             <option value="company">Entreprise (managers)</option>
-                                             <option value="connect">FixAIR Connect</option>
                         </select>
                     </div>
                 </div>
@@ -21480,9 +20674,9 @@ const TP = {
         return simple.test(q.trim()) || q.trim().length < 20;
     },
 
-    // Check if technical
+    // Check if technical (report-oriented terms)
     isTechnicalQuery(q) {
-        const tech = /error|code|fault|panne|erreur|défaut|schéma|schema|diagram|wiring|câblage|pression|bar|température|gaz|r32|r410|frigorigène|install|mise en service|réparer|fix|dépannage|diagnostic|problème|cn\d+|pinout|\b[EPFUepfu]?\d{3,5}\b/i;
+        const tech = /rapport|intervention|maintenance|installation|mise en service|dépannage|remplacement|nettoyage|contrôle|relevé|mesure|pression|bar|température|gaz|r32|r410|frigorigène|charge|câblage|mitsubishi|daikin|carrier|lg|samsung|panasonic|toshiba|fujitsu|hitachi|vrv|vrf|pac|split|pu[hrz]\w*|\b[EPFUepfu]?\d{3,5}\b/i;
         return tech.test(q);
     },
 
@@ -21497,24 +20691,21 @@ const TP = {
         b = b || 'équipement';
         
         {
-            // Analyze query for thought process steps
-            if (/\b([EPFUepfu]?\d{2,5})\b/i.test(q) || /error|code|fault|panne|erreur|défaut/i.test(ql)) {
-                s.push({ icon: 'globe', text: 'Recherche code erreur ' + b + '...' });
-                s.push({ icon: 'doc', text: 'Consultation documentation' });
+            // Analyze query for thought process steps (reporting-focused)
+            if (/mitsubishi|daikin|carrier|lg|samsung|panasonic|toshiba|fujitsu|hitachi|vrv|vrf|pac|split|pu[hrz]\w*/i.test(ql)) {
+                s.push({ icon: 'doc', text: 'Identification équipement ' + b + '...' });
             }
-            if (/wiring|diagram|schema|schéma|pinout|câblage|connecteur|cn\d+/i.test(ql)) {
-                s.push({ icon: 'doc', text: 'Chargement schémas électriques' });
+            if (/maintenance|nettoyage|contrôle|préventive/i.test(ql)) {
+                s.push({ icon: 'tool', text: 'Analyse opérations de maintenance...' });
             }
-            if (/pression|bar|température|gaz|r32|r410|frigorigène|charge/i.test(ql)) {
-                s.push({ icon: 'tool', text: 'Analyse paramètres frigorifiques' });
+            if (/remplacement|changer|changé|remplacé|installé|installation|mise en service/i.test(ql)) {
+                s.push({ icon: 'tool', text: 'Analyse travaux effectués...' });
             }
-            if (/réparer|fix|dépannage|diagnostic|problème|marche pas/i.test(ql)) {
-                s.push({ icon: 'brain', text: 'Analyse diagnostic...' });
+            if (/pression|bar|température|gaz|r32|r410|frigorigène|charge|mesure|relevé/i.test(ql)) {
+                s.push({ icon: 'tool', text: 'Extraction paramètres frigorifiques' });
             }
-            if (/graph|diagramme|visuel|courbe/i.test(ql)) {
-                s.push({ icon: 'chart', text: 'Préparation visuel...' });
-            }
-            if (/rapport|report|compte.?rendu|cerfa|document/i.test(ql)) {
+            if (/intervention|rapport|report|compte.?rendu|cerfa|document/i.test(ql)) {
+                s.push({ icon: 'brain', text: 'Extraction des informations...' });
                 s.push({ icon: 'doc', text: 'Extraction données' });
                 s.push({ icon: 'bullet', text: 'Génération rapport...' });
             } else if (/image|photo|scan|plaque|ocr/i.test(ql)) {
@@ -21522,7 +20713,7 @@ const TP = {
                 s.push({ icon: 'bullet', text: 'Extraction...' });
             }
             if (s.length === 0) {
-                s.push({ icon: 'globe', text: 'Recherche base ' + b + '...' });
+                s.push({ icon: 'brain', text: 'Extraction des informations...' });
             }
             s.push({ icon: 'bullet', text: 'Formulation réponse...' });
         }
